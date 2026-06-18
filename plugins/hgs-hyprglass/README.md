@@ -143,6 +143,40 @@ To print the artifact path:
 make -C plugins/hgs-hyprglass artifact
 ```
 
+## Dev Artifact Workflow
+
+Hyprland can keep a deleted plugin `.so` mapped after unload/reload when the same artifact path is reused. During development, prefer loading a uniquely named copy so status can prove which build is active.
+
+Create a unique ignored artifact:
+
+```sh
+make -C plugins/hgs-hyprglass dev-artifact
+```
+
+The command prints a path like:
+
+```text
+plugins/hgs-hyprglass/build/hgs-hyprglass-dev-20260618T123456Z-b02bde4c.so
+```
+
+Load that exact printed path:
+
+```sh
+hyprctl plugin load "/absolute/path/printed/by/dev-artifact.so"
+hgs hyprglass status | jq '.build, .capabilities'
+```
+
+Unload the exact path you loaded:
+
+```sh
+hyprctl plugin unload "/absolute/path/printed/by/dev-artifact.so"
+hgs hyprglass status
+```
+
+Status includes a compact `build` object with `id`, `pluginVersion`, `gitCommit`, `buildTime`, and `buildType`, plus a `capabilities` object listing supported material modes and render stages. If git metadata is unavailable, the build still succeeds and reports `unknown`.
+
+The whole `build/` directory is ignored by git. Hyprland plugin ABI can change with Hyprland updates, so rebuild the plugin after updating Hyprland.
+
 ## Manual Load Test
 
 Load only when you intend to test against the live Hyprland session:

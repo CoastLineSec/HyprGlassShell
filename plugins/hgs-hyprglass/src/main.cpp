@@ -23,6 +23,26 @@
 #include <utility>
 #include <vector>
 
+#ifndef HGS_HYPRGLASS_PLUGIN_VERSION
+#define HGS_HYPRGLASS_PLUGIN_VERSION "0.1.0"
+#endif
+
+#ifndef HGS_HYPRGLASS_BUILD_ID
+#define HGS_HYPRGLASS_BUILD_ID "unknown"
+#endif
+
+#ifndef HGS_HYPRGLASS_BUILD_TIME
+#define HGS_HYPRGLASS_BUILD_TIME "unknown"
+#endif
+
+#ifndef HGS_HYPRGLASS_GIT_COMMIT
+#define HGS_HYPRGLASS_GIT_COMMIT "unknown"
+#endif
+
+#ifndef HGS_HYPRGLASS_BUILD_TYPE
+#define HGS_HYPRGLASS_BUILD_TYPE "unknown"
+#endif
+
 namespace {
 
 using json = nlohmann::json;
@@ -199,6 +219,28 @@ struct MaterialColorResolution {
 };
 
 std::map<std::string, DescriptorSummary> g_descriptors;
+
+json buildInfoToJSON() {
+    return {
+        {"id", HGS_HYPRGLASS_BUILD_ID},
+        {"pluginVersion", HGS_HYPRGLASS_PLUGIN_VERSION},
+        {"gitCommit", HGS_HYPRGLASS_GIT_COMMIT},
+        {"buildTime", HGS_HYPRGLASS_BUILD_TIME},
+        {"buildType", HGS_HYPRGLASS_BUILD_TYPE},
+    };
+}
+
+json capabilitiesToJSON() {
+    return {
+        {"materials", json::array({"flat", "blur-native"})},
+        {"debugOverlay", true},
+        {"nativeBlur", true},
+        {"renderStages", {
+            {"material", "RENDER_POST_WINDOWS"},
+            {"debugOverlay", "RENDER_LAST_MOMENT"},
+        }},
+    };
+}
 
 std::string trim(std::string value) {
     auto isSpace = [](unsigned char c) { return std::isspace(c) != 0; };
@@ -1726,6 +1768,12 @@ std::string normalStatus() {
     out << "hgs-hyprglass\n";
     out << "  pluginLoaded: true\n";
     out << "  available: true\n";
+    out << "  pluginVersion: " << HGS_HYPRGLASS_PLUGIN_VERSION << "\n";
+    out << "  buildId: " << HGS_HYPRGLASS_BUILD_ID << "\n";
+    out << "  buildTime: " << HGS_HYPRGLASS_BUILD_TIME << "\n";
+    out << "  gitCommit: " << HGS_HYPRGLASS_GIT_COMMIT << "\n";
+    out << "  buildType: " << HGS_HYPRGLASS_BUILD_TYPE << "\n";
+    out << "  materialModesSupported: flat,blur-native\n";
     out << "  compositorRendering: " << (snapshot.materialMode != "off" ? "true" : "false") << "\n";
     out << "  materialMode: " << snapshot.materialMode << "\n";
     out << "  materialRenderStage: " << materialRenderStageFor(snapshot.materialMode) << "\n";
@@ -1791,6 +1839,8 @@ std::string jsonStatus() {
         {"plugin", "hgs-hyprglass"},
         {"pluginLoaded", true},
         {"available", true},
+        {"build", buildInfoToJSON()},
+        {"capabilities", capabilitiesToJSON()},
         {"compositorRendering", snapshot.materialMode != "off"},
         {"generation", snapshot.generation},
         {"applyCount", snapshot.applyCount},
@@ -2014,7 +2064,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     if (Event::bus())
         g_renderStageListener = Event::bus()->m_events.render.stage.listen(renderHyprGlass);
 
-    return {"hgs-hyprglass", "HyprGlassShell compositor-side glass material engine", "CoastLineSec", "0.1.0"};
+    return {"hgs-hyprglass", "HyprGlassShell compositor-side glass material engine", "CoastLineSec", HGS_HYPRGLASS_PLUGIN_VERSION};
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {

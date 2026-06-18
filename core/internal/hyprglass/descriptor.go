@@ -137,6 +137,8 @@ type Status struct {
 	Plugin                       string             `json:"plugin"`
 	PluginLoaded                 bool               `json:"pluginLoaded"`
 	Available                    bool               `json:"available"`
+	Build                        *BuildStatus       `json:"build,omitempty"`
+	Capabilities                 *CapabilityStatus  `json:"capabilities,omitempty"`
 	CompositorRendering          bool               `json:"compositorRendering"`
 	Generation                   uint64             `json:"generation,omitempty"`
 	ApplyCount                   uint64             `json:"applyCount,omitempty"`
@@ -166,6 +168,21 @@ type Status struct {
 	Warnings                     []string           `json:"warnings,omitempty"`
 	DebugOverlay                 DebugOverlayStatus `json:"debugOverlay,omitempty"`
 	Material                     MaterialStatus     `json:"material,omitempty"`
+}
+
+type BuildStatus struct {
+	ID            string `json:"id,omitempty"`
+	PluginVersion string `json:"pluginVersion,omitempty"`
+	GitCommit     string `json:"gitCommit,omitempty"`
+	BuildTime     string `json:"buildTime,omitempty"`
+	BuildType     string `json:"buildType,omitempty"`
+}
+
+type CapabilityStatus struct {
+	Materials    []string          `json:"materials,omitempty"`
+	DebugOverlay bool              `json:"debugOverlay,omitempty"`
+	NativeBlur   bool              `json:"nativeBlur,omitempty"`
+	RenderStages map[string]string `json:"renderStages,omitempty"`
 }
 
 type DescriptorStatus struct {

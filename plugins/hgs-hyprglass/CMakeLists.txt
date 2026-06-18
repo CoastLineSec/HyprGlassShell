@@ -14,6 +14,18 @@ if(NOT NLOHMANN_JSON_INCLUDE_DIR)
     message(FATAL_ERROR "nlohmann/json.hpp not found. Install nlohmann-json to build hgs-hyprglass.")
 endif()
 
+string(TIMESTAMP HGS_HYPRGLASS_BUILD_TIME "%Y-%m-%dT%H:%M:%SZ" UTC)
+execute_process(
+    COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse --short=12 HEAD
+    OUTPUT_VARIABLE HGS_HYPRGLASS_GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT HGS_HYPRGLASS_GIT_COMMIT)
+    set(HGS_HYPRGLASS_GIT_COMMIT "unknown")
+endif()
+set(HGS_HYPRGLASS_BUILD_ID "${HGS_HYPRGLASS_BUILD_TIME}-${HGS_HYPRGLASS_GIT_COMMIT}")
+
 add_library(hgs-hyprglass SHARED
     src/main.cpp
 )
@@ -21,6 +33,13 @@ add_library(hgs-hyprglass SHARED
 target_include_directories(hgs-hyprglass PRIVATE ${NLOHMANN_JSON_INCLUDE_DIR})
 target_link_libraries(hgs-hyprglass PRIVATE PkgConfig::HYPRLAND)
 target_compile_options(hgs-hyprglass PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(hgs-hyprglass PRIVATE
+    HGS_HYPRGLASS_PLUGIN_VERSION="${PROJECT_VERSION}"
+    HGS_HYPRGLASS_BUILD_ID="${HGS_HYPRGLASS_BUILD_ID}"
+    HGS_HYPRGLASS_BUILD_TIME="${HGS_HYPRGLASS_BUILD_TIME}"
+    HGS_HYPRGLASS_GIT_COMMIT="${HGS_HYPRGLASS_GIT_COMMIT}"
+    HGS_HYPRGLASS_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+)
 set_target_properties(hgs-hyprglass PROPERTIES
     PREFIX ""
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
