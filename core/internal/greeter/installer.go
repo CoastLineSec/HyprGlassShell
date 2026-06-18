@@ -1779,61 +1779,6 @@ vt = 1
 	return nil
 }
 
-func stripConfigFlag(command string) string {
-	for _, flag := range []string{" -C ", " --config "} {
-		idx := strings.Index(command, flag)
-		if idx == -1 {
-			continue
-		}
-
-		before := command[:idx]
-		after := command[idx+len(flag):]
-
-		switch {
-		case strings.HasPrefix(after, `"`):
-			if end := strings.Index(after[1:], `"`); end != -1 {
-				after = after[end+2:]
-			} else {
-				after = ""
-			}
-		default:
-			if space := strings.Index(after, " "); space != -1 {
-				after = after[space:]
-			} else {
-				after = ""
-			}
-		}
-
-		command = strings.TrimSpace(before + after)
-	}
-
-	return command
-}
-
-func stripCacheDirFlag(command string) string {
-	fields := strings.Fields(command)
-	if len(fields) == 0 {
-		return strings.TrimSpace(command)
-	}
-
-	filtered := make([]string, 0, len(fields))
-	for i := 0; i < len(fields); i++ {
-		token := fields[i]
-		if token == "--cache-dir" {
-			if i+1 < len(fields) {
-				i++
-			}
-			continue
-		}
-		if strings.HasPrefix(token, "--cache-dir=") {
-			continue
-		}
-		filtered = append(filtered, token)
-	}
-
-	return strings.Join(filtered, " ")
-}
-
 // getDebianOBSSlug returns the OBS repository slug for the running Debian version.
 func getDebianOBSSlug(osInfo *distros.OSInfo) string {
 	versionID := strings.ToLower(osInfo.VersionID)

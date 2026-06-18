@@ -106,6 +106,7 @@ func init() {
 	ipcCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		printIPCHelp()
 	})
+	pluginsCmd.AddCommand(pluginsBrowseCmd, pluginsListCmd, pluginsInstallCmd, pluginsUninstallCmd, pluginsUpdateCmd)
 }
 
 var debugSrvCmd = &cobra.Command{
@@ -552,6 +553,7 @@ func getCommonCommands() []*cobra.Command {
 		randrCmd,
 		blurCmd,
 		hyprglassCmd,
+		pluginsCmd,
 		trashCmd,
 		systemCmd,
 		switchUserCmd,

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
@@ -373,19 +372,6 @@ func (o *OpenSUSEDistribution) categorizePackages(dependencies []deps.Dependency
 	}
 
 	return systemPkgs, obsPkgs, manualPkgs, variantMap
-}
-
-func (o *OpenSUSEDistribution) appendMissingSystemPackages(systemPkgs []string, extraPkgs []string) []string {
-	for _, pkg := range extraPkgs {
-		if slices.Contains(systemPkgs, pkg) || o.packageInstalled(pkg) {
-			continue
-		}
-
-		o.log(fmt.Sprintf("Adding openSUSE runtime package: %s", pkg))
-		systemPkgs = append(systemPkgs, pkg)
-	}
-
-	return systemPkgs
 }
 
 func (o *OpenSUSEDistribution) extractPackageNames(packages []PackageMapping) []string {

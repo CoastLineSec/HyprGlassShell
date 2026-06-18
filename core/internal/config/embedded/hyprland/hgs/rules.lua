@@ -17,4 +17,3 @@ hl.window_rule({
 
     no_focus = true,
 })
-

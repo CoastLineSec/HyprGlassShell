@@ -242,7 +242,7 @@ var hgsConfigSpecs = map[string]hgsConfigSpec{
 
 func detectCompositorForSetup() (string, error) {
 	if !utils.CommandExists("Hyprland") && !utils.CommandExists("hyprctl") {
-		return "", fmt.Errorf("Hyprland is required")
+		return "", fmt.Errorf("hyprland is required")
 	}
 	return "hyprland", nil
 }

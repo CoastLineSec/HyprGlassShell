@@ -5,6 +5,7 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/protocols/LayerShell.hpp>
 #include <hyprland/src/render/Renderer.hpp>
+#include <hyprland/src/render/pass/BorderPassElement.hpp>
 #include <hyprland/src/render/pass/RectPassElement.hpp>
 #include <hyprland/src/state/MonitorState.hpp>
 
@@ -201,6 +202,10 @@ struct MaterialDescriptor {
     std::string              colorUsed;
     std::string              effectiveBlurSource;
     std::string              effectiveBlurControl;
+    std::string              rimTechnique = "disabled";
+    std::string              rimColorUsed;
+    std::string              innerEdgeTechnique = "disabled";
+    std::string              innerEdgeColorUsed;
     std::string              drawMapping;
     std::vector<std::string> drawWarnings;
     CHyprColor               color = CHyprColor(0.92F, 0.95F, 1.0F, 0.0F);
@@ -211,10 +216,24 @@ struct MaterialDescriptor {
     double                   requestedFrost = 0.0;
     double                   blurAlphaUsed = 0.0;
     double                   alphaUsed = 0.0;
+    double                   tintOverlayAlphaUsed = 0.0;
+    double                   rimAlphaUsed = 0.0;
+    double                   rimExpansionPx = 0.0;
+    double                   innerEdgeAlphaUsed = 0.0;
+    double                   innerEdgeInsetPx = 0.0;
+    double                   highlightAlphaUsed = 0.0;
+    double                   shadowAlphaUsed = 0.0;
     int                      drawTransform = 0;
+    int                      passCount = 0;
     bool                     drawable = false;
     bool                     rounded = false;
     bool                     blurEnabled = false;
+    bool                     tintOverlayEnabled = false;
+    bool                     rimEnabled = false;
+    bool                     innerEdgeEnabled = false;
+    bool                     highlightEnabled = false;
+    bool                     highlightTransformSafe = true;
+    bool                     shadowEnabled = false;
     bool                     drawTransformSupported = true;
     bool                     perSurfaceBlurSupported = false;
     std::string              perSurfaceBlurSupport;
@@ -252,7 +271,7 @@ json buildInfoToJSON() {
 
 json capabilitiesToJSON() {
     return {
-        {"materials", json::array({"flat", "blur-native"})},
+        {"materials", json::array({"flat", "blur-native", "glass-v1"})},
         {"debugOverlay", true},
         {"nativeBlur", true},
         {"renderStages", {
@@ -643,6 +662,44 @@ double clampDouble(double value, double min, double max) {
     return std::clamp(value, min, max);
 }
 
+bool materialModeUsesNativeBlur(std::string_view mode) {
+    return mode == "blur-native" || mode == "glass-v1";
+}
+
+bool materialModeIsSupported(std::string_view mode) {
+    return mode == "flat" || materialModeUsesNativeBlur(mode);
+}
+
+double glassRimAlpha(double frost) {
+    return clampDouble(0.024 + frost * 0.046, 0.024, 0.07);
+}
+
+double glassInnerEdgeAlpha(double frost) {
+    return clampDouble(0.008 + frost * 0.020, 0.008, 0.028);
+}
+
+double glassHighlightAlpha(double frost) {
+    return clampDouble(0.014 + frost * 0.032, 0.014, 0.046);
+}
+
+double glassTintOverlayAlpha(double frost, double tintOpacity) {
+    return clampDouble(0.010 + frost * 0.018 + tintOpacity * 0.07, 0.010, 0.045);
+}
+
+CHyprColor withAlpha(const CHyprColor& color, double alpha) {
+    return CHyprColor(color.r, color.g, color.b, static_cast<float>(clampDouble(alpha, 0.0, 1.0)));
+}
+
+CHyprColor mixColor(const CHyprColor& color, float r, float g, float b, double amount, double alpha) {
+    const double t = clampDouble(amount, 0.0, 1.0);
+    return CHyprColor(
+        static_cast<float>(color.r + (r - color.r) * t),
+        static_cast<float>(color.g + (g - color.g) * t),
+        static_cast<float>(color.b + (b - color.b) * t),
+        static_cast<float>(clampDouble(alpha, 0.0, 1.0))
+    );
+}
+
 uint8_t hexNibble(char c) {
     if (c >= '0' && c <= '9')
         return static_cast<uint8_t>(c - '0');
@@ -978,7 +1035,7 @@ MaterialDescriptor analyzeMaterialDrawable(
 
     if (materialMode == "off")
         return material;
-    if (materialMode != "flat" && materialMode != "blur-native") {
+    if (!materialModeIsSupported(materialMode)) {
         material.reason = "material mode unsupported";
         return material;
     }
@@ -1067,7 +1124,8 @@ MaterialDescriptor analyzeMaterialDrawable(
     material.alphaUsed = resolvedColor.alphaUsed;
 
     material.requestedFrost = clampDouble(descriptor.frost, 0.0, 1.0);
-    if (materialMode == "blur-native") {
+    material.passCount = 1;
+    if (materialModeUsesNativeBlur(materialMode)) {
         material.blurAlphaUsed = material.requestedFrost;
         material.blurEnabled = material.blurAlphaUsed > 0.01;
         material.effectiveBlurSource = "native-hyprland";
@@ -1077,6 +1135,38 @@ MaterialDescriptor analyzeMaterialDrawable(
         addWarning(material.warnings, "native Hyprland blur kernel uses global decoration:blur config; descriptor frost maps to CRectPassElement blurA alpha only");
         if (material.alphaUsed >= 1.0)
             addWarning(material.warnings, "native blur requires translucent material alpha in CRectPassElement; resolved alpha is opaque");
+    }
+    if (materialMode == "glass-v1") {
+        material.tintOverlayAlphaUsed = glassTintOverlayAlpha(material.requestedFrost, material.tintOpacityRequested);
+        material.rimAlphaUsed = glassRimAlpha(material.requestedFrost);
+        material.rimExpansionPx = 0.0;
+        material.innerEdgeAlphaUsed = glassInnerEdgeAlpha(material.requestedFrost);
+        material.innerEdgeInsetPx = 2.0;
+        material.highlightAlphaUsed = glassHighlightAlpha(material.requestedFrost);
+        material.shadowAlphaUsed = 0.0;
+
+        material.tintOverlayEnabled = material.tintOverlayAlphaUsed > 0.001;
+        material.rimEnabled = material.rimAlphaUsed > 0.001;
+        material.rimTechnique = material.rimEnabled ? "rounded-border-pass" : "disabled";
+        material.rimColorUsed = material.rimEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.52, 1.0)) : "";
+        material.innerEdgeEnabled = material.innerEdgeAlphaUsed > 0.001 && material.rectUsed.width > material.innerEdgeInsetPx * 2.0 + 1.0 && material.rectUsed.height > material.innerEdgeInsetPx * 2.0 + 1.0;
+        material.innerEdgeTechnique = material.innerEdgeEnabled ? "rounded-border-pass" : "disabled";
+        material.innerEdgeColorUsed = material.innerEdgeEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.62, 1.0)) : "";
+        material.highlightTransformSafe = material.drawTransformSupported && isTransformSupported(material.drawTransform);
+        material.highlightEnabled = material.highlightTransformSafe && material.highlightAlphaUsed > 0.001 && material.rectUsed.width > material.radiusUsed * 2.0 + 8.0;
+        material.shadowEnabled = false;
+
+        material.passCount = 1;
+        if (material.tintOverlayEnabled)
+            ++material.passCount;
+        if (material.rimEnabled)
+            ++material.passCount;
+        if (material.innerEdgeEnabled)
+            ++material.passCount;
+        if (material.highlightEnabled)
+            ++material.passCount;
+
+        addWarning(material.warnings, "glass-v1 rim uses CBorderPassElement rounded border pass; square outline layers remain disabled");
     }
 
     return material;
@@ -1136,12 +1226,32 @@ json materialDescriptorToJSON(const MaterialDescriptor& material) {
         out["tintOpacityRequested"] = material.tintOpacityRequested;
         out["alphaUsed"] = material.alphaUsed;
         out["blurEnabled"] = material.blurEnabled;
-        if (material.mode == "blur-native") {
+        out["passCount"] = material.passCount;
+        if (materialModeUsesNativeBlur(material.mode)) {
             out["blurAlphaUsed"] = material.blurAlphaUsed;
             out["effectiveBlurSource"] = material.effectiveBlurSource;
             out["effectiveBlurControl"] = material.effectiveBlurControl;
             out["perSurfaceBlurSupported"] = material.perSurfaceBlurSupported;
             out["perSurfaceBlurSupport"] = material.perSurfaceBlurSupport;
+        }
+        if (material.mode == "glass-v1") {
+            out["tintOverlayEnabled"] = material.tintOverlayEnabled;
+            out["tintOverlayAlphaUsed"] = material.tintOverlayAlphaUsed;
+            out["rimEnabled"] = material.rimEnabled;
+            out["rimTechnique"] = material.rimTechnique;
+            out["rimAlphaUsed"] = material.rimAlphaUsed;
+            out["rimExpansionPx"] = material.rimExpansionPx;
+            out["rimColorUsed"] = material.rimColorUsed;
+            out["innerEdgeEnabled"] = material.innerEdgeEnabled;
+            out["innerEdgeTechnique"] = material.innerEdgeTechnique;
+            out["innerEdgeAlphaUsed"] = material.innerEdgeAlphaUsed;
+            out["innerEdgeInsetPx"] = material.innerEdgeInsetPx;
+            out["innerEdgeColorUsed"] = material.innerEdgeColorUsed;
+            out["highlightEnabled"] = material.highlightEnabled;
+            out["highlightAlphaUsed"] = material.highlightEnabled ? material.highlightAlphaUsed : 0.0;
+            out["highlightTransformSafe"] = material.highlightTransformSafe;
+            out["shadowEnabled"] = material.shadowEnabled;
+            out["shadowAlphaUsed"] = material.shadowEnabled ? material.shadowAlphaUsed : 0.0;
         }
     }
 
@@ -1496,7 +1606,7 @@ StatusSnapshot activeStatusSnapshot() {
 }
 
 bool materialModeEnabled(std::string_view mode) {
-    return mode == "flat" || mode == "blur-native";
+    return materialModeIsSupported(mode);
 }
 
 std::string materialRenderStageFor(std::string_view mode) {
@@ -1643,6 +1753,11 @@ std::vector<std::string> collectMaterialWarnings(
         addWarning(warnings, "blur-native material uses RENDER_POST_WINDOWS and Hyprland native blur; render ordering is diagnostic until visually verified");
         addWarning(warnings, "blur-native frost maps to CRectPassElement blurA alpha; effective blur kernel strength still comes from global Hyprland decoration:blur settings");
     }
+    if (materialMode == "glass-v1") {
+        addWarning(warnings, "glass-v1 material uses RENDER_POST_WINDOWS, Hyprland native blur, and simple rect pass overlays");
+        addWarning(warnings, "glass-v1 frost maps to CRectPassElement blurA alpha; effective blur kernel strength still comes from global Hyprland decoration:blur settings");
+        addWarning(warnings, "glass-v1 highlight uses the same renderer-projected rounded rect path on transforms 0-7");
+    }
     for (const auto& [id, descriptor] : descriptors) {
         const auto material = analyzeMaterialDrawable(materialMode, descriptor, matches.at(id), coordinates.at(id), candidates);
         for (const auto& warning : material.warnings)
@@ -1698,6 +1813,22 @@ void drawMaterialRect(const RectSummary& rect, const CHyprColor& color, int roun
     g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(std::move(data)));
 }
 
+void drawRoundedBorder(const RectSummary& rect, const CHyprColor& color, int round, int borderSize) {
+    if (!g_pHyprRenderer || !rectValid(rect))
+        return;
+
+    CBorderPassElement::SBorderData data;
+    data.box = CBox(rect.x, rect.y, rect.width, rect.height);
+    data.grad1 = Config::CGradientValueData(color);
+    data.hasGrad2 = false;
+    data.a = 1.0F;
+    data.round = std::max(0, round);
+    data.outerRound = -1;
+    data.borderSize = std::max(1, borderSize);
+    data.roundingPower = 2.0F;
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CBorderPassElement>(data));
+}
+
 void drawDebugOutline(const RectSummary& rect, const CHyprColor& color, double thickness) {
     if (!rectValid(rect))
         return;
@@ -1710,6 +1841,53 @@ void drawDebugOutline(const RectSummary& rect, const CHyprColor& color, double t
     drawDebugLine({.x = rect.x, .y = rect.y + rect.height - clampedHorizontal, .width = rect.width, .height = clampedHorizontal}, color);
     drawDebugLine({.x = rect.x, .y = rect.y, .width = clampedVertical, .height = rect.height}, color);
     drawDebugLine({.x = rect.x + rect.width - clampedVertical, .y = rect.y, .width = clampedVertical, .height = rect.height}, color);
+}
+
+RectSummary insetRect(const RectSummary& rect, double inset) {
+    if (!rectValid(rect))
+        return {};
+
+    const double safeInset = std::max(0.0, std::min({inset, (rect.width - 1.0) / 2.0, (rect.height - 1.0) / 2.0}));
+    return {
+        .x = rect.x + safeInset,
+        .y = rect.y + safeInset,
+        .width = rect.width - safeInset * 2.0,
+        .height = rect.height - safeInset * 2.0,
+    };
+}
+
+void drawGlassV1Material(const MaterialDescriptor& material) {
+    if (!material.drawable)
+        return;
+
+    const int round = static_cast<int>(std::round(material.radiusUsed));
+    drawMaterialRect(material.rectUsed, material.color, round, material.blurEnabled, material.blurAlphaUsed);
+
+    if (material.tintOverlayEnabled)
+        drawMaterialRect(material.rectUsed, withAlpha(material.color, material.tintOverlayAlphaUsed), round, false, 0.0);
+
+    if (material.rimEnabled)
+        drawRoundedBorder(material.rectUsed, mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.52, material.rimAlphaUsed), round, 1);
+
+    if (material.innerEdgeEnabled) {
+        const RectSummary inner = insetRect(material.rectUsed, material.innerEdgeInsetPx);
+        const int innerRound = static_cast<int>(std::round(clampDouble(material.radiusUsed - material.innerEdgeInsetPx, 0.0, std::min(inner.width, inner.height) / 2.0)));
+        if (rectValid(inner))
+            drawRoundedBorder(inner, mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.62, material.innerEdgeAlphaUsed), innerRound, 1);
+    }
+
+    if (material.highlightEnabled) {
+        RectSummary highlight = insetRect(material.rectUsed, 2.0);
+        if (rectValid(highlight)) {
+            const double horizontalInset = std::min(std::max(material.radiusUsed + 2.0, 2.0), (highlight.width - 1.0) / 2.0);
+            highlight.x += horizontalInset;
+            highlight.width -= horizontalInset * 2.0;
+            highlight.height = std::min({highlight.height, std::max(2.0, material.rectUsed.height * 0.12), 7.0});
+            const int highlightRound = static_cast<int>(std::round(clampDouble(material.radiusUsed / 3.0, 0.0, std::min(highlight.width, highlight.height) / 2.0)));
+            if (rectValid(highlight))
+                drawMaterialRect(highlight, CHyprColor(1.0F, 1.0F, 1.0F, static_cast<float>(material.highlightAlphaUsed)), highlightRound, false, 0.0);
+        }
+    }
 }
 
 void drawMismatchMarker(const RectSummary& rect) {
@@ -1811,7 +1989,10 @@ void renderCompositorMaterial(eRenderStage stage) {
         if (!material.drawable)
             continue;
 
-        drawMaterialRect(material.rectUsed, material.color, static_cast<int>(std::round(material.radiusUsed)), material.blurEnabled, material.blurAlphaUsed);
+        if (snapshot.materialMode == "glass-v1")
+            drawGlassV1Material(material);
+        else
+            drawMaterialRect(material.rectUsed, material.color, static_cast<int>(std::round(material.radiusUsed)), material.blurEnabled, material.blurAlphaUsed);
         ++renderedCount;
     }
 
@@ -1872,7 +2053,7 @@ json materialStatusToJSON(
         {"lastRenderStatus", snapshot.materialMode != "off" ? snapshot.lastMaterialRenderStatus : "disabled"},
         {"warnings", collectMaterialWarnings(snapshot.materialMode, snapshot.descriptors, matches, coordinates, candidates)},
     };
-    if (snapshot.materialMode == "blur-native") {
+    if (materialModeUsesNativeBlur(snapshot.materialMode)) {
         out["nativeBlurEnabled"] = true;
         out["effectiveBlurControl"] = "global-kernel-per-surface-alpha";
         out["perSurfaceBlurSupported"] = false;
@@ -1897,7 +2078,7 @@ std::string normalStatus() {
     out << "  buildTime: " << HGS_HYPRGLASS_BUILD_TIME << "\n";
     out << "  gitCommit: " << HGS_HYPRGLASS_GIT_COMMIT << "\n";
     out << "  buildType: " << HGS_HYPRGLASS_BUILD_TYPE << "\n";
-    out << "  materialModesSupported: flat,blur-native\n";
+    out << "  materialModesSupported: flat,blur-native,glass-v1\n";
     out << "  compositorRendering: " << (snapshot.materialMode != "off" ? "true" : "false") << "\n";
     out << "  materialMode: " << snapshot.materialMode << "\n";
     out << "  materialRenderStage: " << materialRenderStageFor(snapshot.materialMode) << "\n";
@@ -2087,7 +2268,7 @@ std::string materialCommandStatus(eHyprCtlOutputFormat format) {
             {"renderStage", materialRenderStageFor(snapshot.materialMode)},
             {"lastRenderStatus", snapshot.materialMode != "off" ? snapshot.lastMaterialRenderStatus : "disabled"},
         };
-        if (snapshot.materialMode == "blur-native") {
+        if (materialModeUsesNativeBlur(snapshot.materialMode)) {
             status["nativeBlurEnabled"] = true;
             status["effectiveBlurControl"] = "global-kernel-per-surface-alpha";
             status["perSurfaceBlurSupported"] = false;
@@ -2145,7 +2326,9 @@ std::string hyprglassMaterialRequest(eHyprCtlOutputFormat format, std::string re
         return setMaterialMode("flat");
     if (mode == "blur-native")
         return setMaterialMode("blur-native");
-    return "error: expected off, flat, blur-native, or status\n";
+    if (mode == "glass-v1")
+        return setMaterialMode("glass-v1");
+    return "error: expected off, flat, blur-native, glass-v1, or status\n";
 }
 
 }

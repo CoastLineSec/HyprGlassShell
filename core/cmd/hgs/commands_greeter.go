@@ -236,7 +236,7 @@ func installGreeter(nonInteractive bool) error {
 	fmt.Println("\nDetecting installed compositors...")
 	compositors := greeter.DetectCompositors()
 	if len(compositors) == 0 {
-		return fmt.Errorf("Hyprland is required for the HGS greeter")
+		return fmt.Errorf("hyprland is required for the HGS greeter")
 	}
 
 	var selectedCompositor string
@@ -922,7 +922,7 @@ func resolveLocalHGSPath() (string, error) {
 					continue
 				}
 				name := strings.ToLower(entry.Name())
-				if !strings.Contains(name, "hgs") && !strings.Contains(name, "hgs") {
+				if !strings.Contains(name, "hgs") && !strings.Contains(name, "hyprglass") {
 					continue
 				}
 				if resolved, ok := resolveHGSLocalCandidate(filepath.Join(homeDir, entry.Name())); ok {
@@ -1197,7 +1197,7 @@ func enableGreeter(nonInteractive bool) error {
 	compositors := greeter.DetectCompositors()
 
 	if len(compositors) == 0 {
-		return fmt.Errorf("Hyprland is required for the HGS greeter")
+		return fmt.Errorf("hyprland is required for the HGS greeter")
 	}
 
 	var selectedCompositor string

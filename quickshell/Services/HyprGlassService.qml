@@ -107,6 +107,7 @@ Singleton {
         case "off":
         case "flat":
         case "blur-native":
+        case "glass-v1":
             return mode;
         default:
             return "";
@@ -130,17 +131,17 @@ Singleton {
     }
 
     function materialOpacityForFrost(value) {
-        return frostResponse(value, 0.16, defaultMaterialOpacity, 0.52);
+        return frostResponse(value, 0.12, defaultMaterialOpacity, 0.46);
     }
 
     function neutralTintOpacityForFrost(tone, value) {
         if (tone === "light")
-            return frostResponse(value, 0.015, neutralLightTintOpacity, 0.10);
-        return frostResponse(value, 0.02, neutralDarkTintOpacity, 0.14);
+            return frostResponse(value, 0.018, neutralLightTintOpacity, 0.12);
+        return frostResponse(value, 0.025, neutralDarkTintOpacity, 0.15);
     }
 
     function colorTintOpacityForFrost(value) {
-        return frostResponse(value, 0.08, colorTintOpacity, 0.32);
+        return frostResponse(value, 0.055, colorTintOpacity, 0.24);
     }
 
     // Temporary dev overrides only. Normal resolution uses SettingsData.
@@ -154,12 +155,12 @@ Singleton {
     property string colorTint: normalizeHexColor(colorTintEnvSet ? Quickshell.env("HGS_HYPRGLASS_COLOR") : (SettingsData.hyprGlassCustomColor ?? "#88AADD"), "#88AADD")
     property real frostAmount: clamp(frostAmountEnvSet ? envNumber("HGS_HYPRGLASS_FROST", defaultFrostAmount) : (SettingsData.hyprGlassFrostAmount ?? defaultFrostAmount), 0, 1)
 
-    readonly property string neutralLightTintColor: "#ffffff"
-    readonly property string neutralDarkTintColor: "#111318"
-    readonly property real neutralLightTintOpacity: 0.04
-    readonly property real neutralDarkTintOpacity: 0.06
-    readonly property real colorTintOpacity: 0.18
-    readonly property real defaultMaterialOpacity: 0.28
+    readonly property string neutralLightTintColor: "#F8FBFF"
+    readonly property string neutralDarkTintColor: "#242A33"
+    readonly property real neutralLightTintOpacity: 0.045
+    readonly property real neutralDarkTintOpacity: 0.075
+    readonly property real colorTintOpacity: 0.14
+    readonly property real defaultMaterialOpacity: 0.24
     readonly property real materialSaturation: 1.16
     readonly property real materialContrastBias: 0.04
     readonly property int statusPollIntervalMs: 2000
@@ -213,7 +214,7 @@ Singleton {
 
         const material = lastStatus?.material ?? {};
         const mode = material.mode ?? "off";
-        if (material.enabled !== true || (mode !== "flat" && mode !== "blur-native"))
+        if (material.enabled !== true || (mode !== "flat" && mode !== "blur-native" && mode !== "glass-v1"))
             return { ready: false, reason: "compositor material disabled" };
         if (material.lastRenderStatus !== "ok")
             return { ready: false, reason: `material render status ${material.lastRenderStatus ?? "unknown"}` };

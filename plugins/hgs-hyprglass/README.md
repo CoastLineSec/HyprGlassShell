@@ -24,7 +24,7 @@ Current assumptions:
 - The plugin computes framebuffer geometry as `monitorLocalLogical * monitorScale`.
 - A descriptor can either match the full layer surface or describe a material rect contained inside the matched layer surface. Contained material rects are coordinate-aligned when they are inside the layer-surface bounds; `delta` still reports their inset from the layer-surface bounds.
 
-The framebuffer conversion has not been verified on fractional scale, transformed/rotated monitors, or mixed-scale layouts. Coordinate confidence remains diagnostic until those cases are tested.
+Framebuffer conversion has been verified for one mixed layout with `DP-4` temporarily at scale `1.25` and `DP-2` at scale `1.0`. Broader fractional-scale layouts and transformed/rotated monitors remain diagnostic until tested.
 
 ## Debug Bounds Overlay
 
@@ -67,9 +67,9 @@ Hyprland native blur does not expose per-descriptor blur radius through this pas
 
 Material v0.1 does not copy the framebuffer, sample a custom backdrop texture, refract, lens, draw rim lighting, draw shadows, draw glossy highlights, or run a custom shader. Per-corner radii are not represented in this v0.1 path.
 
-Transformed monitors are skipped and reported as unsupported. Fractional scale and mixed-scale render ordering are not yet proven.
+Transformed monitors are skipped and reported as unsupported. Fractional scale has only been validated for one `DP-4` scale `1.25` mixed-layout test, so broader mixed-scale render ordering remains diagnostic.
 
-Status exposes monitor scale and transform diagnostics for each monitor and descriptor. Monitor entries include `scaleKind`, `fractionalScale`, and `transformSupported`. Descriptor coordinate entries include the raw logical rect, computed monitor-local logical rect, computed framebuffer rect, rounded framebuffer rect, logical delta, framebuffer delta, and framebuffer rounding mode. Fractional-scale framebuffer coordinates are diagnostic until tested on a live fractional-scale monitor.
+Status exposes monitor scale and transform diagnostics for each monitor and descriptor. Monitor entries include `scaleKind`, `fractionalScale`, and `transformSupported`. Descriptor coordinate entries include the raw logical rect, computed monitor-local logical rect, computed framebuffer rect, rounded framebuffer rect, logical delta, framebuffer delta, and framebuffer rounding mode. Debug overlay and compositor material draw rects use rounded framebuffer coordinates.
 
 HyprGlassShell normally keeps each QML fallback visible until plugin status proves that the same descriptor is actively drawable by the compositor material path. The shell only hides the fallback for that specific descriptor when the plugin is loaded, material mode is enabled, status is fresh, the layer surface is matched, coordinates are aligned or near, and `compositorMaterial.drawable` is true. Unsupported or skipped monitors keep the QML fallback.
 

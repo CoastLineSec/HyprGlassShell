@@ -379,6 +379,24 @@ type MaterialDescriptorStatus struct {
 	TintOpacityRequested    float64   `json:"tintOpacityRequested,omitempty"`
 	AlphaUsed               float64   `json:"alphaUsed,omitempty"`
 	BlurEnabled             bool      `json:"blurEnabled,omitempty"`
+	TintOverlayEnabled      bool      `json:"tintOverlayEnabled,omitempty"`
+	TintOverlayAlphaUsed    float64   `json:"tintOverlayAlphaUsed,omitempty"`
+	RimEnabled              bool      `json:"rimEnabled,omitempty"`
+	RimTechnique            string    `json:"rimTechnique,omitempty"`
+	RimAlphaUsed            float64   `json:"rimAlphaUsed,omitempty"`
+	RimExpansionPx          float64   `json:"rimExpansionPx,omitempty"`
+	RimColorUsed            string    `json:"rimColorUsed,omitempty"`
+	InnerEdgeEnabled        bool      `json:"innerEdgeEnabled,omitempty"`
+	InnerEdgeTechnique      string    `json:"innerEdgeTechnique,omitempty"`
+	InnerEdgeAlphaUsed      float64   `json:"innerEdgeAlphaUsed,omitempty"`
+	InnerEdgeInsetPx        float64   `json:"innerEdgeInsetPx,omitempty"`
+	InnerEdgeColorUsed      string    `json:"innerEdgeColorUsed,omitempty"`
+	HighlightEnabled        bool      `json:"highlightEnabled,omitempty"`
+	HighlightAlphaUsed      float64   `json:"highlightAlphaUsed,omitempty"`
+	HighlightTransformSafe  bool      `json:"highlightTransformSafe,omitempty"`
+	ShadowEnabled           bool      `json:"shadowEnabled,omitempty"`
+	ShadowAlphaUsed         float64   `json:"shadowAlphaUsed,omitempty"`
+	PassCount               int       `json:"passCount,omitempty"`
 	Warnings                []string  `json:"warnings,omitempty"`
 }
 
