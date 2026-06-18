@@ -177,6 +177,12 @@ struct DebugOverlayDescriptor {
     RectSummary              rectUsed;
     RectSummary              surfaceRectUsed;
     RectSummary              globalRectUsed;
+    std::string              rectUsedSpace = "monitor-framebuffer-pixels-rounded";
+    std::string              surfaceRectUsedSpace = "monitor-framebuffer-pixels-rounded";
+    std::string              drawMapping;
+    std::vector<std::string> drawWarnings;
+    int                      drawTransform = 0;
+    bool                     drawTransformSupported = true;
     bool                     drawable = false;
     bool                     hasSurfaceRect = false;
     bool                     mismatch = false;
@@ -188,12 +194,15 @@ struct MaterialDescriptor {
     std::vector<std::string> warnings;
     RectSummary              rectUsed;
     RectSummary              globalRectUsed;
+    std::string              rectUsedSpace = "monitor-framebuffer-pixels-rounded";
     std::string              renderStage = "RENDER_POST_WINDOWS";
     std::string              mode = "off";
     std::string              tintColorRequested;
     std::string              colorUsed;
     std::string              effectiveBlurSource;
     std::string              effectiveBlurControl;
+    std::string              drawMapping;
+    std::vector<std::string> drawWarnings;
     CHyprColor               color = CHyprColor(0.92F, 0.95F, 1.0F, 0.0F);
     double                   radiusRequested = 0.0;
     double                   radiusUsed = 0.0;
@@ -202,9 +211,11 @@ struct MaterialDescriptor {
     double                   requestedFrost = 0.0;
     double                   blurAlphaUsed = 0.0;
     double                   alphaUsed = 0.0;
+    int                      drawTransform = 0;
     bool                     drawable = false;
     bool                     rounded = false;
     bool                     blurEnabled = false;
+    bool                     drawTransformSupported = true;
     bool                     perSurfaceBlurSupported = false;
     std::string              perSurfaceBlurSupport;
 };
@@ -216,6 +227,15 @@ struct MaterialColorResolution {
     double      opacityRequested = 0.0;
     double      tintOpacityRequested = 0.0;
     double      alphaUsed = 0.0;
+};
+
+struct DrawRectMapping {
+    RectSummary              rect;
+    std::string              space;
+    std::string              mapping;
+    std::vector<std::string> warnings;
+    int                      transform = 0;
+    bool                     supported = false;
 };
 
 std::map<std::string, DescriptorSummary> g_descriptors;
@@ -354,7 +374,7 @@ std::string scaleKindFor(double scale) {
 }
 
 bool isTransformSupported(int transform) {
-    return transform == 0;
+    return transform >= 0 && transform <= 7;
 }
 
 RectSummary multiplyRect(const RectSummary& rect, double factor) {
@@ -564,6 +584,59 @@ bool rectValid(const RectSummary& rect) {
     return std::isfinite(rect.x) && std::isfinite(rect.y) && std::isfinite(rect.width) && std::isfinite(rect.height) && rect.width > 0.0 && rect.height > 0.0;
 }
 
+std::string drawMappingForTransform(int transform) {
+    switch (transform) {
+    case 0: return "logical-to-framebuffer-normal";
+    case 1: return "logical-to-framebuffer-renderer-projected-transform-1";
+    case 2: return "logical-to-framebuffer-renderer-projected-transform-2";
+    case 3: return "logical-to-framebuffer-renderer-projected-transform-3";
+    case 4: return "logical-to-framebuffer-renderer-projected-transform-4";
+    case 5: return "logical-to-framebuffer-renderer-projected-transform-5";
+    case 6: return "logical-to-framebuffer-renderer-projected-transform-6";
+    case 7: return "logical-to-framebuffer-renderer-projected-transform-7";
+    default: return "unsupported-transform";
+    }
+}
+
+std::string drawRectSpaceForTransform(int transform) {
+    if (transform == 0)
+        return "monitor-framebuffer-pixels-rounded";
+    return "monitor-framebuffer-pixels-rounded-transform-" + std::to_string(transform);
+}
+
+DrawRectMapping mapLogicalRectToFramebuffer(const RectSummary& monitorLocalLogical, const SurfaceCandidate& candidate) {
+    DrawRectMapping mapping;
+    mapping.transform = candidate.monitorTransform;
+    mapping.supported = isTransformSupported(candidate.monitorTransform);
+    mapping.mapping = drawMappingForTransform(candidate.monitorTransform);
+    mapping.space = drawRectSpaceForTransform(candidate.monitorTransform);
+
+    if (!mapping.supported) {
+        addWarning(mapping.warnings, "monitor transform is unsupported for compositor draw mapping");
+        return mapping;
+    }
+    if (!rectValid(monitorLocalLogical)) {
+        addWarning(mapping.warnings, "monitor-local logical rect is invalid");
+        return mapping;
+    }
+    if (!candidate.hasMonitorGeometry || !rectValid(candidate.monitorLogical)) {
+        addWarning(mapping.warnings, "monitor logical geometry unavailable for transform draw mapping");
+        return mapping;
+    }
+    if (candidate.scale <= 0.0) {
+        addWarning(mapping.warnings, "monitor scale unavailable for transform draw mapping");
+        return mapping;
+    }
+
+    mapping.rect = roundRect(multiplyRect(monitorLocalLogical, candidate.scale));
+    if (!rectValid(mapping.rect))
+        addWarning(mapping.warnings, "transform draw mapping produced an invalid framebuffer rect");
+    if (candidate.monitorTransform != 0)
+        addWarning(mapping.warnings, "draw rect uses scaled monitor-local coordinates; Hyprland render pass projects the monitor transform");
+
+    return mapping;
+}
+
 double clampDouble(double value, double min, double max) {
     if (!std::isfinite(value))
         return min;
@@ -748,13 +821,15 @@ CoordinateAnalysis analyzeCoordinates(const DescriptorSummary& descriptor, const
     addWarning(analysis.warnings, "surface logicalBox appears to be global-layout logical coordinates");
     addWarning(analysis.warnings, "framebuffer rect is computed from monitor-local logical rect multiplied by monitor scale");
     if (analysis.fractionalScale)
-        addWarning(analysis.warnings, "fractional monitor scale is active; framebuffer rounding is diagnostic and has not been live-tested");
+        addWarning(analysis.warnings, "fractional monitor scale is active; draw rects use rounded framebuffer coordinates");
     else
         addWarning(analysis.warnings, "fractional scale is not active for this descriptor; fractional scale remains untested");
     if (analysis.relation == "contained-in-layer-surface")
         addWarning(analysis.warnings, "descriptor logical rect is contained inside the matched layer surface; delta reports inset from layer-surface bounds");
-    if (candidate.monitorTransform != 0)
-        addWarning(analysis.warnings, "monitor transform is non-normal; framebuffer conversion does not yet account for rotation");
+    if (candidate.monitorTransform != 0 && candidate.transformSupported)
+        addWarning(analysis.warnings, "monitor transform is non-normal; coordinate framebuffer rect is pre-transform and draw rect uses transform-aware mapping");
+    else if (candidate.monitorTransform != 0)
+        addWarning(analysis.warnings, "monitor transform is non-normal and unsupported for compositor draw mapping");
 
     return analysis;
 }
@@ -829,7 +904,7 @@ DebugOverlayDescriptor analyzeDebugOverlayDrawable(
         overlay.reason = "monitor scale unavailable";
         return overlay;
     }
-    if (candidate.monitorTransform != 0) {
+    if (!candidate.transformSupported) {
         overlay.reason = "monitor transform unsupported";
         addWarning(overlay.warnings, "monitor transform is non-normal; debug overlay is skipped for this descriptor");
         return overlay;
@@ -847,11 +922,31 @@ DebugOverlayDescriptor analyzeDebugOverlayDrawable(
         return overlay;
     }
 
+    const auto descriptorDraw = mapLogicalRectToFramebuffer(descriptor.logical, candidate);
+    overlay.drawTransform = descriptorDraw.transform;
+    overlay.drawTransformSupported = descriptorDraw.supported;
+    overlay.drawMapping = descriptorDraw.mapping;
+    overlay.drawWarnings = descriptorDraw.warnings;
+    if (!descriptorDraw.supported || !rectValid(descriptorDraw.rect)) {
+        overlay.reason = descriptorDraw.warnings.empty() ? "transform draw mapping failed" : descriptorDraw.warnings.front();
+        return overlay;
+    }
+
+    const auto surfaceDraw = mapLogicalRectToFramebuffer(coordinate.computedMonitorLocalLogical, candidate);
+    if (!surfaceDraw.supported || !rectValid(surfaceDraw.rect)) {
+        overlay.reason = surfaceDraw.warnings.empty() ? "surface transform draw mapping failed" : surfaceDraw.warnings.front();
+        for (const auto& warning : surfaceDraw.warnings)
+            addWarning(overlay.drawWarnings, warning);
+        return overlay;
+    }
+
     overlay.drawable = true;
     overlay.status = "drawable";
     overlay.reason = "coordinate " + coordinate.status;
-    overlay.rectUsed = descriptor.logical;
-    overlay.surfaceRectUsed = coordinate.computedMonitorLocalLogical;
+    overlay.rectUsed = descriptorDraw.rect;
+    overlay.rectUsedSpace = descriptorDraw.space;
+    overlay.surfaceRectUsed = surfaceDraw.rect;
+    overlay.surfaceRectUsedSpace = surfaceDraw.space;
     overlay.globalRectUsed = {
         .x      = descriptor.logical.x + candidate.monitorLogical.x,
         .y      = descriptor.logical.y + candidate.monitorLogical.y,
@@ -861,6 +956,8 @@ DebugOverlayDescriptor analyzeDebugOverlayDrawable(
     overlay.hasSurfaceRect = true;
     overlay.mismatch = coordinate.status == "mismatched";
     overlay.warnings = coordinate.warnings;
+    for (const auto& warning : overlay.drawWarnings)
+        addWarning(overlay.warnings, warning);
     if (overlay.mismatch)
         addWarning(overlay.warnings, "descriptor rect and matched surface rect differ");
 
@@ -915,7 +1012,7 @@ MaterialDescriptor analyzeMaterialDrawable(
         material.reason = "monitor scale unavailable";
         return material;
     }
-    if (candidate.monitorTransform != 0) {
+    if (!candidate.transformSupported) {
         material.reason = "monitor transform unsupported";
         addWarning(material.warnings, "monitor transform is non-normal; compositor material is skipped for this descriptor");
         return material;
@@ -929,10 +1026,21 @@ MaterialDescriptor analyzeMaterialDrawable(
         return material;
     }
 
+    const auto drawMapping = mapLogicalRectToFramebuffer(descriptor.logical, candidate);
+    material.drawTransform = drawMapping.transform;
+    material.drawTransformSupported = drawMapping.supported;
+    material.drawMapping = drawMapping.mapping;
+    material.drawWarnings = drawMapping.warnings;
+    if (!drawMapping.supported || !rectValid(drawMapping.rect)) {
+        material.reason = drawMapping.warnings.empty() ? "transform draw mapping failed" : drawMapping.warnings.front();
+        return material;
+    }
+
     material.drawable = true;
     material.status = "drawable";
     material.reason = "coordinate " + coordinate.status;
-    material.rectUsed = descriptor.logical;
+    material.rectUsed = drawMapping.rect;
+    material.rectUsedSpace = drawMapping.space;
     material.globalRectUsed = {
         .x      = descriptor.logical.x + candidate.monitorLogical.x,
         .y      = descriptor.logical.y + candidate.monitorLogical.y,
@@ -940,10 +1048,12 @@ MaterialDescriptor analyzeMaterialDrawable(
         .height = descriptor.logical.height,
     };
     material.warnings = coordinate.warnings;
+    for (const auto& warning : material.drawWarnings)
+        addWarning(material.warnings, warning);
 
     material.radiusRequested = uniformRadiusFromDescriptor(descriptor.radius);
-    const double maxRadius = std::min(descriptor.logical.width, descriptor.logical.height) / 2.0;
-    material.radiusUsed = clampDouble(material.radiusRequested, 0.0, maxRadius);
+    const double maxRadius = std::min(material.rectUsed.width, material.rectUsed.height) / 2.0;
+    material.radiusUsed = clampDouble(material.radiusRequested * candidate.scale, 0.0, maxRadius);
     material.rounded = material.radiusUsed > 0.0;
     if (descriptor.radius.topLeft != descriptor.radius.topRight || descriptor.radius.topRight != descriptor.radius.bottomRight || descriptor.radius.bottomRight != descriptor.radius.bottomLeft)
         addWarning(material.warnings, "flat material uses a single uniform corner radius from the minimum descriptor corner radius");
@@ -981,11 +1091,15 @@ json debugOverlayDescriptorToJSON(const DebugOverlayDescriptor& overlay) {
     };
 
     if (overlay.drawable) {
-        out["rectUsed"] = rectWithSpaceToJSON("monitor-local-logical", overlay.rectUsed);
+        out["rectUsed"] = rectWithSpaceToJSON(overlay.rectUsedSpace, overlay.rectUsed);
         out["globalRectUsed"] = rectWithSpaceToJSON("global-layout-logical", overlay.globalRectUsed);
+        out["drawTransform"] = overlay.drawTransform;
+        out["drawTransformSupported"] = overlay.drawTransformSupported;
+        out["drawMapping"] = overlay.drawMapping;
+        out["drawWarnings"] = overlay.drawWarnings;
         out["mismatch"] = overlay.mismatch;
         if (overlay.hasSurfaceRect)
-            out["surfaceRectUsed"] = rectWithSpaceToJSON("monitor-local-logical", overlay.surfaceRectUsed);
+            out["surfaceRectUsed"] = rectWithSpaceToJSON(overlay.surfaceRectUsedSpace, overlay.surfaceRectUsed);
     }
 
     return out;
@@ -1001,8 +1115,12 @@ json materialDescriptorToJSON(const MaterialDescriptor& material) {
     };
 
     if (material.drawable) {
-        out["rectUsed"] = rectWithSpaceToJSON("monitor-local-logical", material.rectUsed);
+        out["rectUsed"] = rectWithSpaceToJSON(material.rectUsedSpace, material.rectUsed);
         out["globalRectUsed"] = rectWithSpaceToJSON("global-layout-logical", material.globalRectUsed);
+        out["drawTransform"] = material.drawTransform;
+        out["drawTransformSupported"] = material.drawTransformSupported;
+        out["drawMapping"] = material.drawMapping;
+        out["drawWarnings"] = material.drawWarnings;
         out["renderStage"] = material.renderStage;
         out["rounded"] = material.rounded;
         out["radiusRequested"] = material.radiusRequested;
@@ -1422,6 +1540,10 @@ int countTransformedMonitors(const std::vector<MonitorSummary>& monitors) {
     return static_cast<int>(std::ranges::count_if(monitors, [](const auto& monitor) { return monitor.transform != 0; }));
 }
 
+int countSupportedTransformMonitors(const std::vector<MonitorSummary>& monitors) {
+    return static_cast<int>(std::ranges::count_if(monitors, [](const auto& monitor) { return monitor.transform != 0 && monitor.transformSupported; }));
+}
+
 int countUnsupportedTransformMonitors(const std::vector<MonitorSummary>& monitors) {
     return static_cast<int>(std::ranges::count_if(monitors, [](const auto& monitor) { return !monitor.transformSupported; }));
 }
@@ -1449,9 +1571,11 @@ std::vector<std::string> collectStatusWarnings(
 ) {
     auto warnings = collectCoordinateWarnings(coordinates);
     if (countFractionalScaleMonitors(monitors) > 0)
-        addWarning(warnings, "fractional scale monitor present; HyprGlass framebuffer alignment remains diagnostic until live-tested");
+        addWarning(warnings, "fractional scale monitor present; inspect rounded framebuffer coordinates and visual alignment");
     else
         addWarning(warnings, "no fractional scale monitors detected; fractional scale remains untested");
+    if (countSupportedTransformMonitors(monitors) > 0)
+        addWarning(warnings, "one or more transformed monitors use transform-aware framebuffer draw mapping");
     if (countUnsupportedTransformMonitors(monitors) > 0)
         addWarning(warnings, "one or more transformed monitors are unsupported and descriptors there are skipped");
     if (countPotentiallyStaleDescriptors(matches) > 0)
@@ -1622,7 +1746,7 @@ void renderDebugOverlay(eRenderStage stage) {
         updateLastDebugOverlayRenderStatus("no drawable descriptors");
         return;
     }
-    if (currentMonitor->m_transform != WL_OUTPUT_TRANSFORM_NORMAL)
+    if (!isTransformSupported(static_cast<int>(currentMonitor->m_transform)))
         return;
 
     for (const auto& [id, descriptor] : snapshot.descriptors) {
@@ -1664,7 +1788,7 @@ void renderCompositorMaterial(eRenderStage stage) {
         updateLastMaterialRenderStatus("current monitor unavailable");
         return;
     }
-    if (currentMonitor->m_transform != WL_OUTPUT_TRANSFORM_NORMAL)
+    if (!isTransformSupported(static_cast<int>(currentMonitor->m_transform)))
         return;
 
     auto candidates = discoverLayerSurfaces();
@@ -1789,6 +1913,7 @@ std::string normalStatus() {
     out << "  monitorCount: " << monitors.size() << "\n";
     out << "  fractionalScaleMonitorCount: " << countFractionalScaleMonitors(monitors) << "\n";
     out << "  transformedMonitorCount: " << countTransformedMonitors(monitors) << "\n";
+    out << "  supportedTransformMonitorCount: " << countSupportedTransformMonitors(monitors) << "\n";
     out << "  unsupportedTransformMonitorCount: " << countUnsupportedTransformMonitors(monitors) << "\n";
     out << "  staleDescriptorCount: " << countPotentiallyStaleDescriptors(matches) << "\n";
     out << "  coordinateAlignedCount: " << countCoordinateStatus(coordinates, "aligned") << "\n";
@@ -1854,6 +1979,7 @@ std::string jsonStatus() {
         {"monitorCount", monitors.size()},
         {"fractionalScaleMonitorCount", countFractionalScaleMonitors(monitors)},
         {"transformedMonitorCount", countTransformedMonitors(monitors)},
+        {"supportedTransformMonitorCount", countSupportedTransformMonitors(monitors)},
         {"unsupportedTransformMonitorCount", countUnsupportedTransformMonitors(monitors)},
         {"staleDescriptorCount", countPotentiallyStaleDescriptors(matches)},
         {"coordinateAlignedCount", countCoordinateStatus(coordinates, "aligned")},

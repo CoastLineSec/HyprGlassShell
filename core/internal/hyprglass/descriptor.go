@@ -152,6 +152,7 @@ type Status struct {
 	MonitorCount                 int                `json:"monitorCount,omitempty"`
 	FractionalScaleMonitors      int                `json:"fractionalScaleMonitorCount,omitempty"`
 	TransformedMonitors          int                `json:"transformedMonitorCount,omitempty"`
+	SupportedTransformMonitors   int                `json:"supportedTransformMonitorCount,omitempty"`
 	UnsupportedTransformMonitors int                `json:"unsupportedTransformMonitorCount,omitempty"`
 	StaleDescriptorCount         int                `json:"staleDescriptorCount,omitempty"`
 	CoordinateAligned            int                `json:"coordinateAlignedCount,omitempty"`
@@ -339,6 +340,10 @@ type DebugOverlayDescriptorStatus struct {
 	RectUsed        SpaceRect `json:"rectUsed,omitempty"`
 	SurfaceRectUsed SpaceRect `json:"surfaceRectUsed,omitempty"`
 	GlobalRectUsed  SpaceRect `json:"globalRectUsed,omitempty"`
+	DrawTransform   int       `json:"drawTransform,omitempty"`
+	DrawSupported   bool      `json:"drawTransformSupported,omitempty"`
+	DrawMapping     string    `json:"drawMapping,omitempty"`
+	DrawWarnings    []string  `json:"drawWarnings,omitempty"`
 	Mismatch        bool      `json:"mismatch,omitempty"`
 	Warnings        []string  `json:"warnings,omitempty"`
 }
@@ -351,6 +356,10 @@ type MaterialDescriptorStatus struct {
 	RenderStage             string    `json:"renderStage,omitempty"`
 	RectUsed                SpaceRect `json:"rectUsed,omitempty"`
 	GlobalRectUsed          SpaceRect `json:"globalRectUsed,omitempty"`
+	DrawTransform           int       `json:"drawTransform,omitempty"`
+	DrawSupported           bool      `json:"drawTransformSupported,omitempty"`
+	DrawMapping             string    `json:"drawMapping,omitempty"`
+	DrawWarnings            []string  `json:"drawWarnings,omitempty"`
 	Rounded                 bool      `json:"rounded,omitempty"`
 	RadiusRequested         float64   `json:"radiusRequested,omitempty"`
 	RadiusUsed              float64   `json:"radiusUsed,omitempty"`
