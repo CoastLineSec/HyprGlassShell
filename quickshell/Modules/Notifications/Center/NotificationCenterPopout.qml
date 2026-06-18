@@ -3,10 +3,10 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+HGSPopout {
     id: root
 
-    layerNamespace: "dms:notification-center-popout"
+    layerNamespace: "hgs:notification-center-popout"
     fullHeightSurface: true
 
     property bool notificationHistoryVisible: false

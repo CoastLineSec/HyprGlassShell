@@ -188,7 +188,7 @@ Item {
                 width: parent.width
                 spacing: Theme.spacingM
 
-                DankIcon {
+                HGSIcon {
                     name: device ? BluetoothService.getDeviceIcon(device) : "headset"
                     size: Theme.iconSize + 4
                     color: Theme.primary
@@ -283,7 +283,7 @@ Item {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "check"
                             size: Theme.iconSize - 4
                             color: Theme.primary
@@ -293,7 +293,7 @@ Item {
                             visible: modelData.name === currentCodec
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: codecRipple
                             cornerRadius: parent.radius
                         }

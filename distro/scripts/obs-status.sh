@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Unified OBS status checker for dms packages
+# Unified OBS status checker for hgs packages
 # Checks all platforms (Debian, OpenSUSE) and architectures (x86_64, aarch64)
 # Only pulls logs if build failed
 # Usage: ./distro/scripts/obs-status.sh [package-name]
 #
 # Examples:
 #   ./distro/scripts/obs-status.sh              # Check all packages
-#   ./distro/scripts/obs-status.sh dms          # Check specific package
+#   ./distro/scripts/obs-status.sh hgs          # Check specific package
 
 OBS_BASE_PROJECT="home:AvengeMedia"
 OBS_BASE="$HOME/.cache/osc-checkouts"
 
-ALL_PACKAGES=(dms dms-git dms-greeter)
+ALL_PACKAGES=(hgs hgs-git hgs-greeter)
 
 REPOS=("Debian_13" "openSUSE_Tumbleweed" "16.0")
 ARCHES=("x86_64" "aarch64")
@@ -35,14 +35,14 @@ cd "$OBS_BASE" || {
 
 for pkg in "${PACKAGES[@]}"; do
     case "$pkg" in
-    dms)
-        PROJECT="$OBS_BASE_PROJECT:dms"
+    hgs)
+        PROJECT="$OBS_BASE_PROJECT:hgs"
         ;;
-    dms-git)
-        PROJECT="$OBS_BASE_PROJECT:dms-git"
+    hgs-git)
+        PROJECT="$OBS_BASE_PROJECT:hgs-git"
         ;;
-    dms-greeter)
-        PROJECT="$OBS_BASE_PROJECT:danklinux"
+    hgs-greeter)
+        PROJECT="$OBS_BASE_PROJECT:coastlinesec"
         ;;
     *)
         echo "Error: Unknown package '$pkg'"

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+set -eu
+
+state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+session_file="$state_home/HyprGlassShell/session.json"
+
+session_terminal() {
+	if [ ! -r "$session_file" ]; then
+		return 1
+	fi
+
+	if command -v jq >/dev/null 2>&1; then
+		jq -r '.terminalOverride // empty' "$session_file" 2>/dev/null
+		return 0
+	fi
+
+	sed -n 's/.*"terminalOverride"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$session_file" 2>/dev/null | head -n 1
+}
+
+try_exec() {
+	if [ "$#" -eq 0 ] || [ -z "${1:-}" ]; then
+		return 1
+	fi
+	if ! command -v "$1" >/dev/null 2>&1; then
+		return 1
+	fi
+	exec "$@"
+}
+
+configured_terminal="$(session_terminal || true)"
+if [ -n "$configured_terminal" ]; then
+	try_exec "$configured_terminal" "$@"
+fi
+
+if command -v xdg-terminal-exec >/dev/null 2>&1; then
+	xdg-terminal-exec "$@" && exit 0
+fi
+
+if [ -n "${TERMINAL:-}" ]; then
+	try_exec "$TERMINAL" "$@"
+fi
+
+for terminal in ghostty kitty foot alacritty wezterm konsole gnome-terminal xterm; do
+	try_exec "$terminal" "$@"
+done
+
+printf '%s\n' "hgs-terminal: no terminal emulator found" >&2
+exit 127

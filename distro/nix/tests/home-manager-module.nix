@@ -12,7 +12,7 @@ let
     + "/nixos";
 in
 pkgs.testers.runNixOSTest {
-  name = "dms-home-manager-module";
+  name = "hgs-home-manager-module";
 
   nodes.machine = {
     ...
@@ -21,29 +21,29 @@ pkgs.testers.runNixOSTest {
       homeManagerNixosModule
     ];
 
-    users.users.danklinux = {
+    users.users.coastlinesec = {
       isNormalUser = true;
       createHome = true;
-      home = "/home/danklinux";
+      home = "/home/coastlinesec";
       extraGroups = [ "wheel" ];
     };
 
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
 
-    home-manager.users.danklinux = {
+    home-manager.users.coastlinesec = {
       pkgs,
       ...
     }: {
       imports = [
-        self.homeModules.dank-material-shell
+        self.homeModules.hypr-glass-shell
       ];
 
-      home.username = "danklinux";
-      home.homeDirectory = "/home/danklinux";
+      home.username = "coastlinesec";
+      home.homeDirectory = "/home/coastlinesec";
       home.stateVersion = "25.11";
 
-      programs.dank-material-shell = {
+      programs.hypr-glass-shell = {
         enable = true;
         systemd = {
           enable = true;
@@ -64,7 +64,7 @@ pkgs.testers.runNixOSTest {
 
         plugins.TestPlugin = {
           enable = true;
-          src = pkgs.runCommand "dms-test-plugin" { } ''
+          src = pkgs.runCommand "hgs-test-plugin" { } ''
             mkdir -p "$out"
             echo plugin > "$out/plugin.txt"
           '';
@@ -84,18 +84,18 @@ pkgs.testers.runNixOSTest {
 
     machine.wait_for_unit("multi-user.target")
 
-    machine.succeed("su -- danklinux -c 'command -v dms'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/settings.json'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/clsettings.json'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/plugin_settings.json'")
-    machine.succeed("su -- danklinux -c 'test -e ~/.config/DankMaterialShell/plugins/TestPlugin'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.local/state/DankMaterialShell/session.json'")
+    machine.succeed("su -- coastlinesec -c 'command -v hgs'")
+    machine.succeed("su -- coastlinesec -c 'test -f ~/.config/HyprGlassShell/settings.json'")
+    machine.succeed("su -- coastlinesec -c 'test -f ~/.config/HyprGlassShell/clsettings.json'")
+    machine.succeed("su -- coastlinesec -c 'test -f ~/.config/HyprGlassShell/plugin_settings.json'")
+    machine.succeed("su -- coastlinesec -c 'test -e ~/.config/HyprGlassShell/plugins/TestPlugin'")
+    machine.succeed("su -- coastlinesec -c 'test -f ~/.local/state/HyprGlassShell/session.json'")
 
-    settings = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/settings.json'"))
-    clipboard = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/clsettings.json'"))
-    session = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.local/state/DankMaterialShell/session.json'"))
-    plugins = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/plugin_settings.json'"))
-    doctor = json.loads(machine.succeed("su -- danklinux -c 'dms doctor --json'"))
+    settings = json.loads(machine.succeed("su -- coastlinesec -c 'cat ~/.config/HyprGlassShell/settings.json'"))
+    clipboard = json.loads(machine.succeed("su -- coastlinesec -c 'cat ~/.config/HyprGlassShell/clsettings.json'"))
+    session = json.loads(machine.succeed("su -- coastlinesec -c 'cat ~/.local/state/HyprGlassShell/session.json'"))
+    plugins = json.loads(machine.succeed("su -- coastlinesec -c 'cat ~/.config/HyprGlassShell/plugin_settings.json'"))
+    doctor = json.loads(machine.succeed("su -- coastlinesec -c 'hgs doctor --json'"))
 
     t.assertEqual(settings["theme"], "integration-test")
     t.assertEqual(clipboard["maxItems"], 10)

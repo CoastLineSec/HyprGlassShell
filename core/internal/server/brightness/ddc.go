@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -348,7 +348,7 @@ func (b *DDCBackend) getVCPFeature(fd int, vcp byte) (*ddcCapability, error) {
 		return nil, fmt.Errorf("poll i2c: %w", err)
 	}
 	if pollResult == 0 {
-		return nil, fmt.Errorf("poll timeout after %dms", pollTimeout)
+		return nil, fmt.Errorf("poll timeout after %d ms", pollTimeout)
 	}
 	if pollFds[0].Revents&unix.POLLIN == 0 {
 		return nil, fmt.Errorf("poll returned but POLLIN not set")

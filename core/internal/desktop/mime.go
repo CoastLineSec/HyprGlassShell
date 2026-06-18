@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 var (

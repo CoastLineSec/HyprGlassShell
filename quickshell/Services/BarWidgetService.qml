@@ -4,13 +4,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.I3
 
 Singleton {
     id: root
 
     property var widgetRegistry: ({})
-    property var dankBarRepeater: null
+    property var hgsBarRepeater: null
 
     signal widgetRegistered(string widgetId, string screenName)
     signal widgetUnregistered(string widgetId, string screenName)
@@ -71,14 +70,8 @@ Singleton {
     }
 
     function getFocusedScreenName() {
-        if (CompositorService.isHyprland && Hyprland.focusedWorkspace?.monitor)
+        if (Hyprland.focusedWorkspace?.monitor)
             return Hyprland.focusedWorkspace.monitor.name;
-        if (CompositorService.isNiri && NiriService.currentOutput)
-            return NiriService.currentOutput;
-        if (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle) {
-            const focusedWs = I3.workspaces?.values?.find(ws => ws.focused === true);
-            return focusedWs?.monitor?.name || "";
-        }
         return "";
     }
 
@@ -135,11 +128,11 @@ Singleton {
     }
 
     function getBarWindowForScreen(screenName) {
-        if (!dankBarRepeater)
+        if (!hgsBarRepeater)
             return null;
 
-        for (var i = 0; i < dankBarRepeater.count; i++) {
-            const loader = dankBarRepeater.itemAt(i);
+        for (var i = 0; i < hgsBarRepeater.count; i++) {
+            const loader = hgsBarRepeater.itemAt(i);
             if (!loader?.item)
                 continue;
 
@@ -164,10 +157,10 @@ Singleton {
     }
 
     function getFirstBarWindow() {
-        if (!dankBarRepeater || dankBarRepeater.count === 0)
+        if (!hgsBarRepeater || hgsBarRepeater.count === 0)
             return null;
 
-        const loader = dankBarRepeater.itemAt(0);
+        const loader = hgsBarRepeater.itemAt(0);
         if (!loader?.item)
             return null;
 

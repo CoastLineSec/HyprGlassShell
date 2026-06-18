@@ -308,8 +308,8 @@
   "90°": {
     "90°": "۹۰°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">لایسنس MIT</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">لایسنس MIT</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "فایلی با این نام از قبل وجود دارد. آیا می‌خواهید آن را بازنویسی کنید؟"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "فعال‌سازی صفحه خوش‌آمدگویی"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "صفحه خوش‌آمدگویی DMS فعال شود؟ یک ترمینال برای احراز هویت sudo باز خواهد شد. پس از فعال‌سازی همگام‌سازی را اجرا کنید تا تنظیمات شما اعمال شود."
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "صفحه خوش‌آمدگویی HGS فعال شود؟ یک ترمینال برای احراز هویت sudo باز خواهد شد. پس از فعال‌سازی همگام‌سازی را اجرا کنید تا تنظیمات شما اعمال شود."
   },
   "Activation": {
     "Activation": "فعال‌سازی"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "«%1» به گروه %2 افزوده شود؟"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "«%1» به گروه %2 افزوده شود؟ کاربر باید خارج و دوباره وارد شود، سپس دستور dms greeter sync --profile را اجرا کند تا تم صفحه‌ی ورود خود را منتشر کند."
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "«%1» به گروه %2 افزوده شود؟ کاربر باید خارج و دوباره وارد شود، سپس دستور hgs greeter sync --profile را اجرا کند تا تم صفحه‌ی ورود خود را منتشر کند."
   },
   "Add Bar": {
     "Add Bar": "افزودن نوار"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "کاربر جدید را به گروه %1 اضافه کنید تا بتواند dms greeter sync --profile را اجرا کند."
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "کاربر جدید را به گروه %1 اضافه کنید تا بتواند hgs greeter sync --profile را اجرا کند."
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "کاربر جدید را به گروه %1 اضافه کنید تا بتواند از sudo استفاده کند."
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "قفل خودکار پس از"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "به طور خودکار صفحه را هنگامی که DMS شروع می‌شود قفل کن"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "به طور خودکار صفحه را هنگامی که HGS شروع می‌شود قفل کن"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "صفحه را هنگام آماده‌شدن سیستم برای تعلیق به صورت خودکار قفل کن"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "نمای ظاهری نوار را تغییر بده"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "زبان استفاده شده توسط رابط DMS را تغییر دهید."
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "زبان استفاده شده توسط رابط HGS را تغییر دهید."
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "منطقه محلی برای قالب‌بندی تاریخ و زمان را مستقل از زبان رابط تغییر دهید."
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "بررسی هنگام راه‌اندازی"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": ""
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": ""
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "دستور سفارشی خود را در تنظیمات ← داک ← زباله‌دان، بررسی کنید."
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "انتخاب رنگ تأکیدی حاشیه"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "لوگوی نمایش‌داده شده بر دکمه‌ی لانچر در نوار دَنک را انتخاب کنید"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "لوگوی نمایش‌داده شده بر دکمه‌ی لانچر در نوار دَنک را انتخاب کنید"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "انتخاب کنید پاپ‌آپ اعلان کجای صفحه ظاهر شود"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "تم رنگی برای برجسته‌سازی کد. %1 تم دردسترس است."
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "رنگ تم از مخزن DMS"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "رنگ تم از مخزن HGS"
   },
   "Colorful": {
     "Colorful": "رنگارنگ"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "گزینه‌های راحتی برای صفحه قفل. برای اعمال شدن همگام‌سازی را انجام دهید."
   },
-  "Convert to DMS": {
-    "Convert to DMS": ""
+  "Convert to HGS": {
+    "Convert to HGS": ""
   },
   "Cooldown": {
     "Cooldown": "زمان باقی‌مانده"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "حالت آزمایشی - برای خروج بر هر‌جایی کلیک کنید"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "انتخاب کننده DMS"
+  "HGS Chooser": {
+    "HGS Chooser": "انتخاب کننده HGS"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "مدیریت افزونه DMS در دسترس نیست"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "مدیریت افزونه HGS در دسترس نیست"
   },
-  "DMS Settings": {
-    "DMS Settings": "تنظیمات DMS"
+  "HGS Settings": {
+    "HGS Settings": "تنظیمات HGS"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": ""
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": ""
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "میانبرهای DMS"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "میانبرهای HGS"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": ""
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": ""
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": ""
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": ""
   },
-  "DMS out of date": {
-    "DMS out of date": "DMS بروز نیست"
+  "HGS out of date": {
+    "HGS out of date": "HGS بروز نیست"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "سرور DMS قدیمی است (API نسخهٔ %1، نسخهٔ مورد انتظار %2)"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "سرور HGS قدیمی است (API نسخهٔ %1، نسخهٔ مورد انتظار %2)"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "سرویس DMS قطع می‌باشد. تنظیمات کلیپ‌بورد در دسترس نیست."
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "سرویس HGS قطع می‌باشد. تنظیمات کلیپ‌بورد در دسترس نیست."
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "اقدام‌های شِل DMS (لانچر، کلیپ‌بورد و غیره)"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "اقدام‌های شِل HGS (لانچر، کلیپ‌بورد و غیره)"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKET در دسترس نیست"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKET در دسترس نیست"
   },
   "Daily": {
     "Daily": "روزانه"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "روزانه در:"
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "نوار دَنک"
+  "HGS Bar": {
+    "HGS Bar": "نوار دَنک"
   },
-  "DankBar": {
-    "DankBar": "نوار دَنک"
+  "HGSBar": {
+    "HGSBar": "نوار دَنک"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "دَنک متریال شل آماده استفاده می‌باشد"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "دَنک متریال شل آماده استفاده می‌باشد"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "آیکون‌های DankShell و سیستم (نیازمند راه‌اندازی مجدد)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "آیکون‌های HGSShell و سیستم (نیازمند راه‌اندازی مجدد)"
   },
   "Dark Mode": {
     "Dark Mode": "حالت تاریک"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "باران‌ریزه"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "جایگزینی شما برای %1 حذف شود تا عملکرد پیش‌فرض DMS دوباره اعمال گردد؟"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "جایگزینی شما برای %1 حذف شود تا عملکرد پیش‌فرض HGS دوباره اعمال گردد؟"
   },
   "Duplicate": {
     "Duplicate": "تکثیر"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "یک جایگزینی سفارشی در زیر فعال کنید تا شدت سایه، شفافیت و رنگ به ازای هر نوار تنظیم شود."
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "فعال‌سازی لایه تار قابل کنترل توسط کامپازیتور (namespace: dms:blurwallpaper). نیازمند پیکربندی دستی niri است."
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "فعال‌سازی لایه تار قابل کنترل توسط کامپازیتور (namespace: hgs:blurwallpaper). نیازمند پیکربندی دستی niri است."
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "فعال کردن اثرانگشت هنگام ورود"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "فعال‌کردن احراز هویت با اثرانگشت"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "اثرانگشت یا کلید امنیتی را برای صفحه خوش‌آمد‌گویی DMS فعال کن. تغییرات احراز هویت به طور خودکار اعمال می‌شوند."
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "اثرانگشت یا کلید امنیتی را برای صفحه خوش‌آمد‌گویی HGS فعال کن. تغییرات احراز هویت به طور خودکار اعمال می‌شوند."
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "فعال‌کردن یکپارچه‌سازی قفل loginctl"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "زنگ زدن دستگاه ناموفق بود"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "اجرای 'dms greeter status' ناموفق بود. از نصب DMS و بودن dms در PATH اطمینان حاصل نمایید."
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "اجرای 'hgs greeter status' ناموفق بود. از نصب HGS و بودن hgs در PATH اطمینان حاصل نمایید."
   },
   "Failed to save audio config": {
     "Failed to save audio config": "ذخیره پیکربندی صوتی ناموفق بود"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "فایل دریافت شده از"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "جستجوی فایل به dsearch نیاز دارد\nاز github.com/morelazers/dsearch نصب کنید"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "جستجوی فایل به dsearch نیاز دارد\nاز github.com/morelazers/dsearch نصب کنید"
   },
   "File search unavailable": {
     "File search unavailable": "جستجوی فایل دردسترس نیست"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "پوشه‌ها"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "از رنگ پس‌زمینه DMS پیروی کن"
+  "Follow HGS background color": {
+    "Follow HGS background color": "از رنگ پس‌زمینه HGS پیروی کن"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "فوکوس مانیتور را دنبال کن"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "کنترل گاما"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "کنترل گاما در دسترس نیست. نیاز به DMS API نسخه ۶ به بالا دارد."
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "کنترل گاما در دسترس نیست. نیاز به HGS API نسخه ۶ به بالا دارد."
   },
   "Generate Override": {
     "Generate Override": ""
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": ""
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": ""
   },
   "Generic": {
     "Generic": "عمومی"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "قلم صفحه خوش‌آمدگویی"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "اعضای گروه صفحه خوش‌آمد‌گویی می‌توانند تم صفحه ورود خود را با dms greeter sync --profile پس از خروج و ورود مجدد همگام‌سازی کنند."
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "اعضای گروه صفحه خوش‌آمد‌گویی می‌توانند تم صفحه ورود خود را با hgs greeter sync --profile پس از خروج و ورود مجدد همگام‌سازی کنند."
   },
   "Greeter group:": {
     "Greeter group:": "گروه صفحه خوش‌آمدگویی:"
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "تنظیمات بیکاری سیستم"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": ""
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": ""
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "اگر فیلد پنهان باشد، به محض فشردن کلید پدیدار می‌شود."
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "نصب تم"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "نصب تم رنگ‌ها از مخزن تم DMS"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "نصب تم رنگ‌ها از مخزن تم HGS"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "نصب به اتمام رسید. صفحه خوش‌آمدگویی نصب شد."
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "نصب بسته matugen برای تم پویا"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "آیا می‌خواهید افزونه '%1' را از مخزن DMS نصب کنید؟"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "آیا می‌خواهید افزونه '%1' را از مخزن HGS نصب کنید؟"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "نصب افزونه‌ها از مخزن افزونه DMS"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "نصب افزونه‌ها از مخزن افزونه HGS"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "صفحه خوش‌آمدگویی DMS نصب شود؟ یک ترمینال برای احراز هویت sudo باز خواهد شد."
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "صفحه خوش‌آمدگویی HGS نصب شود؟ یک ترمینال برای احراز هویت sudo باز خواهد شد."
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "آیا می‌خواهید تم '%1' را از مخزن DMS نصب کنید؟"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "آیا می‌خواهید تم '%1' را از مخزن HGS نصب کنید؟"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "نصب و راه‌اندازی PAM: مراجعه کنید به "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "پس‌زمینه نوار را کاملا شفاف کن"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "مدیریت و پیکربندی افزونه‌ها برای گسترش کارایی DMS"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "مدیریت و پیکربندی افزونه‌ها برای گسترش کارایی HGS"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "مدیریت حداکثر ۴ پیکربندی مستقل برای نوارها. هر نوار موقعیت، ابزارک‌ها، استایل و نحوه نمایش خاص خود را دارد."
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "سایه‌ها و ارتفاع الهام‌گرفته از متریال در مودال‌ها، پنجره‌های بازشو و دیالوگ‌ها"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "متریال: منحنی‌های بزیه بیانی Material Design 3. حس پیش‌فرض DMS."
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "متریال: منحنی‌های بزیه بیانی Material Design 3. حس پیش‌فرض HGS."
   },
   "Matugen Contrast": {
     "Matugen Contrast": "کنتراست Matugen"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "حالت شب و گاما"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": ""
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": ""
   },
   "Niri Integration": {
     "Niri Integration": "همگام‌سازی نیری"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "بدون حاشیه"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "هیچ میانبری برای DMS پیکربندی نشده"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "هیچ میانبری برای HGS پیکربندی نشده"
   },
   "No Dim": {
     "No Dim": "بدون تاریک‌شدن"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "گاما را فقط بر اساس قواعد زمانی یا مکانی تنظیم کن."
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "فقط روی PAM مدیریت شده توسط DMS تأثیر می‌گذارد. اگر greetd از قبل شامل pam_fprintd باشد، اثر انگشت فعال می‌ماند."
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "فقط روی PAM مدیریت شده توسط HGS تأثیر می‌گذارد. اگر greetd از قبل شامل pam_fprintd باشد، اثر انگشت فعال می‌ماند."
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "تنها پنجره‌ها در مانیتور کنونی را در هر داک نمایش بده"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "میانبر %1 حذف شود؟"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "میانبر %1 حذف شود؟ یک مدخل نگاشت نشده در dms/binds-user.lua ذخیره می‌شود تا در بروزرسانی‌های DMS حذف شده باقی بماند."
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "میانبر %1 حذف شود؟ یک مدخل نگاشت نشده در hgs/binds-user.lua ذخیره می‌شود تا در بروزرسانی‌های HGS حذف شده باقی بماند."
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "حذف دسترسی‌های ادمین"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "به ابزار 'dgop' نیاز دارد"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "به DMS %1 نیاز دارد"
+  "Requires HGS %1": {
+    "Requires HGS %1": "به HGS %1 نیاز دارد"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": ""
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": ""
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": ""
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "وضوح، مکان، بزرگنمایی"
   },
-  "Restart DMS": {
-    "Restart DMS": "راه‌اندازی مجدد DMS"
+  "Restart HGS": {
+    "Restart HGS": "راه‌اندازی مجدد HGS"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "دَنک متریال شل را مجدد راه بینداز"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "دَنک متریال شل را مجدد راه بینداز"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "راه‌اندازی مجدد سیستم صوتی..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "قواعد (%1)"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": ""
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": ""
   },
   "Run Again": {
     "Run Again": "اجرای دوباره"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "اجرای قالب‌های DMS"
+  "Run HGS Templates": {
+    "Run HGS Templates": "اجرای قالب‌های HGS"
   },
   "Run User Templates": {
     "Run User Templates": "اجرای قالب‌های کاربر"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "بزرگنمایی"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "اندازه قلم نوار دَنک را به صورت مستقل مقیاس کن"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "اندازه قلم نوار دَنک را به صورت مستقل مقیاس کن"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "اندازه آیکون‌های نوار دَنک را به صورت مستقل مقیاس کن"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "اندازه آیکون‌های نوار دَنک را به صورت مستقل مقیاس کن"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "تمام اندازه‌های قلم در سراسر شِل مقیاس کن"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "نمایش راه‌اندازی مجدد"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "نمایش راه‌اندازی مجدد DMS"
+  "Show Restart HGS": {
+    "Show Restart HGS": "نمایش راه‌اندازی مجدد HGS"
   },
   "Show Saved Items": {
     "Show Saved Items": "نمایش موارد ذخیره شده"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "برف"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "برخی افزونه‌ها نیازمند نسخه جدیدتر DMS هستند:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "برخی افزونه‌ها نیازمند نسخه جدیدتر HGS هستند:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "مرتب‌سازی بر اساس حروف الفبا"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "استاندارد"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "استاندارد: "
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "استاندارد: "
   },
   "Start": {
     "Start": "شروع"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "پارامتر‌های اضافی ترمینال"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": ""
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": ""
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "ترمینال پشتیبان ناموفق بود. یکی از شبیه‌سازی ترمینال‌های پشتیبانی شده را نصب یا به صورت دستی 'dms greeter sync' را اجرا کنید."
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "ترمینال پشتیبان ناموفق بود. یکی از شبیه‌سازی ترمینال‌های پشتیبانی شده را نصب یا به صورت دستی 'hgs greeter sync' را اجرا کنید."
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "ترمینال پشتیبان باز شد. احراز هویت را آنجا کامل کنید؛ وقتی انجام شد بصورت خودکار بسته می‌شود."
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "ابزار «dgop» برای نظارت سیستم نیاز است.\nلطفا برای استفاده از این قابلیت dgop را نصب کنید."
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "متغیر محیطی DMS_SOCKET تنظیم نشده یا سوکت موجود نیست. مدیریت افزونه خودکار به DMS_SOCKET نیاز دارد."
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "متغیر محیطی HGS_SOCKET تنظیم نشده یا سوکت موجود نیست. مدیریت افزونه خودکار به HGS_SOCKET نیاز دارد."
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "تنظیمات پایین، تنظیمات Qt و GTK شما را تغییر می‌دهند. اگر می‌خواهید تنظیمات کنونی خود را نگه دارید، لطفا از آنها نسخه پشتیبان تهیه کنید (qt5ctl.conf |qt6ctl.conf و ~/.config/gtk-3.0|gtk-4.0)"
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "اخطار افزونه شخص ثالث"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "افزونه‌های شخص‌ثالث توسط کامیونیتی ساخته شده‌اند و به‌طور رسمی توسط دَنک متریال شل پشتیبانی نمی‌شوند.\n\nاین افزونه‌ها ممکن است خطرات امنیتی و حریم خصوصی داشته باشند - با مسئولیت خودتان نصب کنید."
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "افزونه‌های شخص‌ثالث توسط کامیونیتی ساخته شده‌اند و به‌طور رسمی توسط دَنک متریال شل پشتیبانی نمی‌شوند.\n\nاین افزونه‌ها ممکن است خطرات امنیتی و حریم خصوصی داشته باشند - با مسئولیت خودتان نصب کنید."
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "این نگاشت توسط config.kdl بازنویسی شده"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "این دستگاه"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": ""
   },
   "This may take a few seconds": {
     "This may take a few seconds": "این ممکن است چند ثانیه طول بکشد"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "برای بروزرسانی، دستور زیر را اجرا کن:"
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "برای استفاده از این نگاشت DMS، نگاشت‌کلید را در config.kdl خود حذف کنید یا تغییر دهید"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "برای استفاده از این نگاشت HGS، نگاشت‌کلید را در config.kdl خود حذف کنید یا تغییر دهید"
   },
   "Toast Messages": {
     "Toast Messages": "پیام‌های تًست"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "حذف ناموفق بود: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "صفحه خوش‌آمد‌گویی DMS حذف شود؟ این پیکربندی را حذف و مدیریت نمایشگر قبلی را بازیابی خواهد کرد. یک ترمینال برای احراز هویت sudo باز خواهد شد."
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "صفحه خوش‌آمد‌گویی HGS حذف شود؟ این پیکربندی را حذف و مدیریت نمایشگر قبلی را بازیابی خواهد کرد. یک ترمینال برای احراز هویت sudo باز خواهد شد."
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "حذف شده: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "از IPC اقدام نوار اسپات‌لایت استفاده می‌کند و همیشه نوار کمینه را باز می‌کند."
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "استفاده از قلم monospace سراسری از تنظیمات ← شخصی‌سازی"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "خوش آمدید"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "به دَنک متریال شل خوش آمدید"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "به دَنک متریال شل خوش آمدید"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "هنگام کلیک روی پنجره داک در محیط‌کار ویژه هایپرلند، پیش از فوکوس روی پنجره آن محیط‌کار ویژه را برگردان"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "مستقیم"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": ""
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": ""
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "پیکربندی dms/cursor وجود دارد اما وارد نشده است. تنظیمات اشاره‌گر موس اعمال نخواهند شد."
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "پیکربندی hgs/cursor وجود دارد اما وارد نشده است. تنظیمات اشاره‌گر موس اعمال نخواهند شد."
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "پیکربندی dms/outputs وجود دارد اما در پیکربندی کامپوزیتور شما گنجانده نشده است. تغییرات نمایشگر پایدار نخواهند بود."
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "پیکربندی hgs/outputs وجود دارد اما در پیکربندی کامپوزیتور شما گنجانده نشده است. تغییرات نمایشگر پایدار نخواهند بود."
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": ""
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "فعال‌سازی loginctl ناموفق بود (خروجی %1)"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctl در دسترس نیست - یکپارچه‌سازی قفل به اتصال سوکت DMS نیاز دارد"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctl در دسترس نیست - یکپارچه‌سازی قفل به اتصال سوکت HGS نیاز دارد"
   },
   "mango: config reloaded": {
     "mango: config reloaded": ""
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "پیکربندی میانبرهای نیری"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "دیسکورد نیری/dms"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "دیسکورد نیری/hgs"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "نیری: پیکربندی دوباره بارگذاری شد"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "روشن"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "DMS را برای یکپارچه‌سازی NM بروز کنید."
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "HGS را برای یکپارچه‌سازی NM بروز کنید."
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "useradd ناموفق بود (خروجی %1)"

@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+# Extract version from debian/changelog
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+# Get upstream version (strip -1ppa1 suffix)
+UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed 's/-[^-]*$$//')
+BASE_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed 's/ppa[0-9]*$$//' | sed 's/+git.*//')
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# All files are included in source package
+	test -f hgs-greeter-source.tar.gz || (echo "ERROR: hgs-greeter-source.tar.gz not found!" && exit 1)
+
+	# Extract source tarball
+	tar -xzf hgs-greeter-source.tar.gz
+	# Find the extracted directory
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "HyprGlassShell*" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ]; then \
+		ln -sf $$SOURCE_DIR HyprGlassShell-$(BASE_VERSION); \
+	fi
+
+override_dh_auto_install:
+	# Install greeter files to shared data location
+	mkdir -p debian/hgs-greeter/usr/share/quickshell/hgs-greeter
+	cp -r HyprGlassShell-$(BASE_VERSION)/quickshell/* debian/hgs-greeter/usr/share/quickshell/hgs-greeter/
+
+	# Install launcher script
+	install -Dm755 HyprGlassShell-$(BASE_VERSION)/quickshell/Modules/Greetd/assets/hgs-greeter \
+		debian/hgs-greeter/usr/bin/hgs-greeter
+
+	# Install documentation
+	install -Dm644 HyprGlassShell-$(BASE_VERSION)/quickshell/Modules/Greetd/README.md \
+		debian/hgs-greeter/usr/share/doc/hgs-greeter/README.md
+
+	# Install LICENSE file
+	install -Dm644 HyprGlassShell-$(BASE_VERSION)/LICENSE \
+		debian/hgs-greeter/usr/share/doc/hgs-greeter/LICENSE
+
+	install -Dpm0644 HyprGlassShell-$(BASE_VERSION)/quickshell/systemd/tmpfiles-hgs-greeter.conf \
+		debian/hgs-greeter/usr/lib/tmpfiles.d/hgs-greeter.conf
+	install -Dm644 HyprGlassShell-$(BASE_VERSION)/quickshell/systemd/sysusers-hgs-greeter.conf \
+		debian/hgs-greeter/usr/lib/sysusers.d/hgs-greeter.conf
+
+	# Create cache directory structure (will be created by postinst)
+	mkdir -p debian/hgs-greeter/var/cache/hgs-greeter
+
+	# Remove build and development files
+	rm -rf debian/hgs-greeter/usr/share/quickshell/hgs-greeter/core
+	rm -rf debian/hgs-greeter/usr/share/quickshell/hgs-greeter/distro
+	rm -rf debian/hgs-greeter/usr/share/quickshell/hgs-greeter/.git*
+	rm -f debian/hgs-greeter/usr/share/quickshell/hgs-greeter/.gitignore
+	rm -rf debian/hgs-greeter/usr/share/quickshell/hgs-greeter/.github
+
+override_dh_auto_clean:
+	rm -rf HyprGlassShell-*
+	dh_auto_clean

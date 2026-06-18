@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">רישיון MIT</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">רישיון MIT</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "קיים כבר קובץ עם השם זה. האם ברצונך לדרוס אותו?"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "הפעל/י את מסך ההתחברות"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "האם להפעיל את מסך ההתחברות של DMS? מסוף ייפתח לאימות עם sudo. הרץ/י את הסנכרון לאחר ההפעלה כדי להחיל את ההגדרות שלך."
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "האם להפעיל את מסך ההתחברות של HGS? מסוף ייפתח לאימות עם sudo. הרץ/י את הסנכרון לאחר ההפעלה כדי להחיל את ההגדרות שלך."
   },
   "Activation": {
     "Activation": "הפעלה"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "להוסיף את \"%1\" לקבוצה %2?"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "להוסיף את \"%1\" לקבוצה %2? עליהם להתנתק ולהתחבר מחדש, ולאחר מכן להריץ את הפקודה dms greeter sync --profile כדי לפרסם את ערכת הנושא שלהם למסך ההתחברות."
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "להוסיף את \"%1\" לקבוצה %2? עליהם להתנתק ולהתחבר מחדש, ולאחר מכן להריץ את הפקודה hgs greeter sync --profile כדי לפרסם את ערכת הנושא שלהם למסך ההתחברות."
   },
   "Add Bar": {
     "Add Bar": "הוסף/י סרגל"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "הוסף/י את המשתמש/ת החדש/ה לקבוצה %1 כדי שיוכלו להריץ את הפקודה dms greeter sync --profile."
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "הוסף/י את המשתמש/ת החדש/ה לקבוצה %1 כדי שיוכלו להריץ את הפקודה hgs greeter sync --profile."
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "הוסף/י את המשתמש/ת החדש/ה לקבוצה %1 כדי שיוכלו להשתמש בsudo."
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "נעילה אוטומטית לאחר"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "נעל/י אוטומטית את המסך כאשר DMS מופעל"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "נעל/י אוטומטית את המסך כאשר HGS מופעל"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "נעילה אוטומטית של המסך כשהמערכת מתכוננת למצב השהיה"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "שנה/י את מראה הסרגל"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "שנה/י את השפה שנעשה בה שימוש בממשק של DMS."
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "שנה/י את השפה שנעשה בה שימוש בממשק של HGS."
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "שנה/י את הגדרות האזור שנעשה בהם שימוש כדי להציג תאריך ושעה, ללא תלות בשפת הממשק."
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "בדוק/בדקי בהפעלה"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "בדוק/בדקי את מצב הסנכרון לפי דרישה. סנכרון (מלא) מיועד למנהל/ת הראשי/ת: הסנכרון מעתיק את ערכת הנושא שלך למסך ההתחברות ומגדיר את תצורת הgreeter של המערכת. במערכות מרובות משתמשים, הוסף/י חשבונות אחרים תחת הגדרות → משתמשים, ולאחר מכן בקש/י מכל אחד מהם להריץ dms greeter sync --profile לאחר התנתקות והתחברות מחדש - לא סנכרון מלא. שינויי אימות מוחלים באופן אוטומטי."
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "בדוק/בדקי את מצב הסנכרון לפי דרישה. סנכרון (מלא) מיועד למנהל/ת הראשי/ת: הסנכרון מעתיק את ערכת הנושא שלך למסך ההתחברות ומגדיר את תצורת הgreeter של המערכת. במערכות מרובות משתמשים, הוסף/י חשבונות אחרים תחת הגדרות → משתמשים, ולאחר מכן בקש/י מכל אחד מהם להריץ hgs greeter sync --profile לאחר התנתקות והתחברות מחדש - לא סנכרון מלא. שינויי אימות מוחלים באופן אוטומטי."
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "בדוק/בדקי את הפקודה המותאמת אישית שלך בהגדרות → Dock → אשפה."
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "בחר/י את צבע ההדגשה של המסגרת"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "בחר/י את הלוגו המוצג על כפתור המשגר בDank Bar"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "בחר/י את הלוגו המוצג על כפתור המשגר בHGS Bar"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "בחר/י היכן יופיעו התראות קופצות על המסך"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "ערכת צבעים להדגשת תחביר. %1 ערכות נושא זמינות."
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "ערכת צבעים מהמאגר של DMS"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "ערכת צבעים מהמאגר של HGS"
   },
   "Colorful": {
     "Colorful": "צבעוני"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "אפשרויות נוחות למסך ההתחברות. הרץ/י סנכרון כדי להחיל."
   },
-  "Convert to DMS": {
-    "Convert to DMS": "המר/י לDMS"
+  "Convert to HGS": {
+    "Convert to HGS": "המר/י לHGS"
   },
   "Cooldown": {
     "Cooldown": "זמן המתנה"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "מצב הדגמה - לחץ/י בכל מקום כדי לצאת"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "הבוחר של DMS"
+  "HGS Chooser": {
+    "HGS Chooser": "הבוחר של HGS"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "מנהל התוספים של DMS אינו זמין"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "מנהל התוספים של HGS אינו זמין"
   },
-  "DMS Settings": {
-    "DMS Settings": "הגדרות DMS"
+  "HGS Settings": {
+    "HGS Settings": "הגדרות HGS"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": "הגדרות DMS כותבות קיצורי מקלדת בLua. הוסף/י את קובץ ה-include של DMS כדי שהעריכות יחולו."
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": "הגדרות HGS כותבות קיצורי מקלדת בLua. הוסף/י את קובץ ה-include של HGS כדי שהעריכות יחולו."
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "קיצורי DMS"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "קיצורי HGS"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "מסך ההתחברות של DMS דורש את החבילות הבאות: greetd ו-dms-greeter (חובה), fprintd ו-pam_fprintd (להזדהות עם טביעת אצבע) ו-pam_u2f (להזדהות עם מפתחות אבטחה). הוסף/הוסיפי את המשתמש שלך לקבוצת greeter. שינויי אימות מוחלים באופן אוטומטי ועשויים לפתוח מסוף כאשר נדרש אימות עם sudo."
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "מסך ההתחברות של HGS דורש את החבילות הבאות: greetd ו-hgs-greeter (חובה), fprintd ו-pam_fprintd (להזדהות עם טביעת אצבע) ו-pam_u2f (להזדהות עם מפתחות אבטחה). הוסף/הוסיפי את המשתמש שלך לקבוצת greeter. שינויי אימות מוחלים באופן אוטומטי ועשויים לפתוח מסוף כאשר נדרש אימות עם sudo."
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": "DMS דורש הרשאות מנהל מערכת. המסוף ייסגר אוטומטית בסיום."
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": "HGS דורש הרשאות מנהל מערכת. המסוף ייסגר אוטומטית בסיום."
   },
-  "DMS out of date": {
-    "DMS out of date": "הDMS לא מעודכן"
+  "HGS out of date": {
+    "HGS out of date": "הHGS לא מעודכן"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "השרת של DMS לא מעודכן (API v%1, צפוי v%2)"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "השרת של HGS לא מעודכן (API v%1, צפוי v%2)"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "השירות של DMS אינו מחובר. הגדרות לוח ההעתקה אינן זמינות."
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "השירות של HGS אינו מחובר. הגדרות לוח ההעתקה אינן זמינות."
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "פעולות מעטפת של DMS (משגר, לוח העתקה וכו')"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "פעולות מעטפת של HGS (משגר, לוח העתקה וכו')"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKET אינו זמין"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKET אינו זמין"
   },
   "Daily": {
     "Daily": "יומי"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "יומי בשעה:"
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank Bar"
+  "HGS Bar": {
+    "HGS Bar": "HGS Bar"
   },
-  "DankBar": {
-    "DankBar": "Dank Bar"
+  "HGSBar": {
+    "HGSBar": "HGS Bar"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "DankMaterialShell מוכן לשימוש"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "HyprGlassShell מוכן לשימוש"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "סמלי DankShell ומערכת (דורש הפעלה מחדש)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "סמלי HGSShell ומערכת (דורש הפעלה מחדש)"
   },
   "Dark Mode": {
     "Dark Mode": "מצב כהה"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "טפטוף"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "לבטל את הדריסה שלך עבור %1 כך שפעולת ברירת המחדל של DMS תחול מחדש?"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "לבטל את הדריסה שלך עבור %1 כך שפעולת ברירת המחדל של HGS תחול מחדש?"
   },
   "Duplicate": {
     "Duplicate": "שכפל/י"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "הפעל/י דריסה מותאמת אישית למטה כדי להגדיר עוצמת צל, שקיפות וצבע עבור כל סרגל בנפרד."
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "הפעל/י שכבת טשטוש הניתנת לזיהוי על ידי הקומפוזיטור (namespace: dms:blurwallpaper). דורש הגדרה ידנית של Niri."
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "הפעל/י שכבת טשטוש הניתנת לזיהוי על ידי הקומפוזיטור (namespace: hgs:blurwallpaper). דורש הגדרה ידנית של Niri."
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "הפעלת הזדהות עם טביעת אצבע"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "הפעלת אימות באמצעות טביעת אצבע"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "הפעל/י הזדהות באמצעות טביעת אצבע או מפתח אבטחה במסך ההתחברות של DMS. שינויי אימות מוחלים באופן אוטומטי."
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "הפעל/י הזדהות באמצעות טביעת אצבע או מפתח אבטחה במסך ההתחברות של HGS. שינויי אימות מוחלים באופן אוטומטי."
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "הפעלת האינטגרציה עם loginctl"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "שליחת הצלצול להתקן נכשלה"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "הרצת הפקודה 'dms greeter status' נכשלה. ודא/י שDMS מותקן ו-dms נמצא בPATH."
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "הרצת הפקודה 'hgs greeter status' נכשלה. ודא/י שHGS מותקן ו-hgs נמצא בPATH."
   },
   "Failed to save audio config": {
     "Failed to save audio config": "שמירת הגדרות שמע נכשלה"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "התקבל קובץ מ"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "חיפוש קבצים הכלי dsearch נדרש כדי לבצע חיפוש של קבצים.\nהתקן/י אותו מ: github.com/morelazers/dsearch"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "חיפוש קבצים הכלי dsearch נדרש כדי לבצע חיפוש של קבצים.\nהתקן/י אותו מ: github.com/morelazers/dsearch"
   },
   "File search unavailable": {
     "File search unavailable": "חיפוש קבצים אינו זמין"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "תיקיות"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "עקוב/י אחרי צבע הרקע של DMS"
+  "Follow HGS background color": {
+    "Follow HGS background color": "עקוב/י אחרי צבע הרקע של HGS"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "מעקב אחרי המסך הממוקד"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "בקרת גאמה"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "בקרת גאמה אינה זמינה. נדרש API של DMS גרסה 6 ומעלה."
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "בקרת גאמה אינה זמינה. נדרש API של HGS גרסה 6 ומעלה."
   },
   "Generate Override": {
     "Generate Override": "צור/צרי דריסה"
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "צור/צרי תצורות בסיס עבור GTK3/4 או QT5/QT6 (החבילה qt6ct-kde נדרשת) כדי לעקוב אחר הצבעים של DMS. צריך ליצור את התבנית רק פעם אחת. <br/><br/>מומלץ להגדיר את <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> לפני החלת ערכות נושא על GTK."
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "צור/צרי תצורות בסיס עבור GTK3/4 או QT5/QT6 (החבילה qt6ct-kde נדרשת) כדי לעקוב אחר הצבעים של HGS. צריך ליצור את התבנית רק פעם אחת. <br/><br/>מומלץ להגדיר את <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> לפני החלת ערכות נושא על GTK."
   },
   "Generic": {
     "Generic": "כללי"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "גופן מסך ההתחברות"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "חברי קבוצת greeter יכולים לסנכרן את ערכת הנושא שלהם למסך ההתחברות באמצעות dms greeter sync --profile לאחר התנתקות והתחברות מחדש."
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "חברי קבוצת greeter יכולים לסנכרן את ערכת הנושא שלהם למסך ההתחברות באמצעות hgs greeter sync --profile לאחר התנתקות והתחברות מחדש."
   },
   "Greeter group:": {
     "Greeter group:": "קבוצת greeter:"
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "הגדרות המתנה"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": "אם סמלי אפליקציות בהפעלה אוטומטית אינם מופיעים במגש המערכת, צור/צרי דריסת systemd כדי להבטיח שDMS מופעל לפני אפליקציות אלו"
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": "אם סמלי אפליקציות בהפעלה אוטומטית אינם מופיעים במגש המערכת, צור/צרי דריסת systemd כדי להבטיח שHGS מופעל לפני אפליקציות אלו"
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "אם השדה מוסתר, הוא יופיע ברגע שלוחצים על מקש."
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "התקן/י ערכת נושא"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "התקן/י ערכות צבעים ממאגר ערכות הנושא של DMS"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "התקן/י ערכות צבעים ממאגר ערכות הנושא של HGS"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "ההתקנה הושלמה. מסך ההתחברות הותקן."
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "התקן/י את החבילה של matugen כדי לאפשר עיצוב דינמי"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "להתקין את התוסף '%1' מהמאגר של DMS?"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "להתקין את התוסף '%1' מהמאגר של HGS?"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "התקן/י תוספים ממאגר התוספים של DMS"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "התקן/י תוספים ממאגר התוספים של HGS"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "להתקין את מסך ההתחברות של DMS? ייפתח מסוף לאימות עם sudo."
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "להתקין את מסך ההתחברות של HGS? ייפתח מסוף לאימות עם sudo."
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "להתקין את ערכת הנושא '%1' מהמאגר של DMS?"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "להתקין את ערכת הנושא '%1' מהמאגר של HGS?"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "להתקנה והגדרה של PAM: ראה/י את "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "הפוך/הפכי את רקע הסרגל לשקוף לחלוטין"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "נהל/י והגדר/י תוספים להרחבת היכולות של DMS"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "נהל/י והגדר/י תוספים להרחבת היכולות של HGS"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "נהל/י עד 4 תצורות סרגל עצמאיות. לכל סרגל יש מיקום, ווידג׳טים, סגנון והקצאת תצוגה משלו."
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "הצללות והגבהה בהשראת Material Design על חלוניות, חלונות קופצים ותיבות דו-שיח"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "חומרי: עקומות Bezier אקספרסיביות של Material Design 3. תחושת ברירת המחדל של DMS."
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "חומרי: עקומות Bezier אקספרסיביות של Material Design 3. תחושת ברירת המחדל של HGS."
   },
   "Matugen Contrast": {
     "Matugen Contrast": "ניגודיות Matugen"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "מצב לילה וגאמה"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "מצב לילה נכשל: בקרת גאמה של DMS אינה זמינה"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "מצב לילה נכשל: בקרת גאמה של HGS אינה זמינה"
   },
   "Niri Integration": {
     "Niri Integration": "אינטגרציה עם Niri"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "ללא מסגרת"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "לא הוגדרו קיצורי DMS"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "לא הוגדרו קיצורי HGS"
   },
   "No Dim": {
     "No Dim": "ללא עמעום"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "כוונן/י את הגאמה רק לפי כללי זמן או מיקום."
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "משפיע רק על PAM המנוהל על ידי DMS. אם greetd כבר כולל את pam_fprintd, טביעת האצבע תישאר מופעלת."
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "משפיע רק על PAM המנוהל על ידי HGS. אם greetd כבר כולל את pam_fprintd, טביעת האצבע תישאר מופעלת."
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "הצג/י רק חלונות מהמסך הנוכחי בכל Dock"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "להסיר את קיצור הדרך %1?"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "להסיר את קיצור הדרך %1? רשומת ביטולקישור תישמר בdms/binds-user.lua כדי שהוא יישאר מוסר גם לאחר עדכוני DMS."
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "להסיר את קיצור הדרך %1? רשומת ביטולקישור תישמר בhgs/binds-user.lua כדי שהוא יישאר מוסר גם לאחר עדכוני HGS."
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "הוסרו הרשאות מנהל מערכת"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "הכלי 'dgop' נדרש"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "DMS %1 נדרש"
+  "Requires HGS %1": {
+    "Requires HGS %1": "HGS %1 נדרש"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "נדרש שרת DMS עם יכולת עדכון מערכת (sysupdate)"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "נדרש שרת HGS עם יכולת עדכון מערכת (sysupdate)"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": "קומפוזיטור MangoWC נדרש"
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "רזולוציה, מיקום, קנה מידה"
   },
-  "Restart DMS": {
-    "Restart DMS": "הפעלה מחדש של DMS"
+  "Restart HGS": {
+    "Restart HGS": "הפעלה מחדש של HGS"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "הפעל/י מחדש את DankMaterialShell"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "הפעל/י מחדש את HyprGlassShell"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "מפעיל מערכת שמע מחדש..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "חוקים (%1)"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": "נמצאו חוקים בהגדרות הקומפוזיטור שלך. הם לקריאה בלבד כאן, השתמש/י ב'המר/י לDMS' כדי ליצור עותק הניתן לעריכה."
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": "נמצאו חוקים בהגדרות הקומפוזיטור שלך. הם לקריאה בלבד כאן, השתמש/י ב'המר/י לHGS' כדי ליצור עותק הניתן לעריכה."
   },
   "Run Again": {
     "Run Again": "הרץ/י שוב"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "הרץ/י תבניות DMS"
+  "Run HGS Templates": {
+    "Run HGS Templates": "הרץ/י תבניות HGS"
   },
   "Run User Templates": {
     "Run User Templates": "הרץ/י תבניות משתמש"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "קנה מידה"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "שנה/י את גודל הגופנים של DankBar באופן עצמאי"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "שנה/י את גודל הגופנים של HGSBar באופן עצמאי"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "התאם/י את גודל הסמלים בDankBar באופן עצמאי"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "התאם/י את גודל הסמלים בHGSBar באופן עצמאי"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "שנה/י קנה מידה של כל גדלי הגופנים בכל המעטפת"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "הצגה של \"הפעלה מחדש\""
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "הצגה של \"הפעלה מחדש של DMS\""
+  "Show Restart HGS": {
+    "Show Restart HGS": "הצגה של \"הפעלה מחדש של HGS\""
   },
   "Show Saved Items": {
     "Show Saved Items": "הצג/י פריטים שמורים"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "שלג"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "תוספים מסוימים דורשים גרסה חדשה יותר של DMS:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "תוספים מסוימים דורשים גרסה חדשה יותר של HGS:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "מיון לפי סדר אלפביתי"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "רגיל"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "סטנדרטי: עיצוב Material Design 3 קלאסי - הפאנלים עולים מלמטה עם שינוי גודל עדין. ברירת המחדל של DMS."
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "סטנדרטי: עיצוב Material Design 3 קלאסי - הפאנלים עולים מלמטה עם שינוי גודל עדין. ברירת המחדל של HGS."
   },
   "Start": {
     "Start": "התחל/י"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "פרמטרים נוספים למסוף"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "המעבר למסוף כגיבוי נכשל. התקן/י יישום מסוף נתמך או הרץ/י את הפקודה 'dms auth sync' באופן ידני."
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "המעבר למסוף כגיבוי נכשל. התקן/י יישום מסוף נתמך או הרץ/י את הפקודה 'hgs auth sync' באופן ידני."
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "המעבר למסוף כגיבוי נכשל. התקן/י את אחד מיישומי המסוף הנתמכים או הרץ/י את הפקודה 'dms greeter sync' באופן ידני."
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "המעבר למסוף כגיבוי נכשל. התקן/י את אחד מיישומי המסוף הנתמכים או הרץ/י את הפקודה 'hgs greeter sync' באופן ידני."
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "נפתח מסוף כגיבוי. השלם/השלימי את הגדרת האימות שם, הוא ייסגר אוטומטית בסיום."
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "כלי 'dgop' נדרש לניטור מערכת.\nאנא התקן/י dgop כדי להשתמש בתכונה זו."
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "משתנה הסביבה DMS_SOCKET אינו מוגדר או שהsocket אינו זמין. ניהול תוספים אוטומטי דורש את DMS_SOCKET."
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "משתנה הסביבה HGS_SOCKET אינו מוגדר או שהsocket אינו זמין. ניהול תוספים אוטומטי דורש את HGS_SOCKET."
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "ההגדרות הבאות ישנו את הגדרות ה GTK וQt שלך. אם ברצונך לשמור על התצורות הנוכחיות, נא לגבות אותן (qt5ct.conf|qt6ct.conf וconfig/gtk-3.0|gtk-4.0./~)."
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "אזהרת תוסף צד שלישי"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "תוספי צד שלישי נוצרו על ידי הקהילה ואינם נתמכים רשמית על ידי DankMaterialShell.\n\nתוספים אלה עלולים להוות סיכוני אבטחה ופרטיות - התקן/י על אחריותך בלבד."
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "תוספי צד שלישי נוצרו על ידי הקהילה ואינם נתמכים רשמית על ידי HyprGlassShell.\n\nתוספים אלה עלולים להוות סיכוני אבטחה ופרטיות - התקן/י על אחריותך בלבד."
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "קיצור זה נדרס על ידי config.kdl"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "התקן זה"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י dms setup כדי להעביר את ההגדרות לפני עריכת הגדרות סמן העכבר."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י hgs setup כדי להעביר את ההגדרות לפני עריכת הגדרות סמן העכבר."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י dms setup כדי להעביר את ההגדרות לפני עריכת הגדרות התצוגה."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י hgs setup כדי להעביר את ההגדרות לפני עריכת הגדרות התצוגה."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י dms setup כדי להעביר את ההגדרות לפני עריכת קיצורי מקלדת בהגדרות."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י hgs setup כדי להעביר את ההגדרות לפני עריכת קיצורי מקלדת בהגדרות."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י dms setup כדי להעביר את ההגדרות לפני עריכת חוקי החלון בהגדרות."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": "התקנה זו עדיין משתמשת בhyprland.conf. הרץ/י hgs setup כדי להעביר את ההגדרות לפני עריכת חוקי החלון בהגדרות."
   },
   "This may take a few seconds": {
     "This may take a few seconds": "זה עשוי לקחת מספר שניות"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "כדי לעדכן, הרץ/י את הפקודה הבאה:"
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "כדי להשתמש בקיצור המקלדת הזה ב DMS, הסר/י או שנה/י את קיצור המקלדת בקובץ הconfig.kdl שלך"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "כדי להשתמש בקיצור המקלדת הזה ב HGS, הסר/י או שנה/י את קיצור המקלדת בקובץ הconfig.kdl שלך"
   },
   "Toast Messages": {
     "Toast Messages": "הודעות קופצות"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "הסרת ההתקנה נכשלה: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "להסיר את מסך ההתחברות של DMS? זה יסיר את ההגדרות וישחזר את מנהל התצוגה הקודם שלך. ייפתח חלון מסוף לאימות עם sudo."
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "להסיר את מסך ההתחברות של HGS? זה יסיר את ההגדרות וישחזר את מנהל התצוגה הקודם שלך. ייפתח חלון מסוף לאימות עם sudo."
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "הוסר: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "משתמש בפעולת הIPC של spotlight-bar ותמיד פותח את הסרגל המינימלי."
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "משתמש בגופן ברוחב קבוע גלובלי מהגדרות ← התאמה אישית"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "ברוכים הבאים"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "ברוכים הבאים לDankMaterialShell"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "ברוכים הבאים לHyprGlassShell"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "בעת לחיצה על חלון Dock בסביבת עבודה מיוחדת של Hyprland, החזר/י את סביבת העבודה המיוחדת הזו לפני המיקוד של החלון"
@@ -8550,7 +8550,7 @@
     "You have unsaved changes. Save before opening a file?": "יש לך שינויים שלא נשמרו. האם ברצונך לשמור לפני פתיחת קובץ?"
   },
   "You need to set either:\nQT_QPA_PLATFORMTHEME=gtk3 OR\nQT_QPA_PLATFORMTHEME=qt6ct\nas environment variables, and then restart the shell.\n\nqt6ct requires qt6ct-kde to be installed.": {
-    "You need to set either:\nQT_QPA_PLATFORMTHEME=gtk3 OR\nQT_QPA_PLATFORMTHEME=qt6ct\nas environment variables, and then restart the shell.\n\nqt6ct requires qt6ct-kde to be installed.": "עליך להגדיר את אחד מהמשתנים הבאים:\nQT_QPA_PLATFORMTHEME=gtk3 או\nQT_QPA_PLATFORMTHEME=qt6ct\nכמשתני סביבה ולאחר מכן להפעיל מחדש את DMS.\n\n* qt6ct דורש התקנה של qt6ct-kde."
+    "You need to set either:\nQT_QPA_PLATFORMTHEME=gtk3 OR\nQT_QPA_PLATFORMTHEME=qt6ct\nas environment variables, and then restart the shell.\n\nqt6ct requires qt6ct-kde to be installed.": "עליך להגדיר את אחד מהמשתנים הבאים:\nQT_QPA_PLATFORMTHEME=gtk3 או\nQT_QPA_PLATFORMTHEME=qt6ct\nכמשתני סביבה ולאחר מכן להפעיל מחדש את HGS.\n\n* qt6ct דורש התקנה של qt6ct-kde."
   },
   "You'll enter your password at the greeter after the next reboot.": {
     "You'll enter your password at the greeter after the next reboot.": "תצטרך/תצטרכי להזין את הסיסמה שלך במסך ההתחברות לאחר ההפעלה מחדש הבאה."
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "ישיר"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "הפרויקט DMS הוא מעטפת שולחן עבודה מודרנית וניתנת להתאמה אישית עם עיצוב בהשראת <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material Design 3</a> של גוגל.<br /><br/>היא נבנתה עם שפת התכנות <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> ו<a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, ספריית QT6 לבניית מעטפות לשולחן העבודה."
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "הפרויקט HGS הוא מעטפת שולחן עבודה מודרנית וניתנת להתאמה אישית עם עיצוב בהשראת <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material Design 3</a> של גוגל.<br /><br/>היא נבנתה עם שפת התכנות <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> ו<a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, ספריית QT6 לבניית מעטפות לשולחן העבודה."
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "קובץ ההגדרה dms/cursor קיים אך אינו כלול. הגדרות סמן העכבר לא יחולו."
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "קובץ ההגדרה hgs/cursor קיים אך אינו כלול. הגדרות סמן העכבר לא יחולו."
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "קובץ ההגדרה dms/outputs קיים אך אינו כלול בהגדרות הקומפוזיטור שלך. שינויי תצוגה לא יישמרו."
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "קובץ ההגדרה hgs/outputs קיים אך אינו כלול בהגדרות הקומפוזיטור שלך. שינויי תצוגה לא יישמרו."
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": "לדוגמה /usr/bin/my-script --flag"
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "הפעלת loginctl נכשלה (יציאה %1)"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctl אינו זמין, אינטגרציה של הנעילה דורשת חיבור socket לDMS"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctl אינו זמין, אינטגרציה של הנעילה דורשת חיבור socket לHGS"
   },
   "mango: config reloaded": {
     "mango: config reloaded": "mango: ההגדרות נטענו מחדש"
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "הגדרת קיצורים של Niri"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "שרת הDiscord של niri/dms"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "שרת הDiscord של niri/hgs"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "הודעה מniri: ההגדרות נטענו מחדש"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "פועל"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "עדכן/י את DMS כדי לאפשר אינטגרציה עם NM."
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "עדכן/י את HGS כדי לאפשר אינטגרציה עם NM."
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "useradd נכשל (יציאה %1)"

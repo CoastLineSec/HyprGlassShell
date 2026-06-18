@@ -3,9 +3,9 @@ package wlroutput
 import (
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_output_management"
-	wlclient "github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/proto/wlr_output_management"
+	wlclient "github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 )
 
 type OutputMode struct {

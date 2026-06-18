@@ -23,7 +23,7 @@ Item {
         NetworkService.removeRef();
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -84,25 +84,25 @@ Item {
                         color: Theme.surfaceVariantText
                         width: parent.width
                         horizontalAlignment: Text.AlignLeft
-                        visible: !DMSNetworkService.vpnAvailable
+                        visible: !HGSNetworkService.vpnAvailable
                     }
 
                     Row {
                         width: parent.width
                         spacing: Theme.spacingM
-                        visible: DMSNetworkService.vpnAvailable
+                        visible: HGSNetworkService.vpnAvailable
 
                         StyledText {
                             text: {
-                                if (!DMSNetworkService.connected)
+                                if (!HGSNetworkService.connected)
                                     return I18n.tr("Disconnected");
-                                const names = DMSNetworkService.activeNames || [];
+                                const names = HGSNetworkService.activeNames || [];
                                 if (names.length <= 1)
                                     return names[0] || I18n.tr("Connected");
                                 return names[0] + " +" + (names.length - 1);
                             }
                             font.pixelSize: Theme.fontSizeSmall
-                            color: DMSNetworkService.connected ? Theme.primary : Theme.surfaceVariantText
+                            color: HGSNetworkService.connected ? Theme.primary : Theme.surfaceVariantText
                             width: parent.width - vpnHeaderControls.width - Theme.spacingM
                             horizontalAlignment: Text.AlignLeft
                             anchors.verticalCenter: parent.verticalCenter
@@ -125,7 +125,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: VPNService.importing ? "sync" : "add"
                                         size: Theme.fontSizeSmall
                                         color: Theme.primary
@@ -154,15 +154,15 @@ Item {
                                 radius: 14
                                 width: disconnectAllRow.width + Theme.spacingM * 2
                                 color: disconnectAllArea.containsMouse ? Theme.errorHover : Theme.surfaceLight
-                                visible: DMSNetworkService.connected
-                                opacity: DMSNetworkService.isBusy ? 0.5 : 1.0
+                                visible: HGSNetworkService.connected
+                                opacity: HGSNetworkService.isBusy ? 0.5 : 1.0
 
                                 Row {
                                     id: disconnectAllRow
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "link_off"
                                         size: Theme.fontSizeSmall
                                         color: Theme.surfaceText
@@ -180,9 +180,9 @@ Item {
                                     id: disconnectAllArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    cursorShape: DMSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
-                                    enabled: !DMSNetworkService.isBusy
-                                    onClicked: DMSNetworkService.disconnectAllActive()
+                                    cursorShape: HGSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
+                                    enabled: !HGSNetworkService.isBusy
+                                    onClicked: HGSNetworkService.disconnectAllActive()
                                 }
                             }
                         }
@@ -192,19 +192,19 @@ Item {
                         width: parent.width
                         height: 1
                         color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.12)
-                        visible: DMSNetworkService.vpnAvailable
+                        visible: HGSNetworkService.vpnAvailable
                     }
 
                     Item {
                         width: parent.width
                         height: 100
-                        visible: DMSNetworkService.vpnAvailable && DMSNetworkService.profiles.length === 0
+                        visible: HGSNetworkService.vpnAvailable && HGSNetworkService.profiles.length === 0
 
                         Column {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "vpn_key_off"
                                 size: 36
                                 color: Theme.surfaceVariantText
@@ -230,17 +230,17 @@ Item {
                     Column {
                         width: parent.width
                         spacing: 4
-                        visible: DMSNetworkService.vpnAvailable && DMSNetworkService.profiles.length > 0
+                        visible: HGSNetworkService.vpnAvailable && HGSNetworkService.profiles.length > 0
 
                         Repeater {
-                            model: DMSNetworkService.profiles
+                            model: HGSNetworkService.profiles
 
                             delegate: Rectangle {
                                 id: vpnProfileRow
                                 required property var modelData
                                 required property int index
 
-                                readonly property bool isActive: DMSNetworkService.isActiveUuid(modelData.uuid)
+                                readonly property bool isActive: HGSNetworkService.isActiveUuid(modelData.uuid)
                                 readonly property bool isTransient: !!modelData.transient
                                 readonly property bool canExpand: modelData.canExpand !== false
                                 readonly property bool canDelete: modelData.canDelete !== false
@@ -253,7 +253,7 @@ Item {
                                 color: vpnRowArea.containsMouse ? Theme.primaryHoverLight : (isActive ? Theme.primaryPressed : Theme.surfaceLight)
                                 border.width: isActive ? 2 : 0
                                 border.color: Theme.primary
-                                opacity: DMSNetworkService.isBusy ? 0.6 : 1.0
+                                opacity: HGSNetworkService.isBusy ? 0.6 : 1.0
                                 clip: true
 
                                 Behavior on height {
@@ -267,9 +267,9 @@ Item {
                                     id: vpnRowArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    cursorShape: DMSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
-                                    enabled: !DMSNetworkService.isBusy
-                                    onClicked: DMSNetworkService.toggle(modelData.uuid)
+                                    cursorShape: HGSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
+                                    enabled: !HGSNetworkService.isBusy
+                                    onClicked: HGSNetworkService.toggle(modelData.uuid)
                                 }
 
                                 Column {
@@ -282,7 +282,7 @@ Item {
                                         height: 56 - Theme.spacingS * 2
                                         spacing: Theme.spacingS
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: isActive ? "vpn_lock" : "vpn_key_off"
                                             size: 20
                                             color: isActive ? Theme.primary : Theme.surfaceText
@@ -324,7 +324,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             visible: canExpand
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: isExpanded ? "expand_less" : "expand_more"
                                                 size: 18
@@ -355,7 +355,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             visible: canDelete
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "delete"
                                                 size: 18
@@ -397,7 +397,7 @@ Item {
                                             height: VPNService.configLoading ? 40 : 0
                                             visible: VPNService.configLoading
 
-                                            DankSpinner {
+                                            HGSSpinner {
                                                 anchors.centerIn: parent
                                                 size: 20
                                             }
@@ -488,7 +488,7 @@ Item {
                                             }
                                         }
 
-                                        DankToggle {
+                                        HGSToggle {
                                             width: parent.width
                                             text: I18n.tr("Autoconnect")
                                             checked: configData ? (configData.autoconnect || false) : false

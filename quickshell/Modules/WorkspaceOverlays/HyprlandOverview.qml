@@ -30,7 +30,7 @@ Scope {
                 visible: overviewScope.overviewOpen
                 color: "transparent"
 
-                WlrLayershell.namespace: "dms:workspace-overview"
+                WlrLayershell.namespace: "hgs:workspace-overview"
                 WlrLayershell.layer: WlrLayer.Overlay
                 WlrLayershell.exclusiveZone: -1
                 WlrLayershell.keyboardFocus: {

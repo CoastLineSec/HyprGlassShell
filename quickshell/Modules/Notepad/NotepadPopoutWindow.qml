@@ -37,7 +37,7 @@ FloatingWindow {
         }
     }
 
-    // A compositor close (e.g. niri close-window)
+    // A compositor close can bypass the normal visible binding path.
     onClosed: win.visible = false
 
     Item {
@@ -69,7 +69,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: "edit_note"
                     size: Theme.iconSize - 2
                     color: Theme.primary
@@ -91,7 +91,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXS
 
-                DankActionButton {
+                HGSActionButton {
                     visible: windowControls.canMaximize
                     circular: false
                     iconName: win.maximized ? "fullscreen_exit" : "fullscreen"
@@ -100,7 +100,7 @@ FloatingWindow {
                     onClicked: windowControls.tryToggleMaximize()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     circular: false
                     iconName: "close"
                     iconSize: Theme.iconSize - 4

@@ -71,7 +71,7 @@ Column {
         visible: root.description !== ""
     }
 
-    DankTextField {
+    HGSTextField {
         id: textField
         width: parent.width
         placeholderText: root.placeholder

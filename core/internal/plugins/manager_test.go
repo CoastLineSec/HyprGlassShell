@@ -41,7 +41,7 @@ func TestGetPluginsDir(t *testing.T) {
 
 		os.Setenv("XDG_CONFIG_HOME", "/tmp/test-config")
 		dir := getPluginsDir()
-		assert.Equal(t, "/tmp/test-config/DankMaterialShell/plugins", dir)
+		assert.Equal(t, "/tmp/test-config/HyprGlassShell/plugins", dir)
 	})
 
 	t.Run("falls back to home directory", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestGetPluginsDir(t *testing.T) {
 
 		os.Unsetenv("XDG_CONFIG_HOME")
 		dir := getPluginsDir()
-		assert.Contains(t, dir, ".config/DankMaterialShell/plugins")
+		assert.Contains(t, dir, ".config/HyprGlassShell/plugins")
 	})
 }
 

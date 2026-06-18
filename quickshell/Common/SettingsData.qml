@@ -17,7 +17,7 @@ Singleton {
 
     readonly property int settingsConfigVersion: 11
 
-    readonly property bool isGreeterMode: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
+    readonly property bool isGreeterMode: Quickshell.env("HGS_RUN_GREETER") === "1" || Quickshell.env("HGS_RUN_GREETER") === "true"
 
     enum Position {
         Top,
@@ -78,7 +78,7 @@ Singleton {
     readonly property string _homeUrl: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     readonly property string _configUrl: StandardPaths.writableLocation(StandardPaths.ConfigLocation)
     readonly property string _configDir: Paths.strip(_configUrl)
-    readonly property string pluginSettingsPath: _configDir + "/DankMaterialShell/plugin_settings.json"
+    readonly property string pluginSettingsPath: _configDir + "/HyprGlassShell/plugin_settings.json"
 
     property bool _loading: false
     property bool _pluginSettingsLoading: false
@@ -149,9 +149,9 @@ Singleton {
         });
     }
 
-    property alias dankBarLeftWidgetsModel: leftWidgetsModel
-    property alias dankBarCenterWidgetsModel: centerWidgetsModel
-    property alias dankBarRightWidgetsModel: rightWidgetsModel
+    property alias hgsBarLeftWidgetsModel: leftWidgetsModel
+    property alias hgsBarCenterWidgetsModel: centerWidgetsModel
+    property alias hgsBarRightWidgetsModel: rightWidgetsModel
 
     property string currentThemeName: "purple"
     property string currentThemeCategory: "generic"
@@ -163,22 +163,23 @@ Singleton {
     property string matugenTargetMonitor: ""
     property real popupTransparency: 1.0
     property real dockTransparency: 1
+    property bool hyprGlassColorGlassEnabled: false
+    onHyprGlassColorGlassEnabledChanged: saveSettings()
+    property string hyprGlassColorSource: "custom"
+    onHyprGlassColorSourceChanged: saveSettings()
+    property string hyprGlassCustomColor: "#88AADD"
+    onHyprGlassCustomColorChanged: saveSettings()
+    property real hyprGlassFrostAmount: 0.08
+    onHyprGlassFrostAmountChanged: saveSettings()
     property string widgetBackgroundColor: "sch"
     property string widgetColorMode: "default"
     property string controlCenterTileColorMode: "primary"
     property string buttonColorMode: "primary"
     property real cornerRadius: 12
-    property int niriLayoutGapsOverride: -1
-    property int niriLayoutRadiusOverride: -1
-    property int niriLayoutBorderSize: -1
     property int hyprlandLayoutGapsOverride: -1
     property int hyprlandLayoutRadiusOverride: -1
     property int hyprlandLayoutBorderSize: -1
     property bool hyprlandResizeOnBorder: false
-    property int mangoLayoutGapsOverride: -1
-    property int mangoLayoutRadiusOverride: -1
-    property int mangoLayoutBorderSize: -1
-    property bool mangoTrackpadNaturalScrolling: true
 
     property int firstDayOfWeek: -1
     property bool showWeekNumber: false
@@ -235,8 +236,6 @@ Singleton {
     property real blurBorderOpacity: 0.35
     onBlurBorderOpacityChanged: saveSettings()
     property string wallpaperFillMode: "Fill"
-    property bool blurredWallpaperLayer: false
-    property bool blurWallpaperOnOverview: false
 
     property bool frameEnabled: false
     onFrameEnabledChanged: saveSettings()
@@ -252,8 +251,6 @@ Singleton {
     onFrameScreenPreferencesChanged: saveSettings()
     property real frameBarSize: 40
     onFrameBarSizeChanged: saveSettings()
-    property bool frameShowOnOverview: false
-    onFrameShowOnOverviewChanged: saveSettings()
     property bool frameBlurEnabled: true
     onFrameBlurEnabledChanged: saveSettings()
     property bool frameCloseGaps: true
@@ -382,7 +379,6 @@ Singleton {
     property bool workspaceFollowFocus: false
     property bool showOccupiedWorkspacesOnly: false
     property bool reverseScrolling: false
-    property bool dwlShowAllTags: false
     property bool workspaceActiveAppHighlightEnabled: false
     property string workspaceColorMode: "default"
     property string workspaceOccupiedColorMode: "none"
@@ -446,22 +442,20 @@ Singleton {
     property var filePickerUsageHistory: ({})
     property bool sortAppsAlphabetically: false
     property int appLauncherGridColumns: 4
-    property bool spotlightCloseNiriOverview: true
     property bool rememberLastQuery: false
     property bool rememberLastMode: true
     property var spotlightSectionViewModes: ({})
     onSpotlightSectionViewModesChanged: saveSettings()
     property var appDrawerSectionViewModes: ({})
     onAppDrawerSectionViewModesChanged: saveSettings()
-    property bool niriOverviewOverlayEnabled: true
-    property string dankLauncherV2Size: "compact"
-    property bool dankLauncherV2BorderEnabled: false
-    property int dankLauncherV2BorderThickness: 2
-    property string dankLauncherV2BorderColor: "primary"
-    property bool dankLauncherV2ShowFooter: true
-    property bool dankLauncherV2UnloadOnClose: false
-    property bool dankLauncherV2IncludeFilesInAll: false
-    property bool dankLauncherV2IncludeFoldersInAll: false
+    property string hgsLauncherV2Size: "compact"
+    property bool hgsLauncherV2BorderEnabled: false
+    property int hgsLauncherV2BorderThickness: 2
+    property string hgsLauncherV2BorderColor: "primary"
+    property bool hgsLauncherV2ShowFooter: true
+    property bool hgsLauncherV2UnloadOnClose: false
+    property bool hgsLauncherV2IncludeFilesInAll: false
+    property bool hgsLauncherV2IncludeFoldersInAll: false
     property bool launcherUseOverlayLayer: false
     property string launcherStyle: "full"
     property bool spotlightBarShowModeChips: false
@@ -486,17 +480,10 @@ Singleton {
     property var cursorSettings: ({
             "theme": "System Default",
             "size": 24,
-            "niri": {
-                "hideWhenTyping": false,
-                "hideAfterInactiveMs": 0
-            },
             "hyprland": {
                 "hideOnKeyPress": false,
                 "hideOnTouch": false,
                 "inactiveTimeout": 0
-            },
-            "mango": {
-                "cursorHideTimeout": 0
             }
         })
     property var availableCursorThemes: ["System Default"]
@@ -514,7 +501,7 @@ Singleton {
     property string monoFontFamily: "Fira Code"
     property int fontWeight: Font.Normal
     property real fontScale: 1.0
-    property real dankBarFontScale: 1.0
+    property real hgsBarFontScale: 1.0
     property int textRenderType: SettingsData.TextRenderType.Qt
     property int textRenderQuality: SettingsData.TextRenderQuality.Default
 
@@ -532,16 +519,10 @@ Singleton {
     property bool notepadUseCompositorGap: false
     property int notepadEdgeGap: 0
 
-    // Compositor layout gap when enabled and available, else the manual value.
+    // Hyprland layout gap when enabled and available, else the manual value.
     readonly property int notepadEffectiveEdgeGap: {
         if (notepadUseCompositorGap) {
-            var g = -1;
-            if (CompositorService.isNiri)
-                g = niriLayoutGapsOverride;
-            else if (CompositorService.isHyprland)
-                g = hyprlandLayoutGapsOverride;
-            else if (CompositorService.isMango)
-                g = mangoLayoutGapsOverride;
+            var g = hyprlandLayoutGapsOverride;
             if (g >= 0)
                 return g;
         }
@@ -610,11 +591,9 @@ Singleton {
     property string muxCustomCommand: ""
     property string muxSessionFilter: ""
 
-    property bool runDmsMatugenTemplates: true
+    property bool runHgsMatugenTemplates: true
     property bool matugenTemplateGtk: true
-    property bool matugenTemplateNiri: true
     property bool matugenTemplateHyprland: true
-    property bool matugenTemplateMangowc: true
     property bool matugenTemplateQt5ct: true
     property bool matugenTemplateQt6ct: true
     property bool matugenTemplateFirefox: true
@@ -653,7 +632,6 @@ Singleton {
     property bool dockUseOverlayLayer: false
     property bool dockGroupByApp: false
     property bool dockRestoreSpecialWorkspaceOnClick: false
-    property bool dockOpenOnOverview: false
     property int dockPosition: SettingsData.Position.Bottom
     property real dockSpacing: 4
     property real dockBottomGap: 0
@@ -781,7 +759,6 @@ Singleton {
     property string displayNameMode: "system"
     property var screenPreferences: ({})
     property var showOnLastDisplay: ({})
-    property var niriOutputSettings: ({})
     property var hyprlandOutputSettings: ({})
     property var displayProfiles: ({})
     property var activeDisplayProfile: ({})
@@ -829,14 +806,12 @@ Singleton {
             "autoHideStrict": false,
             "autoHideDelay": 250,
             "showOnWindowsOpen": false,
-            "openOnOverview": false,
             "visible": true,
             "popupGapsAuto": true,
             "popupGapsManual": 4,
             "maximizeDetection": true,
             "useOverlayLayer": false,
             "scrollEnabled": true,
-            "scrollXBehavior": "column",
             "scrollYBehavior": "workspace",
             "shadowIntensity": 0,
             "shadowOpacity": 60,
@@ -1209,7 +1184,7 @@ Singleton {
         return (desktopWidgetInstances || []).filter(inst => !inst.group);
     }
 
-    signal forceDankBarLayoutRefresh
+    signal forceHGSBarLayoutRefresh
     signal forceDockLayoutRefresh
     signal widgetDataChanged
     signal workspaceIconsUpdated
@@ -1253,12 +1228,8 @@ Singleton {
     function updateCompositorLayout() {
         if (typeof CompositorService === "undefined")
             return;
-        if (CompositorService.isNiri && typeof NiriService !== "undefined")
-            NiriService.generateNiriLayoutConfig();
-        if (CompositorService.isHyprland && typeof HyprlandService !== "undefined")
+        if (typeof HyprlandService !== "undefined")
             HyprlandService.generateLayoutConfig();
-        if (CompositorService.isMango && typeof MangoService !== "undefined")
-            MangoService.generateLayoutConfig();
     }
 
     function applyStoredIconTheme() {
@@ -1307,7 +1278,7 @@ Singleton {
         const gtkThemeName = (iconTheme === "System Default") ? systemDefaultIconTheme : iconTheme;
         if (gtkThemeName === "System Default" || gtkThemeName === "")
             return;
-        if (typeof DMSService !== "undefined" && DMSService.apiVersion >= 3 && typeof PortalService !== "undefined") {
+        if (typeof HGSService !== "undefined" && HGSService.apiVersion >= 3 && typeof PortalService !== "undefined") {
             PortalService.setSystemIconTheme(gtkThemeName);
         }
 
@@ -1816,28 +1787,11 @@ Singleton {
     }
 
     function hasNamedWorkspaces() {
-        if (typeof NiriService === "undefined" || !CompositorService.isNiri)
-            return false;
-
-        for (var i = 0; i < NiriService.allWorkspaces.length; i++) {
-            var ws = NiriService.allWorkspaces[i];
-            if (ws.name && ws.name.trim() !== "")
-                return true;
-        }
         return false;
     }
 
     function getNamedWorkspaces() {
-        var namedWorkspaces = [];
-        if (typeof NiriService === "undefined" || !CompositorService.isNiri)
-            return namedWorkspaces;
-
-        for (const ws of NiriService.allWorkspaces) {
-            if (ws.name && ws.name.trim() !== "") {
-                namedWorkspaces.push(ws.name);
-            }
-        }
-        return namedWorkspaces;
+        return [];
     }
 
     function getPopupYPosition(barHeight) {
@@ -2391,14 +2345,14 @@ Singleton {
     }
 
     function sendTestNotification(index) {
-        const notifications = [["Notification Position Test", "DMS test notification 1 of 3 ~ Hi there!", "preferences-system"], ["Second Test", "DMS Notification 2 of 3 ~ Check it out!", "applications-graphics"], ["Third Test", "DMS notification 3 of 3 ~ Enjoy!", "face-smile"]];
+        const notifications = [["Notification Position Test", "HGS test notification 1 of 3 ~ Hi there!", "preferences-system"], ["Second Test", "HGS Notification 2 of 3 ~ Check it out!", "applications-graphics"], ["Third Test", "HGS notification 3 of 3 ~ Enjoy!", "face-smile"]];
 
         if (index < 0 || index >= notifications.length) {
             return;
         }
 
         const notif = notifications[index];
-        testNotificationProcess.command = ["notify-send", "-h", "int:transient:1", "-a", "DMS", "-i", notif[2], notif[0], notif[1]];
+        testNotificationProcess.command = ["notify-send", "-h", "int:transient:1", "-a", "HGS", "-i", notif[2], notif[0], notif[1]];
         testNotificationProcess.running = true;
     }
 
@@ -2483,16 +2437,8 @@ Singleton {
     function updateCompositorCursor() {
         if (typeof CompositorService === "undefined")
             return;
-        if (CompositorService.isNiri && typeof NiriService !== "undefined") {
-            NiriService.generateNiriCursorConfig();
-            return;
-        }
-        if (CompositorService.isHyprland && typeof HyprlandService !== "undefined") {
+        if (typeof HyprlandService !== "undefined") {
             HyprlandService.generateCursorConfig();
-            return;
-        }
-        if (CompositorService.isMango && typeof MangoService !== "undefined") {
-            MangoService.generateCursorConfig();
             return;
         }
     }
@@ -2606,22 +2552,22 @@ Singleton {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         const barPos = defaultBar?.position ?? SettingsData.Position.Top;
         if (position === SettingsData.Position.Bottom && barPos === SettingsData.Position.Bottom && showDock) {
-            setDankBarPosition(SettingsData.Position.Top);
+            setHGSBarPosition(SettingsData.Position.Top);
         }
         if (position === SettingsData.Position.Top && barPos === SettingsData.Position.Top && showDock) {
-            setDankBarPosition(SettingsData.Position.Bottom);
+            setHGSBarPosition(SettingsData.Position.Bottom);
         }
         if (position === SettingsData.Position.Left && barPos === SettingsData.Position.Left && showDock) {
-            setDankBarPosition(SettingsData.Position.Right);
+            setHGSBarPosition(SettingsData.Position.Right);
         }
         if (position === SettingsData.Position.Right && barPos === SettingsData.Position.Right && showDock) {
-            setDankBarPosition(SettingsData.Position.Left);
+            setHGSBarPosition(SettingsData.Position.Left);
         }
         saveSettings();
         Qt.callLater(() => forceDockLayoutRefresh());
     }
 
-    function setDankBarSpacing(spacing) {
+    function setHGSBarSpacing(spacing) {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2631,7 +2577,7 @@ Singleton {
         updateCompositorLayout();
     }
 
-    function setDankBarPosition(position) {
+    function setHGSBarPosition(position) {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (!defaultBar)
             return;
@@ -2656,7 +2602,7 @@ Singleton {
         });
     }
 
-    function setDankBarLeftWidgets(order) {
+    function setHGSBarLeftWidgets(order) {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2666,7 +2612,7 @@ Singleton {
         }
     }
 
-    function setDankBarCenterWidgets(order) {
+    function setHGSBarCenterWidgets(order) {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2676,7 +2622,7 @@ Singleton {
         }
     }
 
-    function setDankBarRightWidgets(order) {
+    function setHGSBarRightWidgets(order) {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2686,7 +2632,7 @@ Singleton {
         }
     }
 
-    function resetDankBarWidgetsToDefault() {
+    function resetHGSBarWidgetsToDefault() {
         var defaultLeft = ["launcherButton", "workspaceSwitcher", "focusedWindow"];
         var defaultCenter = ["music", "clock", "weather"];
         var defaultRight = ["systemTray", "clipboard", "notificationButton", "battery", "controlCenterButton"];
@@ -2974,7 +2920,7 @@ Singleton {
             Theme.reloadCustomThemeVariant();
     }
 
-    function toggleDankBarVisible() {
+    function toggleHGSBarVisible() {
         const defaultBar = barConfigs[0] || getBarConfig("default");
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -3014,42 +2960,6 @@ Singleton {
     function getPluginSettingsForPlugin(pluginId) {
         const settings = pluginSettings[pluginId];
         return settings ? JSON.parse(JSON.stringify(settings)) : {};
-    }
-
-    function getNiriOutputSetting(outputId, key, defaultValue) {
-        if (!niriOutputSettings[outputId])
-            return defaultValue;
-        return niriOutputSettings[outputId][key] !== undefined ? niriOutputSettings[outputId][key] : defaultValue;
-    }
-
-    function setNiriOutputSetting(outputId, key, value) {
-        const updated = JSON.parse(JSON.stringify(niriOutputSettings));
-        if (!updated[outputId])
-            updated[outputId] = {};
-        updated[outputId][key] = value;
-        niriOutputSettings = updated;
-        saveSettings();
-    }
-
-    function getNiriOutputSettings(outputId) {
-        const settings = niriOutputSettings[outputId];
-        return settings ? JSON.parse(JSON.stringify(settings)) : {};
-    }
-
-    function setNiriOutputSettings(outputId, settings) {
-        const updated = JSON.parse(JSON.stringify(niriOutputSettings));
-        updated[outputId] = settings;
-        niriOutputSettings = updated;
-        saveSettings();
-    }
-
-    function removeNiriOutputSettings(outputId) {
-        if (!niriOutputSettings[outputId])
-            return;
-        const updated = JSON.parse(JSON.stringify(niriOutputSettings));
-        delete updated[outputId];
-        niriOutputSettings = updated;
-        saveSettings();
     }
 
     function getHyprlandOutputSetting(outputId, key, defaultValue) {
@@ -3177,7 +3087,7 @@ Singleton {
     FileView {
         id: settingsFile
 
-        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.ConfigLocation) + "/DankMaterialShell/settings.json"
+        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.ConfigLocation) + "/HyprGlassShell/settings.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true

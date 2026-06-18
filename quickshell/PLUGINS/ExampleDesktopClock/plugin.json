@@ -3,13 +3,13 @@
     "name": "Desktop Clock",
     "description": "An example desktop widget displaying an analog clock",
     "version": "1.0.0",
-    "author": "DankMaterialShell",
+    "author": "HyprGlassShell",
     "type": "desktop",
     "capabilities": ["desktop-widget", "clock"],
     "component": "./DesktopClock.qml",
     "icon": "schedule",
     "settings": "./DesktopClockSettings.qml",
-    "requires_dms": ">=1.2.0",
+    "requires_hgs": ">=1.2.0",
     "permissions": [
         "settings_read",
         "settings_write"

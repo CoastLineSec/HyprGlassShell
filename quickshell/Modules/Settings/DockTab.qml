@@ -21,7 +21,7 @@ Item {
         onFileSelected: path => SettingsData.set("dockLauncherLogoCustomPath", path.replace("file://", ""))
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -70,23 +70,13 @@ Item {
                     text: I18n.tr("Intelligent Auto-hide")
                     description: I18n.tr("Show dock when floating windows don't overlap its area")
                     checked: SettingsData.dockSmartAutoHide
-                    visible: SettingsData.showDock && (CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango)
+                    visible: SettingsData.showDock
                     onToggled: checked => {
                         if (checked && SettingsData.dockAutoHide) {
                             SettingsData.set("dockAutoHide", false);
                         }
                         SettingsData.set("dockSmartAutoHide", checked);
                     }
-                }
-
-                SettingsToggleRow {
-                    settingKey: "dockOpenOnOverview"
-                    tags: ["dock", "overview", "niri"]
-                    text: I18n.tr("Show on Overview")
-                    description: I18n.tr("Always show the dock when niri's overview is open")
-                    checked: SettingsData.dockOpenOnOverview
-                    visible: CompositorService.isNiri
-                    onToggled: checked => SettingsData.set("dockOpenOnOverview", checked)
                 }
 
                 SettingsToggleRow {
@@ -110,7 +100,7 @@ Item {
                     width: parent.width
                     height: dockPositionButtonGroup.height
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: dockPositionButtonGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         model: [I18n.tr("Top"), I18n.tr("Bottom"), I18n.tr("Left"), I18n.tr("Right")]
@@ -180,7 +170,6 @@ Item {
                     text: I18n.tr("Restore Special Workspace Windows")
                     description: I18n.tr("When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window")
                     checked: SettingsData.dockRestoreSpecialWorkspaceOnClick
-                    visible: CompositorService.isHyprland
                     onToggled: checked => SettingsData.set("dockRestoreSpecialWorkspaceOnClick", checked)
                 }
 
@@ -270,29 +259,15 @@ Item {
                             height: logoModeGroup.implicitHeight
                             clip: true
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 id: logoModeGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
                                 minButtonWidth: parent.width < 480 ? 44 : 64
                                 textSize: parent.width < 480 ? Theme.fontSizeSmall : Theme.fontSizeMedium
                                 model: {
-                                    const modes = [I18n.tr("Apps Icon"), I18n.tr("OS Logo"), I18n.tr("Dank")];
-                                    if (CompositorService.isNiri) {
-                                        modes.push("niri");
-                                    } else if (CompositorService.isHyprland) {
-                                        modes.push("Hyprland");
-                                    } else if (CompositorService.isMango) {
-                                        modes.push("mango");
-                                    } else if (CompositorService.isSway) {
-                                        modes.push("Sway");
-                                    } else if (CompositorService.isScroll) {
-                                        modes.push("Scroll");
-                                    } else if (CompositorService.isMiracle) {
-                                        modes.push("Miracle");
-                                    } else {
-                                        modes.push(I18n.tr("Compositor"));
-                                    }
+                                    const modes = [I18n.tr("Apps Icon"), I18n.tr("OS Logo"), I18n.tr("HGS")];
+                                    modes.push("Hyprland");
                                     modes.push(I18n.tr("Custom"));
                                     return modes;
                                 }
@@ -301,7 +276,7 @@ Item {
                                         return 0;
                                     if (SettingsData.dockLauncherLogoMode === "os")
                                         return 1;
-                                    if (SettingsData.dockLauncherLogoMode === "dank")
+                                    if (SettingsData.dockLauncherLogoMode === "hgs")
                                         return 2;
                                     if (SettingsData.dockLauncherLogoMode === "compositor")
                                         return 3;
@@ -320,7 +295,7 @@ Item {
                                         SettingsData.set("dockLauncherLogoMode", "os");
                                         break;
                                     case 2:
-                                        SettingsData.set("dockLauncherLogoMode", "dank");
+                                        SettingsData.set("dockLauncherLogoMode", "hgs");
                                         break;
                                     case 3:
                                         SettingsData.set("dockLauncherLogoMode", "compositor");
@@ -359,7 +334,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: selectButton
                             iconName: "folder_open"
                             width: 36
@@ -395,7 +370,7 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     spacing: Theme.spacingM
 
-                                    DankButtonGroup {
+                                    HGSButtonGroup {
                                         id: colorModeGroup
                                         buttonPadding: parent.parent.width < 480 ? Theme.spacingS : Theme.spacingL
                                         minButtonWidth: parent.parent.width < 480 ? 44 : 64
@@ -565,7 +540,7 @@ Item {
                             color: Theme.surfaceVariantText
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             id: trashCustomCommandField
                             width: parent.width
                             placeholderText: "pcmanfm trash:///"

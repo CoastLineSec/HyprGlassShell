@@ -5,7 +5,7 @@
 //@ pragma Env QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Material
 //@ pragma UseQApplication
-//@ pragma AppId com.danklinux.dms
+//@ pragma AppId io.github.coastlinesec.hgs
 
 import QtQuick
 import Quickshell
@@ -13,24 +13,24 @@ import Quickshell
 ShellRoot {
     id: entrypoint
 
-    readonly property bool runGreeter: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
-    readonly property bool disableHotReload: Quickshell.env("DMS_DISABLE_HOT_RELOAD") === "1" || Quickshell.env("DMS_DISABLE_HOT_RELOAD") === "true"
+    readonly property bool runGreeter: Quickshell.env("HGS_RUN_GREETER") === "1" || Quickshell.env("HGS_RUN_GREETER") === "true"
+    readonly property bool disableHotReload: Quickshell.env("HGS_DISABLE_HOT_RELOAD") === "1" || Quickshell.env("HGS_DISABLE_HOT_RELOAD") === "true"
 
     Component.onCompleted: {
         Quickshell.watchFiles = !disableHotReload;
     }
 
     Loader {
-        id: dmsShellLoader
+        id: hgsShellLoader
         asynchronous: false
-        sourceComponent: DMSShell {}
+        sourceComponent: HGSShell {}
         active: !entrypoint.runGreeter
     }
 
     Loader {
-        id: dmsGreeterLoader
+        id: hgsGreeterLoader
         asynchronous: false
-        sourceComponent: DMSGreeter {}
+        sourceComponent: HGSGreeter {}
         active: entrypoint.runGreeter
     }
 }

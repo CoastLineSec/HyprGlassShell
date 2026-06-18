@@ -105,32 +105,31 @@ Rectangle {
                 },
                 {
                     "id": "compositor_layout",
-                    "text": CompositorService.isNiri ? "Niri" : (CompositorService.isHyprland ? "Hyprland" : "MangoWC"),
+                    "text": "Hyprland",
                     "icon": "layers",
-                    "tabIndex": 37,
-                    "layoutCapable": true
+                    "tabIndex": 37
                 }
             ]
         },
         {
-            "id": "dankbar",
-            "text": I18n.tr("Dank Bar"),
+            "id": "hgsbar",
+            "text": I18n.tr("HGS Bar"),
             "icon": "toolbar",
             "children": [
                 {
-                    "id": "dankbar_appearance",
+                    "id": "hgsbar_appearance",
                     "text": I18n.tr("Appearance"),
                     "icon": "palette",
                     "tabIndex": 6
                 },
                 {
-                    "id": "dankbar_settings",
+                    "id": "hgsbar_settings",
                     "text": I18n.tr("Settings"),
                     "icon": "tune",
                     "tabIndex": 3
                 },
                 {
-                    "id": "dankbar_widgets",
+                    "id": "hgsbar_widgets",
                     "text": I18n.tr("Widgets"),
                     "icon": "widgets",
                     "tabIndex": 22
@@ -238,7 +237,7 @@ Rectangle {
             "id": "network",
             "text": I18n.tr("Network"),
             "icon": "wifi",
-            "dmsOnly": true,
+            "hgsOnly": true,
             "children": [
                 {
                     "id": "network_status",
@@ -282,8 +281,7 @@ Rectangle {
                     "id": "running_apps",
                     "text": I18n.tr("Running Apps"),
                     "icon": "app_registration",
-                    "tabIndex": 19,
-                    "hyprlandNiriOnly": true
+                    "tabIndex": 19
                 },
                 {
                     "id": "autostart",
@@ -296,8 +294,7 @@ Rectangle {
                     "id": "window_rules",
                     "text": I18n.tr("Window Rules"),
                     "icon": "select_window",
-                    "tabIndex": 38,
-                    "windowRulesCapable": true
+                    "tabIndex": 38
                 }
             ]
         },
@@ -381,12 +378,6 @@ Rectangle {
             ]
         },
         {
-            "id": "plugins",
-            "text": I18n.tr("Plugins"),
-            "icon": "extension",
-            "tabIndex": 12
-        },
-        {
             "id": "separator",
             "separator": true
         },
@@ -399,7 +390,7 @@ Rectangle {
     ]
 
     function isItemVisible(item) {
-        if (item.dmsOnly && NetworkService.usingLegacy)
+        if (item.hgsOnly && NetworkService.usingLegacy)
             return false;
         if (item.cupsOnly && !CupsService.cupsAvailable)
             return false;
@@ -407,15 +398,7 @@ Rectangle {
             return false;
         if (item.soundsOnly && !AudioService.soundsAvailable)
             return false;
-        if (item.hyprlandNiriOnly && !CompositorService.isNiri && !CompositorService.isHyprland)
-            return false;
-        if (item.windowRulesCapable && !CompositorService.isNiri && !CompositorService.isHyprland && !CompositorService.isMango)
-            return false;
-        if (item.layoutCapable && !CompositorService.isNiri && !CompositorService.isHyprland && !CompositorService.isMango)
-            return false;
-        if (item.niriOnly && !CompositorService.isNiri)
-            return false;
-        if (item.clipboardOnly && (!DMSService.isConnected || DMSService.apiVersion < 23))
+        if (item.clipboardOnly && (!HGSService.isConnected || HGSService.apiVersion < 23))
             return false;
         if (item.updaterOnly && !SystemUpdateService.sysupdateAvailable)
             return false;
@@ -687,7 +670,7 @@ Rectangle {
         searchSelectedIndex = Math.max(0, Math.min(searchSelectedIndex + delta, SettingsSearchService.results.length - 1));
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: sidebarColumn.height
@@ -718,7 +701,7 @@ Rectangle {
                 height: Theme.spacingXS
             }
 
-            DankTextField {
+            HGSTextField {
                 id: searchField
                 width: parent.width - parent.leftPadding - parent.rightPadding
                 placeholderText: I18n.tr("Search...")
@@ -821,7 +804,7 @@ Rectangle {
                             return "transparent";
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: resultRipple
                             rippleColor: root.searchSelectedIndex === resultDelegate.index ? Theme.buttonText : Theme.surfaceText
                             cornerRadius: resultDelegate.radius
@@ -837,7 +820,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: resultDelegate.modelData.icon || "settings"
                                 size: Theme.iconSize - 2
                                 color: root.searchSelectedIndex === resultDelegate.index ? Theme.buttonText : Theme.surfaceText
@@ -953,7 +936,7 @@ Rectangle {
                             return "transparent";
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: categoryRipple
                             rippleColor: categoryRow.isActive ? Theme.buttonText : Theme.surfaceText
                             cornerRadius: categoryRow.radius
@@ -967,7 +950,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: categoryDelegate.modelData.icon || ""
                                 size: Theme.iconSize - 2
                                 color: categoryRow.isActive ? Theme.buttonText : Theme.surfaceText
@@ -983,7 +966,7 @@ Rectangle {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             id: expandIcon
                             name: root.isCategoryExpanded(categoryDelegate.modelData.id) ? "expand_less" : "expand_more"
                             size: Theme.iconSize - 4
@@ -1052,7 +1035,7 @@ Rectangle {
                                     return "transparent";
                                 }
 
-                                DankRipple {
+                                HGSRipple {
                                     id: childRipple
                                     rippleColor: childDelegate.isActive ? Theme.buttonText : Theme.surfaceText
                                     cornerRadius: childDelegate.radius
@@ -1066,7 +1049,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Theme.spacingM
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: childDelegate.modelData.icon || ""
                                         size: Theme.iconSize - 4
                                         color: childDelegate.isActive ? Theme.buttonText : Theme.surfaceVariantText

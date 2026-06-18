@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	mocks_utils "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/utils"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	mocks_utils "github.com/CoastLineSec/HyprGlassShell/core/internal/mocks/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -436,8 +436,8 @@ func TestBuildMergedConfigColorsOnly(t *testing.T) {
 	}
 
 	content := string(output)
-	assert.Contains(t, content, "[templates.dank]")
-	assert.Contains(t, content, "output_path = '"+filepath.Join(opts.StateDir, "dms-colors.json")+"'")
+	assert.Contains(t, content, "[templates.hgs]")
+	assert.Contains(t, content, "output_path = '"+filepath.Join(opts.StateDir, "hgs-colors.json")+"'")
 	assert.NotContains(t, content, "[templates.gtk]")
 	assert.False(t, strings.Contains(content, "output_path = 'CONFIG_DIR/"), "colors-only config should not emit app template outputs")
 }

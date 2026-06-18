@@ -6,10 +6,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:power-menu"
+    layerNamespace: "hgs:power-menu"
     keepPopoutsOpen: true
     useOverlayLayer: true
 
@@ -86,7 +86,7 @@ DankModal {
         }
         if (action === "restart") {
             close();
-            Quickshell.execDetached(["dms", "restart"]);
+            Quickshell.execDetached(["hgs", "restart"]);
             return;
         }
         if (action === "switchuser") {
@@ -215,7 +215,7 @@ DankModal {
         case "restart":
             return {
                 "icon": "refresh",
-                "label": I18n.tr("Restart DMS"),
+                "label": I18n.tr("Restart HGS"),
                 "key": "D"
             };
         case "switchuser":
@@ -597,7 +597,7 @@ DankModal {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: gridButtonRect.actionData.icon
                                 size: Theme.iconSize + 8
                                 color: {
@@ -740,7 +740,7 @@ DankModal {
                             }
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: listButtonRect.actionData.icon
                                 size: Theme.iconSize + 4
                                 color: {
@@ -817,7 +817,7 @@ DankModal {
                     }
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: root.showHoldHint ? "warning" : "touch_app"
                     size: Theme.fontSizeSmall
                     color: root.showHoldHint ? Theme.warning : Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.6)

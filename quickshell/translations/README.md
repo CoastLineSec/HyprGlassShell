@@ -1,6 +1,6 @@
-# DankMaterialShell Translations
+# HyprGlassShell Translations
 
-This directory contains translation files for DankMaterialShell extracted from all qsTr() calls in the QML codebase.
+This directory contains translation files for HyprGlassShell extracted from all qsTr() calls in the QML codebase.
 
 ## Files
 
@@ -50,7 +50,7 @@ The JSON files follow POEditor's import format:
 To update the translation files after code changes:
 
 ```bash
-cd /home/brandon/.config/quickshell/DankMaterialShellGit/translations
+cd /home/brandon/.config/quickshell/HyprGlassShellGit/translations
 ./extract_translations.py
 ```
 

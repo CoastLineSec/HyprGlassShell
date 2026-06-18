@@ -82,7 +82,7 @@ FocusScope {
             visible: active
             focus: active
 
-            sourceComponent: DankBarTab {
+            sourceComponent: HGSBarTab {
                 parentModal: root.parentModal
             }
 
@@ -140,19 +140,19 @@ FocusScope {
             onLoaded: loadedOnce = true
         }
 
-        DankSpinner {
+        HGSSpinner {
             anchors.centerIn: parent
             visible: root.currentIndex === 38 && windowRulesLoader.status === Loader.Loading
         }
 
         Loader {
-            id: dankBarAppearanceLoader
+            id: hgsBarAppearanceLoader
             anchors.fill: parent
             active: root.currentIndex === 6
             visible: active
             focus: active
 
-            sourceComponent: DankBarAppearanceTab {
+            sourceComponent: HGSBarAppearanceTab {
                 parentModal: root.parentModal
             }
 
@@ -366,23 +366,6 @@ FocusScope {
         }
 
         Loader {
-            id: pluginsLoader
-            anchors.fill: parent
-            active: root.currentIndex === 12
-            visible: active
-            focus: active
-
-            sourceComponent: PluginsTab {
-                parentModal: root.parentModal
-            }
-
-            onActiveChanged: {
-                if (active && item)
-                    Qt.callLater(() => item.forceActiveFocus());
-            }
-        }
-
-        Loader {
             id: aboutLoader
             anchors.fill: parent
             active: root.currentIndex === 13
@@ -558,7 +541,7 @@ FocusScope {
             }
         }
 
-        DankSpinner {
+        HGSSpinner {
             anchors.centerIn: parent
             visible: root.currentIndex === 22 && widgetsLoader.status === Loader.Loading
         }

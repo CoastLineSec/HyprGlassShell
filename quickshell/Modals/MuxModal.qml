@@ -10,10 +10,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: muxModal
 
-    layerNamespace: "dms:mux"
+    layerNamespace: "hgs:mux"
 
     property int selectedIndex: -1
     property string searchText: ""
@@ -308,7 +308,7 @@ DankModal {
             }
 
             // Search field
-            DankTextField {
+            HGSTextField {
                 id: searchField
 
                 width: parent.width
@@ -351,7 +351,7 @@ DankModal {
                         radius: 20
                         color: Theme.primaryContainer
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "add"
                             size: Theme.iconSize
@@ -480,7 +480,7 @@ DankModal {
                                         visible: MuxService.supportsRename
                                         color: renameMouse.containsMouse ? Theme.surfaceContainerHighest : "transparent"
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "edit"
                                             size: Theme.iconSizeSmall
@@ -503,7 +503,7 @@ DankModal {
                                         radius: 18
                                         color: deleteMouse.containsMouse ? Theme.errorContainer : "transparent"
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "delete"
                                             size: Theme.iconSizeSmall
@@ -534,7 +534,7 @@ DankModal {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                HGSIcon {
                                     name: muxModal.searchText.length > 0 ? "search_off" : "terminal"
                                     size: 48
                                     color: Theme.surfaceVariantText

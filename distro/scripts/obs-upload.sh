@@ -1,14 +1,14 @@
 #!/bin/bash
-# Unified OBS upload script for dms packages
+# Unified OBS upload script for hgs packages
 # Handles Debian and OpenSUSE builds for both x86_64 and aarch64
 # Usage: ./distro/scripts/obs-upload.sh [distro] <package-name> [commit-message|rebuild-number]
 #
 # Examples:
-#   ./distro/scripts/obs-upload.sh dms "Update to v1.0.2"
-#   ./distro/scripts/obs-upload.sh debian dms
-#   ./distro/scripts/obs-upload.sh opensuse dms-git
-#   ./distro/scripts/obs-upload.sh debian dms-git 2    # Rebuild with db2 suffix
-#   ./distro/scripts/obs-upload.sh dms-git --rebuild=2 # Rebuild with db2 suffix (flag syntax)
+#   ./distro/scripts/obs-upload.sh hgs "Update to v1.0.2"
+#   ./distro/scripts/obs-upload.sh debian hgs
+#   ./distro/scripts/obs-upload.sh opensuse hgs-git
+#   ./distro/scripts/obs-upload.sh debian hgs-git 2    # Rebuild with db2 suffix
+#   ./distro/scripts/obs-upload.sh hgs-git --rebuild=2 # Rebuild with db2 suffix (flag syntax)
 
 set -e
 
@@ -68,14 +68,14 @@ fi
 
 OBS_BASE_PROJECT="home:AvengeMedia"
 OBS_BASE="$HOME/.cache/osc-checkouts"
-AVAILABLE_PACKAGES=(dms dms-git dms-greeter)
+AVAILABLE_PACKAGES=(hgs hgs-git hgs-greeter)
 
 if [[ -z "$PACKAGE" ]]; then
     echo "Available packages:"
     echo ""
-    echo "  1. dms         - Stable DMS"
-    echo "  2. dms-git     - Nightly DMS"
-    echo "  3. dms-greeter - DMS greeter for greetd"
+    echo "  1. hgs         - Stable HGS"
+    echo "  2. hgs-git     - Nightly HGS"
+    echo "  3. hgs-greeter - HGS greeter for greetd"
     echo "  a. all"
     echo ""
     read -r -p "Select package (1-${#AVAILABLE_PACKAGES[@]}, a): " selection
@@ -115,17 +115,17 @@ osc_retry() {
     done
 }
 
-# Bundled Go for dms-git OBS builds (offline VM); filenames must match distro/opensuse/dms-git.spec Source1/2.
-GO_TOOLCHAIN_CACHE="${GO_TOOLCHAIN_CACHE:-$HOME/.cache/dms-obs-go-toolchain}"
+# Bundled Go for hgs-git OBS builds (offline VM); filenames must match distro/opensuse/hgs-git.spec Source1/2.
+GO_TOOLCHAIN_CACHE="${GO_TOOLCHAIN_CACHE:-$HOME/.cache/hgs-obs-go-toolchain}"
 
-dms_git_go_toolchain_version() {
+hgs_git_go_toolchain_version() {
     grep -m1 '^go ' "$REPO_ROOT/core/go.mod" 2>/dev/null | awk '{print $2}'
 }
 
-ensure_dms_git_go_tarballs() {
+ensure_hgs_git_go_tarballs() {
     local dest="$1"
     local ver arch url cached
-    ver="$(dms_git_go_toolchain_version)"
+    ver="$(hgs_git_go_toolchain_version)"
     if [[ -z "$ver" ]]; then
         echo "ERROR: Could not read Go version from core/go.mod"
         exit 1
@@ -200,7 +200,7 @@ check_obs_version_exists() {
     return 1
 }
 
-update_debian_dms_service() {
+update_debian_hgs_service() {
     local service_path="$1"
     if [[ -z "$service_path" || ! -f "$service_path" ]]; then
         return 0
@@ -217,11 +217,11 @@ update_debian_dms_service() {
     fi
 
     sed -i "s|/archive/refs/tags/v[0-9][^\"]*\.tar\.gz|/archive/refs/tags/v${base_version}.tar.gz|" "$service_path"
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-distropkg-amd64\.gz|/releases/download/v${base_version}/dms-distropkg-amd64.gz|" "$service_path"
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-distropkg-arm64\.gz|/releases/download/v${base_version}/dms-distropkg-arm64.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/hgs-distropkg-amd64\.gz|/releases/download/v${base_version}/hgs-distropkg-amd64.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/hgs-distropkg-arm64\.gz|/releases/download/v${base_version}/hgs-distropkg-arm64.gz|" "$service_path"
 }
 
-update_debian_dms_greeter_service() {
+update_debian_hgs_greeter_service() {
     local service_path="$1"
     if [[ -z "$service_path" || ! -f "$service_path" ]]; then
         return 0
@@ -234,7 +234,7 @@ update_debian_dms_greeter_service() {
     if [[ -z "$base_version" ]]; then
         return 0
     fi
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-qml\.tar\.gz|/releases/download/v${base_version}/dms-qml.tar.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/hgs-qml\.tar\.gz|/releases/download/v${base_version}/hgs-qml.tar.gz|" "$service_path"
 }
 
 update_opensuse_git_spec() {
@@ -243,7 +243,7 @@ update_opensuse_git_spec() {
     if [[ -z "$spec_path" || ! -f "$spec_path" ]]; then
         return 0
     fi
-    go_ver="$(dms_git_go_toolchain_version)"
+    go_ver="$(hgs_git_go_toolchain_version)"
     if [[ -n "$go_ver" ]] && grep -q '^%global go_toolchain_version' "$spec_path"; then
         sed -i "s/^%global go_toolchain_version .*/%global go_toolchain_version ${go_ver}/" "$spec_path"
         echo "    Synced %global go_toolchain_version to ${go_ver} (core/go.mod)"
@@ -317,14 +317,14 @@ if [[ ! -d "distro/debian/$PACKAGE" ]]; then
 fi
 
 case "$PACKAGE" in
-dms)
-    PROJECT="dms"
+hgs)
+    PROJECT="hgs"
     ;;
-dms-git)
-    PROJECT="dms-git"
+hgs-git)
+    PROJECT="hgs-git"
     ;;
-dms-greeter)
-    PROJECT="danklinux"
+hgs-greeter)
+    PROJECT="coastlinesec"
     ;;
 *)
     echo "Error: Unknown package '$PACKAGE'"
@@ -400,7 +400,7 @@ if [[ -d "distro/debian/$PACKAGE/debian" ]]; then
         COMMIT_COUNT=$(git rev-list --count HEAD)
         BASE_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
         if [[ -z "$BASE_VERSION" ]]; then
-            BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/dms.spec | head -1 || echo "1.0.2")
+            BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/hgs.spec | head -1 || echo "1.0.2")
         fi
         CHANGELOG_VERSION="${BASE_VERSION}+git${COMMIT_COUNT}.${COMMIT_HASH}"
         echo "  - Generated git snapshot version: $CHANGELOG_VERSION"
@@ -423,10 +423,10 @@ if [[ -d "distro/debian/$PACKAGE/debian" ]]; then
     fi
 
     # Keep Debian _service in sync with changelog version
-    if [[ "$PACKAGE" == "dms" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
-        update_debian_dms_service "distro/debian/$PACKAGE/_service"
-    elif [[ "$PACKAGE" == "dms-greeter" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
-        update_debian_dms_greeter_service "distro/debian/$PACKAGE/_service"
+    if [[ "$PACKAGE" == "hgs" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
+        update_debian_hgs_service "distro/debian/$PACKAGE/_service"
+    elif [[ "$PACKAGE" == "hgs-greeter" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
+        update_debian_hgs_greeter_service "distro/debian/$PACKAGE/_service"
     fi
 
     # Check if this version already exists in OBS
@@ -480,16 +480,16 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ -f "distro/opensuse/$PACKAGE.spec" ]];
 
     if [[ "$PACKAGE" == *"-git" ]]; then
         update_opensuse_git_spec "$WORK_DIR/$PACKAGE.spec"
-    elif [[ "$PACKAGE" == "dms-greeter" ]] && [[ -n "$CHANGELOG_VERSION" ]]; then
-        DMS_GREETER_BASE_VERSION=$(echo "$CHANGELOG_VERSION" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
-        DMS_GREETER_RELEASE=$(echo "$CHANGELOG_VERSION" | sed -E 's/.*db([0-9]+)$/\1/' || echo "1")
+    elif [[ "$PACKAGE" == "hgs-greeter" ]] && [[ -n "$CHANGELOG_VERSION" ]]; then
+        HGS_GREETER_BASE_VERSION=$(echo "$CHANGELOG_VERSION" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
+        HGS_GREETER_RELEASE=$(echo "$CHANGELOG_VERSION" | sed -E 's/.*db([0-9]+)$/\1/' || echo "1")
         CHANGELOG_DATE=$(date '+%a %b %d %Y')
-        sed -i "s/VERSION_PLACEHOLDER/${DMS_GREETER_BASE_VERSION}/g" "$WORK_DIR/$PACKAGE.spec"
-        sed -i "s/RELEASE_PLACEHOLDER/${DMS_GREETER_RELEASE}/g" "$WORK_DIR/$PACKAGE.spec"
+        sed -i "s/VERSION_PLACEHOLDER/${HGS_GREETER_BASE_VERSION}/g" "$WORK_DIR/$PACKAGE.spec"
+        sed -i "s/RELEASE_PLACEHOLDER/${HGS_GREETER_RELEASE}/g" "$WORK_DIR/$PACKAGE.spec"
         sed -i "s/CHANGELOG_DATE_PLACEHOLDER/${CHANGELOG_DATE}/g" "$WORK_DIR/$PACKAGE.spec"
         # Explicitly set Version:/Release: in case the spec uses %{version} macro
-        sed -i "s/^Version:.*/Version:        ${DMS_GREETER_BASE_VERSION}/" "$WORK_DIR/$PACKAGE.spec"
-        sed -i "s/^Release:.*/Release:        ${DMS_GREETER_RELEASE}%{?dist}/" "$WORK_DIR/$PACKAGE.spec"
+        sed -i "s/^Version:.*/Version:        ${HGS_GREETER_BASE_VERSION}/" "$WORK_DIR/$PACKAGE.spec"
+        sed -i "s/^Release:.*/Release:        ${HGS_GREETER_RELEASE}%{?dist}/" "$WORK_DIR/$PACKAGE.spec"
     fi
 
     if [[ -f "$WORK_DIR/.osc/$PACKAGE.spec" ]]; then
@@ -541,7 +541,7 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
 
         if [[ -n "$GIT_URL" ]]; then
             echo "    Cloning git source from: $GIT_URL (revision: ${GIT_REVISION:-master})"
-            SOURCE_DIR="$TEMP_DIR/dms-git-source"
+            SOURCE_DIR="$TEMP_DIR/hgs-git-source"
             if git clone --depth 1 --branch "${GIT_REVISION:-master}" "$GIT_URL" "$SOURCE_DIR" 2>/dev/null ||
                 git clone --depth 1 "$GIT_URL" "$SOURCE_DIR" 2>/dev/null; then
                 cd "$SOURCE_DIR"
@@ -555,17 +555,17 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
         fi
     fi
 
-    # For dms-greeter: download dms-qml.tar.gz from _service URL
-    if [[ -z "${SOURCE_DIR:-}" ]] && [[ "$PACKAGE" == "dms-greeter" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
-        DMS_GREETER_URL=$(grep -A 5 'name="download_url"' "distro/debian/$PACKAGE/_service" | grep "path" | sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/' | head -1)
-        if [[ -n "$DMS_GREETER_URL" ]]; then
-            DMS_GREETER_FULL_URL="https://github.com${DMS_GREETER_URL}"
-            echo "    Downloading dms-greeter source from: $DMS_GREETER_FULL_URL"
-            if wget -q -O "$TEMP_DIR/dms-qml.tar.gz" "$DMS_GREETER_FULL_URL" 2>/dev/null || \
-                curl -L -f -s -o "$TEMP_DIR/dms-qml.tar.gz" "$DMS_GREETER_FULL_URL" 2>/dev/null; then
+    # For hgs-greeter: download hgs-qml.tar.gz from _service URL
+    if [[ -z "${SOURCE_DIR:-}" ]] && [[ "$PACKAGE" == "hgs-greeter" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
+        HGS_GREETER_URL=$(grep -A 5 'name="download_url"' "distro/debian/$PACKAGE/_service" | grep "path" | sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/' | head -1)
+        if [[ -n "$HGS_GREETER_URL" ]]; then
+            HGS_GREETER_FULL_URL="https://github.com${HGS_GREETER_URL}"
+            echo "    Downloading hgs-greeter source from: $HGS_GREETER_FULL_URL"
+            if wget -q -O "$TEMP_DIR/hgs-qml.tar.gz" "$HGS_GREETER_FULL_URL" 2>/dev/null || \
+                curl -L -f -s -o "$TEMP_DIR/hgs-qml.tar.gz" "$HGS_GREETER_FULL_URL" 2>/dev/null; then
                 cd "$TEMP_DIR"
-                tar -xzf dms-qml.tar.gz
-                if [[ -f "Modules/Greetd/assets/dms-greeter" ]]; then
+                tar -xzf hgs-qml.tar.gz
+                if [[ -f "Modules/Greetd/assets/hgs-greeter" ]]; then
                     SOURCE_DIR="$TEMP_DIR"
                 fi
                 cd "$REPO_ROOT"
@@ -581,8 +581,8 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
             cd "$OBS_TARBALL_DIR"
 
             case "$PACKAGE" in
-            dms-greeter)
-                EXPECTED_DIR="dms-qml"
+            hgs-greeter)
+                EXPECTED_DIR="hgs-qml"
                 echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                 mkdir -p "$EXPECTED_DIR"
                 cp -a "$SOURCE_DIR"/. "$EXPECTED_DIR/"
@@ -590,12 +590,12 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
                 rm -rf "$EXPECTED_DIR"
                 echo "    Created $SOURCE0 ($(stat -c%s "$WORK_DIR/$SOURCE0" 2>/dev/null || echo 0) bytes)"
                 ;;
-            dms)
-                DMS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
-                EXPECTED_DIR="DankMaterialShell-${DMS_VERSION}"
+            hgs)
+                HGS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
+                EXPECTED_DIR="HyprGlassShell-${HGS_VERSION}"
                 ;;
-            dms-git)
-                EXPECTED_DIR="dms-git-source"
+            hgs-git)
+                EXPECTED_DIR="hgs-git-source"
                 ;;
             *)
                 EXPECTED_DIR=$(basename "$SOURCE_DIR")
@@ -611,9 +611,9 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
             cd "$REPO_ROOT"
             rm -rf "$OBS_TARBALL_DIR"
 
-            if [[ "$PACKAGE" == "dms-git" ]]; then
+            if [[ "$PACKAGE" == "hgs-git" ]]; then
                 echo "  - Staging bundled Go toolchains for RPM (Source1/Source2)"
-                ensure_dms_git_go_tarballs "$WORK_DIR"
+                ensure_hgs_git_go_tarballs "$WORK_DIR"
             fi
         fi
     else
@@ -655,7 +655,7 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
 
                 if [[ -n "$GIT_URL" ]]; then
                     echo "    Cloning git source from: $GIT_URL (revision: ${GIT_REVISION:-master})"
-                    SOURCE_DIR="$TEMP_DIR/dms-git-source"
+                    SOURCE_DIR="$TEMP_DIR/hgs-git-source"
                     if git clone --depth 1 --branch "${GIT_REVISION:-master}" "$GIT_URL" "$SOURCE_DIR" 2>/dev/null ||
                         git clone --depth 1 "$GIT_URL" "$SOURCE_DIR" 2>/dev/null; then
                         cd "$SOURCE_DIR"
@@ -670,7 +670,7 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                         exit 1
                     fi
                 fi
-            elif grep -q "download_url" "distro/debian/$PACKAGE/_service" && [[ "$PACKAGE" != "dms-git" ]]; then
+            elif grep -q "download_url" "distro/debian/$PACKAGE/_service" && [[ "$PACKAGE" != "hgs-git" ]]; then
                 ALL_PATHS=$(grep -A 5 '<service name="download_url">' "distro/debian/$PACKAGE/_service" |
                     grep '<param name="path">' |
                     sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/')
@@ -723,20 +723,20 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                         elif [[ "$SOURCE_URL" == *.tar.gz ]] || [[ "$SOURCE_URL" == *.tgz ]]; then
                             tar -xzf source-archive
                         fi
-                        SOURCE_DIR=$(find . -maxdepth 1 -type d -name "DankMaterialShell-*" | head -1)
+                        SOURCE_DIR=$(find . -maxdepth 1 -type d -name "HyprGlassShell-*" | head -1)
                         if [[ -z "$SOURCE_DIR" ]]; then
                             SOURCE_DIR=$(find . -maxdepth 1 -type d ! -name "." | head -1)
                         fi
-                        # dms-qml.tar.gz extracts flat (quickshell contents, no top-level dir)
-                        # Create dms-qml wrapper so combined tarball has correct top-level dir (like dms)
-                        if [[ "$PACKAGE" == "dms-greeter" ]] && [[ -f "Modules/Greetd/assets/dms-greeter" ]]; then
-                            mkdir -p dms-qml
+                        # hgs-qml.tar.gz extracts flat (quickshell contents, no top-level dir)
+                        # Create hgs-qml wrapper so combined tarball has correct top-level dir (like hgs)
+                        if [[ "$PACKAGE" == "hgs-greeter" ]] && [[ -f "Modules/Greetd/assets/hgs-greeter" ]]; then
+                            mkdir -p hgs-qml
                             for f in *; do
-                                if [[ -e "$f" && "$f" != "dms-qml" && "$f" != "source-archive" ]]; then
-                                    mv "$f" dms-qml/ 2>/dev/null || true
+                                if [[ -e "$f" && "$f" != "hgs-qml" && "$f" != "source-archive" ]]; then
+                                    mv "$f" hgs-qml/ 2>/dev/null || true
                                 fi
                             done
-                            SOURCE_DIR="dms-qml"
+                            SOURCE_DIR="hgs-qml"
                         fi
                         if [[ -z "$SOURCE_DIR" || ! -d "$SOURCE_DIR" ]]; then
                             echo "Error: Failed to extract source archive or find source directory"
@@ -776,8 +776,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
 
         echo "==> Found source directory: $SOURCE_DIR"
 
-        # Vendor Go dependencies for dms-git
-        if [[ "$PACKAGE" == "dms-git" ]] && [[ -d "$SOURCE_DIR/core" ]]; then
+        # Vendor Go dependencies for hgs-git
+        if [[ "$PACKAGE" == "hgs-git" ]] && [[ -d "$SOURCE_DIR/core" ]]; then
             echo "  - Vendoring Go dependencies for offline OBS build..."
             cd "$SOURCE_DIR/core"
 
@@ -805,8 +805,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
             echo "  - Creating OpenSUSE-compatible source tarballs"
 
             SOURCE0=$(grep "^Source0:" "distro/opensuse/$PACKAGE.spec" | awk '{print $2}' | head -1)
-            if [[ -z "$SOURCE0" && "$PACKAGE" == "dms-git" ]]; then
-                SOURCE0="dms-git-source.tar.gz"
+            if [[ -z "$SOURCE0" && "$PACKAGE" == "hgs-git" ]]; then
+                SOURCE0="hgs-git-source.tar.gz"
             fi
 
             if [[ -n "$SOURCE0" ]]; then
@@ -814,8 +814,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 cd "$OBS_TARBALL_DIR"
 
                 case "$PACKAGE" in
-                dms-greeter)
-                    EXPECTED_DIR="dms-qml"
+                hgs-greeter)
+                    EXPECTED_DIR="hgs-qml"
                     echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                     mkdir -p "$EXPECTED_DIR"
                     cp -a "$SOURCE_DIR"/. "$EXPECTED_DIR/"
@@ -829,9 +829,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                     rm -rf "$EXPECTED_DIR"
                     echo "    Created $SOURCE0 ($(stat -c%s "$WORK_DIR/$SOURCE0" 2>/dev/null || echo 0) bytes)"
                     ;;
-                dms)
-                    DMS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
-                    EXPECTED_DIR="DankMaterialShell-${DMS_VERSION}"
+                hgs)
+                    HGS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
+                    EXPECTED_DIR="HyprGlassShell-${HGS_VERSION}"
                     echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                     cp -r "$SOURCE_DIR" "$EXPECTED_DIR"
                     if [[ "$SOURCE0" == *.tar.xz ]]; then
@@ -844,8 +844,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                     rm -rf "$EXPECTED_DIR"
                     echo "    Created $SOURCE0 ($(stat -c%s "$WORK_DIR/$SOURCE0" 2>/dev/null || echo 0) bytes)"
                     ;;
-                dms-git)
-                    EXPECTED_DIR="dms-git-source"
+                hgs-git)
+                    EXPECTED_DIR="hgs-git-source"
                     echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                     cp -r "$SOURCE_DIR" "$EXPECTED_DIR"
                     if [[ "$SOURCE0" == *.tar.xz ]]; then
@@ -876,9 +876,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 cd "$REPO_ROOT"
                 rm -rf "$OBS_TARBALL_DIR"
 
-                if [[ "$PACKAGE" == "dms-git" ]]; then
+                if [[ "$PACKAGE" == "hgs-git" ]]; then
                     echo "  - Staging bundled Go toolchains for RPM (Source1/Source2)"
-                    ensure_dms_git_go_tarballs "$WORK_DIR"
+                    ensure_hgs_git_go_tarballs "$WORK_DIR"
                 fi
 
                 echo "  - OpenSUSE source tarballs created"
@@ -888,16 +888,16 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
             cp "distro/opensuse/$PACKAGE.spec" "$WORK_DIR/"
             if [[ "$PACKAGE" == *"-git" ]]; then
                 update_opensuse_git_spec "$WORK_DIR/$PACKAGE.spec"
-            elif [[ "$PACKAGE" == "dms-greeter" ]] && [[ -n "$CHANGELOG_VERSION" ]]; then
-                DMS_GREETER_BASE_VERSION=$(echo "$CHANGELOG_VERSION" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
-                DMS_GREETER_RELEASE=$(echo "$CHANGELOG_VERSION" | sed -E 's/.*db([0-9]+)$/\1/' || echo "1")
+            elif [[ "$PACKAGE" == "hgs-greeter" ]] && [[ -n "$CHANGELOG_VERSION" ]]; then
+                HGS_GREETER_BASE_VERSION=$(echo "$CHANGELOG_VERSION" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
+                HGS_GREETER_RELEASE=$(echo "$CHANGELOG_VERSION" | sed -E 's/.*db([0-9]+)$/\1/' || echo "1")
                 CHANGELOG_DATE=$(date '+%a %b %d %Y')
-                sed -i "s/VERSION_PLACEHOLDER/${DMS_GREETER_BASE_VERSION}/g" "$WORK_DIR/$PACKAGE.spec"
-                sed -i "s/RELEASE_PLACEHOLDER/${DMS_GREETER_RELEASE}/g" "$WORK_DIR/$PACKAGE.spec"
+                sed -i "s/VERSION_PLACEHOLDER/${HGS_GREETER_BASE_VERSION}/g" "$WORK_DIR/$PACKAGE.spec"
+                sed -i "s/RELEASE_PLACEHOLDER/${HGS_GREETER_RELEASE}/g" "$WORK_DIR/$PACKAGE.spec"
                 sed -i "s/CHANGELOG_DATE_PLACEHOLDER/${CHANGELOG_DATE}/g" "$WORK_DIR/$PACKAGE.spec"
                 # Explicitly set Version:/Release: in case the spec uses %{version} macro
-                sed -i "s/^Version:.*/Version:        ${DMS_GREETER_BASE_VERSION}/" "$WORK_DIR/$PACKAGE.spec"
-                sed -i "s/^Release:.*/Release:        ${DMS_GREETER_RELEASE}%{?dist}/" "$WORK_DIR/$PACKAGE.spec"
+                sed -i "s/^Version:.*/Version:        ${HGS_GREETER_BASE_VERSION}/" "$WORK_DIR/$PACKAGE.spec"
+                sed -i "s/^Release:.*/Release:        ${HGS_GREETER_RELEASE}%{?dist}/" "$WORK_DIR/$PACKAGE.spec"
             fi
         fi
 
@@ -924,14 +924,14 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 rm -f "$TEMP_CHANGELOG"
             fi
 
-            # For dms, rename directory to match what debian/rules expects
+            # For hgs, rename directory to match what debian/rules expects
             # debian/rules uses UPSTREAM_VERSION which is the full version from changelog
-            if [[ "$PACKAGE" == "dms" ]]; then
+            if [[ "$PACKAGE" == "hgs" ]]; then
                 CHANGELOG_IN_SOURCE="$SOURCE_DIR/debian/changelog"
                 if [[ -f "$CHANGELOG_IN_SOURCE" ]]; then
                     ACTUAL_VERSION=$(grep -m1 "^$PACKAGE" "$CHANGELOG_IN_SOURCE" 2>/dev/null | sed 's/.*(\([^)]*\)).*/\1/' || echo "$VERSION")
                     CURRENT_DIR=$(basename "$SOURCE_DIR")
-                    EXPECTED_DIR="DankMaterialShell-${ACTUAL_VERSION}"
+                    EXPECTED_DIR="HyprGlassShell-${ACTUAL_VERSION}"
                     if [[ "$CURRENT_DIR" != "$EXPECTED_DIR" ]]; then
                         echo "    Renaming directory from $CURRENT_DIR to $EXPECTED_DIR to match debian/rules"
                         cd "$(dirname "$SOURCE_DIR")"
@@ -942,9 +942,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 fi
             fi
 
-            if [[ "$PACKAGE" == "dms-git" ]]; then
+            if [[ "$PACKAGE" == "hgs-git" ]]; then
                 echo "    Bundling Go toolchains into Debian source tree (offline build)"
-                ensure_dms_git_go_tarballs "$SOURCE_DIR"
+                ensure_hgs_git_go_tarballs "$SOURCE_DIR"
             fi
 
             rm -f "$WORK_DIR/$COMBINED_TARBALL"
@@ -959,9 +959,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 exit 1
             fi
 
-            if [[ "$PACKAGE" == "dms" ]]; then
+            if [[ "$PACKAGE" == "hgs" ]]; then
                 TARBALL_DIR=$(tar -tzf "$WORK_DIR/$COMBINED_TARBALL" 2>/dev/null | head -1 | cut -d'/' -f1)
-                EXPECTED_TARBALL_DIR="DankMaterialShell-${VERSION}"
+                EXPECTED_TARBALL_DIR="HyprGlassShell-${VERSION}"
                 if [[ "$TARBALL_DIR" != "$EXPECTED_TARBALL_DIR" ]]; then
                     echo "    Warning: Tarball directory name mismatch: $TARBALL_DIR != $EXPECTED_TARBALL_DIR"
                     echo "    This may cause build failures. Recreating tarball..."
@@ -1029,22 +1029,22 @@ EOF
             echo "  - Quilt format detected: creating debian.tar.gz"
             tar -czf "$WORK_DIR/debian.tar.gz" -C "distro/debian/$PACKAGE" debian/
 
-            # For dms-greeter: create orig tarball so Debian build gets upstream (OBS only passes .dsc Files to Debian)
+            # For hgs-greeter: create orig tarball so Debian build gets upstream (OBS only passes .dsc Files to Debian)
             DSC_FILES_DEBIAN=""
-            if [[ "$PACKAGE" == "dms-greeter" ]]; then
+            if [[ "$PACKAGE" == "hgs-greeter" ]]; then
                 UPSTREAM_VER=$(echo "$VERSION" | sed 's/-[^-]*$//')
                 ORIG_TARBALL="${PACKAGE}_${UPSTREAM_VER}.orig.tar.gz"
                 ORIG_DIR="${PACKAGE}-${UPSTREAM_VER}"
 
                 if [[ -f "distro/debian/$PACKAGE/_service" ]] && grep -q "download_url" "distro/debian/$PACKAGE/_service"; then
                     DG_TEMP=$(mktemp -d)
-                    DMS_GREETER_PATH=$(grep -A 5 'name="download_url"' "distro/debian/$PACKAGE/_service" | grep "path" | sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/' | head -1)
-                    if [[ -n "$DMS_GREETER_PATH" ]]; then
-                        DG_URL="https://github.com${DMS_GREETER_PATH}"
-                        echo "  - Downloading dms-greeter source for orig tarball: $DG_URL"
-                        if wget -q -O "$DG_TEMP/dms-qml.tar.gz" "$DG_URL" 2>/dev/null || curl -L -f -s -o "$DG_TEMP/dms-qml.tar.gz" "$DG_URL" 2>/dev/null; then
-                            ( cd "$DG_TEMP" && tar --no-same-owner -xzf dms-qml.tar.gz && mkdir -p "$ORIG_DIR" && \
-                              for f in *; do [[ "$f" != "dms-qml.tar.gz" && "$f" != "$ORIG_DIR" ]] && mv "$f" "$ORIG_DIR/"; done )
+                    HGS_GREETER_PATH=$(grep -A 5 'name="download_url"' "distro/debian/$PACKAGE/_service" | grep "path" | sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/' | head -1)
+                    if [[ -n "$HGS_GREETER_PATH" ]]; then
+                        DG_URL="https://github.com${HGS_GREETER_PATH}"
+                        echo "  - Downloading hgs-greeter source for orig tarball: $DG_URL"
+                        if wget -q -O "$DG_TEMP/hgs-qml.tar.gz" "$DG_URL" 2>/dev/null || curl -L -f -s -o "$DG_TEMP/hgs-qml.tar.gz" "$DG_URL" 2>/dev/null; then
+                            ( cd "$DG_TEMP" && tar --no-same-owner -xzf hgs-qml.tar.gz && mkdir -p "$ORIG_DIR" && \
+                              for f in *; do [[ "$f" != "hgs-qml.tar.gz" && "$f" != "$ORIG_DIR" ]] && mv "$f" "$ORIG_DIR/"; done )
                             if [[ -d "$DG_TEMP/$ORIG_DIR/Modules" ]] || [[ -f "$DG_TEMP/$ORIG_DIR/LICENSE" ]]; then
                                 tar --sort=name --mtime='2000-01-01 00:00:00' --owner=0 --group=0 -czf "$WORK_DIR/$ORIG_TARBALL" -C "$DG_TEMP" "$ORIG_DIR"
                                 ORIG_MD5=$(md5sum "$WORK_DIR/$ORIG_TARBALL" | cut -d' ' -f1)
@@ -1111,15 +1111,15 @@ if [[ -n "$OBS_FILES" ]]; then
             continue
         fi
 
-        # Keep pinned Go toolchain archives (bundled for dms-git offline builds)
+        # Keep pinned Go toolchain archives (bundled for hgs-git offline builds)
         if [[ "$old_file" =~ ^go[0-9].+\.linux-(amd64|arm64)\.tar\.gz$ ]]; then
             echo "  - Keeping Go toolchain tarball: $old_file"
             continue
         fi
 
-        # Keep current orig tarball for dms-greeter (Debian 3.0 quilt needs it)
+        # Keep current orig tarball for hgs-greeter (Debian 3.0 quilt needs it)
         UPSTREAM_VER_CLEAN=$(echo "$CHANGELOG_VERSION" | sed 's/-[^-]*$//' 2>/dev/null)
-        if [[ "$PACKAGE" == "dms-greeter" ]] && [[ "$old_file" == "${PACKAGE}_${UPSTREAM_VER_CLEAN}.orig.tar.gz" ]]; then
+        if [[ "$PACKAGE" == "hgs-greeter" ]] && [[ "$old_file" == "${PACKAGE}_${UPSTREAM_VER_CLEAN}.orig.tar.gz" ]]; then
             echo "  - Keeping orig tarball: $old_file"
             continue
         fi

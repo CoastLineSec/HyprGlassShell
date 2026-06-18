@@ -1,7 +1,7 @@
 package distros
 
 import (
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
 )
 
 // NewDependencyDetector creates a DependencyDetector for the specified distribution

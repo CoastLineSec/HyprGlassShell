@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 )
 
 type gpSamlAuthResult struct {

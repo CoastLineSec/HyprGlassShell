@@ -14,7 +14,7 @@ Singleton {
     property bool enabled: true
     property bool respectInhibitors: true
 
-    readonly property bool externalInhibitActive: DMSService.screensaverInhibited
+    readonly property bool externalInhibitActive: HGSService.screensaverInhibited
 
     readonly property bool isOnBattery: BatteryService.batteryAvailable && !BatteryService.isPluggedIn
     readonly property int monitorTimeout: isOnBattery ? SettingsData.batteryMonitorTimeout : SettingsData.acMonitorTimeout
@@ -172,7 +172,7 @@ Singleton {
 
     onExternalInhibitActiveChanged: {
         if (externalInhibitActive) {
-            const apps = DMSService.screensaverInhibitors.map(i => i.appName).join(", ");
+            const apps = HGSService.screensaverInhibitors.map(i => i.appName).join(", ");
             log.info("External idle inhibit active from:", apps || "unknown");
             SessionService.idleInhibited = true;
             SessionService.inhibitReason = "External app: " + (apps || "unknown");
@@ -186,7 +186,7 @@ Singleton {
     Component.onCompleted: {
         _applyMonitorEnableds();
         if (externalInhibitActive) {
-            const apps = DMSService.screensaverInhibitors.map(i => i.appName).join(", ");
+            const apps = HGSService.screensaverInhibitors.map(i => i.appName).join(", ");
             SessionService.idleInhibited = true;
             SessionService.inhibitReason = "External app: " + (apps || "unknown");
         }

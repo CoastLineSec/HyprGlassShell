@@ -28,7 +28,7 @@ Item {
                 smooth: true
                 mipmap: true
                 asynchronous: true
-                source: "file://" + Theme.shellDir + "/assets/danklogonormal.svg"
+                source: "file://" + Theme.shellDir + "/assets/hgslogonormal.svg"
                 layer.enabled: true
                 layer.smooth: true
                 layer.mipmap: true
@@ -44,7 +44,7 @@ Item {
                 spacing: Theme.spacingXS
 
                 StyledText {
-                    text: I18n.tr("Welcome to DankMaterialShell", "greeter welcome page title")
+                    text: I18n.tr("Welcome to HyprGlassShell", "greeter welcome page title")
                     font.pixelSize: Theme.fontSizeXLarge + 4
                     font.weight: Font.Bold
                     color: Theme.surfaceText
@@ -111,17 +111,17 @@ Item {
                 GreeterFeatureCard {
                     width: (parent.width - Theme.spacingS * 2) / 3
                     iconName: "view_carousel"
-                    title: I18n.tr("DankBar", "greeter feature card title")
+                    title: I18n.tr("HGSBar", "greeter feature card title")
                     description: I18n.tr("Modular widget bar", "greeter feature card description")
-                    onClicked: PopoutService.openSettingsWithTab("dankbar_settings")
+                    onClicked: PopoutService.openSettingsWithTab("hgsbar_settings")
                 }
 
                 GreeterFeatureCard {
                     width: (parent.width - Theme.spacingS * 2) / 3
-                    iconName: "extension"
-                    title: I18n.tr("Plugins", "greeter feature card title")
-                    description: I18n.tr("Extensible architecture", "greeter feature card description")
-                    onClicked: PopoutService.openSettingsWithTab("plugins")
+                    iconName: "settings_applications"
+                    title: I18n.tr("Hyprland First", "greeter feature card title")
+                    description: I18n.tr("Compositor-native controls", "greeter feature card description")
+                    onClicked: PopoutService.openSettingsWithTab("compositor")
                 }
 
                 GreeterFeatureCard {
@@ -130,8 +130,7 @@ Item {
                     title: I18n.tr("Multi-Monitor", "greeter feature card title")
                     description: I18n.tr("Per-screen config", "greeter feature card description")
                     onClicked: {
-                        const hasDisplayConfig = CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango;
-                        PopoutService.openSettingsWithTab(hasDisplayConfig ? "display_config" : "display_widgets");
+                        PopoutService.openSettingsWithTab("display_config");
                     }
                 }
 
@@ -149,7 +148,7 @@ Item {
                     title: I18n.tr("Control Center", "greeter feature card title")
                     description: I18n.tr("Quick system toggles", "greeter feature card description")
                     // This is doing an IPC since its just easier and lazier to access the bar ref
-                    onClicked: Quickshell.execDetached(["dms", "ipc", "call", "control-center", "open"])
+                    onClicked: Quickshell.execDetached(["hgs", "ipc", "call", "control-center", "open"])
                 }
 
                 GreeterFeatureCard {

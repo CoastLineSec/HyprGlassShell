@@ -1,6 +1,6 @@
 package providers
 
-import "github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+import "github.com/CoastLineSec/HyprGlassShell/core/internal/windowrules"
 
 func newTestWindowRule(id, name, appID string) windowrules.WindowRule {
 	return windowrules.WindowRule{

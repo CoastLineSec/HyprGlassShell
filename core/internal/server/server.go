@@ -14,28 +14,28 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/bluez"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/clipboard"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups"
-	serverDbus "github.com/AvengeMedia/DankMaterialShell/core/internal/server/dbus"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/freedesktop"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/location"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/sysupdate"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/tailscale"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/thememode"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/trayrecovery"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wayland"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlroutput"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/geolocation"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/apppicker"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/bluez"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/brightness"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/clipboard"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/cups"
+	serverDbus "github.com/CoastLineSec/HyprGlassShell/core/internal/server/dbus"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/evdev"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/freedesktop"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/location"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/loginctl"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/network"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/sysupdate"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/tailscale"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/thememode"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/trayrecovery"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wayland"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlcontext"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlroutput"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 )
 
 const APIVersion = 26
@@ -77,7 +77,7 @@ var locationManager *location.Manager
 var sysUpdateManager *sysupdate.Manager
 var geoClientInstance geolocation.Client
 
-const dbusClientID = "dms-dbus-client"
+const dbusClientID = "hgs-dbus-client"
 
 var capabilitySubscribers syncmap.Map[string, chan ServerInfo]
 var cupsSubscribers syncmap.Map[string, bool]
@@ -90,16 +90,16 @@ func getSocketDir() string {
 
 	if os.Getuid() == 0 {
 		if _, err := os.Stat("/run"); err == nil {
-			return "/run/dankdots"
+			return "/run/hgsdots"
 		}
-		return "/var/run/dankdots"
+		return "/var/run/hgsdots"
 	}
 
 	return os.TempDir()
 }
 
 func GetSocketPath() string {
-	return filepath.Join(getSocketDir(), fmt.Sprintf("danklinux-%d.sock", os.Getpid()))
+	return filepath.Join(getSocketDir(), fmt.Sprintf("coastlinesec-%d.sock", os.Getpid()))
 }
 
 func FindSocket() (string, error) {
@@ -110,11 +110,11 @@ func FindSocket() (string, error) {
 	}
 
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), "danklinux-") && strings.HasSuffix(entry.Name(), ".sock") {
+		if strings.HasPrefix(entry.Name(), "coastlinesec-") && strings.HasSuffix(entry.Name(), ".sock") {
 			return filepath.Join(dir, entry.Name()), nil
 		}
 	}
-	return "", fmt.Errorf("no dms socket found")
+	return "", fmt.Errorf("no hgs socket found")
 }
 
 func cleanupStaleSockets() {
@@ -125,11 +125,11 @@ func cleanupStaleSockets() {
 	}
 
 	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), "danklinux-") || !strings.HasSuffix(entry.Name(), ".sock") {
+		if !strings.HasPrefix(entry.Name(), "coastlinesec-") || !strings.HasSuffix(entry.Name(), ".sock") {
 			continue
 		}
 
-		pidStr := strings.TrimPrefix(entry.Name(), "danklinux-")
+		pidStr := strings.TrimPrefix(entry.Name(), "coastlinesec-")
 		pidStr = strings.TrimSuffix(pidStr, ".sock")
 		pid, err := strconv.Atoi(pidStr)
 		if err != nil {
@@ -408,7 +408,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func getCapabilities() Capabilities {
-	caps := []string{"plugins"}
+	var caps []string
 
 	if networkManager != nil {
 		caps = append(caps, "network")
@@ -474,7 +474,7 @@ func getCapabilities() Capabilities {
 }
 
 func getServerInfo() ServerInfo {
-	caps := []string{"plugins"}
+	var caps []string
 
 	if networkManager != nil {
 		caps = append(caps, "network")
@@ -1326,7 +1326,7 @@ func Start(printDocs bool) error {
 	defer listener.Close()
 	defer cleanupManagers()
 
-	log.Infof("DMS API Server listening on: %s", socketPath)
+	log.Infof("HGS API Server listening on: %s", socketPath)
 	log.Infof("API Version: %d", APIVersion)
 	log.Info("Protocol: JSON over Unix socket")
 	log.Info("Request format: {\"id\": <any>, \"method\": \"...\", \"params\": {...}}")
@@ -1337,13 +1337,6 @@ func Start(printDocs bool) error {
 		log.Info("  ping          - Test connection")
 		log.Info("  getServerInfo - Get server info (API version and capabilities)")
 		log.Info("  subscribe     - Subscribe to multiple services (params: services [default: all])")
-		log.Info("Plugins:")
-		log.Info(" plugins.list                - List all plugins")
-		log.Info(" plugins.listInstalled       - List installed plugins")
-		log.Info(" plugins.install             - Install plugin (params: name)")
-		log.Info(" plugins.uninstall           - Uninstall plugin (params: name)")
-		log.Info(" plugins.update              - Update plugin (params: name)")
-		log.Info(" plugins.search              - Search plugins (params: query, category?, compositor?, capability?)")
 		log.Info("Network:")
 		log.Info(" network.getState            - Get current network state")
 		log.Info(" network.wifi.scan           - Scan for WiFi networks (params: device?)")
@@ -1535,8 +1528,8 @@ func Start(printDocs bool) error {
 			return
 		}
 
-		ch := loginctlManager.Subscribe("dms-lock-bridge")
-		defer loginctlManager.Unsubscribe("dms-lock-bridge")
+		ch := loginctlManager.Subscribe("hgs-lock-bridge")
+		defer loginctlManager.Unsubscribe("hgs-lock-bridge")
 
 		initial := loginctlManager.GetState()
 		lastLocked := initial.Locked

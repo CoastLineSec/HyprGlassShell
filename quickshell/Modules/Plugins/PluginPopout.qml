@@ -2,10 +2,10 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankPopout {
+HGSPopout {
     id: root
 
-    layerNamespace: "dms:plugins:" + layerNamespacePlugin
+    layerNamespace: "hgs:plugins:" + layerNamespacePlugin
 
     property var triggerScreen: null
     property Component pluginContent: null

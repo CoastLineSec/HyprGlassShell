@@ -1,14 +1,14 @@
 # Plugin System
 
-Create widgets for DankBar and Control Center using dynamically-loaded QML components.
+Create widgets for HGSBar and Control Center using dynamically-loaded QML components.
 
 ## Plugin Registry
 
-Browse and discover community plugins at **https://plugins.danklinux.com/**
+Browse and discover community plugins at **https://plugins.coastlinesec.com/**
 
 ## Overview
 
-Plugins let you add custom widgets to DankBar and Control Center. They're discovered from `~/.config/DankMaterialShell/plugins/` and managed via PluginService.
+Plugins let you add custom widgets to HGSBar and Control Center. They're discovered from `~/.config/HyprGlassShell/plugins/` and managed via PluginService.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Plugins let you add custom widgets to DankBar and Control Center. They're discov
 
 1. **PluginService** (`Services/PluginService.qml`)
    - Singleton service managing plugin lifecycle
-   - Discovers plugins from `$CONFIGPATH/DankMaterialShell/plugins/`
+   - Discovers plugins from `$CONFIGPATH/HyprGlassShell/plugins/`
    - Handles loading, unloading, and state management
    - Provides data persistence for plugin settings
 
@@ -29,18 +29,18 @@ Plugins let you add custom widgets to DankBar and Control Center. They're discov
    - Dynamically loads plugin settings components inline
    - Provides consistent settings interface with proper focus handling
 
-4. **DankBar Integration** (`Modules/DankBar/DankBar.qml`)
+4. **HGSBar Integration** (`Modules/HGSBar/HGSBar.qml`)
    - Renders plugin widgets in the bar
    - Merges plugin components with built-in widgets
    - Supports left, center, and right sections
-   - Supports any dankbar position (top/left/right/bottom)
+   - Supports any hgsbar position (top/left/right/bottom)
 
 ## Plugin Structure
 
-Each plugin must be a directory in `$CONFIGPATH/DankMaterialShell/plugins/` containing:
+Each plugin must be a directory in `$CONFIGPATH/HyprGlassShell/plugins/` containing:
 
 ```
-$CONFIGPATH/DankMaterialShell/plugins/YourPlugin/
+$CONFIGPATH/HyprGlassShell/plugins/YourPlugin/
 ├── plugin.json          # Required: Plugin manifest
 ├── YourWidget.qml       # Required: Widget component
 ├── YourSettings.qml     # Optional: Settings UI
@@ -65,7 +65,7 @@ The manifest file defines plugin metadata and configuration.
     "component": "./YourWidget.qml",
     "icon": "material_icon_name",
     "settings": "./YourSettings.qml",
-    "requires_dms": ">=0.1.0",
+    "requires_hgs": ">=0.1.0",
     "requires": ["some-system-tool"],
     "permissions": [
         "settings_read",
@@ -81,7 +81,7 @@ The manifest file defines plugin metadata and configuration.
 - `version`: Semantic version string (e.g., "1.0.0")
 - `author`: Plugin creator name or email
 - `type`: Plugin type - "widget", "daemon", "launcher", or "desktop"
-- `capabilities`: Array of plugin capabilities  (e.g., ["dankbar-widget"], ["control-center"], ["monitoring"])
+- `capabilities`: Array of plugin capabilities  (e.g., ["hgsbar-widget"], ["control-center"], ["monitoring"])
 - `component`: Relative path to main QML component file
 
 **Required for Launcher Type:**
@@ -90,9 +90,9 @@ The manifest file defines plugin metadata and configuration.
 **Optional Fields:**
 - `icon`: Material Design icon name (displayed in UI)
 - `settings`: Path to settings component (enables settings UI)
-- `requires_dms`: Minimum DMS version requirement (e.g., ">=0.1.18", ">0.1.0")
+- `requires_hgs`: Minimum HGS version requirement (e.g., ">=0.1.18", ">0.1.0")
 - `requires`: Array of required system tools/dependencies (e.g., ["curl", "jq"])
-- `permissions`: Required DMS permissions (e.g., ["settings_read", "settings_write"])
+- `permissions`: Required HGS permissions (e.g., ["settings_read", "settings_write"])
 
 **Permissions:**
 
@@ -113,7 +113,7 @@ import qs.Widgets
 import qs.Modules.Plugins
 
 PluginComponent {
-    // Define horizontal bar pill, for top and bottom DankBar positions (optional)
+    // Define horizontal bar pill, for top and bottom HGSBar positions (optional)
     horizontalBarPill: Component {
         StyledRect {
             width: content.implicitWidth + Theme.spacingM * 2
@@ -131,7 +131,7 @@ PluginComponent {
         }
     }
 
-    // Define vertical bar pill, for left and right DankBar positions (optional)
+    // Define vertical bar pill, for left and right HGSBar positions (optional)
     verticalBarPill: Component {
         // Same as horizontal but optimized for vertical layout
     }
@@ -273,7 +273,7 @@ PopoutComponent {
 
     // Your content here - use parent.width for full width
     // Calculate available height: root.popoutHeight - headerHeight - detailsHeight - spacing
-    DankGridView {
+    HGSGridView {
         width: parent.width
         height: parent.height
         // ...
@@ -538,7 +538,7 @@ PluginSettings {
 
 ```qml
 PluginService.pluginDirectory: string
-// Path to plugins directory ($CONFIGPATH/DankMaterialShell/plugins)
+// Path to plugins directory ($CONFIGPATH/HyprGlassShell/plugins)
 
 PluginService.availablePlugins: object
 // Map of all discovered plugins {pluginId: pluginInfo}
@@ -705,8 +705,8 @@ PluginComponent {
 ### Step 1: Create Plugin Directory
 
 ```bash
-mkdir -p $CONFIGPATH/DankMaterialShell/plugins/MyPlugin
-cd $CONFIGPATH/DankMaterialShell/plugins/MyPlugin
+mkdir -p $CONFIGPATH/HyprGlassShell/plugins/MyPlugin
+cd $CONFIGPATH/HyprGlassShell/plugins/MyPlugin
 ```
 
 ### Step 2: Create Manifest
@@ -725,7 +725,7 @@ Create `plugin.json`:
     "component": "./MyWidget.qml",
     "icon": "extension",
     "settings": "./MySettings.qml",
-    "requires_dms": ">=0.1.0",
+    "requires_hgs": ">=0.1.0",
     "permissions": ["settings_read", "settings_write"]
 }
 ```
@@ -820,27 +820,27 @@ PluginSettings {
 
 ### Step 5: Enable Plugin
 
-1. Run the shell: `qs -p $CONFIGPATH/quickshell/dms/shell.qml`
+1. Run the shell: `qs -p $CONFIGPATH/quickshell/hgs/shell.qml`
 2. Open Settings (Ctrl+,)
 3. Navigate to Plugins tab
 4. Click "Scan for Plugins"
 5. Enable your plugin with the toggle switch
-6. Add the plugin to your DankBar configuration
+6. Add the plugin to your HGSBar configuration
 
-## Adding Plugin to DankBar
+## Adding Plugin to HGSBar
 
 After enabling a plugin, add it to the bar:
 
-1. Open Settings → Appearance → DankBar Layout
+1. Open Settings → Appearance → HGSBar Layout
 2. Add a new widget entry with your plugin ID
 3. Choose section (left, center, right)
 4. Save and reload
 
-Or edit `$CONFIGPATH/quickshell/dms/config.json`:
+Or edit `$CONFIGPATH/quickshell/hgs/config.json`:
 
 ```json
 {
-    "dankBarLeftWidgets": [
+    "hgsBarLeftWidgets": [
         {"widgetId": "myPlugin", "enabled": true}
     ]
 }
@@ -848,7 +848,7 @@ Or edit `$CONFIGPATH/quickshell/dms/config.json`:
 
 ## Best Practices
 
-1. **Use Existing Widgets**: Leverage `qs.Widgets` components (DankIcon, DankToggle, etc.) for consistency
+1. **Use Existing Widgets**: Leverage `qs.Widgets` components (HGSIcon, HGSToggle, etc.) for consistency
 2. **Follow Theme**: Use `Theme` singleton for colors, spacing, and fonts
 3. **Data Persistence**: Use PluginService data APIs instead of manual file operations
 4. **Error Handling**: Gracefully handle missing dependencies and invalid data
@@ -860,11 +860,11 @@ Or edit `$CONFIGPATH/quickshell/dms/config.json`:
 
 ## Clipboard Access
 
-Plugins that need to copy text to the clipboard should use the built-in `dms cl copy` command through Quickshell's `execDetached` function.
+Plugins that need to copy text to the clipboard should use the built-in `hgs cl copy` command through Quickshell's `execDetached` function.
 
 ### Correct Method
 
-Import Quickshell and use `execDetached` with `dms cl copy`:
+Import Quickshell and use `execDetached` with `hgs cl copy`:
 
 ```qml
 import QtQuick
@@ -872,7 +872,7 @@ import Quickshell
 
 Item {
     function copyToClipboard(text) {
-        Quickshell.execDetached(["dms", "cl", "copy", text])
+        Quickshell.execDetached(["hgs", "cl", "copy", text])
     }
 }
 ```
@@ -884,7 +884,7 @@ From the ExampleEmojiPlugin (EmojiWidget.qml):
 ```qml
 MouseArea {
     onClicked: {
-        Quickshell.execDetached(["dms", "cl", "copy", modelData])
+        Quickshell.execDetached(["hgs", "cl", "copy", modelData])
         ToastService.showInfo("Copied " + modelData + " to clipboard")
         popoutColumn.closePopout()
     }
@@ -899,7 +899,7 @@ MouseArea {
 
 ### Dependencies
 
-This method uses the built-in DMS clipboard functionality which has native Wayland support.
+This method uses the built-in HGS clipboard functionality which has native Wayland support.
 
 ## Running External Commands
 
@@ -1039,7 +1039,7 @@ import qs.Common
 import qs.Widgets
 
 Item {
-    DankTextField {
+    HGSTextField {
         id: searchField
         placeholderText: "Search files..."
 
@@ -1088,7 +1088,7 @@ Item {
 View plugin logs:
 
 ```bash
-qs -v -p $CONFIGPATH/quickshell/dms/shell.qml
+qs -v -p $CONFIGPATH/quickshell/hgs/shell.qml
 ```
 
 Look for lines prefixed with:
@@ -1100,12 +1100,12 @@ Look for lines prefixed with:
 
 1. **Plugin Not Detected**
    - Check plugin.json syntax (use `jq` or JSON validator)
-   - Verify directory is in `$CONFIGPATH/DankMaterialShell/plugins/`
+   - Verify directory is in `$CONFIGPATH/HyprGlassShell/plugins/`
    - Click "Scan for Plugins" in Settings
 
 2. **Widget Not Displaying**
    - Ensure plugin is enabled in Settings
-   - Add plugin ID to DankBar widget list
+   - Add plugin ID to HGSBar widget list
    - Check widget width/height properties
 
 3. **Settings Not Loading**
@@ -1116,7 +1116,7 @@ Look for lines prefixed with:
 
 4. **Data Not Persisting**
    - Confirm pluginService.savePluginData() calls (with injection)
-   - Check `$CONFIGPATH/DankMaterialShell/settings.json` for pluginSettings data
+   - Check `$CONFIGPATH/HyprGlassShell/settings.json` for pluginSettings data
    - Verify plugin has settings permissions
    - Ensure PluginService was properly injected into settings component
 
@@ -1134,7 +1134,7 @@ Currently, only `settings_write` is enforced by the PluginSettings component.
 
 ## API Stability
 
-The plugin API is currently **experimental**. Breaking changes may occur in minor version updates. Pin to specific DMS versions for production use.
+The plugin API is currently **experimental**. Breaking changes may occur in minor version updates. Pin to specific HGS versions for production use.
 
 **Roadmap:**
 - Plugin marketplace/repository
@@ -1145,7 +1145,7 @@ The plugin API is currently **experimental**. Breaking changes may occur in mino
 
 ## Launcher Plugins
 
-Launcher plugins extend the DMS application launcher by adding custom searchable items with trigger-based filtering.
+Launcher plugins extend the HGS application launcher by adding custom searchable items with trigger-based filtering.
 
 ### Overview
 
@@ -1173,7 +1173,7 @@ To create a launcher plugin, set the plugin type in `plugin.json`:
     "trigger": "#",
     "icon": "search",
     "settings": "./MySettings.qml",
-    "requires_dms": ">=0.1.18",
+    "requires_hgs": ">=0.1.18",
     "permissions": ["settings_read", "settings_write"]
 }
 ```
@@ -1332,7 +1332,7 @@ FocusScope {
             }
         }
 
-        DankTextField {
+        HGSTextField {
             id: triggerField
             visible: !noTriggerToggle.checked
             text: loadSettings("trigger", "#")
@@ -1655,7 +1655,7 @@ Instead of a single `type` + `component`, declare a `components` map. Set `type`
     "version": "1.0.0",
     "author": "Your Name",
     "type": "composite",
-    "capabilities": ["daemon", "dankbar-widget", "desktop-widget"],
+    "capabilities": ["daemon", "hgsbar-widget", "desktop-widget"],
     "components": {
         "daemon":   "./MyDaemon.qml",
         "widget":   "./MyBarWidget.qml",
@@ -1664,7 +1664,7 @@ Instead of a single `type` + `component`, declare a `components` map. Set `type`
     },
     "trigger": "#",
     "settings": "./MySettings.qml",
-    "requires_dms": ">=1.5.0",
+    "requires_hgs": ">=1.5.0",
     "permissions": ["settings_read", "settings_write"]
 }
 ```
@@ -1715,12 +1715,12 @@ plugin.
   - [Emoji Picker](./ExampleEmojiPlugin/)
   - [WorldClock](https://github.com/rochacbruno/WorldClock)
   - [LauncherExample](./LauncherExample/)
-  - [Calculator](https://github.com/rochacbruno/DankCalculator)
+  - [Calculator](https://github.com/rochacbruno/HGSCalculator)
   - [Desktop Clock](./ExampleDesktopClock/)
   - [Composite Example](./ExampleCompositePlugin/)
 - **PluginService**: `Services/PluginService.qml`
 - **Settings UI**: `Modules/Settings/PluginsTab.qml`
-- **DankBar Integration**: `Modules/DankBar/DankBar.qml`
+- **HGSBar Integration**: `Modules/HGSBar/HGSBar.qml`
 - **Launcher Integration**: `Modules/AppDrawer/AppLauncher.qml`
 - **Desktop Widget Integration**: `Modules/DesktopWidgetLayer.qml`
 - **Theme Reference**: `Common/Theme.qml`
@@ -1736,4 +1736,4 @@ Share your plugins with the community:
 4. Add example screenshots
 5. Document dependencies and permissions
 
-For plugin system improvements, submit issues or PRs to the main DMS repository.
+For plugin system improvements, submit issues or PRs to the main HGS repository.

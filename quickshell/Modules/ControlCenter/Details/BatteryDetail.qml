@@ -46,7 +46,7 @@ Rectangle {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 name: BatteryService.getBatteryIcon()
                 size: Theme.iconSizeLarge
                 color: {
@@ -191,7 +191,7 @@ Rectangle {
             }
         }
 
-        DankButtonGroup {
+        HGSButtonGroup {
             property var profileModel: PowerProfileWatcher.availableProfiles
             property int currentProfileIndex: {
                 if (typeof PowerProfiles === "undefined")
@@ -231,7 +231,7 @@ Rectangle {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "warning"
                         size: Theme.iconSize
                         color: Theme.error

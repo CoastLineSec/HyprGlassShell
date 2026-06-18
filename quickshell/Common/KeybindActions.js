@@ -1,312 +1,124 @@
 .pragma library
 
 const ACTION_TYPES = [
-    { id: "dms", label: "DMS Action", icon: "widgets" },
+    { id: "hgs", label: "HGS Action", icon: "widgets" },
     { id: "compositor", label: "Compositor", icon: "desktop_windows" },
     { id: "spawn", label: "Run Command", icon: "terminal" },
     { id: "shell", label: "Shell Command", icon: "code" }
 ];
 
-const DMS_ACTIONS = [
-    { id: "spawn dms ipc call spotlight toggle", label: "Default Launcher: Toggle" },
-    { id: "spawn dms ipc call spotlight open", label: "Default Launcher: Open" },
-    { id: "spawn dms ipc call spotlight close", label: "Default Launcher: Close" },
-    { id: "spawn dms ipc call defaultApp browser", label: "Default Web Browser: Open" },
-    { id: "spawn dms ipc call defaultApp fileManager", label: "Default File Manager: Open" },
-    { id: "spawn dms ipc call defaultApp mail", label: "Default Mail: Open" },
-    { id: "spawn dms ipc call defaultApp calendar", label: "Default Calendar: Open" },
-    { id: "spawn dms ipc call defaultApp textEditor", label: "Default Text Editor: Open" },
-    { id: "spawn dms ipc call defaultApp pdfReader", label: "Default PDF Reader: Open" },
-    { id: "spawn dms ipc call defaultApp imageViewer", label: "Default Image Viewer: Open" },
-    { id: "spawn dms ipc call defaultApp videoPlayer", label: "Default Video Player: Open" },
-    { id: "spawn dms ipc call defaultApp musicPlayer", label: "Default Music Player: Open" },
-    { id: "spawn dms ipc call spotlight-bar toggle", label: "Spotlight Bar: Toggle" },
-    { id: "spawn dms ipc call spotlight-bar open", label: "Spotlight Bar: Open" },
-    { id: "spawn dms ipc call spotlight-bar close", label: "Spotlight Bar: Close" },
-    { id: "spawn dms ipc call clipboard toggle", label: "Clipboard: Toggle" },
-    { id: "spawn dms ipc call clipboard open", label: "Clipboard: Open" },
-    { id: "spawn dms ipc call clipboard close", label: "Clipboard: Close" },
-    { id: "spawn dms ipc call notifications toggle", label: "Notifications: Toggle" },
-    { id: "spawn dms ipc call notifications open", label: "Notifications: Open" },
-    { id: "spawn dms ipc call notifications close", label: "Notifications: Close" },
-    { id: "spawn dms ipc call processlist toggle", label: "Task Manager: Toggle" },
-    { id: "spawn dms ipc call processlist open", label: "Task Manager: Open" },
-    { id: "spawn dms ipc call processlist close", label: "Task Manager: Close" },
-    { id: "spawn dms ipc call processlist focusOrToggle", label: "Task Manager: Focus or Toggle" },
-    { id: "spawn dms ipc call settings toggle", label: "Settings: Toggle" },
-    { id: "spawn dms ipc call settings open", label: "Settings: Open" },
-    { id: "spawn dms ipc call settings close", label: "Settings: Close" },
-    { id: "spawn dms ipc call settings focusOrToggle", label: "Settings: Focus or Toggle" },
-    { id: "spawn dms ipc call powermenu toggle", label: "Power Menu: Toggle" },
-    { id: "spawn dms ipc call powermenu open", label: "Power Menu: Open" },
-    { id: "spawn dms ipc call powermenu close", label: "Power Menu: Close" },
-    { id: "spawn dms ipc call control-center toggle", label: "Control Center: Toggle" },
-    { id: "spawn dms ipc call control-center open", label: "Control Center: Open" },
-    { id: "spawn dms ipc call control-center close", label: "Control Center: Close" },
-    { id: "spawn dms ipc call notepad toggle", label: "Notepad: Toggle" },
-    { id: "spawn dms ipc call notepad open", label: "Notepad: Open" },
-    { id: "spawn dms ipc call notepad close", label: "Notepad: Close" },
-    { id: "spawn dms ipc call notepad expand", label: "Notepad: Expand" },
-    { id: "spawn dms ipc call notepad collapse", label: "Notepad: Collapse" },
-    { id: "spawn dms ipc call notepad toggleExpand", label: "Notepad: Toggle Expand" },
-    { id: "spawn dms ipc call dash toggle \"\"", label: "Dashboard: Toggle" },
-    { id: "spawn dms ipc call dash open overview", label: "Dashboard: Overview" },
-    { id: "spawn dms ipc call dash open media", label: "Dashboard: Media" },
-    { id: "spawn dms ipc call dash open weather", label: "Dashboard: Weather" },
-    { id: "spawn dms ipc call dankdash wallpaper", label: "Wallpaper Browser" },
-    { id: "spawn dms ipc call file browse wallpaper", label: "File: Browse Wallpaper" },
-    { id: "spawn dms ipc call file browse profile", label: "File: Browse Profile" },
-    { id: "spawn dms ipc call color-picker toggle", label: "Color Picker: Toggle" },
-    { id: "spawn dms ipc call color-picker open", label: "Color Picker: Open" },
-    { id: "spawn dms ipc call color-picker close", label: "Color Picker: Close" },
-    { id: "spawn dms ipc call keybinds toggle niri", label: "Keybinds Cheatsheet: Toggle", compositor: "niri" },
-    { id: "spawn dms ipc call keybinds open niri", label: "Keybinds Cheatsheet: Open", compositor: "niri" },
-    { id: "spawn dms ipc call keybinds close", label: "Keybinds Cheatsheet: Close" },
-    { id: "spawn dms ipc call lock lock", label: "Lock Screen" },
-    { id: "spawn dms ipc call lock demo", label: "Lock Screen: Demo" },
-    { id: "spawn dms ipc call inhibit toggle", label: "Idle Inhibit: Toggle" },
-    { id: "spawn dms ipc call inhibit enable", label: "Idle Inhibit: Enable" },
-    { id: "spawn dms ipc call inhibit disable", label: "Idle Inhibit: Disable" },
-    { id: "spawn dms ipc call audio increment 5", label: "Volume Up" },
-    { id: "spawn dms ipc call audio increment 1", label: "Volume Up (1%)" },
-    { id: "spawn dms ipc call audio increment 5", label: "Volume Up (5%)" },
-    { id: "spawn dms ipc call audio increment 10", label: "Volume Up (10%)" },
-    { id: "spawn dms ipc call audio decrement 5", label: "Volume Down" },
-    { id: "spawn dms ipc call audio decrement 1", label: "Volume Down (1%)" },
-    { id: "spawn dms ipc call audio decrement 5", label: "Volume Down (5%)" },
-    { id: "spawn dms ipc call audio decrement 10", label: "Volume Down (10%)" },
-    { id: "spawn dms ipc call mpris increment 5", label: "Player Volume Up (5%)" },
-    { id: "spawn dms ipc call mpris decrement 5", label: "Player Volume Down (5%)" },
-    { id: "spawn dms ipc call audio mute", label: "Volume Mute Toggle" },
-    { id: "spawn dms ipc call mic mute", label: "Microphone Mute Toggle" },
-    { id: "spawn dms ipc call audio cycleoutput", label: "Audio Output: Cycle" },
-    { id: "spawn dms ipc call brightness increment 5 \"\"", label: "Brightness Up" },
-    { id: "spawn dms ipc call brightness increment 1 \"\"", label: "Brightness Up (1%)" },
-    { id: "spawn dms ipc call brightness increment 5 \"\"", label: "Brightness Up (5%)" },
-    { id: "spawn dms ipc call brightness increment 10 \"\"", label: "Brightness Up (10%)" },
-    { id: "spawn dms ipc call brightness decrement 5 \"\"", label: "Brightness Down" },
-    { id: "spawn dms ipc call brightness decrement 1 \"\"", label: "Brightness Down (1%)" },
-    { id: "spawn dms ipc call brightness decrement 5 \"\"", label: "Brightness Down (5%)" },
-    { id: "spawn dms ipc call brightness decrement 10 \"\"", label: "Brightness Down (10%)" },
-    { id: "spawn dms ipc call brightness toggleExponential \"\"", label: "Brightness: Toggle Exponential" },
-    { id: "spawn dms ipc call theme toggle", label: "Theme: Toggle Light/Dark" },
-    { id: "spawn dms ipc call theme light", label: "Theme: Light Mode" },
-    { id: "spawn dms ipc call theme dark", label: "Theme: Dark Mode" },
-    { id: "spawn dms ipc call night toggle", label: "Night Mode: Toggle" },
-    { id: "spawn dms ipc call night enable", label: "Night Mode: Enable" },
-    { id: "spawn dms ipc call night disable", label: "Night Mode: Disable" },
-    { id: "spawn dms ipc call bar toggle index 0", label: "Bar: Toggle (Primary)" },
-    { id: "spawn dms ipc call bar reveal index 0", label: "Bar: Reveal (Primary)" },
-    { id: "spawn dms ipc call bar hide index 0", label: "Bar: Hide (Primary)" },
-    { id: "spawn dms ipc call bar toggleReveal index 0", label: "Bar: Toggle Autohide Reveal (Primary)" },
-    { id: "spawn dms ipc call bar toggleAutoHide index 0", label: "Bar: Toggle Auto-Hide (Primary)" },
-    { id: "spawn dms ipc call bar autoHide index 0", label: "Bar: Enable Auto-Hide (Primary)" },
-    { id: "spawn dms ipc call bar manualHide index 0", label: "Bar: Disable Auto-Hide (Primary)" },
-    { id: "spawn dms ipc call dock toggle", label: "Dock: Toggle" },
-    { id: "spawn dms ipc call dock reveal", label: "Dock: Reveal" },
-    { id: "spawn dms ipc call dock hide", label: "Dock: Hide" },
-    { id: "spawn dms ipc call dock toggleAutoHide", label: "Dock: Toggle Auto-Hide" },
-    { id: "spawn dms ipc call dock autoHide", label: "Dock: Enable Auto-Hide" },
-    { id: "spawn dms ipc call dock manualHide", label: "Dock: Disable Auto-Hide" },
-    { id: "spawn dms ipc call mpris playPause", label: "Media: Play/Pause" },
-    { id: "spawn dms ipc call mpris play", label: "Media: Play" },
-    { id: "spawn dms ipc call mpris pause", label: "Media: Pause" },
-    { id: "spawn dms ipc call mpris previous", label: "Media: Previous Track" },
-    { id: "spawn dms ipc call mpris next", label: "Media: Next Track" },
-    { id: "spawn dms ipc call mpris stop", label: "Media: Stop" },
-    { id: "spawn dms ipc call niri screenshot", label: "Screenshot: Interactive", compositor: "niri" },
-    { id: "spawn dms ipc call niri screenshotScreen", label: "Screenshot: Full Screen", compositor: "niri" },
-    { id: "spawn dms ipc call niri screenshotWindow", label: "Screenshot: Window", compositor: "niri" },
-    { id: "spawn dms ipc call hypr toggleOverview", label: "Hyprland: Toggle Overview", compositor: "hyprland" },
-    { id: "spawn dms ipc call hypr openOverview", label: "Hyprland: Open Overview", compositor: "hyprland" },
-    { id: "spawn dms ipc call hypr closeOverview", label: "Hyprland: Close Overview", compositor: "hyprland" },
-    { id: "spawn dms ipc call wallpaper next", label: "Wallpaper: Next" },
-    { id: "spawn dms ipc call wallpaper prev", label: "Wallpaper: Previous" },
-    { id: "spawn dms ipc call workspace-rename open", label: "Workspace: Rename" }
+const HGS_ACTIONS = [
+    { id: "spawn hgs ipc call spotlight toggle", label: "Default Launcher: Toggle" },
+    { id: "spawn hgs ipc call spotlight open", label: "Default Launcher: Open" },
+    { id: "spawn hgs ipc call spotlight close", label: "Default Launcher: Close" },
+    { id: "spawn hgs ipc call defaultApp browser", label: "Default Web Browser: Open" },
+    { id: "spawn hgs ipc call defaultApp fileManager", label: "Default File Manager: Open" },
+    { id: "spawn hgs ipc call defaultApp mail", label: "Default Mail: Open" },
+    { id: "spawn hgs ipc call defaultApp calendar", label: "Default Calendar: Open" },
+    { id: "spawn hgs ipc call defaultApp textEditor", label: "Default Text Editor: Open" },
+    { id: "spawn hgs ipc call defaultApp pdfReader", label: "Default PDF Reader: Open" },
+    { id: "spawn hgs ipc call defaultApp imageViewer", label: "Default Image Viewer: Open" },
+    { id: "spawn hgs ipc call defaultApp videoPlayer", label: "Default Video Player: Open" },
+    { id: "spawn hgs ipc call defaultApp musicPlayer", label: "Default Music Player: Open" },
+    { id: "spawn hgs ipc call spotlight-bar toggle", label: "Spotlight Bar: Toggle" },
+    { id: "spawn hgs ipc call spotlight-bar open", label: "Spotlight Bar: Open" },
+    { id: "spawn hgs ipc call spotlight-bar close", label: "Spotlight Bar: Close" },
+    { id: "spawn hgs ipc call clipboard toggle", label: "Clipboard: Toggle" },
+    { id: "spawn hgs ipc call clipboard open", label: "Clipboard: Open" },
+    { id: "spawn hgs ipc call clipboard close", label: "Clipboard: Close" },
+    { id: "spawn hgs ipc call notifications toggle", label: "Notifications: Toggle" },
+    { id: "spawn hgs ipc call notifications open", label: "Notifications: Open" },
+    { id: "spawn hgs ipc call notifications close", label: "Notifications: Close" },
+    { id: "spawn hgs ipc call processlist toggle", label: "Task Manager: Toggle" },
+    { id: "spawn hgs ipc call processlist open", label: "Task Manager: Open" },
+    { id: "spawn hgs ipc call processlist close", label: "Task Manager: Close" },
+    { id: "spawn hgs ipc call processlist focusOrToggle", label: "Task Manager: Focus or Toggle" },
+    { id: "spawn hgs ipc call settings toggle", label: "Settings: Toggle" },
+    { id: "spawn hgs ipc call settings open", label: "Settings: Open" },
+    { id: "spawn hgs ipc call settings close", label: "Settings: Close" },
+    { id: "spawn hgs ipc call settings focusOrToggle", label: "Settings: Focus or Toggle" },
+    { id: "spawn hgs ipc call powermenu toggle", label: "Power Menu: Toggle" },
+    { id: "spawn hgs ipc call powermenu open", label: "Power Menu: Open" },
+    { id: "spawn hgs ipc call powermenu close", label: "Power Menu: Close" },
+    { id: "spawn hgs ipc call control-center toggle", label: "Control Center: Toggle" },
+    { id: "spawn hgs ipc call control-center open", label: "Control Center: Open" },
+    { id: "spawn hgs ipc call control-center close", label: "Control Center: Close" },
+    { id: "spawn hgs ipc call notepad toggle", label: "Notepad: Toggle" },
+    { id: "spawn hgs ipc call notepad open", label: "Notepad: Open" },
+    { id: "spawn hgs ipc call notepad close", label: "Notepad: Close" },
+    { id: "spawn hgs ipc call notepad expand", label: "Notepad: Expand" },
+    { id: "spawn hgs ipc call notepad collapse", label: "Notepad: Collapse" },
+    { id: "spawn hgs ipc call notepad toggleExpand", label: "Notepad: Toggle Expand" },
+    { id: "spawn hgs ipc call dash toggle \"\"", label: "Dashboard: Toggle" },
+    { id: "spawn hgs ipc call dash open overview", label: "Dashboard: Overview" },
+    { id: "spawn hgs ipc call dash open media", label: "Dashboard: Media" },
+    { id: "spawn hgs ipc call dash open weather", label: "Dashboard: Weather" },
+    { id: "spawn hgs ipc call hgsdash wallpaper", label: "Wallpaper Browser" },
+    { id: "spawn hgs ipc call file browse wallpaper", label: "File: Browse Wallpaper" },
+    { id: "spawn hgs ipc call file browse profile", label: "File: Browse Profile" },
+    { id: "spawn hgs ipc call color-picker toggle", label: "Color Picker: Toggle" },
+    { id: "spawn hgs ipc call color-picker open", label: "Color Picker: Open" },
+    { id: "spawn hgs ipc call color-picker close", label: "Color Picker: Close" },
+    { id: "spawn hgs ipc call keybinds close", label: "Keybinds Cheatsheet: Close" },
+    { id: "spawn hgs ipc call lock lock", label: "Lock Screen" },
+    { id: "spawn hgs ipc call lock demo", label: "Lock Screen: Demo" },
+    { id: "spawn hgs ipc call inhibit toggle", label: "Idle Inhibit: Toggle" },
+    { id: "spawn hgs ipc call inhibit enable", label: "Idle Inhibit: Enable" },
+    { id: "spawn hgs ipc call inhibit disable", label: "Idle Inhibit: Disable" },
+    { id: "spawn hgs ipc call audio increment 5", label: "Volume Up" },
+    { id: "spawn hgs ipc call audio increment 1", label: "Volume Up (1%)" },
+    { id: "spawn hgs ipc call audio increment 5", label: "Volume Up (5%)" },
+    { id: "spawn hgs ipc call audio increment 10", label: "Volume Up (10%)" },
+    { id: "spawn hgs ipc call audio decrement 5", label: "Volume Down" },
+    { id: "spawn hgs ipc call audio decrement 1", label: "Volume Down (1%)" },
+    { id: "spawn hgs ipc call audio decrement 5", label: "Volume Down (5%)" },
+    { id: "spawn hgs ipc call audio decrement 10", label: "Volume Down (10%)" },
+    { id: "spawn hgs ipc call mpris increment 5", label: "Player Volume Up (5%)" },
+    { id: "spawn hgs ipc call mpris decrement 5", label: "Player Volume Down (5%)" },
+    { id: "spawn hgs ipc call audio mute", label: "Volume Mute Toggle" },
+    { id: "spawn hgs ipc call mic mute", label: "Microphone Mute Toggle" },
+    { id: "spawn hgs ipc call audio cycleoutput", label: "Audio Output: Cycle" },
+    { id: "spawn hgs ipc call brightness increment 5 \"\"", label: "Brightness Up" },
+    { id: "spawn hgs ipc call brightness increment 1 \"\"", label: "Brightness Up (1%)" },
+    { id: "spawn hgs ipc call brightness increment 5 \"\"", label: "Brightness Up (5%)" },
+    { id: "spawn hgs ipc call brightness increment 10 \"\"", label: "Brightness Up (10%)" },
+    { id: "spawn hgs ipc call brightness decrement 5 \"\"", label: "Brightness Down" },
+    { id: "spawn hgs ipc call brightness decrement 1 \"\"", label: "Brightness Down (1%)" },
+    { id: "spawn hgs ipc call brightness decrement 5 \"\"", label: "Brightness Down (5%)" },
+    { id: "spawn hgs ipc call brightness decrement 10 \"\"", label: "Brightness Down (10%)" },
+    { id: "spawn hgs ipc call brightness toggleExponential \"\"", label: "Brightness: Toggle Exponential" },
+    { id: "spawn hgs ipc call theme toggle", label: "Theme: Toggle Light/Dark" },
+    { id: "spawn hgs ipc call theme light", label: "Theme: Light Mode" },
+    { id: "spawn hgs ipc call theme dark", label: "Theme: Dark Mode" },
+    { id: "spawn hgs ipc call night toggle", label: "Night Mode: Toggle" },
+    { id: "spawn hgs ipc call night enable", label: "Night Mode: Enable" },
+    { id: "spawn hgs ipc call night disable", label: "Night Mode: Disable" },
+    { id: "spawn hgs ipc call bar toggle index 0", label: "Bar: Toggle (Primary)" },
+    { id: "spawn hgs ipc call bar reveal index 0", label: "Bar: Reveal (Primary)" },
+    { id: "spawn hgs ipc call bar hide index 0", label: "Bar: Hide (Primary)" },
+    { id: "spawn hgs ipc call bar toggleReveal index 0", label: "Bar: Toggle Autohide Reveal (Primary)" },
+    { id: "spawn hgs ipc call bar toggleAutoHide index 0", label: "Bar: Toggle Auto-Hide (Primary)" },
+    { id: "spawn hgs ipc call bar autoHide index 0", label: "Bar: Enable Auto-Hide (Primary)" },
+    { id: "spawn hgs ipc call bar manualHide index 0", label: "Bar: Disable Auto-Hide (Primary)" },
+    { id: "spawn hgs ipc call dock toggle", label: "Dock: Toggle" },
+    { id: "spawn hgs ipc call dock reveal", label: "Dock: Reveal" },
+    { id: "spawn hgs ipc call dock hide", label: "Dock: Hide" },
+    { id: "spawn hgs ipc call dock toggleAutoHide", label: "Dock: Toggle Auto-Hide" },
+    { id: "spawn hgs ipc call dock autoHide", label: "Dock: Enable Auto-Hide" },
+    { id: "spawn hgs ipc call dock manualHide", label: "Dock: Disable Auto-Hide" },
+    { id: "spawn hgs ipc call mpris playPause", label: "Media: Play/Pause" },
+    { id: "spawn hgs ipc call mpris play", label: "Media: Play" },
+    { id: "spawn hgs ipc call mpris pause", label: "Media: Pause" },
+    { id: "spawn hgs ipc call mpris previous", label: "Media: Previous Track" },
+    { id: "spawn hgs ipc call mpris next", label: "Media: Next Track" },
+    { id: "spawn hgs ipc call mpris stop", label: "Media: Stop" },
+    { id: "spawn hgs ipc call hypr toggleOverview", label: "Hyprland: Toggle Overview", compositor: "hyprland" },
+    { id: "spawn hgs ipc call hypr openOverview", label: "Hyprland: Open Overview", compositor: "hyprland" },
+    { id: "spawn hgs ipc call hypr closeOverview", label: "Hyprland: Close Overview", compositor: "hyprland" },
+    { id: "spawn hgs ipc call wallpaper next", label: "Wallpaper: Next" },
+    { id: "spawn hgs ipc call wallpaper prev", label: "Wallpaper: Previous" },
+    { id: "spawn hgs ipc call workspace-rename open", label: "Workspace: Rename" }
 ];
-
-const NIRI_ACTIONS = {
-    "Window": [
-        { id: "close-window", label: "Close Window" },
-        { id: "fullscreen-window", label: "Fullscreen" },
-        { id: "maximize-column", label: "Maximize Column" },
-        { id: "center-column", label: "Center Column" },
-        { id: "center-visible-columns", label: "Center Visible Columns" },
-        { id: "toggle-window-floating", label: "Toggle Floating" },
-        { id: "switch-focus-between-floating-and-tiling", label: "Switch Floating/Tiling Focus" },
-        { id: "switch-preset-column-width", label: "Cycle Column Width" },
-        { id: "switch-preset-window-height", label: "Cycle Window Height" },
-        { id: "set-column-width", label: "Set Column Width" },
-        { id: "set-window-height", label: "Set Window Height" },
-        { id: "reset-window-height", label: "Reset Window Height" },
-        { id: "expand-column-to-available-width", label: "Expand to Available Width" },
-        { id: "consume-or-expel-window-left", label: "Consume/Expel Left" },
-        { id: "consume-or-expel-window-right", label: "Consume/Expel Right" },
-        { id: "toggle-column-tabbed-display", label: "Toggle Tabbed" },
-        { id: "toggle-window-rule-opacity", label: "Toggle Window Opacity" }
-    ],
-    "Focus": [
-        { id: "focus-column-left", label: "Focus Left" },
-        { id: "focus-column-right", label: "Focus Right" },
-        { id: "focus-window-down", label: "Focus Down" },
-        { id: "focus-window-up", label: "Focus Up" },
-        { id: "focus-column-first", label: "Focus First Column" },
-        { id: "focus-column-last", label: "Focus Last Column" }
-    ],
-    "Move": [
-        { id: "move-column-left", label: "Move Left" },
-        { id: "move-column-right", label: "Move Right" },
-        { id: "move-window-down", label: "Move Down" },
-        { id: "move-window-up", label: "Move Up" },
-        { id: "move-column-to-first", label: "Move to First" },
-        { id: "move-column-to-last", label: "Move to Last" }
-    ],
-    "Workspace": [
-        { id: "focus-workspace-down", label: "Focus Workspace Down" },
-        { id: "focus-workspace-up", label: "Focus Workspace Up" },
-        { id: "focus-workspace-previous", label: "Focus Previous Workspace" },
-        { id: "focus-workspace", label: "Focus Workspace (by index)" },
-        { id: "move-column-to-workspace-down", label: "Move to Workspace Down" },
-        { id: "move-column-to-workspace-up", label: "Move to Workspace Up" },
-        { id: "move-column-to-workspace", label: "Move to Workspace (by index)" },
-        { id: "move-workspace-down", label: "Move Workspace Down" },
-        { id: "move-workspace-up", label: "Move Workspace Up" }
-    ],
-    "Monitor": [
-        { id: "focus-monitor-left", label: "Focus Monitor Left" },
-        { id: "focus-monitor-right", label: "Focus Monitor Right" },
-        { id: "focus-monitor-down", label: "Focus Monitor Down" },
-        { id: "focus-monitor-up", label: "Focus Monitor Up" },
-        { id: "move-column-to-monitor-left", label: "Move Column to Monitor Left" },
-        { id: "move-column-to-monitor-right", label: "Move Column to Monitor Right" },
-        { id: "move-column-to-monitor-down", label: "Move Column to Monitor Down" },
-        { id: "move-column-to-monitor-up", label: "Move Column to Monitor Up" },
-        { id: "move-workspace-to-monitor-left", label: "Move Workspace to Monitor Left" },
-        { id: "move-workspace-to-monitor-right", label: "Move Workspace to Monitor Right" },
-        { id: "move-workspace-to-monitor-down", label: "Move Workspace to Monitor Down" },
-        { id: "move-workspace-to-monitor-up", label: "Move Workspace to Monitor Up" },
-        { id: "move-workspace-to-monitor-next", label: "Move Workspace to Next Monitor" },
-        { id: "move-workspace-to-monitor-previous", label: "Move Workspace to Previous Monitor" }
-    ],
-    "Screenshot": [
-        { id: "screenshot", label: "Screenshot (Interactive)" },
-        { id: "screenshot-screen", label: "Screenshot Screen" },
-        { id: "screenshot-window", label: "Screenshot Window" }
-    ],
-    "System": [
-        { id: "toggle-overview", label: "Toggle Overview" },
-        { id: "show-hotkey-overlay", label: "Show Hotkey Overlay" },
-        { id: "do-screen-transition", label: "Screen Transition" },
-        { id: "power-off-monitors", label: "Power Off Monitors" },
-        { id: "power-on-monitors", label: "Power On Monitors" },
-        { id: "toggle-keyboard-shortcuts-inhibit", label: "Toggle Shortcuts Inhibit" },
-        { id: "quit", label: "Quit Niri" },
-        { id: "suspend", label: "Suspend" }
-    ],
-    "Alt-Tab": [
-        { id: "next-window", label: "Next Window" },
-        { id: "previous-window", label: "Previous Window" }
-    ]
-};
-
-const MANGOWC_ACTIONS = {
-    "Window": [
-        { id: "killclient", label: "Close Window" },
-        { id: "focuslast", label: "Focus Last Window" },
-        { id: "focusstack next", label: "Focus Next in Stack" },
-        { id: "focusstack prev", label: "Focus Previous in Stack" },
-        { id: "focusdir left", label: "Focus Left" },
-        { id: "focusdir right", label: "Focus Right" },
-        { id: "focusdir up", label: "Focus Up" },
-        { id: "focusdir down", label: "Focus Down" },
-        { id: "exchange_client left", label: "Swap Left" },
-        { id: "exchange_client right", label: "Swap Right" },
-        { id: "exchange_client up", label: "Swap Up" },
-        { id: "exchange_client down", label: "Swap Down" },
-        { id: "exchange_stack_client next", label: "Swap Next in Stack" },
-        { id: "exchange_stack_client prev", label: "Swap Previous in Stack" },
-        { id: "togglefloating", label: "Toggle Floating" },
-        { id: "togglefullscreen", label: "Toggle Fullscreen" },
-        { id: "togglefakefullscreen", label: "Toggle Fake Fullscreen" },
-        { id: "togglemaximizescreen", label: "Toggle Maximize" },
-        { id: "toggleglobal", label: "Toggle Global (Sticky)" },
-        { id: "toggleoverlay", label: "Toggle Overlay" },
-        { id: "minimized", label: "Minimize Window" },
-        { id: "restore_minimized", label: "Restore Minimized" },
-        { id: "toggle_render_border", label: "Toggle Border" },
-        { id: "centerwin", label: "Center Window" },
-        { id: "zoom", label: "Swap with Master" }
-    ],
-    "Move/Resize": [
-        { id: "smartmovewin left", label: "Smart Move Left" },
-        { id: "smartmovewin right", label: "Smart Move Right" },
-        { id: "smartmovewin up", label: "Smart Move Up" },
-        { id: "smartmovewin down", label: "Smart Move Down" },
-        { id: "smartresizewin left", label: "Smart Resize Left" },
-        { id: "smartresizewin right", label: "Smart Resize Right" },
-        { id: "smartresizewin up", label: "Smart Resize Up" },
-        { id: "smartresizewin down", label: "Smart Resize Down" },
-        { id: "movewin", label: "Move Window (x,y)" },
-        { id: "resizewin", label: "Resize Window (w,h)" }
-    ],
-    "Tags": [
-        { id: "view", label: "View Tag" },
-        { id: "viewtoleft", label: "View Left Tag" },
-        { id: "viewtoright", label: "View Right Tag" },
-        { id: "viewtoleft_have_client", label: "View Left (with client)" },
-        { id: "viewtoright_have_client", label: "View Right (with client)" },
-        { id: "viewcrossmon", label: "View Cross-Monitor" },
-        { id: "tag", label: "Move to Tag" },
-        { id: "tagsilent", label: "Move to Tag (silent)" },
-        { id: "tagtoleft", label: "Move to Left Tag" },
-        { id: "tagtoright", label: "Move to Right Tag" },
-        { id: "tagcrossmon", label: "Move Cross-Monitor" },
-        { id: "toggletag", label: "Toggle Tag on Window" },
-        { id: "toggleview", label: "Toggle Tag View" },
-        { id: "comboview", label: "Combo View Tags" }
-    ],
-    "Layout": [
-        { id: "setlayout", label: "Set Layout" },
-        { id: "switch_layout", label: "Cycle Layouts" },
-        { id: "set_proportion", label: "Set Proportion" },
-        { id: "switch_proportion_preset", label: "Cycle Proportion Presets" },
-        { id: "incnmaster +1", label: "Increase Masters" },
-        { id: "incnmaster -1", label: "Decrease Masters" },
-        { id: "setmfact", label: "Set Master Factor" },
-        { id: "incgaps", label: "Adjust Gaps" },
-        { id: "togglegaps", label: "Toggle Gaps" }
-    ],
-    "Monitor": [
-        { id: "focusmon left", label: "Focus Monitor Left" },
-        { id: "focusmon right", label: "Focus Monitor Right" },
-        { id: "focusmon up", label: "Focus Monitor Up" },
-        { id: "focusmon down", label: "Focus Monitor Down" },
-        { id: "tagmon left", label: "Move to Monitor Left" },
-        { id: "tagmon right", label: "Move to Monitor Right" },
-        { id: "tagmon up", label: "Move to Monitor Up" },
-        { id: "tagmon down", label: "Move to Monitor Down" },
-        { id: "disable_monitor", label: "Disable Monitor" },
-        { id: "enable_monitor", label: "Enable Monitor" },
-        { id: "toggle_monitor", label: "Toggle Monitor" },
-        { id: "create_virtual_output", label: "Create Virtual Output" },
-        { id: "destroy_all_virtual_output", label: "Destroy Virtual Outputs" }
-    ],
-    "Scratchpad": [
-        { id: "toggle_scratchpad", label: "Toggle Scratchpad" },
-        { id: "toggle_name_scratchpad", label: "Toggle Named Scratchpad" }
-    ],
-    "Overview": [
-        { id: "toggleoverview", label: "Toggle Overview" }
-    ],
-    "System": [
-        { id: "reload_config", label: "Reload Config" },
-        { id: "quit", label: "Quit MangoWC" },
-        { id: "setkeymode", label: "Set Keymode" },
-        { id: "switch_keyboard_layout", label: "Switch Keyboard Layout" },
-        { id: "setoption", label: "Set Option" },
-        { id: "toggle_trackpad_enable", label: "Toggle Trackpad" }
-    ]
-};
 
 const HYPRLAND_ACTIONS = {
     "Window": [
@@ -441,120 +253,10 @@ const HYPRLAND_ACTIONS = {
 };
 
 const COMPOSITOR_ACTIONS = {
-    niri: NIRI_ACTIONS,
-    mangowc: MANGOWC_ACTIONS,
     hyprland: HYPRLAND_ACTIONS
 };
 
-const CATEGORY_ORDER = ["DMS", "Execute", "Workspace", "Tags", "Window", "Move/Resize", "Focus", "Move", "Layout", "Groups", "Monitor", "Scratchpad", "Screenshot", "System", "Pass-through", "Overview", "Alt-Tab", "Other"];
-
-const NIRI_ACTION_ARGS = {
-    "quit": {
-        args: [{ name: "skip-confirmation", type: "bool", label: "Skip confirmation" }]
-    },
-    "do-screen-transition": {
-        args: [{ name: "delay-ms", type: "number", label: "Delay (ms)", placeholder: "250" }]
-    },
-    "set-column-width": {
-        args: [{ name: "value", type: "text", label: "Width", placeholder: "+10%, -10%, 50%" }]
-    },
-    "set-window-height": {
-        args: [{ name: "value", type: "text", label: "Height", placeholder: "+10%, -10%, 50%" }]
-    },
-    "focus-workspace": {
-        args: [{ name: "index", type: "number", label: "Workspace", placeholder: "1, 2, 3..." }]
-    },
-    "move-column-to-workspace": {
-        args: [
-            { name: "index", type: "number", label: "Workspace", placeholder: "1, 2, 3..." },
-            { name: "focus", type: "bool", label: "Follow focus", default: false }
-        ]
-    },
-    "move-column-to-workspace-down": {
-        args: [{ name: "focus", type: "bool", label: "Follow focus", default: false }]
-    },
-    "move-column-to-workspace-up": {
-        args: [{ name: "focus", type: "bool", label: "Follow focus", default: false }]
-    },
-    "screenshot": {
-        args: [{ name: "show-pointer", type: "bool", label: "Show pointer" }]
-    },
-    "screenshot-screen": {
-        args: [
-            { name: "show-pointer", type: "bool", label: "Show pointer" },
-            { name: "write-to-disk", type: "bool", label: "Save to disk" }
-        ]
-    },
-    "screenshot-window": {
-        args: [{ name: "write-to-disk", type: "bool", label: "Save to disk" }]
-    }
-};
-
-const MANGOWC_ACTION_ARGS = {
-    "view": {
-        args: [
-            { name: "tag", type: "number", label: "Tag", placeholder: "1-9" },
-            { name: "monitor", type: "number", label: "Monitor", placeholder: "0", default: "0" }
-        ]
-    },
-    "tag": {
-        args: [
-            { name: "tag", type: "number", label: "Tag", placeholder: "1-9" },
-            { name: "monitor", type: "number", label: "Monitor", placeholder: "0", default: "0" }
-        ]
-    },
-    "tagsilent": {
-        args: [
-            { name: "tag", type: "number", label: "Tag", placeholder: "1-9" },
-            { name: "monitor", type: "number", label: "Monitor", placeholder: "0", default: "0" }
-        ]
-    },
-    "toggletag": {
-        args: [
-            { name: "tag", type: "number", label: "Tag", placeholder: "1-9" },
-            { name: "monitor", type: "number", label: "Monitor", placeholder: "0", default: "0" }
-        ]
-    },
-    "toggleview": {
-        args: [
-            { name: "tag", type: "number", label: "Tag", placeholder: "1-9" },
-            { name: "monitor", type: "number", label: "Monitor", placeholder: "0", default: "0" }
-        ]
-    },
-    "comboview": {
-        args: [{ name: "tags", type: "text", label: "Tags", placeholder: "1,2,3" }]
-    },
-    "setlayout": {
-        args: [{ name: "layout", type: "text", label: "Layout", placeholder: "tile, monocle, grid, deck" }]
-    },
-    "set_proportion": {
-        args: [{ name: "value", type: "text", label: "Proportion", placeholder: "0.5, +0.1, -0.1" }]
-    },
-    "setmfact": {
-        args: [{ name: "value", type: "text", label: "Factor", placeholder: "+0.05, -0.05" }]
-    },
-    "incgaps": {
-        args: [{ name: "value", type: "number", label: "Amount", placeholder: "+5, -5" }]
-    },
-    "movewin": {
-        args: [{ name: "value", type: "text", label: "Position", placeholder: "x,y or +10,+10" }]
-    },
-    "resizewin": {
-        args: [{ name: "value", type: "text", label: "Size", placeholder: "w,h or +10,+10" }]
-    },
-    "setkeymode": {
-        args: [{ name: "mode", type: "text", label: "Mode", placeholder: "default, custom" }]
-    },
-    "setoption": {
-        args: [{ name: "option", type: "text", label: "Option", placeholder: "option_name value" }]
-    },
-    "toggle_name_scratchpad": {
-        args: [{ name: "name", type: "text", label: "Name", placeholder: "scratchpad name" }]
-    },
-    "incnmaster": {
-        args: [{ name: "value", type: "number", label: "Amount", placeholder: "+1, -1" }]
-    }
-};
+const CATEGORY_ORDER = ["HGS", "Execute", "Workspace", "Tags", "Window", "Move/Resize", "Focus", "Move", "Layout", "Groups", "Monitor", "Scratchpad", "Screenshot", "System", "Pass-through", "Overview", "Alt-Tab", "Other"];
 
 const HYPRLAND_ACTION_ARGS = {
     "workspace": {
@@ -732,57 +434,55 @@ const HYPRLAND_ACTION_ARGS = {
 };
 
 const ACTION_ARGS = {
-    niri: NIRI_ACTION_ARGS,
-    mangowc: MANGOWC_ACTION_ARGS,
     hyprland: HYPRLAND_ACTION_ARGS
 };
 
-const DMS_ACTION_ARGS = {
+const HGS_ACTION_ARGS = {
     "audio increment": {
-        base: "spawn dms ipc call audio increment",
+        base: "spawn hgs ipc call audio increment",
         args: [{ name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" }]
     },
     "audio decrement": {
-        base: "spawn dms ipc call audio decrement",
+        base: "spawn hgs ipc call audio decrement",
         args: [{ name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" }]
     },
     "player increment": {
-        base: "spawn dms ipc call mpris increment",
+        base: "spawn hgs ipc call mpris increment",
         args: [{ name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" }]
     },
     "player decrement": {
-        base: "spawn dms ipc call mpris decrement",
+        base: "spawn hgs ipc call mpris decrement",
         args: [{ name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" }]
     },
     "brightness increment": {
-        base: "spawn dms ipc call brightness increment",
+        base: "spawn hgs ipc call brightness increment",
         args: [
             { name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" },
             { name: "device", type: "text", label: "Device", placeholder: "leave empty for default", default: "" }
         ]
     },
     "brightness decrement": {
-        base: "spawn dms ipc call brightness decrement",
+        base: "spawn hgs ipc call brightness decrement",
         args: [
             { name: "amount", type: "number", label: "Amount %", placeholder: "5", default: "5" },
             { name: "device", type: "text", label: "Device", placeholder: "leave empty for default", default: "" }
         ]
     },
     "brightness toggleExponential": {
-        base: "spawn dms ipc call brightness toggleExponential",
+        base: "spawn hgs ipc call brightness toggleExponential",
         args: [
             { name: "device", type: "text", label: "Device", placeholder: "leave empty for default", default: "" }
         ]
     },
     "dash toggle": {
-        base: "spawn dms ipc call dash toggle",
+        base: "spawn hgs ipc call dash toggle",
         args: [
             { name: "tab", type: "text", label: "Tab", placeholder: "overview, media, wallpaper, weather", default: "" }
         ]
     }
 };
 
-const DMS_AMOUNT_LABELS = {
+const HGS_AMOUNT_LABELS = {
     "audio increment": "Volume Up",
     "audio decrement": "Volume Down",
     "mpris increment": "Player Volume Up",
@@ -791,9 +491,9 @@ const DMS_AMOUNT_LABELS = {
     "brightness decrement": "Brightness Down"
 };
 
-function getDmsAmountLabel(action) {
-    var parsed = parseDmsActionArgs(action);
-    var label = DMS_AMOUNT_LABELS[parsed.base];
+function getHgsAmountLabel(action) {
+    var parsed = parseHgsActionArgs(action);
+    var label = HGS_AMOUNT_LABELS[parsed.base];
     if (!label)
         return null;
     var amount = parsed.args?.amount;
@@ -806,30 +506,12 @@ function getActionTypes() {
     return ACTION_TYPES;
 }
 
-function getDmsActionArgs() {
-    return DMS_ACTION_ARGS;
+function getHgsActionArgs() {
+    return HGS_ACTION_ARGS;
 }
 
-function getDmsActions(isNiri, isHyprland) {
-    const result = [];
-    for (let i = 0; i < DMS_ACTIONS.length; i++) {
-        const action = DMS_ACTIONS[i];
-        if (!action.compositor) {
-            result.push(action);
-            continue;
-        }
-        switch (action.compositor) {
-            case "niri":
-                if (isNiri)
-                    result.push(action);
-                break;
-            case "hyprland":
-                if (isHyprland)
-                    result.push(action);
-                break;
-        }
-    }
-    return result;
+function getHgsActions() {
+    return HGS_ACTIONS;
 }
 
 function getCompositorCategories(compositor) {
@@ -850,10 +532,10 @@ function getCategoryOrder() {
     return CATEGORY_ORDER;
 }
 
-function findDmsAction(actionId) {
-    for (let i = 0; i < DMS_ACTIONS.length; i++) {
-        if (DMS_ACTIONS[i].id === actionId)
-            return DMS_ACTIONS[i];
+function findHgsAction(actionId) {
+    for (let i = 0; i < HGS_ACTIONS.length; i++) {
+        if (HGS_ACTIONS[i].id === actionId)
+            return HGS_ACTIONS[i];
     }
     return null;
 }
@@ -876,13 +558,13 @@ function getActionLabel(action, compositor) {
     if (!action)
         return "";
 
-    var amountLabel = getDmsAmountLabel(action);
+    var amountLabel = getHgsAmountLabel(action);
     if (amountLabel)
         return amountLabel;
 
-    var dmsAct = findDmsAction(action);
-    if (dmsAct)
-        return dmsAct.label;
+    var hgsAct = findHgsAction(action);
+    if (hgsAct)
+        return hgsAct.label;
 
     if (compositor) {
         var compAct = findCompositorAction(compositor, action);
@@ -904,8 +586,8 @@ function getActionLabel(action, compositor) {
 function getActionType(action) {
     if (!action)
         return "compositor";
-    if (action.startsWith("spawn dms ipc call "))
-        return "dms";
+    if (action.startsWith("spawn hgs ipc call "))
+        return "hgs";
     if (/^spawn \w+ -c /.test(action) || action.startsWith("spawn_shell "))
         return "shell";
     if (action.startsWith("spawn "))
@@ -913,10 +595,10 @@ function getActionType(action) {
     return "compositor";
 }
 
-function isDmsAction(action) {
+function isHgsAction(action) {
     if (!action)
         return false;
-    return action.startsWith("spawn dms ipc call ");
+    return action.startsWith("spawn hgs ipc call ");
 }
 
 function isValidAction(action) {
@@ -956,8 +638,6 @@ function buildSpawnAction(command, args) {
 function buildShellAction(compositor, shellCmd, shell) {
     if (!shellCmd)
         return "";
-    if (compositor === "mangowc")
-        return "spawn_shell " + shellCmd;
     var shellBin = shell || "sh";
     return "spawn " + shellBin + " -c \"" + shellCmd.replace(/"/g, "\\\"") + "\"";
 }
@@ -1004,9 +684,9 @@ function getActionArgConfig(compositor, action) {
     if (compositorArgs && compositorArgs[baseAction])
         return { type: "compositor", base: baseAction, config: compositorArgs[baseAction] };
 
-    for (var key in DMS_ACTION_ARGS) {
-        if (action.startsWith(DMS_ACTION_ARGS[key].base))
-            return { type: "dms", base: key, config: DMS_ACTION_ARGS[key] };
+    for (var key in HGS_ACTION_ARGS) {
+        if (action.startsWith(HGS_ACTION_ARGS[key].base))
+            return { type: "hgs", base: key, config: HGS_ACTION_ARGS[key] };
     }
 
     return null;
@@ -1028,53 +708,6 @@ function parseCompositorActionArgs(compositor, action) {
     var argParts = parts.slice(1);
 
     switch (compositor) {
-        case "niri":
-            switch (base) {
-                case "move-column-to-workspace":
-                    for (var i = 0; i < argParts.length; i++) {
-                        if (argParts[i] === "focus=true" || argParts[i] === "focus=false") {
-                            args.focus = argParts[i] === "focus=true";
-                        } else if (!args.index) {
-                            args.index = argParts[i];
-                        }
-                    }
-                    break;
-                case "move-column-to-workspace-down":
-                case "move-column-to-workspace-up":
-                    for (var k = 0; k < argParts.length; k++) {
-                        if (argParts[k] === "focus=true" || argParts[k] === "focus=false")
-                            args.focus = argParts[k] === "focus=true";
-                    }
-                    break;
-                default:
-                    for (var j = 0; j < argParts.length; j++) {
-                        var kv = argParts[j].split("=");
-                        if (kv.length === 2) {
-                            switch (kv[1]) {
-                                case "true":
-                                    args[kv[0]] = true;
-                                    break;
-                                case "false":
-                                    args[kv[0]] = false;
-                                    break;
-                                default:
-                                    args[kv[0]] = kv[1];
-                            }
-                        } else {
-                            args.value = args.value ? (args.value + " " + argParts[j]) : argParts[j];
-                        }
-                    }
-            }
-            break;
-        case "mangowc":
-            if (argConfig.args && argConfig.args.length > 0 && argParts.length > 0) {
-                var paramStr = argParts.join(" ");
-                var paramValues = paramStr.split(",");
-                for (var m = 0; m < argConfig.args.length && m < paramValues.length; m++) {
-                    args[argConfig.args[m].name] = paramValues[m];
-                }
-            }
-            break;
         case "hyprland":
             if (argConfig.args && argConfig.args.length > 0) {
                 switch (base) {
@@ -1175,60 +808,6 @@ function buildCompositorAction(compositor, base, args) {
         return base;
 
     switch (compositor) {
-        case "niri":
-            switch (base) {
-                case "move-column-to-workspace":
-                    if (args.index)
-                        parts.push(args.index);
-                    if (args.focus === false)
-                        parts.push("focus=false");
-                    break;
-                case "move-column-to-workspace-down":
-                case "move-column-to-workspace-up":
-                    if (args.focus === false)
-                        parts.push("focus=false");
-                    break;
-                default:
-                    if (args.value)
-                        parts.push(args.value);
-                    else if (args.index)
-                        parts.push(args.index);
-                    for (var prop in args) {
-                        switch (prop) {
-                            case "value":
-                            case "index":
-                                continue;
-                        }
-                        var val = args[prop];
-                        if (val === true)
-                            parts.push(prop + "=true");
-                        else if (val === false)
-                            parts.push(prop + "=false");
-                        else if (val !== undefined && val !== null && val !== "")
-                            parts.push(prop + "=" + val);
-                    }
-            }
-            break;
-        case "mangowc":
-            var compositorArgs = ACTION_ARGS.mangowc;
-            if (compositorArgs && compositorArgs[base] && compositorArgs[base].args) {
-                var argConfig = compositorArgs[base].args;
-                var argValues = [];
-                for (var i = 0; i < argConfig.length; i++) {
-                    var argDef = argConfig[i];
-                    var val = args[argDef.name];
-                    if (val === undefined || val === "")
-                        val = argDef.default || "";
-                    if (val === "" && argValues.length === 0)
-                        continue;
-                    argValues.push(val);
-                }
-                if (argValues.length > 0)
-                    parts.push(argValues.join(","));
-            } else if (args.value) {
-                parts.push(args.value);
-            }
-            break;
         case "hyprland":
             var hyprArgs = ACTION_ARGS.hyprland;
             if (hyprArgs && hyprArgs[base] && hyprArgs[base].args) {
@@ -1292,12 +871,12 @@ function buildCompositorAction(compositor, base, args) {
     return parts.join(" ");
 }
 
-function parseDmsActionArgs(action) {
+function parseHgsActionArgs(action) {
     if (!action)
         return { base: "", args: {} };
 
-    for (var key in DMS_ACTION_ARGS) {
-        var config = DMS_ACTION_ARGS[key];
+    for (var key in HGS_ACTION_ARGS) {
+        var config = HGS_ACTION_ARGS[key];
         if (!action.startsWith(config.base))
             continue;
 
@@ -1345,8 +924,8 @@ function parseDmsActionArgs(action) {
     return { base: action, args: {} };
 }
 
-function buildDmsAction(baseKey, args) {
-    var config = DMS_ACTION_ARGS[baseKey];
+function buildHgsAction(baseKey, args) {
+    var config = HGS_ACTION_ARGS[baseKey];
     if (!config)
         return "";
 

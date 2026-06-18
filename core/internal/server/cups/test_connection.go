@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/ipp"
 )
 
 var validProtocols = map[string]bool{

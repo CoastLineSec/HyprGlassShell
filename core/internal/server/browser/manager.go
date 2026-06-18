@@ -3,7 +3,7 @@ package browser
 import (
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 )
 
 type Manager struct {

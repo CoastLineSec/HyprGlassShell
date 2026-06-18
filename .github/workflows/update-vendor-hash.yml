@@ -36,7 +36,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Attempting nix build to get new vendorHash..."
-          if output=$(nix build .#dms-shell 2>&1); then
+          if output=$(nix build .#hgs-shell 2>&1); then
             echo "Build succeeded, no hash update needed"
             exit 0
           fi
@@ -46,7 +46,7 @@ jobs:
           [ "$current_hash" = "$new_hash" ] && { echo "vendorHash already up to date"; exit 0; }
           sed -i "s|vendorHash = \"$current_hash\"|vendorHash = \"$new_hash\"|" flake.nix
           echo "Verifying build with new vendorHash..."
-          nix build .#dms-shell
+          nix build .#hgs-shell
           echo "vendorHash updated successfully!"
 
       - name: Commit and push vendorHash update
@@ -55,8 +55,8 @@ jobs:
         run: |
           set -euo pipefail
           if ! git diff --quiet flake.nix; then
-            git config user.name "dms-ci[bot]"
-            git config user.email "dms-ci[bot]@users.noreply.github.com"
+            git config user.name "hgs-ci[bot]"
+            git config user.email "hgs-ci[bot]@users.noreply.github.com"
             git add flake.nix
             git commit -m "nix: update vendorHash for go.mod changes" || exit 0
             git pull --rebase origin ${{ github.ref_name }}

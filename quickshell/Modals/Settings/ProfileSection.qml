@@ -28,7 +28,7 @@ Rectangle {
             height: 80
             anchors.verticalCenter: parent.verticalCenter
 
-            DankCircularImage {
+            HGSCircularImage {
                 id: profileImage
 
                 anchors.fill: parent
@@ -60,7 +60,7 @@ Rectangle {
                         radius: 14
                         color: Qt.rgba(255, 255, 255, 0.9)
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "edit"
                             size: 16
@@ -87,7 +87,7 @@ Rectangle {
                         color: Qt.rgba(255, 255, 255, 0.9)
                         visible: profileImage.hasImage
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "close"
                             size: 16
@@ -132,7 +132,7 @@ Rectangle {
             }
 
             StyledText {
-                text: DgopService.hostname || "DMS"
+                text: DgopService.hostname || "HGS"
                 font.pixelSize: Theme.fontSizeMedium
                 color: Theme.surfaceVariantText
                 elide: Text.ElideRight

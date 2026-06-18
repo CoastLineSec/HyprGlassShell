@@ -253,15 +253,15 @@ Item {
 
         // make sure we don't overwrite an existing override with a default one, in case the user has already customized it
         function buildOverrideContent(existing) {
-            if (!existing) return "[Unit]\nAfter=dms.service\n";
+            if (!existing) return "[Unit]\nAfter=hgs.service\n";
             const lines = existing.split("\n");
-            const hasAfter = lines.some(l => l.trim() === "After=dms.service");
+            const hasAfter = lines.some(l => l.trim() === "After=hgs.service");
             if (hasAfter) return existing;
             const unitIdx = lines.findIndex(l => l.trim() === "[Unit]");
             if (unitIdx >= 0) {
-                lines.splice(unitIdx + 1, 0, "After=dms.service");
+                lines.splice(unitIdx + 1, 0, "After=hgs.service");
             } else {
-                lines.push("[Unit]", "After=dms.service");
+                lines.push("[Unit]", "After=hgs.service");
             }
             return lines.join("\n");
         }
@@ -273,7 +273,7 @@ Item {
         }
 
         onLoadFailed: {
-            setText("[Unit]\nAfter=dms.service\n");
+            setText("[Unit]\nAfter=hgs.service\n");
             ToastService.showInfo(I18n.tr("Systemd Override generated"));
         }
 
@@ -321,7 +321,7 @@ Item {
         desktopApps = [];
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -449,7 +449,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: browseButton
                             text: I18n.tr("Browse")
                             iconName: "search"
@@ -481,7 +481,7 @@ Item {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         width: parent.width
                         placeholderText: I18n.tr("%command%")
                         text: root.newEntryCommandWrapper
@@ -518,7 +518,7 @@ Item {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         width: parent.width
                         placeholderText: I18n.tr("e.g. My Script")
                         text: root.newEntryName
@@ -549,7 +549,7 @@ Item {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         width: parent.width
                         placeholderText: I18n.tr("e.g. /usr/bin/my-script --flag")
                         text: root.newEntryExec
@@ -571,7 +571,7 @@ Item {
                     height: Theme.spacingM
                 }
 
-                DankButton {
+                HGSButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: I18n.tr("Add to Autostart")
                     iconName: "add"
@@ -605,7 +605,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: clearAllButton
                         iconName: "delete_sweep"
                         iconSize: Theme.iconSize - 2
@@ -688,14 +688,14 @@ Item {
                                     }
                                 }
 
-                                DankToggle {
+                                HGSToggle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     checked: !modelData.hidden
                                     onToggled: checked => root.setHidden(modelData, !checked)
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingS
                                 anchors.verticalCenter: parent.verticalCenter
@@ -732,13 +732,13 @@ Item {
 
                     StyledText {
                         width: parent.width
-                        text: I18n.tr("If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps")
+                        text: I18n.tr("If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps")
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceVariantText
                         wrapMode: Text.WordWrap
                     }
 
-                    DankButton {
+                    HGSButton {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: I18n.tr("Generate Override")
                         iconName: "build"

@@ -3,8 +3,8 @@ package network
 import (
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/errdefs"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/Wifx/gonetworkmanager/v2"
 )
 

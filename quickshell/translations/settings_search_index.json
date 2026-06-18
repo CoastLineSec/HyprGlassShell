@@ -59,7 +59,7 @@
       "wallpaper"
     ],
     "icon": "blur_on",
-    "description": "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.",
+    "description": "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.",
     "conditionKey": "isNiri"
   },
   {
@@ -147,7 +147,7 @@
       "targetable",
       "wallpaper"
     ],
-    "description": "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration."
+    "description": "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration."
   },
   {
     "section": "disableWallpaper",
@@ -438,7 +438,7 @@
       "calendar",
       "clock",
       "daemon",
-      "dankcalendar",
+      "hgscalendar",
       "date",
       "day",
       "events",
@@ -735,13 +735,13 @@
     "section": "barConfigurations",
     "label": "Bar Configurations",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "config",
       "configurations",
       "configure",
-      "dank",
+      "hgs",
       "panel",
       "setup",
       "statusbar",
@@ -754,11 +754,11 @@
     "section": "barDisplay",
     "label": "Display Assignment",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "assignment",
       "bar",
-      "dank",
+      "hgs",
       "display",
       "monitor",
       "output",
@@ -773,10 +773,10 @@
     "section": "barPosition",
     "label": "Position",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "panel",
       "position",
       "statusbar",
@@ -788,10 +788,10 @@
     "section": "_tab_3",
     "label": "Settings",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "panel",
       "settings",
       "statusbar",
@@ -803,10 +803,10 @@
     "section": "barUseOverlayLayer",
     "label": "Use Overlay Layer",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "fullscreen",
       "layer",
       "overlay",
@@ -823,14 +823,14 @@
     "section": "barVisibility",
     "label": "Visibility",
     "tabIndex": 3,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "auto-hide",
       "autohide",
       "automatically",
       "away",
       "bar",
-      "dank",
+      "hgs",
       "fullscreen",
       "hidden",
       "hide",
@@ -853,10 +853,10 @@
     "section": "workspaceDragReorder",
     "label": "Drag to Reorder",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "drag",
       "indicators",
@@ -876,11 +876,11 @@
     "section": "workspaceFollowFocus",
     "label": "Follow Monitor Focus",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "currently",
-      "dank",
+      "hgs",
       "desktop",
       "desktops",
       "focus",
@@ -902,14 +902,14 @@
     "section": "groupActiveWorkspaceApps",
     "label": "Group Active Workspace",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "active",
       "app",
       "application",
       "apps",
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "focused",
       "group",
@@ -929,14 +929,14 @@
     "section": "groupWorkspaceApps",
     "label": "Group Workspace Apps",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "app",
       "application",
       "apps",
       "bar",
       "collapse",
-      "dank",
+      "hgs",
       "desktop",
       "desktops",
       "group",
@@ -958,14 +958,14 @@
     "section": "workspaceActiveAppHighlightEnabled",
     "label": "Highlight Active Workspace App",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "active",
       "app",
       "apps",
       "bar",
       "currently",
-      "dank",
+      "hgs",
       "day",
       "desktop",
       "focused",
@@ -986,10 +986,10 @@
     "section": "workspaceIcons",
     "label": "Named Workspace Icons",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "icons",
       "named",
@@ -1005,10 +1005,10 @@
     "section": "reverseScrolling",
     "label": "Reverse Scrolling Direction",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "direction",
       "over",
@@ -1030,11 +1030,11 @@
     "section": "dwlShowAllTags",
     "label": "Show All Tags",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "all",
       "bar",
-      "dank",
+      "hgs",
       "dwl",
       "occupied",
       "panel",
@@ -1051,12 +1051,12 @@
     "section": "showOccupiedWorkspacesOnly",
     "label": "Show Occupied Workspaces Only",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "active",
       "bar",
       "contain",
-      "dank",
+      "hgs",
       "desktop",
       "desktops",
       "display",
@@ -1080,14 +1080,14 @@
     "section": "showWorkspaceApps",
     "label": "Show Workspace Apps",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "app",
       "application",
       "applications",
       "apps",
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "display",
       "icons",
@@ -1110,10 +1110,10 @@
     "section": "showWorkspaceIndex",
     "label": "Workspace Index Numbers",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "index",
       "labels",
@@ -1133,11 +1133,11 @@
     "section": "showWorkspaceName",
     "label": "Workspace Names",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "bars",
-      "dank",
+      "hgs",
       "desktop",
       "first",
       "horizontal",
@@ -1160,12 +1160,12 @@
     "section": "showWorkspacePadding",
     "label": "Workspace Padding",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "always",
       "available",
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "desktops",
       "even",
@@ -1186,10 +1186,10 @@
     "section": "workspaceSettings",
     "label": "Workspace Settings",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "index",
       "labels",
@@ -1212,10 +1212,10 @@
     "section": "_tab_4",
     "label": "Workspaces",
     "tabIndex": 4,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "desktop",
       "desktops",
       "panel",
@@ -1795,7 +1795,7 @@
     "section": "barBorder",
     "label": "Border",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "appearance",
       "bar",
@@ -1803,7 +1803,7 @@
       "color",
       "colors",
       "colour",
-      "dank",
+      "hgs",
       "hue",
       "look",
       "panel",
@@ -1820,13 +1820,13 @@
     "section": "barCorners",
     "label": "Corners & Background",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "background",
       "bar",
       "corner",
       "corners",
-      "dank",
+      "hgs",
       "panel",
       "radius",
       "remove",
@@ -1842,12 +1842,12 @@
   },
   {
     "section": "barAppearance",
-    "label": "Dank Bar",
+    "label": "HGS Bar",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "panel",
       "statusbar",
       "taskbar",
@@ -1859,11 +1859,11 @@
     "section": "barShadowDirectionSource",
     "label": "Direction Source",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "choose",
-      "dank",
+      "hgs",
       "direction",
       "panel",
       "resolves",
@@ -1879,12 +1879,12 @@
     "section": "workspaceFocusedBorderEnabled",
     "label": "Focused Border",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "around",
       "bar",
       "border",
-      "dank",
+      "hgs",
       "desktop",
       "focused",
       "indicator",
@@ -1903,11 +1903,11 @@
     "section": "barFontScale",
     "label": "Font Scale",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
-      "dankbar",
+      "hgs",
+      "hgsbar",
       "font",
       "independently",
       "panel",
@@ -1918,17 +1918,17 @@
       "topbar"
     ],
     "icon": "text_fields",
-    "description": "Scale DankBar font sizes independently"
+    "description": "Scale HGSBar font sizes independently"
   },
   {
     "section": "barIconScale",
     "label": "Icon Scale",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
-      "dankbar",
+      "hgs",
+      "hgsbar",
       "icon",
       "independently",
       "panel",
@@ -1939,16 +1939,16 @@
       "topbar"
     ],
     "icon": "interests",
-    "description": "Scale DankBar icon sizes independently"
+    "description": "Scale HGSBar icon sizes independently"
   },
   {
     "section": "barShadowDirectionManual",
     "label": "Manual Direction",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "direction",
       "fixed",
       "manual",
@@ -1964,12 +1964,12 @@
     "section": "barTransparency",
     "label": "Opacity",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "background",
       "bar",
       "controls",
-      "dank",
+      "hgs",
       "opacity",
       "panel",
       "statusbar",
@@ -1983,10 +1983,10 @@
     "section": "barShadow",
     "label": "Shadow Override",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
-      "dank",
+      "hgs",
       "global",
       "override",
       "panel",
@@ -2003,11 +2003,11 @@
     "section": "barSpacing",
     "label": "Spacing",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "between",
-      "dank",
+      "hgs",
       "edges",
       "gap",
       "gaps",
@@ -2029,7 +2029,7 @@
     "section": "trayIconTint",
     "label": "System Tray Icon Tint",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "applying",
       "bar",
@@ -2037,7 +2037,7 @@
       "color",
       "colour",
       "controls",
-      "dank",
+      "hgs",
       "hue",
       "icon",
       "much",
@@ -2057,14 +2057,14 @@
     "section": "barWidgetOutline",
     "label": "Widget Outline",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "appearance",
       "bar",
       "color",
       "colors",
       "colour",
-      "dank",
+      "hgs",
       "hue",
       "look",
       "outline",
@@ -2083,13 +2083,13 @@
     "section": "workspaceAppearance",
     "label": "Workspace Appearance",
     "tabIndex": 6,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "appearance",
       "around",
       "bar",
       "border",
-      "dank",
+      "hgs",
       "desktop",
       "focused",
       "indicator",
@@ -2123,7 +2123,7 @@
       "wireless"
     ],
     "icon": "wifi",
-    "conditionKey": "dmsConnected"
+    "conditionKey": "hgsConnected"
   },
   {
     "section": "networkStatus",
@@ -2177,7 +2177,7 @@
     "icon": "edit"
   },
   {
-    "section": "dankLauncherV2Appearance",
+    "section": "hgsLauncherV2Appearance",
     "label": "Appearance",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2200,7 +2200,7 @@
     "description": "Show mode tabs and keyboard hints at the bottom."
   },
   {
-    "section": "dankLauncherV2BorderEnabled",
+    "section": "hgsLauncherV2BorderEnabled",
     "label": "Border",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2248,11 +2248,11 @@
   },
   {
     "section": "builtInPlugins",
-    "label": "DMS",
+    "label": "HGS",
     "tabIndex": 9,
     "category": "Launcher",
     "keywords": [
-      "dms",
+      "hgs",
       "drawer",
       "launcher",
       "menu",
@@ -2365,7 +2365,7 @@
     "icon": "visibility_off"
   },
   {
-    "section": "dankLauncherV2IncludeFilesInAll",
+    "section": "hgsLauncherV2IncludeFilesInAll",
     "label": "Include Files in All Tab",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2387,7 +2387,7 @@
     "description": "Merge indexed file results into the All tab (requires dsearch)."
   },
   {
-    "section": "dankLauncherV2IncludeFoldersInAll",
+    "section": "hgsLauncherV2IncludeFoldersInAll",
     "label": "Include Folders in All Tab",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2625,7 +2625,7 @@
     "description": "Include desktop actions (shortcuts) in search results."
   },
   {
-    "section": "dankLauncherV2ShowFooter",
+    "section": "hgsLauncherV2ShowFooter",
     "label": "Show Footer",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2777,7 +2777,7 @@
     "description": "Show All, Apps, Files, and Plugins chips beside the Spotlight Bar input."
   },
   {
-    "section": "dankLauncherV2BorderThickness",
+    "section": "hgsLauncherV2BorderThickness",
     "label": "Thickness",
     "tabIndex": 9,
     "category": "Launcher",
@@ -2791,7 +2791,7 @@
     ]
   },
   {
-    "section": "dankLauncherV2UnloadOnClose",
+    "section": "hgsLauncherV2UnloadOnClose",
     "label": "Unload on Close",
     "tabIndex": 9,
     "category": "Launcher",
@@ -3267,7 +3267,7 @@
   },
   {
     "section": "matugenTemplateNeovimSetBackground",
-    "label": "Follow DMS background color",
+    "label": "Follow HGS background color",
     "tabIndex": 10,
     "category": "Theme & Colors",
     "keywords": [
@@ -3276,7 +3276,7 @@
       "color",
       "colors",
       "colour",
-      "dms",
+      "hgs",
       "follow",
       "hue",
       "look",
@@ -3419,7 +3419,7 @@
       "appearance",
       "colors",
       "colour",
-      "dankshell",
+      "hgsshell",
       "icon",
       "icons",
       "look",
@@ -3429,7 +3429,7 @@
       "theme"
     ],
     "icon": "interests",
-    "description": "DankShell & System Icons (requires restart)"
+    "description": "HGSShell & System Icons (requires restart)"
   },
   {
     "section": "matugenTemplateKcolorscheme",
@@ -3721,14 +3721,14 @@
     "description": "Shadow elevation on popouts, OSDs, and dropdowns"
   },
   {
-    "section": "runDmsMatugenTemplates",
-    "label": "Run DMS Templates",
+    "section": "runHgsMatugenTemplates",
+    "label": "Run HGS Templates",
     "tabIndex": 10,
     "category": "Theme & Colors",
     "keywords": [
       "appearance",
       "colors",
-      "dms",
+      "hgs",
       "look",
       "matugen",
       "run",
@@ -4575,7 +4575,7 @@
       "starts",
       "startup"
     ],
-    "description": "Automatically lock the screen when DMS starts"
+    "description": "Automatically lock the screen when HGS starts"
   },
   {
     "section": "lockBeforeSuspend",
@@ -6985,11 +6985,11 @@
     "section": "_tab_22",
     "label": "Widgets",
     "tabIndex": 22,
-    "category": "Dank Bar",
+    "category": "HGS Bar",
     "keywords": [
       "bar",
       "components",
-      "dank",
+      "hgs",
       "modules",
       "panel",
       "statusbar",
@@ -7078,7 +7078,7 @@
       "system"
     ],
     "icon": "content_paste",
-    "conditionKey": "dmsConnected"
+    "conditionKey": "hgsConnected"
   },
   {
     "section": "clipboardEnterToPaste",
@@ -7296,7 +7296,7 @@
       "widgets"
     ],
     "icon": "widgets",
-    "conditionKey": "dmsConnected"
+    "conditionKey": "hgsConnected"
   },
   {
     "section": "_tab_27",
@@ -7394,7 +7394,7 @@
       "settings"
     ],
     "icon": "language",
-    "description": "Change the locale used by the DMS interface."
+    "description": "Change the locale used by the HGS interface."
   },
   {
     "section": "timeLocale",
@@ -8205,7 +8205,7 @@
       "user",
       "users"
     ],
-    "description": "Add the new user to the %1 group so they can run dms greeter sync --profile."
+    "description": "Add the new user to the %1 group so they can run hgs greeter sync --profile."
   },
   {
     "section": "createUser",

@@ -134,7 +134,7 @@ Rectangle {
     border.color: Theme.outlineMedium
     border.width: Theme.layerOutlineWidth
 
-    DankFlickable {
+    HGSFlickable {
         id: brightnessContent
         anchors.top: parent.top
         anchors.left: parent.left
@@ -159,7 +159,7 @@ Rectangle {
                     anchors.centerIn: parent
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.horizontalCenter: parent.horizontalCenter
                         name: DisplayService.brightnessAvailable ? "brightness_6" : "error"
                         size: 32
@@ -197,7 +197,7 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "monitor"
                             size: Theme.iconSize
                             color: Theme.surfaceText
@@ -228,7 +228,7 @@ Rectangle {
                             anchors.centerIn: parent
                             spacing: 4
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "push_pin"
                                 size: 16
                                 color: monitorHeader.currentDevicePinned ? Theme.primary : Theme.surfaceText
@@ -243,7 +243,7 @@ Rectangle {
                             }
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: globalPinRipple
                             cornerRadius: parent.radius
                         }
@@ -306,7 +306,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 2
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: {
                                             const deviceClass = modelData.class || "";
                                             const deviceName = modelData.name || "";
@@ -408,7 +408,7 @@ Rectangle {
                                         color: Theme.withAlpha(Theme.surfaceContainerHighest, Theme.popupTransparency)
                                         opacity: SessionData.getBrightnessExponent(modelData.name) > 1.0 ? 1.0 : 0.4
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "remove"
                                             size: 14
@@ -450,7 +450,7 @@ Rectangle {
                                         color: Theme.withAlpha(Theme.surfaceContainerHighest, Theme.popupTransparency)
                                         opacity: SessionData.getBrightnessExponent(modelData.name) < 2.5 ? 1.0 : 0.4
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "add"
                                             size: 14
@@ -478,7 +478,7 @@ Rectangle {
                                     visible: root.screenName && root.screenName.length > 0 && DisplayService.devices && DisplayService.devices.length > 1
                                     color: devicePinnedHere ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.16) : Theme.withAlpha(Theme.surfaceContainerHighest, Theme.popupTransparency)
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "push_pin"
                                         size: 14
@@ -504,7 +504,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 spacing: 4
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "show_chart"
                                     size: 14
                                     color: SessionData.getBrightnessExponential(modelData.name) ? Theme.primary : Theme.surfaceText
@@ -519,7 +519,7 @@ Rectangle {
                                 }
                             }
 
-                            DankRipple {
+                            HGSRipple {
                                 id: expToggleRipple
                                 cornerRadius: parent.radius
                             }
@@ -536,7 +536,7 @@ Rectangle {
                         }
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: deviceRipple
                         cornerRadius: parent.radius
                     }

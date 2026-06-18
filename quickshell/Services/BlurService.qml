@@ -43,7 +43,7 @@ Singleton {
     Process {
         id: blurProbe
         running: false
-        command: ["dms", "blur", "check"]
+        command: ["hgs", "blur", "check"]
 
         stdout: StdioCollector {
             onStreamFinished: {

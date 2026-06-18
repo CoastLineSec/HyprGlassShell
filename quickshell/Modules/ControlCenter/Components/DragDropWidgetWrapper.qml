@@ -248,7 +248,7 @@ Item {
         visible: editMode
         z: 10
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "close"
             size: 12
@@ -294,7 +294,7 @@ Item {
         visible: editMode && root.hasConfigMenu
         z: 10
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "settings"
             size: 12
@@ -321,7 +321,7 @@ Item {
         z: 15
         opacity: dragArea.drag.active ? 1.0 : 0.7
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "drag_indicator"
             size: 10

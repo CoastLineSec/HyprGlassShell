@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/luaconfig"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/luaconfig"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 const (
@@ -40,20 +40,20 @@ type HyprlandParser struct {
 	readingLine        int
 	configDir          string
 	currentSource      string
-	dmsBindsExists     bool
-	dmsBindsIncluded   bool
+	hgsBindsExists     bool
+	hgsBindsIncluded   bool
 	includeCount       int
-	dmsIncludePos      int
-	bindsAfterDMS      int
-	dmsBindKeys        map[string]bool
+	hgsIncludePos      int
+	bindsAfterHGS      int
+	hgsBindKeys        map[string]bool
 	configBindKeys     map[string]bool
 	conflictingConfigs map[string]*HyprlandKeyBinding
 	bindMap            map[string]*HyprlandKeyBinding
 	bindOrder          []string
 	processedFiles     map[string]bool
-	dmsProcessed       bool
+	hgsProcessed       bool
 	removedKeys        map[string]bool // bare hl.unbind targets (negative overrides)
-	defaultDMSKeys     map[string]bool // keys present in dms/binds.{lua,conf}
+	defaultHGSKeys     map[string]bool // keys present in hgs/binds.{lua,conf}
 	configFormat       string
 	readOnly           bool
 }
@@ -63,15 +63,15 @@ func NewHyprlandParser(configDir string) *HyprlandParser {
 		contentLines:       []string{},
 		readingLine:        0,
 		configDir:          configDir,
-		dmsIncludePos:      -1,
-		dmsBindKeys:        make(map[string]bool),
+		hgsIncludePos:      -1,
+		hgsBindKeys:        make(map[string]bool),
 		configBindKeys:     make(map[string]bool),
 		conflictingConfigs: make(map[string]*HyprlandKeyBinding),
 		bindMap:            make(map[string]*HyprlandKeyBinding),
 		bindOrder:          []string{},
 		processedFiles:     make(map[string]bool),
 		removedKeys:        make(map[string]bool),
-		defaultDMSKeys:     make(map[string]bool),
+		defaultHGSKeys:     make(map[string]bool),
 	}
 }
 
@@ -297,18 +297,18 @@ func ParseHyprlandKeys(path string) (*HyprlandSection, error) {
 
 type HyprlandParseResult struct {
 	Section            *HyprlandSection
-	DMSBindsIncluded   bool
-	DMSStatus          *HyprlandDMSStatus
+	HGSBindsIncluded   bool
+	HGSStatus          *HyprlandHGSStatus
 	ConflictingConfigs map[string]*HyprlandKeyBinding
-	DefaultDMSKeys     map[string]bool // keys with a DMS default in binds.{lua,conf}
+	DefaultHGSKeys     map[string]bool // keys with a HGS default in keybinds.lua or legacy binds.{lua,conf}
 }
 
-type HyprlandDMSStatus struct {
+type HyprlandHGSStatus struct {
 	Exists          bool
 	Included        bool
 	IncludePosition int
 	TotalIncludes   int
-	BindsAfterDMS   int
+	BindsAfterHGS   int
 	Effective       bool
 	OverriddenBy    int
 	StatusMessage   string
@@ -316,31 +316,31 @@ type HyprlandDMSStatus struct {
 	ReadOnly        bool
 }
 
-func (p *HyprlandParser) buildDMSStatus() *HyprlandDMSStatus {
-	status := &HyprlandDMSStatus{
-		Exists:          p.dmsBindsExists,
-		Included:        p.dmsBindsIncluded,
-		IncludePosition: p.dmsIncludePos,
+func (p *HyprlandParser) buildHGSStatus() *HyprlandHGSStatus {
+	status := &HyprlandHGSStatus{
+		Exists:          p.hgsBindsExists,
+		Included:        p.hgsBindsIncluded,
+		IncludePosition: p.hgsIncludePos,
 		TotalIncludes:   p.includeCount,
-		BindsAfterDMS:   p.bindsAfterDMS,
+		BindsAfterHGS:   p.bindsAfterHGS,
 		ConfigFormat:    p.configFormat,
 		ReadOnly:        p.readOnly,
 	}
 
 	switch {
-	case !p.dmsBindsExists:
+	case !p.hgsBindsExists:
 		status.Effective = false
-		status.StatusMessage = "dms/binds.lua (or legacy binds.conf) does not exist"
-	case !p.dmsBindsIncluded:
+		status.StatusMessage = "hgs/keybinds.lua (or legacy binds.lua / binds.conf) does not exist"
+	case !p.hgsBindsIncluded:
 		status.Effective = false
-		status.StatusMessage = "dms binds are not loaded from Hyprland config (require / source)"
-	case p.bindsAfterDMS > 0:
+		status.StatusMessage = "hgs binds are not loaded from Hyprland config (require / source)"
+	case p.bindsAfterHGS > 0:
 		status.Effective = true
-		status.OverriddenBy = p.bindsAfterDMS
-		status.StatusMessage = "Some DMS binds may be overridden by config binds"
+		status.OverriddenBy = p.bindsAfterHGS
+		status.StatusMessage = "Some HGS binds may be overridden by config binds"
 	default:
 		status.Effective = true
-		status.StatusMessage = "DMS binds are active"
+		status.StatusMessage = "HGS binds are active"
 	}
 
 	return status
@@ -360,15 +360,15 @@ func (p *HyprlandParser) normalizeKey(key string) string {
 func (p *HyprlandParser) addBind(kb *HyprlandKeyBinding) bool {
 	key := p.formatBindKey(kb)
 	normalizedKey := p.normalizeKey(key)
-	isDMSBind := isDMSBindsSourcePath(kb.Source)
+	isHGSBind := isHGSBindsSourcePath(kb.Source)
 
-	if isDMSBindsPrimarySourcePath(kb.Source) {
-		p.defaultDMSKeys[normalizedKey] = true
+	if isHGSBindsPrimarySourcePath(kb.Source) {
+		p.defaultHGSKeys[normalizedKey] = true
 	}
-	if isDMSBind {
-		p.dmsBindKeys[normalizedKey] = true
-	} else if p.dmsBindKeys[normalizedKey] {
-		p.bindsAfterDMS++
+	if isHGSBind {
+		p.hgsBindKeys[normalizedKey] = true
+	} else if p.hgsBindKeys[normalizedKey] {
+		p.bindsAfterHGS++
 		p.conflictingConfigs[normalizedKey] = kb
 		p.configBindKeys[normalizedKey] = true
 		return false
@@ -383,21 +383,25 @@ func (p *HyprlandParser) addBind(kb *HyprlandKeyBinding) bool {
 	return true
 }
 
-func (p *HyprlandParser) ParseWithDMS() (*HyprlandSection, error) {
+func (p *HyprlandParser) ParseWithHGS() (*HyprlandSection, error) {
 	expandedDir, err := utils.ExpandPath(p.configDir)
 	if err != nil {
 		return nil, err
 	}
 
-	dmsBindsLua := filepath.Join(expandedDir, "dms", "binds.lua")
-	dmsBindsConf := filepath.Join(expandedDir, "dms", "binds.conf")
-	dmsBindsPath := ""
-	if _, err := os.Stat(dmsBindsLua); err == nil {
-		p.dmsBindsExists = true
-		dmsBindsPath = dmsBindsLua
-	} else if _, err := os.Stat(dmsBindsConf); err == nil {
-		p.dmsBindsExists = true
-		dmsBindsPath = dmsBindsConf
+	hgsKeybindsLua := filepath.Join(expandedDir, "hgs", "keybinds.lua")
+	hgsBindsLua := filepath.Join(expandedDir, "hgs", "binds.lua")
+	hgsBindsConf := filepath.Join(expandedDir, "hgs", "binds.conf")
+	hgsBindsPath := ""
+	if _, err := os.Stat(hgsKeybindsLua); err == nil {
+		p.hgsBindsExists = true
+		hgsBindsPath = hgsKeybindsLua
+	} else if _, err := os.Stat(hgsBindsLua); err == nil {
+		p.hgsBindsExists = true
+		hgsBindsPath = hgsBindsLua
+	} else if _, err := os.Stat(hgsBindsConf); err == nil {
+		p.hgsBindsExists = true
+		hgsBindsPath = hgsBindsConf
 	}
 
 	mainConfig, err := hyprlandMainConfigPath(p.configDir)
@@ -416,57 +420,57 @@ func (p *HyprlandParser) ParseWithDMS() (*HyprlandSection, error) {
 		return nil, err
 	}
 
-	if p.dmsBindsExists && !p.dmsProcessed {
-		p.parseDMSBindsDirectly(dmsBindsPath, section)
+	if p.hgsBindsExists && !p.hgsProcessed {
+		p.parseHGSBindsDirectly(hgsBindsPath, section)
 	}
-	p.removeShadowedDMSBinds(section)
-	p.removeUnboundDMSBinds(section)
+	p.removeShadowedHGSBinds(section)
+	p.removeUnboundHGSBinds(section)
 
 	return section, nil
 }
 
-func (p *HyprlandParser) removeUnboundDMSBinds(section *HyprlandSection) {
+func (p *HyprlandParser) removeUnboundHGSBinds(section *HyprlandSection) {
 	if len(p.removedKeys) == 0 {
 		return
 	}
 	filtered := section.Keybinds[:0]
 	for i := range section.Keybinds {
 		kb := section.Keybinds[i]
-		if isDMSBindsSourcePath(kb.Source) && p.removedKeys[p.normalizeKey(p.formatBindKey(&kb))] {
+		if isHGSBindsSourcePath(kb.Source) && p.removedKeys[p.normalizeKey(p.formatBindKey(&kb))] {
 			continue
 		}
 		filtered = append(filtered, kb)
 	}
 	section.Keybinds = filtered
 	for i := range section.Children {
-		p.removeUnboundDMSBinds(&section.Children[i])
+		p.removeUnboundHGSBinds(&section.Children[i])
 	}
 }
 
-func (p *HyprlandParser) removeShadowedDMSBinds(section *HyprlandSection) {
+func (p *HyprlandParser) removeShadowedHGSBinds(section *HyprlandSection) {
 	counts := make(map[string]int)
-	p.countDMSBinds(section, counts)
-	p.filterShadowedDMSBinds(section, counts)
+	p.countHGSBinds(section, counts)
+	p.filterShadowedHGSBinds(section, counts)
 }
 
-func (p *HyprlandParser) countDMSBinds(section *HyprlandSection, counts map[string]int) {
+func (p *HyprlandParser) countHGSBinds(section *HyprlandSection, counts map[string]int) {
 	for i := range section.Keybinds {
 		kb := &section.Keybinds[i]
-		if isDMSBindsSourcePath(kb.Source) {
+		if isHGSBindsSourcePath(kb.Source) {
 			counts[p.normalizeKey(p.formatBindKey(kb))]++
 		}
 	}
 	for i := range section.Children {
-		p.countDMSBinds(&section.Children[i], counts)
+		p.countHGSBinds(&section.Children[i], counts)
 	}
 }
 
-func (p *HyprlandParser) filterShadowedDMSBinds(section *HyprlandSection, counts map[string]int) {
+func (p *HyprlandParser) filterShadowedHGSBinds(section *HyprlandSection, counts map[string]int) {
 	filtered := section.Keybinds[:0]
 	for i := range section.Keybinds {
 		kb := section.Keybinds[i]
 		key := p.normalizeKey(p.formatBindKey(&kb))
-		if isDMSBindsSourcePath(kb.Source) && counts[key] > 1 {
+		if isHGSBindsSourcePath(kb.Source) && counts[key] > 1 {
 			counts[key]--
 			continue
 		}
@@ -474,7 +478,7 @@ func (p *HyprlandParser) filterShadowedDMSBinds(section *HyprlandSection, counts
 	}
 	section.Keybinds = filtered
 	for i := range section.Children {
-		p.filterShadowedDMSBinds(&section.Children[i], counts)
+		p.filterShadowedHGSBinds(&section.Children[i], counts)
 	}
 }
 
@@ -537,13 +541,13 @@ func (p *HyprlandParser) handleSource(line string, section *HyprlandSection, bas
 	}
 
 	sourcePath := strings.TrimSpace(parts[1])
-	isDMSSource := isDMSBindsPrimarySourcePath(sourcePath)
+	isHGSSource := isHGSBindsPrimarySourcePath(sourcePath)
 
 	p.includeCount++
-	if isDMSSource {
-		p.dmsBindsIncluded = true
-		p.dmsIncludePos = p.includeCount
-		p.dmsProcessed = true
+	if isHGSSource {
+		p.hgsBindsIncluded = true
+		p.hgsIncludePos = p.includeCount
+		p.hgsProcessed = true
 	}
 
 	fullPath := sourcePath
@@ -564,25 +568,25 @@ func (p *HyprlandParser) handleSource(line string, section *HyprlandSection, bas
 	section.Children = append(section.Children, *includedSection)
 }
 
-func (p *HyprlandParser) parseDMSBindsDirectly(dmsBindsPath string, section *HyprlandSection) {
-	if strings.EqualFold(filepath.Ext(dmsBindsPath), ".lua") {
-		sub, err := p.parseLuaLinesFromPath(dmsBindsPath)
+func (p *HyprlandParser) parseHGSBindsDirectly(hgsBindsPath string, section *HyprlandSection) {
+	if strings.EqualFold(filepath.Ext(hgsBindsPath), ".lua") {
+		sub, err := p.parseLuaLinesFromPath(hgsBindsPath)
 		if err != nil {
 			return
 		}
 		section.Keybinds = append(section.Keybinds, sub.Keybinds...)
 		section.Children = append(section.Children, sub.Children...)
-		p.dmsProcessed = true
+		p.hgsProcessed = true
 		return
 	}
 
-	data, err := os.ReadFile(dmsBindsPath)
+	data, err := os.ReadFile(hgsBindsPath)
 	if err != nil {
 		return
 	}
 
 	prevSource := p.currentSource
-	p.currentSource = dmsBindsPath
+	p.currentSource = hgsBindsPath
 
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
@@ -595,14 +599,14 @@ func (p *HyprlandParser) parseDMSBindsDirectly(dmsBindsPath string, section *Hyp
 		if kb == nil {
 			continue
 		}
-		kb.Source = dmsBindsPath
+		kb.Source = hgsBindsPath
 		if p.addBind(kb) {
 			section.Keybinds = append(section.Keybinds, *kb)
 		}
 	}
 
 	p.currentSource = prevSource
-	p.dmsProcessed = true
+	p.hgsProcessed = true
 }
 
 func (p *HyprlandParser) parseLuaLinesFromPath(absPath string) (*HyprlandSection, error) {
@@ -646,12 +650,12 @@ func (p *HyprlandParser) parseLuaLines(content string, baseDir, absPath, section
 				if rel == "" {
 					continue
 				}
-				isDMS := isDMSBindsPrimarySourcePath(rel)
+				isHGS := isHGSBindsPrimarySourcePath(rel)
 				p.includeCount++
-				if isDMS {
-					p.dmsBindsIncluded = true
-					p.dmsIncludePos = p.includeCount
-					p.dmsProcessed = true
+				if isHGS {
+					p.hgsBindsIncluded = true
+					p.hgsIncludePos = p.includeCount
+					p.hgsProcessed = true
 				}
 				fullPath := luaconfig.ModuleToPath(rootDir, mod)
 				expanded, err := utils.ExpandPath(fullPath)
@@ -831,19 +835,19 @@ func extractBindFlags(bindType string) string {
 	return bindType[4:] // Everything after "bind"
 }
 
-func ParseHyprlandKeysWithDMS(path string) (*HyprlandParseResult, error) {
+func ParseHyprlandKeysWithHGS(path string) (*HyprlandParseResult, error) {
 	parser := NewHyprlandParser(path)
-	section, err := parser.ParseWithDMS()
+	section, err := parser.ParseWithHGS()
 	if err != nil {
 		return nil, err
 	}
 
 	return &HyprlandParseResult{
 		Section:            section,
-		DMSBindsIncluded:   parser.dmsBindsIncluded,
-		DMSStatus:          parser.buildDMSStatus(),
+		HGSBindsIncluded:   parser.hgsBindsIncluded,
+		HGSStatus:          parser.buildHGSStatus(),
 		ConflictingConfigs: parser.conflictingConfigs,
-		DefaultDMSKeys:     parser.defaultDMSKeys,
+		DefaultHGSKeys:     parser.defaultHGSKeys,
 	}, nil
 }
 
@@ -1529,29 +1533,34 @@ func luaLineTrailingComment(line string) string {
 	return ""
 }
 
-func isDMSBindsSourcePath(p string) bool {
+func isHGSBindsSourcePath(p string) bool {
 	p = filepath.ToSlash(strings.TrimSpace(p))
-	if isDMSBindsPrimarySourcePath(p) {
+	if isHGSBindsPrimarySourcePath(p) {
 		return true
 	}
-	return isDMSBindsUserOverridePath(p)
+	return isHGSBindsUserOverridePath(p)
 }
 
-func isDMSBindsUserOverridePath(p string) bool {
+func isHGSBindsUserOverridePath(p string) bool {
 	p = filepath.ToSlash(strings.TrimSpace(p))
-	return p == "dms/binds-user.lua" || p == "./dms/binds-user.lua" ||
-		strings.HasSuffix(p, "/dms/binds-user.lua")
+	return p == "hgs/user-keybinds.lua" || p == "./hgs/user-keybinds.lua" ||
+		strings.HasSuffix(p, "/hgs/user-keybinds.lua") ||
+		p == "hgs/binds-user.lua" || p == "./hgs/binds-user.lua" ||
+		strings.HasSuffix(p, "/hgs/binds-user.lua")
 }
 
-func isDMSBindsPrimarySourcePath(p string) bool {
+func isHGSBindsPrimarySourcePath(p string) bool {
 	p = filepath.ToSlash(strings.TrimSpace(p))
-	if strings.Contains(p, "/dms/binds.lua") || strings.HasSuffix(p, "dms/binds.lua") || p == "dms/binds.lua" || p == "./dms/binds.lua" {
+	if strings.Contains(p, "/hgs/keybinds.lua") || strings.HasSuffix(p, "hgs/keybinds.lua") || p == "hgs/keybinds.lua" || p == "./hgs/keybinds.lua" {
 		return true
 	}
-	if strings.Contains(p, "/dms/binds.conf") || strings.HasSuffix(p, "dms/binds.conf") {
+	if strings.Contains(p, "/hgs/binds.lua") || strings.HasSuffix(p, "hgs/binds.lua") || p == "hgs/binds.lua" || p == "./hgs/binds.lua" {
 		return true
 	}
-	return p == "dms/binds.conf" || p == "./dms/binds.conf"
+	if strings.Contains(p, "/hgs/binds.conf") || strings.HasSuffix(p, "hgs/binds.conf") {
+		return true
+	}
+	return p == "hgs/binds.conf" || p == "./hgs/binds.conf"
 }
 
 // hyprlandMainConfigPath returns hyprland.lua if present, else hyprland.conf if present.

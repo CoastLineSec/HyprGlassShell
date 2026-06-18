@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 	"github.com/fsnotify/fsnotify"
 	evdev "github.com/holoplot/go-evdev"
 )
@@ -391,7 +391,7 @@ func (m *Manager) Close() {
 
 func InitializeManager() (*Manager, error) {
 	if os.Getuid() != 0 && !hasInputGroupAccess() {
-		return nil, fmt.Errorf("insufficient permissions to access input devices. Add your user to the 'input' group: `sudo usermod -a -G input $USER` or run `dms setup`")
+		return nil, fmt.Errorf("insufficient permissions to access input devices. Add your user to the 'input' group: `sudo usermod -a -G input $USER` or run `hgs setup`")
 	}
 
 	return NewManager()

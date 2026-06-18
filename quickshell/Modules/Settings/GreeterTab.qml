@@ -34,7 +34,7 @@ Item {
 
         switch (reason) {
         case "ready":
-            return SettingsData.greeterEnableFprint ? I18n.tr("Authentication changes apply automatically. Fingerprint-only login may not unlock Keyring.") : I18n.tr("Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.");
+            return SettingsData.greeterEnableFprint ? I18n.tr("Authentication changes apply automatically. Fingerprint-only login may not unlock Keyring.") : I18n.tr("Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.");
         case "missing_enrollment":
             if (SettingsData.greeterEnableFprint)
                 return I18n.tr("Enabled, but no prints are enrolled yet. Enroll fingerprints and run Sync.");
@@ -129,10 +129,10 @@ Item {
     }
     readonly property var greeterActionCommand: {
         if (!root.greeterInstalled)
-            return ["dms", "greeter", "install", "--terminal"];
+            return ["hgs", "greeter", "install", "--terminal"];
         if (!root.greeterEnabled)
-            return ["dms", "greeter", "enable", "--terminal"];
-        return ["dms", "greeter", "uninstall", "--terminal", "--yes"];
+            return ["hgs", "greeter", "enable", "--terminal"];
+        return ["hgs", "greeter", "uninstall", "--terminal", "--yes"];
     }
     property string greeterPendingAction: ""
 
@@ -160,15 +160,15 @@ Item {
         var title, message, confirmText;
         if (!root.greeterInstalled) {
             title = I18n.tr("Install Greeter", "greeter action confirmation");
-            message = I18n.tr("Install the DMS greeter? A terminal will open for sudo authentication.");
+            message = I18n.tr("Install the HGS greeter? A terminal will open for sudo authentication.");
             confirmText = I18n.tr("Install");
         } else if (!root.greeterEnabled) {
             title = I18n.tr("Activate Greeter", "greeter action confirmation");
-            message = I18n.tr("Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.");
+            message = I18n.tr("Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.");
             confirmText = I18n.tr("Activate");
         } else {
             title = I18n.tr("Uninstall Greeter", "greeter action confirmation");
-            message = I18n.tr("Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.");
+            message = I18n.tr("Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.");
             confirmText = I18n.tr("Uninstall");
         }
         greeterActionConfirm.showWithOptions({
@@ -236,7 +236,7 @@ Item {
 
     Process {
         id: greeterBinaryCheckProcess
-        command: ["sh", "-c", "test -f /usr/bin/dms-greeter || test -f /usr/local/bin/dms-greeter"]
+        command: ["sh", "-c", "test -f /usr/bin/hgs-greeter || test -f /usr/local/bin/hgs-greeter"]
         running: false
 
         onExited: exitCode => {
@@ -246,7 +246,7 @@ Item {
 
     Process {
         id: greeterStatusProcess
-        command: ["dms", "greeter", "status"]
+        command: ["hgs", "greeter", "status"]
         running: false
 
         stdout: StdioCollector {
@@ -269,7 +269,7 @@ Item {
                     root.greeterStatusText = root.greeterStatusText + "\n\nstderr:\n" + err;
                 return;
             }
-            var failure = I18n.tr("Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.", "greeter status error") + " (exit " + exitCode + ")";
+            var failure = I18n.tr("Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.", "greeter status error") + " (exit " + exitCode + ")";
             if (out !== "")
                 failure = failure + "\n\n" + out;
             if (err !== "")
@@ -280,7 +280,7 @@ Item {
 
     Process {
         id: greeterSyncProcess
-        command: ["dms", "greeter", "sync", "--yes"]
+        command: ["hgs", "greeter", "sync", "--yes"]
         running: false
 
         stdout: StdioCollector {
@@ -341,7 +341,7 @@ Item {
 
     Process {
         id: greeterTerminalFallbackProcess
-        command: ["dms", "greeter", "sync", "--terminal", "--yes"]
+        command: ["hgs", "greeter", "sync", "--terminal", "--yes"]
         running: false
 
         stderr: StdioCollector {
@@ -355,7 +355,7 @@ Item {
                 root.greeterStatusText = root.greeterStatusText ? root.greeterStatusText + "\n\n" + launched : launched;
                 return;
             }
-            var fallback = I18n.tr("Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.") + " (exit " + exitCode + ")";
+            var fallback = I18n.tr("Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.") + " (exit " + exitCode + ")";
             const err = (root.greeterTerminalFallbackStderr || "").trim();
             if (err !== "")
                 fallback = fallback + "\n\nstderr:\n" + err;
@@ -426,7 +426,7 @@ Item {
     ]
     readonly property var _wallpaperFillModes: ["Stretch", "Fit", "Fill", "Tile", "TileVertically", "TileHorizontally", "Pad"]
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -446,7 +446,7 @@ Item {
                 settingKey: "greeterStatus"
 
                 StyledText {
-                    text: I18n.tr("Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.")
+                    text: I18n.tr("Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     width: parent.width
@@ -486,7 +486,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankButton {
+                    HGSButton {
                         text: root.greeterActionLabel
                         iconName: root.greeterActionIcon
                         horizontalPadding: Theme.spacingL
@@ -498,7 +498,7 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    DankButton {
+                    HGSButton {
                         text: I18n.tr("Refresh")
                         iconName: "refresh"
                         horizontalPadding: Theme.spacingL
@@ -506,7 +506,7 @@ Item {
                         enabled: !root.greeterStatusRunning
                     }
 
-                    DankButton {
+                    HGSButton {
                         text: I18n.tr("Sync")
                         iconName: "sync"
                         horizontalPadding: Theme.spacingL
@@ -523,7 +523,7 @@ Item {
                 settingKey: "greeterAuth"
 
                 StyledText {
-                    text: I18n.tr("Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.")
+                    text: I18n.tr("Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     width: parent.width
@@ -664,7 +664,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankTextField {
+                    HGSTextField {
                         id: greeterWallpaperPathField
                         width: parent.width - browseGreeterWallpaperButton.width - Theme.spacingS
                         placeholderText: I18n.tr("Use desktop wallpaper")
@@ -676,7 +676,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    HGSButton {
                         id: browseGreeterWallpaperButton
                         text: I18n.tr("Browse")
                         horizontalPadding: Theme.spacingL
@@ -762,7 +762,7 @@ Item {
                 settingKey: "greeterDeps"
 
                 StyledText {
-                    text: I18n.tr("DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.")
+                    text: I18n.tr("HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     width: parent.width
@@ -770,7 +770,7 @@ Item {
                 }
 
                 StyledText {
-                    text: I18n.tr("Installation and PAM setup: see the ") + "<a href=\"https://danklinux.com/docs/dankgreeter/installation\" style=\"text-decoration:none; color:" + Theme.primary + ";\">DankGreeter docs</a> " + I18n.tr("or run ") + "'dms greeter install'."
+                    text: I18n.tr("Installation and PAM setup: see the ") + "<a href=\"https://coastlinesec.com/docs/hgsgreeter/installation\" style=\"text-decoration:none; color:" + Theme.primary + ";\">HGSGreeter docs</a> " + I18n.tr("or run ") + "'hgs greeter install'."
                     textFormat: Text.RichText
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText

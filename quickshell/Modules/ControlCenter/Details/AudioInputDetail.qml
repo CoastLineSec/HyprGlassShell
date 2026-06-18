@@ -46,7 +46,7 @@ Rectangle {
             width: parent.width - headerText.width - settingsButton.width
         }
 
-        DankActionButton {
+        HGSActionButton {
             id: settingsButton
             anchors.verticalCenter: parent.verticalCenter
             iconName: "settings"
@@ -79,7 +79,7 @@ Rectangle {
             radius: (Theme.iconSize + Theme.spacingS * 2) / 2
             color: iconArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12) : "transparent"
 
-            DankRipple {
+            HGSRipple {
                 id: iconRipple
                 cornerRadius: parent.radius
             }
@@ -97,7 +97,7 @@ Rectangle {
                 }
             }
 
-            DankIcon {
+            HGSIcon {
                 anchors.centerIn: parent
                 name: {
                     if (!AudioService.source || !AudioService.source.audio)
@@ -110,7 +110,7 @@ Rectangle {
             }
         }
 
-        DankSlider {
+        HGSSlider {
             readonly property real actualVolumePercent: AudioService.source && AudioService.source.audio ? Math.round(AudioService.source.audio.volume * 100) : 0
 
             anchors.verticalCenter: parent.verticalCenter
@@ -137,7 +137,7 @@ Rectangle {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: audioContent
         anchors.top: hasInputVolumeSliderInCC ? headerRow.bottom : volumeSlider.bottom
         anchors.left: parent.left
@@ -219,7 +219,7 @@ Rectangle {
                         anchors.leftMargin: Theme.spacingM
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: {
                                 if (modelData.name.includes("bluez"))
                                     return "headset";
@@ -281,7 +281,7 @@ Rectangle {
                             anchors.centerIn: parent
                             spacing: 4
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "push_pin"
                                 size: 16
                                 color: {
@@ -305,7 +305,7 @@ Rectangle {
                             }
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: pinRipple
                             cornerRadius: parent.radius
                         }
@@ -337,7 +337,7 @@ Rectangle {
                         }
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: deviceRipple
                         cornerRadius: parent.radius
                     }

@@ -10,109 +10,21 @@ Item {
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 
-    property bool isHyprland: CompositorService.isHyprland
-    property bool isNiri: CompositorService.isNiri
-    property bool isSway: CompositorService.isSway
-    property bool isScroll: CompositorService.isScroll
-    property bool isMiracle: CompositorService.isMiracle
-    property bool isMango: CompositorService.isMango
-    property bool isLabwc: CompositorService.isLabwc
+    property string compositorName: "hyprland"
+    property string compositorLogo: "/assets/hyprland.svg"
+    property string compositorUrl: "https://hypr.land"
+    property string compositorTooltip: I18n.tr("Hyprland Website")
 
-    property string compositorName: {
-        if (isHyprland)
-            return "hyprland";
-        if (isSway)
-            return "sway";
-        if (isScroll)
-            return "scroll";
-        if (isMiracle)
-            return "miracle";
-        if (isMango)
-            return "mangowc";
-        if (isLabwc)
-            return "labwc";
-        return "niri";
-    }
+    property string hgsDiscordUrl: "https://discord.gg/ppWTpKmPgT"
+    property string hgsDiscordTooltip: I18n.tr("HyprGlassShell Discord")
+    property string compositorDiscordUrl: "https://discord.com/invite/hQ9XvMUjjr"
+    property string compositorDiscordTooltip: I18n.tr("Hyprland Discord Server")
 
-    property string compositorLogo: {
-        if (isHyprland)
-            return "/assets/hyprland.svg";
-        if (isSway)
-            return "/assets/sway.svg";
-        if (isScroll)
-            return "/assets/sway.svg";
-        if (isMiracle)
-            return "/assets/miraclewm.svg";
-        if (isMango)
-            return "/assets/mango.png";
-        if (isLabwc)
-            return "/assets/labwc.png";
-        return "/assets/niri.svg";
-    }
+    property bool showCompositorDiscord: true
+    property bool showReddit: false
+    property bool showIrc: false
 
-    property string compositorUrl: {
-        if (isHyprland)
-            return "https://hypr.land";
-        if (isSway)
-            return "https://swaywm.org";
-        if (isScroll)
-            return "https://github.com/dawsers/scroll";
-        if (isMiracle)
-            return "https://github.com/miracle-wm-org/miracle-wm";
-        if (isMango)
-            return "https://github.com/DreamMaoMao/mangowc";
-        if (isLabwc)
-            return "https://labwc.github.io/";
-        return "https://github.com/niri-wm/niri";
-    }
-
-    property string compositorTooltip: {
-        if (isHyprland)
-            return I18n.tr("Hyprland Website");
-        if (isSway)
-            return I18n.tr("Sway Website");
-        if (isScroll)
-            return I18n.tr("Scroll GitHub");
-        if (isMiracle)
-            return I18n.tr("Scroll GitHub");
-        if (isMango)
-            return I18n.tr("mangowc GitHub");
-        if (isLabwc)
-            return I18n.tr("LabWC Website");
-        return I18n.tr("niri GitHub");
-    }
-
-    property string dmsDiscordUrl: "https://discord.gg/ppWTpKmPgT"
-    property string dmsDiscordTooltip: I18n.tr("niri/dms Discord")
-
-    property string compositorDiscordUrl: {
-        if (isHyprland)
-            return "https://discord.com/invite/hQ9XvMUjjr";
-        if (isMango)
-            return "https://discord.gg/CPjbDxesh5";
-        return "";
-    }
-
-    property string compositorDiscordTooltip: {
-        if (isHyprland)
-            return I18n.tr("Hyprland Discord Server");
-        if (isMango)
-            return I18n.tr("mangowc Discord Server");
-        return "";
-    }
-
-    property string redditUrl: "https://reddit.com/r/niri"
-    property string redditTooltip: I18n.tr("r/niri Subreddit")
-
-    property string ircUrl: "https://web.libera.chat/gamja/?channels=#labwc"
-    property string ircTooltip: I18n.tr("LabWC IRC Channel")
-
-    property bool showMatrix: isNiri && !isHyprland && !isSway && !isScroll && !isMiracle && !isMango && !isLabwc
-    property bool showCompositorDiscord: isHyprland || isMango
-    property bool showReddit: isNiri && !isHyprland && !isSway && !isScroll && !isMiracle && !isMango && !isLabwc
-    property bool showIrc: isLabwc
-
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -160,7 +72,7 @@ Item {
                             smooth: true
                             mipmap: true
                             asynchronous: true
-                            source: "file://" + Theme.shellDir + "/assets/danklogonormal.svg"
+                            source: "file://" + Theme.shellDir + "/assets/hgslogonormal.svg"
                             layer.enabled: true
                             layer.smooth: true
                             layer.mipmap: true
@@ -173,7 +85,7 @@ Item {
 
                         StyledText {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "DANK LINUX"
+                            text: "HGS LINUX"
                             font.pixelSize: parent.compactLogo ? 32 : 48
                             font.weight: Font.Bold
                             font.family: interFont.name
@@ -189,16 +101,16 @@ Item {
 
                     StyledText {
                         text: {
-                            if (!ShellVersionService.shellVersion && !DMSService.cliVersion)
-                                return "dms";
+                            if (!ShellVersionService.shellVersion && !HGSService.cliVersion)
+                                return "hgs";
 
                             let version = ShellVersionService.shellVersion || "";
-                            let cliVersion = DMSService.cliVersion || "";
+                            let cliVersion = HGSService.cliVersion || "";
 
                             // Debian/Ubuntu/OpenSUSE git format: 1.0.3+git2264.c5c5ce84
                             let match = version.match(/^([\d.]+)\+git(\d+)\./);
                             if (match) {
-                                return `dms (git) v${match[1]}-${match[2]}`;
+                                return `hgs (git) v${match[1]}-${match[2]}`;
                             }
 
                             // Fedora COPR git format: 0.0.git.2267.d430cae9
@@ -220,30 +132,30 @@ Item {
                                 if (!baseVersion)
                                     baseVersion = extractBaseVersion(ShellVersionService.semverVersion);
                                 if (baseVersion) {
-                                    return `dms (git) v${baseVersion}-${match[1]}`;
+                                    return `hgs (git) v${baseVersion}-${match[1]}`;
                                 }
-                                return `dms (git) v${match[1]}`;
+                                return `hgs (git) v${match[1]}`;
                             }
 
                             // Stable release format: 1.0.3
                             match = version.match(/^([\d.]+)$/);
                             if (match) {
-                                return `dms v${match[1]}`;
+                                return `hgs v${match[1]}`;
                             }
 
                             if (!version && cliVersion) {
                                 match = cliVersion.match(/^([\d.]+)\+git(\d+)\./);
                                 if (match) {
-                                    return `dms (git) v${match[1]}-${match[2]}`;
+                                    return `hgs (git) v${match[1]}-${match[2]}`;
                                 }
                                 match = cliVersion.match(/^([\d.]+)$/);
                                 if (match) {
-                                    return `dms v${match[1]}`;
+                                    return `hgs v${match[1]}`;
                                 }
-                                return `dms ${cliVersion}`;
+                                return `hgs ${cliVersion}`;
                             }
 
-                            return `dms ${version}`;
+                            return `hgs ${version}`;
                         }
                         font.pixelSize: Theme.fontSizeXLarge
                         font.weight: Font.Bold
@@ -269,72 +181,56 @@ Item {
 
                         property bool compactMode: parent.width < 450
 
-                        DankButton {
+                        HGSButton {
                             id: docsButton
                             text: resourceButtonsRow.compactMode ? "" : I18n.tr("Docs")
                             iconName: "menu_book"
                             iconSize: 18
                             backgroundColor: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.08)
                             textColor: Theme.surfaceText
-                            onClicked: Qt.openUrlExternally("https://danklinux.com/docs")
+                            onClicked: Qt.openUrlExternally("https://coastlinesec.com/docs")
                             onHoveredChanged: {
                                 if (hovered)
-                                    resourceTooltip.show(resourceButtonsRow.compactMode ? I18n.tr("Docs") + " - danklinux.com/docs" : "danklinux.com/docs", docsButton, 0, 0, "bottom");
+                                    resourceTooltip.show(resourceButtonsRow.compactMode ? I18n.tr("Docs") + " - coastlinesec.com/docs" : "coastlinesec.com/docs", docsButton, 0, 0, "bottom");
                                 else
                                     resourceTooltip.hide();
                             }
                         }
 
-                        DankButton {
-                            id: pluginsButton
-                            text: resourceButtonsRow.compactMode ? "" : I18n.tr("Plugins")
-                            iconName: "extension"
-                            iconSize: 18
-                            backgroundColor: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.08)
-                            textColor: Theme.surfaceText
-                            onClicked: Qt.openUrlExternally("https://plugins.danklinux.com")
-                            onHoveredChanged: {
-                                if (hovered)
-                                    resourceTooltip.show(resourceButtonsRow.compactMode ? I18n.tr("Plugins") + " - plugins.danklinux.com" : "plugins.danklinux.com", pluginsButton, 0, 0, "bottom");
-                                else
-                                    resourceTooltip.hide();
-                            }
-                        }
-
-                        DankButton {
+                        HGSButton {
                             id: githubButton
                             text: resourceButtonsRow.compactMode ? "" : I18n.tr("GitHub")
                             iconName: "code"
                             iconSize: 18
                             backgroundColor: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.08)
                             textColor: Theme.surfaceText
-                            onClicked: Qt.openUrlExternally("https://github.com/AvengeMedia/DankMaterialShell")
+                            onClicked: Qt.openUrlExternally("https://github.com/CoastLineSec/HyprGlassShell")
                             onHoveredChanged: {
                                 if (hovered)
-                                    resourceTooltip.show(resourceButtonsRow.compactMode ? "GitHub - AvengeMedia/DankMaterialShell" : "github.com/AvengeMedia/DankMaterialShell", githubButton, 0, 0, "bottom");
+                                    resourceTooltip.show(resourceButtonsRow.compactMode ? "GitHub - CoastLineSec/HyprGlassShell" : "github.com/CoastLineSec/HyprGlassShell", githubButton, 0, 0, "bottom");
                                 else
                                     resourceTooltip.hide();
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: kofiButton
                             text: resourceButtonsRow.compactMode ? "" : I18n.tr("Ko-fi")
                             iconName: "favorite"
                             iconSize: 18
                             backgroundColor: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12)
                             textColor: Theme.primary
-                            onClicked: Qt.openUrlExternally("https://ko-fi.com/danklinux")
+                            onClicked: Qt.openUrlExternally("https://ko-fi.com/coastlinesec")
                             onHoveredChanged: {
                                 if (hovered)
-                                    resourceTooltip.show(resourceButtonsRow.compactMode ? I18n.tr("Ko-fi") + " - ko-fi.com/danklinux" : "ko-fi.com/danklinux", kofiButton, 0, 0, "bottom");
+                                    resourceTooltip.show(resourceButtonsRow.compactMode ? I18n.tr("Ko-fi") + " - ko-fi.com/coastlinesec" : "ko-fi.com/coastlinesec", kofiButton, 0, 0, "bottom");
                                 else
                                     resourceTooltip.hide();
                             }
                         }
                     }
 
-                    DankTooltipV2 {
+                    HGSTooltipV2 {
                         id: resourceTooltip
                     }
 
@@ -343,10 +239,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         height: 24
                         width: {
-                            let baseWidth = compositorButton.width + dmsDiscordButton.width + Theme.spacingM;
-                            if (showMatrix) {
-                                baseWidth += matrixButton.width + 4;
-                            }
+                            let baseWidth = compositorButton.width + hgsDiscordButton.width + Theme.spacingM;
                             if (showIrc) {
                                 baseWidth += ircButton.width + Theme.spacingM;
                             }
@@ -389,40 +282,6 @@ Item {
                         }
 
                         Item {
-                            id: matrixButton
-                            width: 30
-                            height: 24
-                            x: compositorButton.x + compositorButton.width + 4
-                            visible: showMatrix
-
-                            property bool hovered: false
-                            property string tooltipText: I18n.tr("niri Matrix Chat")
-
-                            Image {
-                                anchors.fill: parent
-                                source: Qt.resolvedUrl(".").toString().replace("file://", "").replace("/Modules/Settings/", "") + "/assets/matrix-logo-white.svg"
-                                sourceSize: Qt.size(28, 18)
-                                smooth: true
-                                fillMode: Image.PreserveAspectFit
-                                layer.enabled: true
-
-                                layer.effect: MultiEffect {
-                                    colorization: 1
-                                    colorizationColor: Theme.surfaceText
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                hoverEnabled: true
-                                onEntered: parent.hovered = true
-                                onExited: parent.hovered = false
-                                onClicked: Qt.openUrlExternally("https://matrix.to/#/#niri:matrix.org")
-                            }
-                        }
-
-                        Item {
                             id: ircButton
                             width: 24
                             height: 24
@@ -433,7 +292,7 @@ Item {
                             property bool hovered: false
                             property string tooltipText: ircTooltip
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: "forum"
                                 size: 20
@@ -451,12 +310,10 @@ Item {
                         }
 
                         Item {
-                            id: dmsDiscordButton
+                            id: hgsDiscordButton
                             width: 20
                             height: 20
                             x: {
-                                if (showMatrix)
-                                    return matrixButton.x + matrixButton.width + Theme.spacingM;
                                 if (showIrc)
                                     return ircButton.x + ircButton.width + Theme.spacingM;
                                 return compositorButton.x + compositorButton.width + Theme.spacingM;
@@ -464,7 +321,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
 
                             property bool hovered: false
-                            property string tooltipText: dmsDiscordTooltip
+                            property string tooltipText: hgsDiscordTooltip
 
                             Image {
                                 anchors.fill: parent
@@ -480,7 +337,7 @@ Item {
                                 hoverEnabled: true
                                 onEntered: parent.hovered = true
                                 onExited: parent.hovered = false
-                                onClicked: Qt.openUrlExternally(dmsDiscordUrl)
+                                onClicked: Qt.openUrlExternally(hgsDiscordUrl)
                             }
                         }
 
@@ -488,7 +345,7 @@ Item {
                             id: compositorDiscordButton
                             width: 20
                             height: 20
-                            x: dmsDiscordButton.x + dmsDiscordButton.width + Theme.spacingM
+                            x: hgsDiscordButton.x + hgsDiscordButton.width + Theme.spacingM
                             anchors.verticalCenter: parent.verticalCenter
                             visible: showCompositorDiscord
 
@@ -517,7 +374,7 @@ Item {
                             id: redditButton
                             width: 20
                             height: 20
-                            x: showCompositorDiscord ? compositorDiscordButton.x + compositorDiscordButton.width + Theme.spacingM : dmsDiscordButton.x + dmsDiscordButton.width + Theme.spacingM
+                            x: showCompositorDiscord ? compositorDiscordButton.x + compositorDiscordButton.width + Theme.spacingM : hgsDiscordButton.x + hgsDiscordButton.width + Theme.spacingM
                             anchors.verticalCenter: parent.verticalCenter
                             visible: showReddit
 
@@ -565,7 +422,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "info"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -582,7 +439,7 @@ Item {
                     }
 
                     StyledText {
-                        text: I18n.tr('dms is a highly customizable, modern desktop shell with a <a href="https://m3.material.io/" style="text-decoration:none; color:%1;">material 3 inspired</a> design.<br /><br/>It is built with <a href="https://quickshell.org" style="text-decoration:none; color:%1;">Quickshell</a>, a QT6 framework for building desktop shells, and <a href="https://go.dev" style="text-decoration:none; color:%1;">Go</a>, a statically typed, compiled programming language.').arg(Theme.primary)
+                        text: I18n.tr('hgs is a highly customizable, modern desktop shell with a <a href="https://m3.material.io/" style="text-decoration:none; color:%1;">material 3 inspired</a> design.<br /><br/>It is built with <a href="https://quickshell.org" style="text-decoration:none; color:%1;">Quickshell</a>, a QT6 framework for building desktop shells, and <a href="https://go.dev" style="text-decoration:none; color:%1;">Go</a>, a statically typed, compiled programming language.').arg(Theme.primary)
                         textFormat: Text.RichText
                         font.pixelSize: Theme.fontSizeMedium
                         linkColor: Theme.primary
@@ -602,7 +459,7 @@ Item {
             }
 
             StyledRect {
-                visible: DMSService.isConnected
+                visible: HGSService.isConnected
                 width: parent.width
                 height: backendSection.implicitHeight + Theme.spacingL * 2
                 radius: Theme.cornerRadius
@@ -621,7 +478,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "dns"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -652,7 +509,7 @@ Item {
                             }
 
                             StyledText {
-                                text: DMSService.cliVersion || "—"
+                                text: HGSService.cliVersion || "—"
                                 font.pixelSize: Theme.fontSizeMedium
                                 font.weight: Font.Medium
                                 color: Theme.surfaceText
@@ -677,7 +534,7 @@ Item {
                             }
 
                             StyledText {
-                                text: `v${DMSService.apiVersion}`
+                                text: `v${HGSService.apiVersion}`
                                 font.pixelSize: Theme.fontSizeMedium
                                 font.weight: Font.Medium
                                 color: Theme.surfaceText
@@ -726,7 +583,7 @@ Item {
                     Column {
                         width: parent.width
                         spacing: Theme.spacingS
-                        visible: DMSService.capabilities.length > 0
+                        visible: HGSService.capabilities.length > 0
 
                         StyledText {
                             text: I18n.tr("Capabilities")
@@ -741,7 +598,7 @@ Item {
                             spacing: 6
 
                             Repeater {
-                                model: DMSService.capabilities
+                                model: HGSService.capabilities
 
                                 Rectangle {
                                     width: capText.implicitWidth + 16
@@ -782,7 +639,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "build"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -802,7 +659,7 @@ Item {
                         anchors.left: parent.left
                         spacing: Theme.spacingS
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Show Welcome")
                             iconName: "waving_hand"
                             backgroundColor: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.08)
@@ -810,7 +667,7 @@ Item {
                             onClicked: FirstLaunchService.showWelcome()
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("System Check")
                             iconName: "vital_signs"
                             backgroundColor: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.08)
@@ -823,7 +680,7 @@ Item {
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: I18n.tr('<a href="https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE" style="text-decoration:none; color:%1;">MIT License</a>').arg(Theme.surfaceVariantText)
+                text: I18n.tr('<a href="https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE" style="text-decoration:none; color:%1;">MIT License</a>').arg(Theme.surfaceVariantText)
                 font.pixelSize: Theme.fontSizeMedium
                 color: Theme.surfaceVariantText
                 textFormat: Text.RichText
@@ -853,8 +710,8 @@ Item {
                 return matrixButton;
             if (ircButton.visible && ircButton.hovered)
                 return ircButton;
-            if (dmsDiscordButton.hovered)
-                return dmsDiscordButton;
+            if (hgsDiscordButton.hovered)
+                return hgsDiscordButton;
             if (compositorDiscordButton.visible && compositorDiscordButton.hovered)
                 return compositorDiscordButton;
             if (redditButton.visible && redditButton.hovered)

@@ -11,8 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 )
 
 const (
@@ -353,7 +353,7 @@ func (m *Manager) runUpgrade(ctx context.Context, opts UpgradeOptions) {
 func (m *Manager) runCustomUpgrade(ctx context.Context, command, terminalOverride string) {
 	term := findTerminal(terminalOverride)
 	if term == "" {
-		m.setError(ErrCodeBackendFailed, "no terminal found (pick one in DMS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
+		m.setError(ErrCodeBackendFailed, "no terminal found (pick one in HGS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
 		return
 	}
 
@@ -368,7 +368,7 @@ func (m *Manager) runCustomUpgrade(ctx context.Context, command, terminalOverrid
 	m.markDirty()
 
 	onLine := func(line string) { m.appendLog(line) }
-	argv := wrapInTerminal(term, "DMS — System Update (custom)", command)
+	argv := wrapInTerminal(term, "HGS — System Update (custom)", command)
 	if err := Run(ctx, argv, RunOptions{OnLine: onLine}); err != nil {
 		code := ErrCodeBackendFailed
 		switch {

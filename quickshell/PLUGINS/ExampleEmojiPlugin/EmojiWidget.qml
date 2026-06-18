@@ -105,7 +105,7 @@ PluginComponent {
                 width: parent.width
                 implicitHeight: root.popoutHeight - popoutColumn.headerHeight - popoutColumn.detailsHeight - Theme.spacingXL
 
-                DankGridView {
+                HGSGridView {
                     id: emojiGrid
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: Math.floor(parent.width / 50) * 50
@@ -135,7 +135,7 @@ PluginComponent {
                             cursorShape: Qt.PointingHandCursor
 
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", modelData])
+                                Quickshell.execDetached(["hgs", "cl", "copy", modelData])
                                 ToastService.showInfo("Copied " + modelData + " to clipboard")
                                 popoutColumn.closePopout()
                             }

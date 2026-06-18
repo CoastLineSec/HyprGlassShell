@@ -1,9 +1,9 @@
 local present, base46 = pcall(require, "base46")
-if not present or not base46._DMS_SUPPORT then
+if not present or not base46._HGS_SUPPORT then
 	vim.notify(
 		"base46 plugin not found or incorrect, make sure to install AvengeMedia/base46",
 		vim.log.levels.ERROR,
-		{ title = "dms integration" }
+		{ title = "hgs integration" }
 	)
 	return
 end
@@ -12,13 +12,13 @@ local config_home = vim.env.XDG_CONFIG_HOME
 if config_home == nil or #config_home == 0 then
 	config_home = vim.fs.joinpath(vim.env.HOME, ".config")
 end
-local settings_file_path = vim.fs.joinpath(config_home, "DankMaterialShell", "settings.json")
+local settings_file_path = vim.fs.joinpath(config_home, "HyprGlassShell", "settings.json")
 local settings_file = io.open(settings_file_path, "r")
 if settings_file == nil then
 	vim.notify(
-		"cannnot read dms settings file at '" .. settings_file_path .. "'",
+		"cannnot read hgs settings file at '" .. settings_file_path .. "'",
 		vim.log.levels.ERROR,
-		{ title = "dms integration" }
+		{ title = "hgs integration" }
 	)
 	return
 end
@@ -35,7 +35,7 @@ local function deepGet(t, k)
 	return t
 end
 
-local mode = vim.system({ "dms", "ipc", "call", "theme", "getMode" }, { text = true }):wait().stdout
+local mode = vim.system({ "hgs", "ipc", "call", "theme", "getMode" }, { text = true }):wait().stdout
 if mode ~= nil then
 	if mode:match("light") then
 		vim.o.background = "light"
@@ -48,7 +48,7 @@ local current_file_path = debug.getinfo(1, "S").source:sub(2)
 local theme_base = deepGet(settings, { "matugenTemplateNeovimSettings", vim.o.background, "baseTheme" })
 	or ("github_" .. vim.o.background)
 local harmony = deepGet(settings, { "matugenTemplateNeovimSettings", vim.o.background, "harmony" }) or 0.5
-local theme_name = "dms"
+local theme_name = "hgs"
 
 if not _G._matugen_theme_watcher then
 	local uv = vim.uv or vim.loop
@@ -64,7 +64,7 @@ if not _G._matugen_theme_watcher then
 				base46.theme_tables[theme_name] = nil
 				if vim.g.colors_name == theme_name then
 					vim.cmd.colorscheme(theme_name)
-					vim.notify("Theme reload", vim.log.levels.INFO, { title = "dms integration" })
+					vim.notify("Theme reload", vim.log.levels.INFO, { title = "hgs integration" })
 				end
 				-- NOTE: contrary to what the documentation says, uv fs events usually do not manage to react to more than one edit.
 				-- I understand that this is not intended: some edit processes in a typical system (e.g. the one neovim uses with

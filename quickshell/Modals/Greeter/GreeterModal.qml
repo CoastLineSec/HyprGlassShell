@@ -27,7 +27,7 @@ FloatingWindow {
     function loadCheatsheet() {
         const provider = KeybindsService.cheatsheetProvider;
         if (KeybindsService.cheatsheetAvailable && provider && !cheatsheetLoaded) {
-            cheatsheetProcess.command = ["dms", "keybinds", "show", provider];
+            cheatsheetProcess.command = ["hgs", "keybinds", "show", provider];
             cheatsheetProcess.running = true;
         }
     }
@@ -214,7 +214,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXS
 
-                DankActionButton {
+                HGSActionButton {
                     visible: windowControls.canMaximize
                     iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
                     iconSize: Theme.iconSize - 4
@@ -222,13 +222,13 @@ FloatingWindow {
                     onClicked: windowControls.tryToggleMaximize()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     iconName: "close"
                     iconSize: Theme.iconSize - 4
                     iconColor: Theme.surfaceText
                     onClicked: root.skip()
 
-                    DankTooltip {
+                    HGSTooltip {
                         text: I18n.tr("Skip setup", "greeter skip button tooltip")
                     }
                 }
@@ -273,7 +273,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingM
 
-                DankButton {
+                HGSButton {
                     visible: root.currentPage < root.totalPages - 1
                     text: I18n.tr("Skip", "greeter skip button")
                     backgroundColor: "transparent"
@@ -281,7 +281,7 @@ FloatingWindow {
                     onClicked: root.skip()
                 }
 
-                DankButton {
+                HGSButton {
                     visible: root.currentPage > 0
                     text: I18n.tr("Back", "greeter back button")
                     iconName: "arrow_back"
@@ -290,7 +290,7 @@ FloatingWindow {
                     onClicked: root.prevPage()
                 }
 
-                DankButton {
+                HGSButton {
                     visible: root.currentPage < root.totalPages - 1
                     enabled: !(root.currentPage === 1 && pageLoader.item && pageLoader.item.isRunning)
                     text: root.currentPage === 0 ? I18n.tr("Get Started", "greeter first page button") : I18n.tr("Next", "greeter next button")
@@ -300,7 +300,7 @@ FloatingWindow {
                     onClicked: root.nextPage()
                 }
 
-                DankButton {
+                HGSButton {
                     visible: root.currentPage === root.totalPages - 1
                     text: I18n.tr("Finish", "greeter finish button")
                     iconName: "check"

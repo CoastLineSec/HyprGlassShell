@@ -7,7 +7,7 @@ import qs.Modules.Settings.Widgets
 Item {
     id: root
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -61,7 +61,6 @@ Item {
                     text: I18n.tr("Show Workspace Apps")
                     description: I18n.tr("Display application icons in workspace indicators")
                     checked: SettingsData.showWorkspaceApps
-                    visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
                     onToggled: checked => SettingsData.set("showWorkspaceApps", checked)
                 }
 
@@ -85,7 +84,7 @@ Item {
                             horizontalAlignment: Text.AlignLeft
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             width: 100
                             height: 28
                             placeholderText: "3"
@@ -153,7 +152,6 @@ Item {
                     text: I18n.tr("Follow Monitor Focus")
                     description: I18n.tr("Show workspaces of the currently focused monitor")
                     checked: SettingsData.workspaceFollowFocus
-                    visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango || CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle
                     onToggled: checked => SettingsData.set("workspaceFollowFocus", checked)
                 }
 
@@ -163,7 +161,6 @@ Item {
                     text: I18n.tr("Show Occupied Workspaces Only")
                     description: I18n.tr("Display only workspaces that contain windows")
                     checked: SettingsData.showOccupiedWorkspacesOnly
-                    visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
                     onToggled: checked => SettingsData.set("showOccupiedWorkspacesOnly", checked)
                 }
 
@@ -173,7 +170,6 @@ Item {
                     text: I18n.tr("Reverse Scrolling Direction")
                     description: I18n.tr("Reverse workspace switch direction when scrolling over the bar")
                     checked: SettingsData.reverseScrolling
-                    visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
                     onToggled: checked => SettingsData.set("reverseScrolling", checked)
                 }
 
@@ -183,18 +179,7 @@ Item {
                     text: I18n.tr("Drag to Reorder")
                     description: I18n.tr("Drag workspace indicators to reorder them")
                     checked: SettingsData.workspaceDragReorder
-                    visible: CompositorService.isNiri
                     onToggled: checked => SettingsData.set("workspaceDragReorder", checked)
-                }
-
-                SettingsToggleRow {
-                    settingKey: "dwlShowAllTags"
-                    tags: ["dwl", "tags", "workspace"]
-                    text: I18n.tr("Show All Tags")
-                    description: I18n.tr("Show all 9 tags instead of only occupied tags")
-                    checked: SettingsData.dwlShowAllTags
-                    visible: CompositorService.isMango
-                    onToggled: checked => SettingsData.set("dwlShowAllTags", checked)
                 }
             }
 
@@ -243,7 +228,7 @@ Item {
                                 elide: Text.ElideRight
                             }
 
-                            DankIconPicker {
+                            HGSIconPicker {
                                 id: iconPicker
                                 anchors.verticalCenter: parent.verticalCenter
 
@@ -283,7 +268,7 @@ Item {
                                 border.width: 0
                                 anchors.verticalCenter: parent.verticalCenter
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "close"
                                     size: 16
                                     color: clearMouseArea.containsMouse ? Theme.error : Theme.outline

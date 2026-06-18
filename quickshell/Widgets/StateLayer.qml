@@ -31,14 +31,14 @@ MouseArea {
 
         Behavior on color {
             enabled: Theme.currentAnimationSpeed !== SettingsData.AnimationSpeed.None
-            DankColorAnim {
+            HGSColorAnim {
                 duration: Theme.shorterDuration
                 easing.bezierCurve: Theme.expressiveCurves.standardDecel
             }
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: rippleLayer
         anchors.fill: parent
         rippleColor: root.stateColor
@@ -68,7 +68,7 @@ MouseArea {
         tooltip.hide();
     }
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: tooltip
     }
 }

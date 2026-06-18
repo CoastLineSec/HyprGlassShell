@@ -28,7 +28,7 @@ Variants {
             blurRadius: dock.usesConnectedFrameChrome ? Theme.connectedCornerRadius : dock.surfaceRadius
         }
 
-        WlrLayershell.namespace: "dms:dock"
+        WlrLayershell.namespace: "hgs:dock"
         WlrLayershell.layer: dock.usesOverlayLayer ? WlrLayer.Overlay : WlrLayer.Top
 
         readonly property bool isVertical: SettingsData.dockPosition === SettingsData.Position.Left || SettingsData.dockPosition === SettingsData.Position.Right
@@ -250,77 +250,12 @@ Variants {
         readonly property bool shouldHideForWindows: {
             if (!SettingsData.dockSmartAutoHide)
                 return false;
-            if (!CompositorService.isNiri && !CompositorService.isHyprland && !CompositorService.isMango)
-                return false;
 
             const screenName = dock.modelData?.name ?? "";
             const dockThickness = dockGeometry.motionThickness;
             const screenWidth = dock.screen?.width ?? 0;
             const screenHeight = dock.screen?.height ?? 0;
 
-            if (CompositorService.isNiri) {
-                NiriService.windows;
-
-                let currentWorkspaceId = null;
-                for (let i = 0; i < NiriService.allWorkspaces.length; i++) {
-                    const ws = NiriService.allWorkspaces[i];
-                    if (ws.output === screenName && ws.is_active) {
-                        currentWorkspaceId = ws.id;
-                        break;
-                    }
-                }
-
-                if (currentWorkspaceId === null)
-                    return false;
-
-                for (let i = 0; i < NiriService.windows.length; i++) {
-                    const win = NiriService.windows[i];
-                    if (win.workspace_id !== currentWorkspaceId)
-                        continue;
-
-                    // Get window position and size from layout data
-                    const tilePos = win.layout?.tile_pos_in_workspace_view;
-                    const winSize = win.layout?.window_size || win.layout?.tile_size;
-
-                    if (tilePos && winSize) {
-                        const winX = tilePos[0];
-                        const winY = tilePos[1];
-                        const winW = winSize[0];
-                        const winH = winSize[1];
-
-                        switch (SettingsData.dockPosition) {
-                        case SettingsData.Position.Top:
-                            if (winY < dockThickness)
-                                return true;
-                            break;
-                        case SettingsData.Position.Bottom:
-                            if (winY + winH > screenHeight - dockThickness)
-                                return true;
-                            break;
-                        case SettingsData.Position.Left:
-                            if (winX < dockThickness)
-                                return true;
-                            break;
-                        case SettingsData.Position.Right:
-                            if (winX + winW > screenWidth - dockThickness)
-                                return true;
-                            break;
-                        }
-                    } else if (!win.is_floating) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            if (CompositorService.isMango) {
-                MangoService.windows;
-                MangoService.outputs;
-                return CompositorService.mangoDockOverlapForSmartAutoHide(screenName, SettingsData.dockPosition, dockThickness, screenWidth, screenHeight);
-            }
-
-            // Hyprland implementation (current workspace + visible special workspaces)
             Hyprland.focusedWorkspace;
             Hyprland.toplevels;
             return CompositorService.hyprlandDockOverlapForSmartAutoHide(screenName, SettingsData.dockPosition, dockThickness, screenWidth, screenHeight);
@@ -343,10 +278,6 @@ Variants {
         property bool reveal: {
             if (_modalRetractActive)
                 return false;
-
-            if (CompositorService.isNiri && NiriService.inOverview && SettingsData.dockOpenOnOverview) {
-                return true;
-            }
 
             // Smart auto-hide: show dock when no windows overlap, hide when they do
             if (SettingsData.dockSmartAutoHide) {
@@ -397,12 +328,7 @@ Variants {
         }
 
         screen: modelData
-        visible: {
-            if (CompositorService.isNiri && NiriService.inOverview) {
-                return SettingsData.dockOpenOnOverview;
-            }
-            return SettingsData.showDock;
-        }
+        visible: SettingsData.showDock
         color: "transparent"
 
         readonly property real dockReserveZone: dockGeometry.reserveZone
@@ -457,7 +383,7 @@ Variants {
             implicitHeight: dock.isVertical ? 1 : dock.dockReserveZone
             exclusiveZone: visible ? dock.dockReserveZone : -1
 
-            WlrLayershell.namespace: "dms:dock-exclusion"
+            WlrLayershell.namespace: "hgs:dock-exclusion"
             WlrLayershell.layer: WlrLayer.Top
 
             anchors {
@@ -494,7 +420,7 @@ Variants {
             return null;
         }
 
-        DankTooltip {
+        HGSTooltip {
             id: dockTooltip
             targetScreen: dock.screen
         }

@@ -22,7 +22,7 @@ Singleton {
     readonly property string pluginDirectory: Paths.strip(Paths.config) + "/plugins"
 
     property bool pluginDirectoryExists: false
-    property string systemPluginDirectory: "/etc/xdg/quickshell/dms-plugins"
+    property string systemPluginDirectory: "/etc/xdg/quickshell/hgs-plugins"
 
     property var knownManifests: ({})
     property var pathToPluginId: ({})
@@ -294,7 +294,7 @@ Singleton {
         info.loaded = isPluginLoaded(manifest.id);
         info.type = manifest.type || (manifest.components ? "composite" : "widget");
         info.source = sourceTag;
-        info.requires_dms = manifest.requires_dms || null;
+        info.requires_hgs = manifest.requires_hgs || null;
 
         const existing = availablePlugins[manifest.id];
         const shouldReplace = (!existing) || (existing && existing.source === "system" && sourceTag === "user");
@@ -570,12 +570,12 @@ Singleton {
         SettingsData.setPluginSetting(pluginId, "variants", newVariants);
 
         const fullId = pluginId + ":" + variantId;
-        removeWidgetFromDankBar(fullId);
+        removeWidgetFromHGSBar(fullId);
 
         pluginDataChanged(pluginId);
     }
 
-    function removeWidgetFromDankBar(widgetId) {
+    function removeWidgetFromHGSBar(widgetId) {
         function filterWidget(widget) {
             const id = typeof widget === "string" ? widget : widget.id;
             return id !== widgetId;
@@ -593,13 +593,13 @@ Singleton {
         const newRight = rightWidgets.filter(filterWidget);
 
         if (newLeft.length !== leftWidgets.length) {
-            SettingsData.setDankBarLeftWidgets(newLeft);
+            SettingsData.setHGSBarLeftWidgets(newLeft);
         }
         if (newCenter.length !== centerWidgets.length) {
-            SettingsData.setDankBarCenterWidgets(newCenter);
+            SettingsData.setHGSBarCenterWidgets(newCenter);
         }
         if (newRight.length !== rightWidgets.length) {
-            SettingsData.setDankBarRightWidgets(newRight);
+            SettingsData.setHGSBarRightWidgets(newRight);
         }
     }
 
@@ -950,17 +950,17 @@ Singleton {
         globalVarChanged(pluginId, varName);
     }
 
-    function checkPluginCompatibility(requiresDms) {
-        if (!requiresDms)
+    function checkPluginCompatibility(requiresHgs) {
+        if (!requiresHgs)
             return true;
-        return ShellVersionService.checkVersionRequirement(requiresDms, ShellVersionService.getParsedShellVersion());
+        return ShellVersionService.checkVersionRequirement(requiresHgs, ShellVersionService.getParsedShellVersion());
     }
 
     function getIncompatiblePlugins() {
         const result = [];
         for (const pluginId in availablePlugins) {
             const plugin = availablePlugins[pluginId];
-            if (plugin.loaded && plugin.requires_dms && !checkPluginCompatibility(plugin.requires_dms)) {
+            if (plugin.loaded && plugin.requires_hgs && !checkPluginCompatibility(plugin.requires_hgs)) {
                 result.push(plugin);
             }
         }

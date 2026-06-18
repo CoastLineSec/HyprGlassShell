@@ -141,7 +141,7 @@ Item {
     }
 
     function copyToClipboard(text) {
-        Quickshell.execDetached(["dms", "cl", "copy", text]);
+        Quickshell.execDetached(["hgs", "cl", "copy", text]);
         showToast("Copied to clipboard");
     }
 

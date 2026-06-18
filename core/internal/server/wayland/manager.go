@@ -11,14 +11,14 @@ import (
 	"syscall"
 	"time"
 
-	wlclient "github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	wlclient "github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 	"github.com/godbus/dbus/v5"
 	"golang.org/x/sys/unix"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_gamma_control"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/errdefs"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/geolocation"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/proto/wlr_gamma_control"
 )
 
 const animKelvinStep = 25
@@ -1037,7 +1037,7 @@ func (m *Manager) handleResume() {
 		return
 	}
 
-	// Compositors (Niri, Hyprland, wlroots-based) re-apply the cached gamma
+	// Hyprland and wlroots-based compositors re-apply the cached gamma
 	// ramp to DRM on resume; gamma_control objects stay valid. We just need
 	// to force a resend so the schedule catches up with the current time of
 	// day — the original #1235 regression was caused by lastAppliedTemp

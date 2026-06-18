@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 var GentooGlobalUseFlags = []string{
@@ -88,7 +88,7 @@ func (g *GentooDistribution) DetectDependencies(ctx context.Context, wm deps.Win
 func (g *GentooDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	dependencies = append(dependencies, g.detectDMS())
+	dependencies = append(dependencies, g.detectHGS())
 
 	dependencies = append(dependencies, g.detectSpecificTerminal(terminal))
 
@@ -102,15 +102,6 @@ func (g *GentooDistribution) DetectDependenciesWithTerminal(ctx context.Context,
 		dependencies = append(dependencies, g.detectHyprlandTools()...)
 	}
 
-	if wm == deps.WindowManagerNiri {
-		dependencies = append(dependencies, g.detectXwaylandSatellite())
-	}
-
-	// Mango-specific tools (dwl-based, uses xwayland-satellite like niri)
-	if wm == deps.WindowManagerMango {
-		dependencies = append(dependencies, g.detectXwaylandSatellite())
-	}
-
 	dependencies = append(dependencies, g.detectMatugen())
 	dependencies = append(dependencies, g.detectDgop())
 
@@ -121,22 +112,18 @@ func (g *GentooDistribution) detectXDGPortal() deps.Dependency {
 	return g.detectPackage("xdg-desktop-portal-gtk", "Desktop integration portal for GTK", g.packageInstalled("sys-apps/xdg-desktop-portal-gtk"))
 }
 
-func (g *GentooDistribution) detectDMS() deps.Dependency {
+func (g *GentooDistribution) detectHGS() deps.Dependency {
 	dep := deps.Dependency{
-		Name:        "dms (DankMaterialShell)",
+		Name:        "hgs (HyprGlassShell)",
 		Status:      deps.StatusMissing,
 		Description: "Desktop Management System configuration",
 		Required:    true,
 		CanToggle:   false,
 	}
-	if g.packageInstalled("gui-apps/dankmaterialshell") {
+	if g.packageInstalled("gui-apps/hyprglassshell") {
 		dep.Status = deps.StatusInstalled
 	}
 	return dep
-}
-
-func (g *GentooDistribution) detectXwaylandSatellite() deps.Dependency {
-	return g.detectPackage("xwayland-satellite", "Xwayland support", g.packageInstalled("gui-apps/xwayland-satellite"))
 }
 
 func (g *GentooDistribution) detectAccountsService() deps.Dependency {
@@ -167,10 +154,10 @@ func (g *GentooDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		"qtwayland":     {Name: "dev-qt/qtwayland", Repository: RepoTypeSystem},
 		"mesa":          {Name: "media-libs/mesa", Repository: RepoTypeSystem, UseFlags: "opengl vulkan"},
 
-		"quickshell":              g.getQuickshellMapping(variants["quickshell"]),
-		"matugen":                 {Name: "x11-misc/matugen", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
-		"dms (DankMaterialShell)": g.getDmsMapping(),
-		"dgop":                    {Name: "gui-apps/dgop", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
+		"quickshell":           g.getQuickshellMapping(variants["quickshell"]),
+		"matugen":              {Name: "x11-misc/matugen", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
+		"hgs (HyprGlassShell)": g.getHgsMapping(),
+		"dgop":                 {Name: "gui-apps/dgop", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
 	}
 
 	switch wm {
@@ -178,13 +165,6 @@ func (g *GentooDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		packages["hyprland"] = g.getHyprlandMapping(variants["hyprland"])
 		packages["hyprctl"] = g.getHyprlandMapping(variants["hyprland"])
 		packages["jq"] = PackageMapping{Name: "app-misc/jq", Repository: RepoTypeSystem}
-	case deps.WindowManagerNiri:
-		packages["niri"] = g.getNiriMapping(variants["niri"])
-		packages["xwayland-satellite"] = PackageMapping{Name: "gui-apps/xwayland-satellite", Repository: RepoTypeGURU, AcceptKeywords: archKeyword}
-	case deps.WindowManagerMango:
-		packages["mango"] = g.getMangoMapping(variants["mango"])
-		packages["scenefx"] = PackageMapping{Name: "gui-libs/scenefx", Repository: RepoTypeGURU, AcceptKeywords: archKeyword}
-		packages["xwayland-satellite"] = PackageMapping{Name: "gui-apps/xwayland-satellite", Repository: RepoTypeGURU, AcceptKeywords: archKeyword}
 	}
 
 	return packages
@@ -194,20 +174,12 @@ func (g *GentooDistribution) getQuickshellMapping(_ deps.PackageVariant) Package
 	return PackageMapping{Name: "gui-apps/quickshell", Repository: RepoTypeGURU, UseFlags: "breakpad jemalloc sockets wayland layer-shell session-lock toplevel-management screencopy X pipewire tray mpris pam hyprland hyprland-global-shortcuts hyprland-focus-grab i3 i3-ipc bluetooth", AcceptKeywords: "**"}
 }
 
-func (g *GentooDistribution) getDmsMapping() PackageMapping {
-	return PackageMapping{Name: "gui-apps/dankmaterialshell", Repository: RepoTypeGURU, AcceptKeywords: g.getArchKeyword()}
+func (g *GentooDistribution) getHgsMapping() PackageMapping {
+	return PackageMapping{Name: "gui-apps/hyprglassshell", Repository: RepoTypeGURU, AcceptKeywords: g.getArchKeyword()}
 }
 
 func (g *GentooDistribution) getHyprlandMapping(_ deps.PackageVariant) PackageMapping {
 	return PackageMapping{Name: "gui-wm/hyprland", Repository: RepoTypeSystem, UseFlags: "X", AcceptKeywords: g.getArchKeyword()}
-}
-
-func (g *GentooDistribution) getNiriMapping(_ deps.PackageVariant) PackageMapping {
-	return PackageMapping{Name: "gui-wm/niri", Repository: RepoTypeGURU, UseFlags: "dbus screencast", AcceptKeywords: g.getArchKeyword()}
-}
-
-func (g *GentooDistribution) getMangoMapping(_ deps.PackageVariant) PackageMapping {
-	return PackageMapping{Name: "gui-wm/mangowm", Repository: RepoTypeGURU, AcceptKeywords: g.getArchKeyword()}
 }
 
 func (g *GentooDistribution) getPrerequisites() []string {
@@ -435,8 +407,8 @@ func (g *GentooDistribution) InstallPackages(ctx context.Context, dependencies [
 		g.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := g.EnableDMSService(ctx, wm); err != nil {
-		g.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := g.EnableHGSService(ctx, wm); err != nil {
+		g.log(fmt.Sprintf("Warning: failed to enable hgs service: %v", err))
 	}
 
 	progressChan <- InstallProgressMsg{
@@ -548,12 +520,12 @@ func (g *GentooDistribution) setPackageUseFlags(ctx context.Context, packageName
 	useFlagLine := fmt.Sprintf("%s %s", packageName, useFlags)
 
 	checkExistingCmd := exec.CommandContext(ctx, "bash", "-c",
-		fmt.Sprintf("grep -q '^%s ' %s/danklinux 2>/dev/null", packageName, packageUseDir))
+		fmt.Sprintf("grep -q '^%s ' %s/coastlinesec 2>/dev/null", packageName, packageUseDir))
 	if checkExistingCmd.Run() == nil {
 		g.log(fmt.Sprintf("Updating USE flags for %s from existing entry", packageName))
 		escapedPkg := strings.ReplaceAll(packageName, "/", "\\/")
 		replaceCmd := privesc.ExecCommand(ctx, sudoPassword,
-			fmt.Sprintf("sed -i '/^%s /d' %s/danklinux; exit_code=$?; exit $exit_code", escapedPkg, packageUseDir))
+			fmt.Sprintf("sed -i '/^%s /d' %s/coastlinesec; exit_code=$?; exit $exit_code", escapedPkg, packageUseDir))
 		if output, err := replaceCmd.CombinedOutput(); err != nil {
 			g.log(fmt.Sprintf("sed delete output: %s", string(output)))
 			return fmt.Errorf("failed to remove old USE flags: %w", err)
@@ -561,7 +533,7 @@ func (g *GentooDistribution) setPackageUseFlags(ctx context.Context, packageName
 	}
 
 	appendCmd := privesc.ExecCommand(ctx, sudoPassword,
-		fmt.Sprintf("bash -c \"echo '%s' >> %s/danklinux\"", useFlagLine, packageUseDir))
+		fmt.Sprintf("bash -c \"echo '%s' >> %s/coastlinesec\"", useFlagLine, packageUseDir))
 
 	output, err := appendCmd.CombinedOutput()
 	if err != nil {
@@ -660,12 +632,12 @@ func (g *GentooDistribution) setPackageAcceptKeywords(ctx context.Context, packa
 	keywordLine := fmt.Sprintf("%s %s", packageName, keywords)
 
 	checkExistingCmd := exec.CommandContext(ctx, "bash", "-c",
-		fmt.Sprintf("grep -q '^%s ' %s/danklinux 2>/dev/null", packageName, acceptKeywordsDir))
+		fmt.Sprintf("grep -q '^%s ' %s/coastlinesec 2>/dev/null", packageName, acceptKeywordsDir))
 	if checkExistingCmd.Run() == nil {
 		g.log(fmt.Sprintf("Updating accept keywords for %s from existing entry", packageName))
 		escapedPkg := strings.ReplaceAll(packageName, "/", "\\/")
 		replaceCmd := privesc.ExecCommand(ctx, sudoPassword,
-			fmt.Sprintf("sed -i '/^%s /d' %s/danklinux; exit_code=$?; exit $exit_code", escapedPkg, acceptKeywordsDir))
+			fmt.Sprintf("sed -i '/^%s /d' %s/coastlinesec; exit_code=$?; exit $exit_code", escapedPkg, acceptKeywordsDir))
 		if output, err := replaceCmd.CombinedOutput(); err != nil {
 			g.log(fmt.Sprintf("sed delete output: %s", string(output)))
 			return fmt.Errorf("failed to remove old accept keywords: %w", err)
@@ -673,7 +645,7 @@ func (g *GentooDistribution) setPackageAcceptKeywords(ctx context.Context, packa
 	}
 
 	appendCmd := privesc.ExecCommand(ctx, sudoPassword,
-		fmt.Sprintf("bash -c \"echo '%s' >> %s/danklinux\"", keywordLine, acceptKeywordsDir))
+		fmt.Sprintf("bash -c \"echo '%s' >> %s/coastlinesec\"", keywordLine, acceptKeywordsDir))
 
 	output, err := appendCmd.CombinedOutput()
 	if err != nil {

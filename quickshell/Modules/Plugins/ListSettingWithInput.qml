@@ -105,7 +105,7 @@ Column {
             id: inputRepeater
             model: root.fields
 
-            DankTextField {
+            HGSTextField {
                 width: modelData.width || 200
                 placeholderText: modelData.placeholder || ""
 
@@ -119,7 +119,7 @@ Column {
             }
         }
 
-        DankButton {
+        HGSButton {
             id: addButton
             width: 50
             height: 36

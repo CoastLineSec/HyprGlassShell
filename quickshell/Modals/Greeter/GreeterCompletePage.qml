@@ -22,17 +22,17 @@ Item {
             "notepad": "Notepad",
             "hotkeys": "Keybinds",
             "lock": "Lock Screen",
-            "dankdash": "Dashboard"
+            "hgsdash": "Dashboard"
         })
 
     function getFeatureDesc(action) {
-        const match = action.match(/dms\s+ipc\s+call\s+(\w+)/);
+        const match = action.match(/hgs\s+ipc\s+call\s+(\w+)/);
         if (match && featureNames[match[1]])
             return featureNames[match[1]];
         return null;
     }
 
-    readonly property var dmsKeybinds: {
+    readonly property var hgsKeybinds: {
         if (!greeterRoot || !greeterRoot.cheatsheetLoaded || !greeterRoot.cheatsheetData || !greeterRoot.cheatsheetData.binds)
             return [];
         const seen = new Set();
@@ -44,7 +44,7 @@ Item {
                 const bind = categoryBinds[i];
                 if (!bind.key || !bind.action)
                     continue;
-                if (!bind.action.includes("dms"))
+                if (!bind.action.includes("hgs"))
                     continue;
                 if (!(bind.action.includes("spawn") || bind.action.includes("exec")))
                     continue;
@@ -63,9 +63,9 @@ Item {
         return binds;
     }
 
-    readonly property bool hasKeybinds: dmsKeybinds.length > 0
+    readonly property bool hasKeybinds: hgsKeybinds.length > 0
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingL * 2
@@ -89,7 +89,7 @@ Item {
                     color: Theme.withAlpha(Theme.success, 0.15)
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "check_circle"
                         size: Theme.iconSize + 4
@@ -109,7 +109,7 @@ Item {
                     }
 
                     StyledText {
-                        text: I18n.tr("DankMaterialShell is ready to use", "greeter completion page subtitle")
+                        text: I18n.tr("HyprGlassShell is ready to use", "greeter completion page subtitle")
                         font.pixelSize: Theme.fontSizeMedium
                         color: Theme.surfaceVariantText
                     }
@@ -125,7 +125,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "keyboard"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -133,7 +133,7 @@ Item {
                     }
 
                     StyledText {
-                        text: I18n.tr("DMS Shortcuts", "greeter keybinds section header")
+                        text: I18n.tr("HGS Shortcuts", "greeter keybinds section header")
                         font.pixelSize: Theme.fontSizeMedium
                         font.weight: Font.Medium
                         color: Theme.surfaceText
@@ -164,7 +164,7 @@ Item {
                         columnSpacing: Theme.spacingM
 
                         Repeater {
-                            model: root.dmsKeybinds
+                            model: root.hgsKeybinds
 
                             Row {
                                 width: keybindsRect.itemWidth
@@ -254,7 +254,7 @@ Item {
                     Row {
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: root.sectionIconSize
                             color: Theme.surfaceVariantText
@@ -262,7 +262,7 @@ Item {
                         }
 
                         StyledText {
-                            text: I18n.tr("No DMS shortcuts configured", "greeter no keybinds message")
+                            text: I18n.tr("No HGS shortcuts configured", "greeter no keybinds message")
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.surfaceVariantText
                             anchors.verticalCenter: parent.verticalCenter
@@ -286,7 +286,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "menu_book"
                                 size: root.sectionIconSize
                                 color: Theme.primary
@@ -301,7 +301,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "open_in_new"
                                 size: Theme.iconSizeSmall - 2
                                 color: Theme.surfaceVariantText
@@ -315,14 +315,7 @@ Item {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                let url = "https://danklinux.com/docs/dankmaterialshell/keybinds-ipc";
-                                if (CompositorService.isNiri)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings";
-                                else if (CompositorService.isHyprland)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings-1";
-                                else if (CompositorService.isMango)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings-2";
-                                Qt.openUrlExternally(url);
+                                Qt.openUrlExternally("https://coastlinesec.com/docs/hyprglassshell/compositors#hgs-keybindings-1");
                             }
                         }
                     }
@@ -345,7 +338,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "settings"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -402,16 +395,16 @@ Item {
                     GreeterSettingsCard {
                         width: (parent.width - Theme.spacingS) / 2
                         iconName: "toolbar"
-                        title: I18n.tr("DankBar", "greeter settings link")
-                        description: I18n.tr("Widgets, layout, style", "greeter dankbar description")
-                        onClicked: PopoutService.openSettingsWithTab("dankbar_settings")
+                        title: I18n.tr("HGSBar", "greeter settings link")
+                        description: I18n.tr("Widgets, layout, style", "greeter hgsbar description")
+                        onClicked: PopoutService.openSettingsWithTab("hgsbar_settings")
                     }
 
                     GreeterSettingsCard {
                         width: (parent.width - Theme.spacingS) / 2
                         iconName: "keyboard"
                         title: I18n.tr("Keybinds", "greeter settings link")
-                        description: I18n.tr("niri shortcuts config", "greeter keybinds niri description")
+                        description: I18n.tr("Hyprland shortcuts config", "greeter keybinds description")
                         visible: KeybindsService.available
                         onClicked: PopoutService.openSettingsWithTab("keybinds")
                     }
@@ -442,7 +435,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "explore"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -467,23 +460,22 @@ Item {
                         iconName: "menu_book"
                         title: I18n.tr("Docs", "greeter documentation link")
                         isExternal: true
-                        onClicked: Qt.openUrlExternally("https://danklinux.com/docs")
+                        onClicked: Qt.openUrlExternally("https://coastlinesec.com/docs")
                     }
 
                     GreeterQuickLink {
                         width: (parent.width - Theme.spacingS * 2) / 3
-                        iconName: "extension"
-                        title: I18n.tr("Plugins", "greeter plugins link")
+                        iconName: "code"
+                        title: I18n.tr("GitHub", "greeter github link")
                         isExternal: true
-                        onClicked: Qt.openUrlExternally("https://danklinux.com/plugins")
+                        onClicked: Qt.openUrlExternally("https://github.com/CoastLineSec/HyprGlassShell")
                     }
 
                     GreeterQuickLink {
                         width: (parent.width - Theme.spacingS * 2) / 3
                         iconName: "palette"
                         title: I18n.tr("Themes", "greeter themes link")
-                        isExternal: true
-                        onClicked: Qt.openUrlExternally("https://danklinux.com/plugins?tab=themes")
+                        onClicked: PopoutService.openSettingsWithTab("theme")
                     }
                 }
             }

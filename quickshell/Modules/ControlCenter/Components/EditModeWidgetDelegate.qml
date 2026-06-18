@@ -146,7 +146,7 @@ Item {
         anchors.margins: -4
         z: 10
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "close"
             size: 12
@@ -191,7 +191,7 @@ Item {
         visible: root.hasConfigMenu
         z: 10
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "settings"
             size: 12
@@ -217,7 +217,7 @@ Item {
         z: 15
         opacity: root.dragging ? 1.0 : 0.7
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "drag_indicator"
             size: 10

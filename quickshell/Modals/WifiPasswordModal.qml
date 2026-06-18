@@ -4,10 +4,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:wifi-password"
+    layerNamespace: "hgs:wifi-password"
     keepPopoutsOpen: true
     allowStacking: true
     shouldBeVisible: false
@@ -374,7 +374,7 @@ DankModal {
                     anchors.right: parent.right
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -397,7 +397,7 @@ DankModal {
                     onClicked: ssidInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: ssidInput
 
                     anchors.fill: parent
@@ -426,7 +426,7 @@ DankModal {
                     border.color: fieldInput.activeFocus ? Theme.primary : Theme.outlineStrong
                     border.width: fieldInput.activeFocus ? 2 : 1
 
-                    DankTextField {
+                    HGSTextField {
                         id: fieldInput
                         anchors.fill: parent
                         font.pixelSize: Theme.fontSizeMedium
@@ -496,7 +496,7 @@ DankModal {
                     onClicked: usernameInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: usernameInput
 
                     anchors.fill: parent
@@ -527,7 +527,7 @@ DankModal {
                     onClicked: passwordInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: passwordInput
 
                     anchors.fill: parent
@@ -566,7 +566,7 @@ DankModal {
                     onClicked: anonInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: anonInput
 
                     anchors.fill: parent
@@ -597,7 +597,7 @@ DankModal {
                     onClicked: domainMatchInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: domainMatchInput
 
                     anchors.fill: parent
@@ -630,7 +630,7 @@ DankModal {
                     border.color: checked ? Theme.primary : Theme.outlineButton
                     border.width: 2
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "check"
                         size: 12

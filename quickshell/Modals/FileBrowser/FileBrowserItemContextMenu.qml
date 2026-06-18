@@ -57,7 +57,7 @@ Popup {
     function copyPath() {
         if (!filePath)
             return;
-        Quickshell.execDetached(["dms", "cl", "copy", filePath]);
+        Quickshell.execDetached(["hgs", "cl", "copy", filePath]);
         close();
     }
 
@@ -122,7 +122,7 @@ Popup {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.verticalCenter: parent.verticalCenter
                             name: modelData.icon
                             size: 16

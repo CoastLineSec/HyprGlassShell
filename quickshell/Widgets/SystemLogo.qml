@@ -34,7 +34,7 @@ Item {
         }
     }
 
-    DankNFIcon {
+    HGSNFIcon {
         id: nfIcon
         anchors.centerIn: parent
         visible: root.useNerdFont

@@ -50,7 +50,7 @@ Column {
                 color: Theme.surfaceText
             }
 
-            DankButtonGroup {
+            HGSButtonGroup {
                 model: ["1m", "5m", "10m", "30m"]
                 currentIndex: {
                     switch (cfg.graphInterval ?? 60) {
@@ -164,7 +164,7 @@ Column {
                             anchors.margins: Theme.spacingS
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "videocam"
                                 size: Theme.iconSizeSmall
                                 color: isSelected ? Theme.primary : Theme.surfaceVariantText
@@ -286,7 +286,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankButtonGroup {
+                HGSButtonGroup {
                     id: processCountButtons
                     model: ["3", "5", "10"]
                     currentIndex: {
@@ -326,7 +326,7 @@ Column {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankButtonGroup {
+                HGSButtonGroup {
                     id: sortByButtons
                     model: ["CPU", "MEM"]
                     currentIndex: (cfg.topProcessSortBy ?? "cpu") === "cpu" ? 0 : 1
@@ -412,7 +412,7 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingM
 
-            DankButton {
+            HGSButton {
                 text: I18n.tr("Reset Position")
                 backgroundColor: Theme.surfaceHover
                 textColor: Theme.surfaceText
@@ -426,7 +426,7 @@ Column {
                 }
             }
 
-            DankButton {
+            HGSButton {
                 text: I18n.tr("Reset Size")
                 backgroundColor: Theme.surfaceHover
                 textColor: Theme.surfaceText

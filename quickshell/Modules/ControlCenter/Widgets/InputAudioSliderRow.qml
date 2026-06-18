@@ -23,7 +23,7 @@ Row {
         radius: (Theme.iconSize + Theme.spacingS * 2) / 2
         color: iconArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12) : Theme.withAlpha(Theme.primary, 0)
 
-        DankRipple {
+        HGSRipple {
             id: iconRipple
             cornerRadius: parent.radius
         }
@@ -43,7 +43,7 @@ Row {
             }
         }
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: {
                 if (!defaultSource?.audio)
@@ -61,7 +61,7 @@ Row {
         }
     }
 
-    DankSlider {
+    HGSSlider {
         readonly property real actualVolumePercent: defaultSource?.audio ? Math.round(defaultSource.audio.volume * 100) : 0
 
         anchors.verticalCenter: parent.verticalCenter

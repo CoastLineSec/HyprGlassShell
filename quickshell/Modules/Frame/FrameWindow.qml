@@ -20,7 +20,7 @@ PanelWindow {
     visible: win._frameVisible
     updatesEnabled: win._frameVisible
 
-    WlrLayershell.namespace: "dms:frame"
+    WlrLayershell.namespace: "hgs:frame"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
@@ -122,7 +122,7 @@ PanelWindow {
     readonly property color _surfaceColor: Theme.connectedSurfaceColor
     readonly property real _surfaceRadius: Theme.connectedSurfaceRadius
     readonly property real _seamOverlap: Theme.hairline(win._dpr)
-    readonly property bool _disableLayer: Quickshell.env("DMS_DISABLE_LAYER") === "true" || Quickshell.env("DMS_DISABLE_LAYER") === "1"
+    readonly property bool _disableLayer: Quickshell.env("HGS_DISABLE_LAYER") === "true" || Quickshell.env("HGS_DISABLE_LAYER") === "1"
     readonly property bool _elevationShadow: win._connectedActive && Theme.elevationEnabled && !win._disableLayer
     // Pack active connected surfaces into four fixed SDF slots (near edges clamp to cutout).
     readonly property var _sdfSlots: {

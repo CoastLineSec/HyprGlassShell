@@ -1,12 +1,12 @@
 import QtQuick
 import qs.Common
-import qs.Modals.DankLauncherV2
+import qs.Modals.HGSLauncherV2
 import qs.Widgets
 
-DankPopout {
+HGSPopout {
     id: appDrawerPopout
 
-    layerNamespace: "dms:app-launcher"
+    layerNamespace: "hgs:app-launcher"
 
     property string _pendingMode: ""
     property string _pendingQuery: ""

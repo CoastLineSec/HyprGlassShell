@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/greeter"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/config"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/distros"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/greeter"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 // ErrConfirmationRequired is returned when --yes is not set and the user
@@ -21,7 +21,6 @@ var ErrConfirmationRequired = fmt.Errorf("confirmation required: pass --yes to p
 // replaceConfigs. Keep in sync with the config types checked by
 // shouldReplaceConfig in deployer.go.
 var validConfigNames = map[string]string{
-	"niri":      "Niri",
 	"hyprland":  "Hyprland",
 	"ghostty":   "Ghostty",
 	"kitty":     "Kitty",
@@ -30,15 +29,15 @@ var validConfigNames = map[string]string{
 
 // orderedConfigNames defines the canonical order for config names in output.
 // Must be kept in sync with validConfigNames.
-var orderedConfigNames = []string{"niri", "hyprland", "ghostty", "kitty", "alacritty"}
+var orderedConfigNames = []string{"hyprland", "ghostty", "kitty", "alacritty"}
 
 // Config holds all CLI parameters for unattended installation.
 type Config struct {
-	Compositor        string // "niri" or "hyprland"
+	Compositor        string // "hyprland"
 	Terminal          string // "ghostty", "kitty", or "alacritty"
 	IncludeDeps       []string
 	ExcludeDeps       []string
-	ReplaceConfigs    []string // specific configs to deploy (e.g. "niri", "ghostty")
+	ReplaceConfigs    []string // specific configs to deploy (e.g. "hyprland", "ghostty")
 	ReplaceConfigsAll bool     // deploy/replace all configurations
 	Yes               bool
 }
@@ -214,13 +213,10 @@ func (r *Runner) Run() error {
 		return fmt.Errorf("package installation failed: %w", err)
 	}
 
-	// 9. Greeter setup (if dms-greeter was included)
-	if !disabledItems["dms-greeter"] && r.depExists(dependencies, "dms-greeter") {
-		compositorName := "niri"
-		if wm == deps.WindowManagerHyprland {
-			compositorName = "Hyprland"
-		}
-		fmt.Fprintln(os.Stdout, "Configuring DMS greeter...")
+	// 9. Greeter setup (if hgs-greeter was included)
+	if !disabledItems["hgs-greeter"] && r.depExists(dependencies, "hgs-greeter") {
+		compositorName := "Hyprland"
+		fmt.Fprintln(os.Stdout, "Configuring HGS greeter...")
 		logFunc := func(line string) {
 			r.log(line)
 			fmt.Fprintf(os.Stdout, "  greeter: %s\n", line)
@@ -268,14 +264,14 @@ func (r *Runner) Run() error {
 
 // buildDisabledItems computes the set of dependencies that should be skipped
 // during installation, applying the --include-deps and --exclude-deps filters.
-// dms-greeter is disabled by default (opt-in), matching TUI behavior.
+// hgs-greeter is disabled by default (opt-in), matching TUI behavior.
 func (r *Runner) buildDisabledItems(dependencies []deps.Dependency) (map[string]bool, error) {
 	disabledItems := make(map[string]bool)
 
-	// dms-greeter is opt-in (disabled by default), matching TUI behavior
+	// hgs-greeter is opt-in (disabled by default), matching TUI behavior
 	for i := range dependencies {
-		if dependencies[i].Name == "dms-greeter" {
-			disabledItems["dms-greeter"] = true
+		if dependencies[i].Name == "hgs-greeter" {
+			disabledItems["hgs-greeter"] = true
 			break
 		}
 	}
@@ -301,8 +297,8 @@ func (r *Runner) buildDisabledItems(dependencies []deps.Dependency) (map[string]
 		if !r.depExists(dependencies, name) {
 			return nil, fmt.Errorf("--exclude-deps: unknown dependency %q", name)
 		}
-		// Don't allow excluding DMS itself
-		if name == "dms (DankMaterialShell)" {
+		// Don't allow excluding HGS itself
+		if name == "hgs (HyprGlassShell)" {
 			return nil, fmt.Errorf("--exclude-deps: cannot exclude required package %q", name)
 		}
 		disabledItems[name] = true
@@ -343,7 +339,7 @@ func (r *Runner) buildReplaceConfigs() (map[string]bool, error) {
 		}
 		deployerKey, ok := validConfigNames[strings.ToLower(name)]
 		if !ok {
-			return nil, fmt.Errorf("--replace-configs: unknown config %q; valid values: niri, hyprland, ghostty, kitty, alacritty", name)
+			return nil, fmt.Errorf("--replace-configs: unknown config %q; valid values: hyprland, ghostty, kitty, alacritty", name)
 		}
 		result[deployerKey] = true
 	}
@@ -360,14 +356,10 @@ func (r *Runner) log(message string) {
 
 func (r *Runner) parseWindowManager() (deps.WindowManager, error) {
 	switch strings.ToLower(r.cfg.Compositor) {
-	case "niri":
-		return deps.WindowManagerNiri, nil
 	case "hyprland":
 		return deps.WindowManagerHyprland, nil
-	case "mango", "mangowc":
-		return deps.WindowManagerMango, nil
 	default:
-		return 0, fmt.Errorf("invalid --compositor value %q: must be 'niri', 'hyprland', or 'mango'", r.cfg.Compositor)
+		return 0, fmt.Errorf("invalid --compositor value %q: must be 'hyprland'", r.cfg.Compositor)
 	}
 }
 
@@ -401,14 +393,14 @@ func (r *Runner) resolveSudoPassword() (string, error) {
 		return "", fmt.Errorf(
 			"sudo authentication required but no cached credentials found\n" +
 				"Options:\n" +
-				"  1. Run 'sudo -v' before dankinstall to cache credentials\n" +
+				"  1. Run 'sudo -v' before hgsinstall to cache credentials\n" +
 				"  2. Configure passwordless sudo for your user",
 		)
 	case privesc.ToolDoas:
 		return "", fmt.Errorf(
 			"doas authentication required but no cached credentials found\n" +
 				"Options:\n" +
-				"  1. Run 'doas true' before dankinstall to cache credentials (requires 'persist' in /etc/doas.conf)\n" +
+				"  1. Run 'doas true' before hgsinstall to cache credentials (requires 'persist' in /etc/doas.conf)\n" +
 				"  2. Configure a 'nopass' rule in /etc/doas.conf for your user",
 		)
 	case privesc.ToolRun0:

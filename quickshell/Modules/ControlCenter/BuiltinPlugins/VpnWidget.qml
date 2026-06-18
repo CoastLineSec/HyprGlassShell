@@ -8,22 +8,22 @@ PluginComponent {
     id: root
 
     Ref {
-        service: DMSNetworkService
+        service: HGSNetworkService
     }
 
     ccWidgetIcon: "vpn_key"
     ccWidgetPrimaryText: I18n.tr("VPN")
     ccWidgetSecondaryText: {
-        if (!DMSNetworkService.connected)
+        if (!HGSNetworkService.connected)
             return I18n.tr("Disconnected");
-        const names = DMSNetworkService.activeNames || [];
+        const names = HGSNetworkService.activeNames || [];
         if (names.length <= 1)
             return names[0] || I18n.tr("Connected");
         return names[0] + " +" + (names.length - 1);
     }
-    ccWidgetIsActive: DMSNetworkService.connected
+    ccWidgetIsActive: HGSNetworkService.connected
 
-    onCcWidgetToggled: DMSNetworkService.toggleVpn()
+    onCcWidgetToggled: HGSNetworkService.toggleVpn()
 
     ccDetailContent: Component {
         VpnDetailContent {

@@ -4,11 +4,11 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
     readonly property var log: Log.scoped("BluetoothPairingModal")
 
-    layerNamespace: "dms:bluetooth-pairing"
+    layerNamespace: "hgs:bluetooth-pairing"
 
     property string deviceName: ""
     property string deviceAddress: ""
@@ -68,7 +68,7 @@ DankModal {
 
     onBackgroundClicked: () => {
         if (token) {
-            DMSService.bluetoothCancelPairing(token);
+            HGSService.bluetoothCancelPairing(token);
         }
         close();
         token = "";
@@ -89,7 +89,7 @@ DankModal {
 
             Keys.onEscapePressed: event => {
                 if (token) {
-                    DMSService.bluetoothCancelPairing(token);
+                    HGSService.bluetoothCancelPairing(token);
                 }
                 close();
                 token = "";
@@ -161,7 +161,7 @@ DankModal {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: pinInputField
 
                         anchors.fill: parent
@@ -196,7 +196,7 @@ DankModal {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: passkeyInputField
 
                         anchors.fill: parent
@@ -278,7 +278,7 @@ DankModal {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: () => {
                                     if (token) {
-                                        DMSService.bluetoothCancelPairing(token);
+                                        HGSService.bluetoothCancelPairing(token);
                                     }
                                     close();
                                     token = "";
@@ -347,7 +347,7 @@ DankModal {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.topMargin: Theme.spacingM
@@ -357,7 +357,7 @@ DankModal {
                 iconColor: Theme.surfaceText
                 onClicked: () => {
                     if (token) {
-                        DMSService.bluetoothCancelPairing(token);
+                        HGSService.bluetoothCancelPairing(token);
                     }
                     close();
                     token = "";
@@ -390,7 +390,7 @@ DankModal {
             break;
         }
 
-        DMSService.bluetoothSubmitPairing(token, secrets, true, response => {
+        HGSService.bluetoothSubmitPairing(token, secrets, true, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Pairing failed"), response.error);
             }

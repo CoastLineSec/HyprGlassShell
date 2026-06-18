@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 

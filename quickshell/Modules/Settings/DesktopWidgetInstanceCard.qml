@@ -50,7 +50,7 @@ SettingsCard {
     onExpandedChanged: isExpanded = expanded
 
     headerActions: [
-        DankToggle {
+        HGSToggle {
             checked: instanceData?.enabled ?? true
             onToggled: isChecked => {
                 if (!root.instanceId)
@@ -60,7 +60,7 @@ SettingsCard {
                 });
             }
         },
-        DankActionButton {
+        HGSActionButton {
             id: menuButton
             iconName: "more_vert"
             onClicked: {
@@ -105,7 +105,7 @@ SettingsCard {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "content_copy"
                                 size: Theme.iconSizeSmall
                                 color: Theme.surfaceText
@@ -142,7 +142,7 @@ SettingsCard {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: root.confirmingDelete ? "warning" : "delete"
                                 size: Theme.iconSizeSmall
                                 color: Theme.error
@@ -208,7 +208,7 @@ SettingsCard {
                     horizontalAlignment: Text.AlignLeft
                 }
 
-                DankTextField {
+                HGSTextField {
                     width: parent.width - 80 - Theme.spacingM
                     text: root.widgetName
                     onEditingFinished: {
@@ -245,7 +245,7 @@ SettingsCard {
                     horizontalAlignment: Text.AlignLeft
                 }
 
-                DankDropdown {
+                HGSDropdown {
                     id: groupDropdown
                     width: parent.width - 80 - Theme.spacingM
                     compactMode: true
@@ -299,40 +299,6 @@ SettingsCard {
                     return;
                 SettingsData.updateDesktopWidgetInstanceConfig(root.instanceId, {
                     showOnOverlay: isChecked
-                });
-            }
-        }
-
-        SettingsDivider {
-            visible: CompositorService.isNiri
-        }
-
-        SettingsToggleRow {
-            visible: CompositorService.isNiri
-            text: I18n.tr("Show on Overview")
-            checked: instanceData?.config?.showOnOverview ?? false
-            onToggled: isChecked => {
-                if (!root.instanceId)
-                    return;
-                SettingsData.updateDesktopWidgetInstanceConfig(root.instanceId, {
-                    showOnOverview: isChecked
-                });
-            }
-        }
-
-        SettingsDivider {
-            visible: CompositorService.isNiri
-        }
-
-        SettingsToggleRow {
-            visible: CompositorService.isNiri
-            text: I18n.tr("Show on Overview Only")
-            checked: instanceData?.config?.showOnOverviewOnly ?? false
-            onToggled: isChecked => {
-                if (!root.instanceId)
-                    return;
-                SettingsData.updateDesktopWidgetInstanceConfig(root.instanceId, {
-                    showOnOverviewOnly: isChecked
                 });
             }
         }
@@ -404,7 +370,7 @@ SettingsCard {
 
                         StyledText {
                             id: ipcText
-                            text: "dms ipc call desktopWidget toggleOverlay " + root.instanceId
+                            text: "hgs ipc call desktopWidget toggleOverlay " + root.instanceId
                             font.pixelSize: Theme.fontSizeSmall
                             font.family: Theme.monoFontFamily
                             color: Theme.surfaceVariantText
@@ -413,7 +379,7 @@ SettingsCard {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: copyBtn
                             iconName: "content_copy"
                             backgroundColor: "transparent"
@@ -422,7 +388,7 @@ SettingsCard {
                             horizontalPadding: 4
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", "dms ipc call desktopWidget toggleOverlay " + root.instanceId]);
+                                Quickshell.execDetached(["hgs", "cl", "copy", "hgs ipc call desktopWidget toggleOverlay " + root.instanceId]);
                                 ToastService.showInfo(I18n.tr("Copied to clipboard"));
                             }
                         }

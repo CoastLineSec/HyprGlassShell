@@ -1,10 +1,10 @@
 {
-  "name": "dms-theme",
-  "displayName": "DMS - Dank Material Shell Theme",
-  "description": "Dynamic theme using matugen & dank16 terminal colors - auto-updated by DankMaterialShell",
-  "publisher": "DankLinux",
+  "name": "hgs-theme",
+  "displayName": "HGS - Hypr Glass Shell Theme",
+  "description": "Dynamic theme using matugen & hgs16 terminal colors - auto-updated by HyprGlassShell",
+  "publisher": "CoastLineSec",
   "version": "0.0.3",
-  "icon": "danklogo.png",
+  "icon": "hgslogo.png",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -12,34 +12,34 @@
     "Themes"
   ],
   "keywords": [
-    "dms",
-    "dank",
+    "hgs",
+    "hgs",
     "material",
-    "dankshell",
-    "danklinux"
+    "hgsshell",
+    "coastlinesec"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/AvengeMedia/DankMaterialShell"
+    "url": "https://github.com/CoastLineSec/HyprGlassShell"
   },
   "contributes": {
     "themes": [
       {
-        "label": "Dynamic Base16 DankShell",
+        "label": "Dynamic Base16 HGSShell",
         "uiTheme": "vs-dark",
-        "path": "./themes/dankshell-default.json",
+        "path": "./themes/hgsshell-default.json",
         "_watch": true
       },
       {
-        "label": "Dynamic Base16 DankShell (Dark)",
+        "label": "Dynamic Base16 HGSShell (Dark)",
         "uiTheme": "vs-dark",
-        "path": "./themes/dankshell-dark.json",
+        "path": "./themes/hgsshell-dark.json",
         "_watch": true
       },
       {
-        "label": "Dynamic Base16 DankShell (Light)",
+        "label": "Dynamic Base16 HGSShell (Light)",
         "uiTheme": "vs",
-        "path": "./themes/dankshell-light.json",
+        "path": "./themes/hgsshell-light.json",
         "_watch": true
       }
     ]

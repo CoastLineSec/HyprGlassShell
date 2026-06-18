@@ -10,7 +10,7 @@ Singleton {
 
     readonly property var log: Log.scoped("GreeterUsersService")
 
-    readonly property string greetCfgDir: Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter"
+    readonly property string greetCfgDir: Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter"
     readonly property string usersCacheDir: greetCfgDir + "/users"
 
     property var users: []

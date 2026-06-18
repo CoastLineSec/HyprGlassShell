@@ -123,7 +123,7 @@ Rectangle {
                 anchors.centerIn: parent
                 spacing: Theme.spacingXS
 
-                DankIcon {
+                HGSIcon {
                     name: scanButton.isDiscovering ? "stop" : "bluetooth_searching"
                     size: 18
                     color: scanButton.adapterEnabled ? Theme.primary : Theme.surfaceVariantText
@@ -139,7 +139,7 @@ Rectangle {
                 }
             }
 
-            DankRipple {
+            HGSRipple {
                 id: scanRipple
                 cornerRadius: scanButton.radius
             }
@@ -160,7 +160,7 @@ Rectangle {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: bluetoothContent
         anchors.top: headerRow.bottom
         anchors.left: parent.left
@@ -261,7 +261,7 @@ Rectangle {
                         anchors.leftMargin: Theme.spacingM
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: BluetoothService.getDeviceIcon(pairedDelegate.modelData)
                             size: Theme.iconSize - 4
                             anchors.verticalCenter: parent.verticalCenter
@@ -346,7 +346,7 @@ Rectangle {
                             anchors.centerIn: parent
                             spacing: 4
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "push_pin"
                                 size: 16
                                 color: pairedDelegate.isPinned ? Theme.primary : Theme.surfaceText
@@ -388,7 +388,7 @@ Rectangle {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: pairedOptionsButton
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -405,7 +405,7 @@ Rectangle {
                         }
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: deviceRipple
                         cornerRadius: pairedDelegate.radius
                     }
@@ -443,7 +443,7 @@ Rectangle {
                 height: 80
                 visible: (BluetoothService.adapter?.discovering ?? false) && availableRepeater.count === 0
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: "sync"
                     size: 24
@@ -502,7 +502,7 @@ Rectangle {
                         anchors.leftMargin: Theme.spacingM
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: BluetoothService.getDeviceIcon(availableDelegate.modelData)
                             size: Theme.iconSize - 4
                             color: Theme.surfaceText
@@ -563,7 +563,7 @@ Rectangle {
                         font.weight: Font.Medium
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: availableRipple
                         cornerRadius: availableDelegate.radius
                     }
@@ -720,7 +720,7 @@ Rectangle {
                 }
 
                 const devicePath = BluetoothService.getDevicePath(bluetoothContextMenu.currentDevice);
-                DMSService.bluetoothRemove(devicePath, response => {
+                HGSService.bluetoothRemove(devicePath, response => {
                     if (!response.error)
                         return;
                     ToastService.showError(I18n.tr("Failed to remove device"), response.error);
@@ -730,7 +730,7 @@ Rectangle {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onBluetoothPairingRequest(data) {
             const modal = PopoutService.bluetoothPairingModal;

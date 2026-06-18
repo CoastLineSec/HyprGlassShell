@@ -1,12 +1,12 @@
 name: Support Request
-description: Help with installation, usage, or general questions about DankMaterialShell
+description: Help with installation, usage, or general questions about HyprGlassShell
 labels:
   - support
 body:
   - type: markdown
     attributes:
       value: |
-        ## DankMaterialShell Support Request
+        ## HyprGlassShell Support Request
   - type: dropdown
     id: compositor
     attributes:
@@ -54,7 +54,7 @@ body:
     attributes:
       label: Select your Installation Method
       options:
-        - DankInstaller
+        - HGSInstaller
         - Distro Packaging
         - Source
     validations:
@@ -77,11 +77,11 @@ body:
     validations:
       required: false
   - type: textarea
-    id: dms_doctor
+    id: hgs_doctor
     attributes:
-      label: dms doctor -vC
-      description: Output of `dms doctor -vC` command — paste between the lines below to keep it collapsed in the issue
-      placeholder: Paste the output of `dms doctor -vC` here
+      label: hgs doctor -vC
+      description: Output of `hgs doctor -vC` command — paste between the lines below to keep it collapsed in the issue
+      placeholder: Paste the output of `hgs doctor -vC` here
       value: |
         <details>
         <summary>Click to expand</summary>

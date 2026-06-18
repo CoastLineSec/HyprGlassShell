@@ -46,7 +46,7 @@ Rectangle {
                 width: parent.width - Theme.spacingM * 2
                 spacing: Theme.spacingM
 
-                DankIcon {
+                HGSIcon {
                     name: root.expanded ? "expand_less" : "expand_more"
                     size: Theme.iconSize
                     color: Theme.surfaceVariantText
@@ -97,7 +97,7 @@ Rectangle {
                     color: deleteMouse.containsMouse ? Theme.error : "transparent"
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "delete"
                         size: 16
@@ -148,7 +148,7 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         width: parent.width - 80 - Theme.spacingM
                         text: root.variant.name || ""
                         onEditingFinished: {
@@ -161,7 +161,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Header")
@@ -171,7 +171,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show CPU")
@@ -179,7 +179,7 @@ Rectangle {
                 onToggled: checked => root.updateConfig("showCpu", checked)
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show CPU Graph")
@@ -188,7 +188,7 @@ Rectangle {
                 onToggled: checked => root.updateConfig("showCpuGraph", checked)
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show CPU Temp")
@@ -199,7 +199,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Memory")
@@ -207,7 +207,7 @@ Rectangle {
                 onToggled: checked => root.updateConfig("showMemory", checked)
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Memory Graph")
@@ -216,7 +216,7 @@ Rectangle {
                 onToggled: checked => root.updateConfig("showMemoryGraph", checked)
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Memory in GB")
@@ -227,7 +227,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Network")
@@ -235,7 +235,7 @@ Rectangle {
                 onToggled: checked => root.updateConfig("showNetwork", checked)
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Network Graph")
@@ -246,7 +246,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Disk")
@@ -256,7 +256,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show GPU Temperature")
@@ -293,7 +293,7 @@ Rectangle {
                             anchors.margins: Theme.spacingS
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "videocam"
                                 size: Theme.iconSizeSmall
                                 color: root.cfg.gpuPciId === modelData.pciId ? Theme.primary : Theme.surfaceVariantText
@@ -326,7 +326,7 @@ Rectangle {
 
             SettingsDivider {}
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width - Theme.spacingM * 2
                 x: Theme.spacingM
                 text: I18n.tr("Show Top Processes")
@@ -369,7 +369,7 @@ Rectangle {
                     }
                 }
 
-                DankSlider {
+                HGSSlider {
                     id: transparencySlider
                     width: parent.width
                     minimum: 0

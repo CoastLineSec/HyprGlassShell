@@ -116,7 +116,7 @@ Item {
         id: deleteClassConfirm
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -147,7 +147,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "print"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -251,7 +251,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "add_circle"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -289,7 +289,7 @@ Item {
                             color: addPrinterToggleArea.containsMouse ? Theme.surfacePressed : "transparent"
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: printerTab.showAddPrinter ? "expand_less" : "expand_more"
                                 size: 18
@@ -342,7 +342,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "search"
                                         size: 16
                                         color: !printerTab.manualEntryMode ? Theme.onPrimary : Theme.surfaceText
@@ -380,7 +380,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "edit"
                                         size: 16
                                         color: printerTab.manualEntryMode ? Theme.onPrimary : Theme.surfaceText
@@ -428,7 +428,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankDropdown {
+                                HGSDropdown {
                                     id: deviceDropdown
                                     dropdownWidth: parent.width - 80 - scanDevicesBtn.width - Theme.spacingS * 2
                                     popupWidth: parent.width - 80 - scanDevicesBtn.width - Theme.spacingS * 2
@@ -450,7 +450,7 @@ Item {
                                     }
                                 }
 
-                                DankActionButton {
+                                HGSActionButton {
                                     id: scanDevicesBtn
                                     iconName: "refresh"
                                     buttonSize: 32
@@ -506,7 +506,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankTextField {
+                                HGSTextField {
                                     width: parent.width - 80 - Theme.spacingS
                                     placeholderText: I18n.tr("IP address or hostname", "Placeholder text for manual printer address input")
                                     text: printerTab.manualHost
@@ -530,7 +530,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankTextField {
+                                HGSTextField {
                                     width: 80
                                     placeholderText: "631"
                                     text: printerTab.manualPort
@@ -554,7 +554,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankDropdown {
+                                HGSDropdown {
                                     id: protocolDropdown
                                     dropdownWidth: 120
                                     popupWidth: 120
@@ -576,7 +576,7 @@ Item {
                                     height: 1
                                 }
 
-                                DankButton {
+                                HGSButton {
                                     text: printerTab.testingConnection ? I18n.tr("Testing...", "Button state while testing printer connection") : I18n.tr("Test Connection", "Button to test connection to a printer by IP address")
                                     iconName: printerTab.testingConnection ? "sync" : "lan"
                                     buttonHeight: 36
@@ -696,7 +696,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankDropdown {
+                                HGSDropdown {
                                     id: ppdDropdown
                                     dropdownWidth: parent.width - 80 - refreshPpdsBtn.width - Theme.spacingS * 2
                                     popupWidth: parent.width - 80 - refreshPpdsBtn.width - Theme.spacingS * 2
@@ -728,7 +728,7 @@ Item {
                                     }
                                 }
 
-                                DankActionButton {
+                                HGSActionButton {
                                     id: refreshPpdsBtn
                                     iconName: "refresh"
                                     buttonSize: 32
@@ -759,7 +759,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankTextField {
+                                HGSTextField {
                                     width: parent.width - 80 - Theme.spacingS
                                     placeholderText: I18n.tr("Printer name (no spaces)")
                                     text: printerTab.newPrinterName
@@ -780,7 +780,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankTextField {
+                                HGSTextField {
                                     width: parent.width - 80 - Theme.spacingS
                                     placeholderText: I18n.tr("Optional location")
                                     text: printerTab.newPrinterLocation
@@ -801,7 +801,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankTextField {
+                                HGSTextField {
                                     width: parent.width - 80 - Theme.spacingS
                                     placeholderText: I18n.tr("Optional description")
                                     text: printerTab.newPrinterInfo
@@ -816,7 +816,7 @@ Item {
                             spacing: Theme.spacingS
                             layoutDirection: Qt.RightToLeft
 
-                            DankButton {
+                            HGSButton {
                                 text: CupsService.creatingPrinter ? I18n.tr("Creating...") : I18n.tr("Create Printer")
                                 iconName: CupsService.creatingPrinter ? "sync" : "add"
                                 buttonHeight: 36
@@ -853,7 +853,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "print"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -888,7 +888,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: refreshBtn
                             iconName: "refresh"
                             buttonSize: 32
@@ -912,7 +912,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "print_disabled"
                                 size: 32
                                 color: Theme.surfaceVariantText
@@ -978,7 +978,7 @@ Item {
                                             anchors.rightMargin: Theme.spacingS
                                             spacing: Theme.spacingS
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 name: isStopped ? "print_disabled" : "print"
                                                 size: 20
                                                 color: isStopped ? Theme.error : (isIdle ? Theme.primary : Theme.warning)
@@ -1051,7 +1051,7 @@ Item {
                                                 radius: 14
                                                 color: expandBtn.containsMouse ? Theme.surfacePressed : "transparent"
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     anchors.centerIn: parent
                                                     name: isExpanded ? "expand_less" : "expand_more"
                                                     size: 18
@@ -1075,7 +1075,7 @@ Item {
                                                 radius: 14
                                                 color: deleteBtn.containsMouse ? Theme.errorHover : "transparent"
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     anchors.centerIn: parent
                                                     name: "delete"
                                                     size: 18
@@ -1222,7 +1222,7 @@ Item {
                                                             anchors.centerIn: parent
                                                             spacing: Theme.spacingXS
 
-                                                            DankIcon {
+                                                            HGSIcon {
                                                                 name: isStopped ? "play_arrow" : "pause"
                                                                 size: 16
                                                                 color: Theme.surfaceText
@@ -1262,7 +1262,7 @@ Item {
                                                             anchors.centerIn: parent
                                                             spacing: Theme.spacingXS
 
-                                                            DankIcon {
+                                                            HGSIcon {
                                                                 name: "description"
                                                                 size: 16
                                                                 color: Theme.surfaceText
@@ -1296,7 +1296,7 @@ Item {
                                                             anchors.centerIn: parent
                                                             spacing: Theme.spacingXS
 
-                                                            DankIcon {
+                                                            HGSIcon {
                                                                 name: printerData?.accepting ? "block" : "check_circle"
                                                                 size: 16
                                                                 color: Theme.surfaceText
@@ -1360,7 +1360,7 @@ Item {
                                                                 anchors.centerIn: parent
                                                                 spacing: Theme.spacingXS
 
-                                                                DankIcon {
+                                                                HGSIcon {
                                                                     name: "delete_sweep"
                                                                     size: 14
                                                                     color: purgeArea.containsMouse ? Theme.error : Theme.surfaceText
@@ -1414,7 +1414,7 @@ Item {
                                                                 anchors.verticalCenter: parent.verticalCenter
                                                                 spacing: Theme.spacingS
 
-                                                                DankIcon {
+                                                                HGSIcon {
                                                                     name: "description"
                                                                     size: 18
                                                                     color: Theme.surfaceVariantText
@@ -1462,7 +1462,7 @@ Item {
                                                                     color: holdJobBtn.containsMouse ? Theme.surfacePressed : "transparent"
                                                                     visible: modelData.state === "pending"
 
-                                                                    DankIcon {
+                                                                    HGSIcon {
                                                                         anchors.centerIn: parent
                                                                         name: "pause"
                                                                         size: 14
@@ -1485,7 +1485,7 @@ Item {
                                                                     color: restartJobBtn.containsMouse ? Theme.surfacePressed : "transparent"
                                                                     visible: modelData.state === "pending-held" || modelData.state === "completed" || modelData.state === "aborted"
 
-                                                                    DankIcon {
+                                                                    HGSIcon {
                                                                         anchors.centerIn: parent
                                                                         name: "replay"
                                                                         size: 14
@@ -1507,7 +1507,7 @@ Item {
                                                                     radius: 12
                                                                     color: cancelJobBtn.containsMouse ? Theme.errorHover : "transparent"
 
-                                                                    DankIcon {
+                                                                    HGSIcon {
                                                                         anchors.centerIn: parent
                                                                         name: "close"
                                                                         size: 14
@@ -1554,7 +1554,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "workspaces"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -1584,7 +1584,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: refreshClassesBtn
                             iconName: "refresh"
                             buttonSize: 32
@@ -1623,7 +1623,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "workspaces"
                                         size: 20
                                         color: Theme.surfaceText
@@ -1661,7 +1661,7 @@ Item {
                                         radius: 14
                                         color: deleteClassBtn.containsMouse ? Theme.errorHover : "transparent"
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "delete"
                                             size: 18

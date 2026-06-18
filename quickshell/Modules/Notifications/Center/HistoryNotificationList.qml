@@ -213,7 +213,7 @@ Item {
         anchors.fill: parent
         spacing: Theme.spacingS
 
-        DankFilterChips {
+        HGSFilterChips {
             id: filterChips
             width: parent.width
             currentIndex: root.getChipIndex()
@@ -226,7 +226,7 @@ Item {
             }
         }
 
-        DankListView {
+        HGSListView {
             id: historyListView
             width: parent.width
             height: parent.height - filterChips.height - Theme.spacingS

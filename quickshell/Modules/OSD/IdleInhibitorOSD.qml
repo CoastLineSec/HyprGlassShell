@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+HGSOSD {
     id: root
 
     osdWidth: Theme.iconSize + Theme.spacingS * 2
@@ -20,7 +20,7 @@ DankOSD {
         }
     }
 
-    content: DankIcon {
+    content: HGSIcon {
         anchors.centerIn: parent
         name: SessionService.idleInhibited ? "motion_sensor_active" : "motion_sensor_idle"
         size: Theme.iconSize

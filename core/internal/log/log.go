@@ -63,7 +63,7 @@ func parseLogLevel(level string) cblog.Level {
 }
 
 func GetQtLoggingRules() string {
-	level := os.Getenv("DMS_LOG_LEVEL")
+	level := os.Getenv("HGS_LOG_LEVEL")
 	if level == "" {
 		level = "info"
 	}
@@ -113,7 +113,7 @@ func GetLogger() *Logger {
 		base.SetReportTimestamp(false)
 
 		level := cblog.InfoLevel
-		if envLevel := os.Getenv("DMS_LOG_LEVEL"); envLevel != "" {
+		if envLevel := os.Getenv("HGS_LOG_LEVEL"); envLevel != "" {
 			level = parseLogLevel(envLevel)
 		}
 		base.SetLevel(level)
@@ -121,7 +121,7 @@ func GetLogger() *Logger {
 
 		logger = &Logger{base}
 
-		if path := os.Getenv("DMS_LOG_FILE"); path != "" {
+		if path := os.Getenv("HGS_LOG_FILE"); path != "" {
 			_ = SetLogFile(path)
 		}
 	})
@@ -129,7 +129,7 @@ func GetLogger() *Logger {
 }
 
 // SetLevel updates the active log level. Accepts the same strings as
-// DMS_LOG_LEVEL. Unknown values default to info.
+// HGS_LOG_LEVEL. Unknown values default to info.
 func SetLevel(level string) {
 	GetLogger().SetLevel(parseLogLevel(level))
 }
@@ -185,14 +185,14 @@ func applyColorProfile(l *Logger, stderr io.Writer) {
 	l.SetColorProfile(termenv.Ascii)
 }
 
-// ApplyEnvOverrides re-reads DMS_LOG_LEVEL and DMS_LOG_FILE and reconfigures
+// ApplyEnvOverrides re-reads HGS_LOG_LEVEL and HGS_LOG_FILE and reconfigures
 // the singleton. Safe to call after CLI flags have rewritten the environment.
 func ApplyEnvOverrides() {
 	GetLogger()
-	if level := os.Getenv("DMS_LOG_LEVEL"); level != "" {
+	if level := os.Getenv("HGS_LOG_LEVEL"); level != "" {
 		SetLevel(level)
 	}
-	if path := os.Getenv("DMS_LOG_FILE"); path != "" {
+	if path := os.Getenv("HGS_LOG_FILE"); path != "" {
 		if err := SetLogFile(path); err != nil {
 			Warnf("Failed to open log file %q: %v", path, err)
 		}

@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "已存在同名文件，是否覆盖？"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "激活登录界面"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "要激活 DMS 登录界面吗？将打开终端进行 sudo 认证。激活后运行“同步”以应用你的设置。"
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "要激活 HGS 登录界面吗？将打开终端进行 sudo 认证。激活后运行“同步”以应用你的设置。"
   },
   "Activation": {
     "Activation": "激活"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "将“%1” 添加到 %2 组吗？"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "将“%1” 添加到 %2 组吗？该用户必须注销并重新登录，然后运行 dms greeter sync --profile 以应用其登录屏幕主题。"
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "将“%1” 添加到 %2 组吗？该用户必须注销并重新登录，然后运行 hgs greeter sync --profile 以应用其登录屏幕主题。"
   },
   "Add Bar": {
     "Add Bar": "添加状态栏"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "将新用户添加到 %1 组，使其能够运行 dms greeter sync --profile。"
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "将新用户添加到 %1 组，使其能够运行 hgs greeter sync --profile。"
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "将新用户添加到 %1 组，使其能够使用 sudo。"
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "锁定超时"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "DMS 启动时自动锁定屏幕"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "HGS 启动时自动锁定屏幕"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "当系统准备挂起时自动锁定屏幕"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "更改状态栏外观"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "更改 DMS 界面使用的区域设置。"
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "更改 HGS 界面使用的区域设置。"
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "更改用于日期和时间格式化的区域设置，与界面语言无关。"
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "启动时检查"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "按需检查同步状态。“同步（完整）”供主管理员使用：它会将你的主题复制到登录屏幕，并设置系统登录界面配置。在多用户系统上，请在“设置” → “用户”中添加其他账户，然后让各用户注销并重新登录后运行 dms greeter sync --profile，而不是执行完整同步。认证变更会自动应用。"
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "按需检查同步状态。“同步（完整）”供主管理员使用：它会将你的主题复制到登录屏幕，并设置系统登录界面配置。在多用户系统上，请在“设置” → “用户”中添加其他账户，然后让各用户注销并重新登录后运行 hgs greeter sync --profile，而不是执行完整同步。认证变更会自动应用。"
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "在“设置” → “程序坞” → “回收站”中检查你的自定义命令。"
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "选择边框强调色"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "选择在 Dank 状态栏上启动器按钮显示的 Logo"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "选择在 HGS 状态栏上启动器按钮显示的 Logo"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "设置通知弹窗的出现位置"
@@ -1440,7 +1440,7 @@
     "Clear Sky": "晴空"
   },
   "Clear all history when server starts": {
-    "Clear all history when server starts": "DMS 服务启动时清除所有历史记录"
+    "Clear all history when server starts": "HGS 服务启动时清除所有历史记录"
   },
   "Clear at Startup": {
     "Clear at Startup": "启动时清除"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "语法高亮颜色主题。共 %1 个主题可供使用。"
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "DMS 主题仓库的颜色主题"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "HGS 主题仓库的颜色主题"
   },
   "Colorful": {
     "Colorful": "彩色"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "登录界面的便捷选项。同步以应用。"
   },
-  "Convert to DMS": {
-    "Convert to DMS": "导入到 DMS"
+  "Convert to HGS": {
+    "Convert to HGS": "导入到 HGS"
   },
   "Cooldown": {
     "Cooldown": "冷却"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "演示模式 - 点击任意位置退出"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "DMS 选择器"
+  "HGS Chooser": {
+    "HGS Chooser": "HGS 选择器"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "DMS 插件管理器不可用"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "HGS 插件管理器不可用"
   },
-  "DMS Settings": {
-    "DMS Settings": "DMS 设置"
+  "HGS Settings": {
+    "HGS Settings": "HGS 设置"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": "DMS 设置会写入 Lua 快捷键配置。请添加 DMS 的 include，修改才能生效。"
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": "HGS 设置会写入 Lua 快捷键配置。请添加 HGS 的 include，修改才能生效。"
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "DMS 快捷键"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "HGS 快捷键"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "DMS 登录界面需要：greetd、dms-greeter。指纹：fprintd、pam_fprintd。安全密钥：pam_u2f。请将你的用户添加到 greeter 组。认证变更会自动应用，需要 sudo 认证时可能会打开终端。"
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "HGS 登录界面需要：greetd、hgs-greeter。指纹：fprintd、pam_fprintd。安全密钥：pam_u2f。请将你的用户添加到 greeter 组。认证变更会自动应用，需要 sudo 认证时可能会打开终端。"
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": "DMS 需要管理员权限。完成后终端会自动关闭。"
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": "HGS 需要管理员权限。完成后终端会自动关闭。"
   },
-  "DMS out of date": {
-    "DMS out of date": "DMS 已过期"
+  "HGS out of date": {
+    "HGS out of date": "HGS 已过期"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "DMS 服务器版本过旧（API v%1，应为 v%2）"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "HGS 服务器版本过旧（API v%1，应为 v%2）"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "DMS 服务未连接。剪切板设置不可用。"
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "HGS 服务未连接。剪切板设置不可用。"
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "DMS Shell 操作（启动器、剪贴板等）"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "HGS Shell 操作（启动器、剪贴板等）"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKET 不可用"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKET 不可用"
   },
   "Daily": {
     "Daily": "每日"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "在每日："
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank 状态栏"
+  "HGS Bar": {
+    "HGS Bar": "HGS 状态栏"
   },
-  "DankBar": {
-    "DankBar": "Dank 状态栏"
+  "HGSBar": {
+    "HGSBar": "HGS 状态栏"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "DankMaterialShell 现已可用"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "HyprGlassShell 现已可用"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "DankShell 和系统图标 (需要重启)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "HGSShell 和系统图标 (需要重启)"
   },
   "Dark Mode": {
     "Dark Mode": "深色模式"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "细雨"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "删除 %1 的覆盖设置并重新应用 DMS 默认动作吗？"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "删除 %1 的覆盖设置并重新应用 HGS 默认动作吗？"
   },
   "Duplicate": {
     "Duplicate": "创建副本"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "启用以下自定义覆盖，设置每个状态栏的阴影强度、透明度和颜色。"
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "启用合成器可定位的模糊层（命名空间：dms:blurwallpaper），需要手动配置 Niri。"
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "启用合成器可定位的模糊层（命名空间：hgs:blurwallpaper），需要手动配置 Niri。"
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "登录时启用指纹识别"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "启用指纹认证"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "启用 DMS 登录界面的指纹或安全密钥。认证变更会自动生效。"
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "启用 HGS 登录界面的指纹或安全密钥。认证变更会自动生效。"
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "启用 loginctl 锁定集成"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "响铃设备失败"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "运行 'dms greeter status' 失败。确保 DMS 已安装，且 dms 已在 PATH 中。"
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "运行 'hgs greeter status' 失败。确保 HGS 已安装，且 hgs 已在 PATH 中。"
   },
   "Failed to save audio config": {
     "Failed to save audio config": "音频配置保存失败"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "已从此处接收文件"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "文件搜索需要 dsearch\n请从 github.com/AvengeMedia/danksearch 安装"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "文件搜索需要 dsearch\n请从 github.com/CoastLineSec/hgssearch 安装"
   },
   "File search unavailable": {
     "File search unavailable": "文件搜索不可用"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "文件夹"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "遵循 DMS 背景颜色"
+  "Follow HGS background color": {
+    "Follow HGS background color": "遵循 HGS 背景颜色"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "遵循显示器聚点"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "伽马控制"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "伽玛控制不可用，需要 DMS API v6+。"
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "伽玛控制不可用，需要 HGS API v6+。"
   },
   "Generate Override": {
     "Generate Override": "生成 Override"
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "生成遵循 DMS 颜色的 GTK3/GTK4 或 QT5/QT6（需要 qt6ct-kde）基线配置。仅需执行一次。<br /><br />建议在应用 GTK 主题前先配置 <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a>。"
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "生成遵循 HGS 颜色的 GTK3/GTK4 或 QT5/QT6（需要 qt6ct-kde）基线配置。仅需执行一次。<br /><br />建议在应用 GTK 主题前先配置 <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a>。"
   },
   "Generic": {
     "Generic": "通用"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "登录界面字体"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "greeter 组成员注销并重新登录后，可使用 dms greeter sync --profile 同步自己的登录屏幕主题。"
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "greeter 组成员注销并重新登录后，可使用 hgs greeter sync --profile 同步自己的登录屏幕主题。"
   },
   "Greeter group:": {
     "Greeter group:": "greeter 组："
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "待机设置"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": "如果自启动应用图标没有出现在系统托盘中，可生成一个 systemd override，确保 DMS 在这些自启动应用之前启动"
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": "如果自启动应用图标没有出现在系统托盘中，可生成一个 systemd override，确保 HGS 在这些自启动应用之前启动"
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "若隐藏密码区域，按下按键后密码区域会即刻出现"
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "安装主题"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "从 DMS 主题仓库安装颜色主题"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "从 HGS 主题仓库安装颜色主题"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "安装完成。登录界面已安装。"
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "安装 matugen 包以使用动态主题"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "要从 DMS 插件仓库安装插件 %1 吗？"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "要从 HGS 插件仓库安装插件 %1 吗？"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "从 DMS 插件仓库安装插件"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "从 HGS 插件仓库安装插件"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "要安装 DMS 登录界面吗？将打开终端进行 sudo 认证。"
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "要安装 HGS 登录界面吗？将打开终端进行 sudo 认证。"
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "要从 DMS 主题仓库安装主题 %1 吗？"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "要从 HGS 主题仓库安装主题 %1 吗？"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "安装与 PAM 设置：请参考 "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "使状态栏背景完全透明"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "管理和配置插件以扩展 DMS 功能"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "管理和配置插件以扩展 HGS 功能"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "最多可管理 4 个独立的状态栏配置。每个状态栏都有自己的位置、部件、样式和显示器分配。"
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "受 Material 启发的模态框、弹窗及对话框的阴影与高程"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "Material：Material Design 3 Expressive 的贝塞尔曲线。也是 DMS 的默认风格。"
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "Material：Material Design 3 Expressive 的贝塞尔曲线。也是 HGS 的默认风格。"
   },
   "Matugen Contrast": {
     "Matugen Contrast": "Matugen 对比度"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "夜间模式与伽玛"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "夜间模式失败：DMS 伽马控制不可用"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "夜间模式失败：HGS 伽马控制不可用"
   },
   "Niri Integration": {
     "Niri Integration": "Niri 集成"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "无边框"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "未配置 DMS 快捷键"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "未配置 HGS 快捷键"
   },
   "No Dim": {
     "No Dim": "不变暗"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "根据时间或位置调节伽马值。"
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "仅影响受 DMS 管理的 PAM。如果 greetd 已经包含了 pam_fprintd，则指纹认证将依旧保持启用。"
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "仅影响受 HGS 管理的 PAM。如果 greetd 已经包含了 pam_fprintd，则指纹认证将依旧保持启用。"
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "在每个程序坞上仅显示当前显示器上的窗口"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "移除快捷键 %1 ？"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "移除快捷键 %1 ？将向 dms/binds-user.lua 保存一条解绑记录，使其在 DMS 更新后仍保持移除。"
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "移除快捷键 %1 ？将向 hgs/binds-user.lua 保存一条解绑记录，使其在 HGS 更新后仍保持移除。"
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "已移除管理员权限"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "需要 dgop 工具"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "需要 DMS %1"
+  "Requires HGS %1": {
+    "Requires HGS %1": "需要 HGS %1"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "需要具备 sysupdate 功能的 DMS 服务器"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "需要具备 sysupdate 功能的 HGS 服务器"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": ""
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "分辨率、位置与缩放"
   },
-  "Restart DMS": {
-    "Restart DMS": "重启 DMS"
+  "Restart HGS": {
+    "Restart HGS": "重启 HGS"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "重启 DankMaterialShell"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "重启 HyprGlassShell"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "正在重启音频系统..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "规则（%1）"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": "在你的合成器配置中发现了这些规则。它们在这里是只读的，请使用“导入到 DMS”创建一个可编辑副本。"
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": "在你的合成器配置中发现了这些规则。它们在这里是只读的，请使用“导入到 HGS”创建一个可编辑副本。"
   },
   "Run Again": {
     "Run Again": "再次运行"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "运行 DMS 模板"
+  "Run HGS Templates": {
+    "Run HGS Templates": "运行 HGS 模板"
   },
   "Run User Templates": {
     "Run User Templates": "运行用户模板"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "缩放"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "独立调整 Dank 状态栏字体缩放"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "独立调整 HGS 状态栏字体缩放"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "独立调整 Dank 状态栏图标大小"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "独立调整 HGS 状态栏图标大小"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "缩放整个 shell 中的所有字体大小"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "显示重启"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "显示重启 DMS"
+  "Show Restart HGS": {
+    "Show Restart HGS": "显示重启 HGS"
   },
   "Show Saved Items": {
     "Show Saved Items": "显示已保存的项目"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "下雪"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "有些插件需要更新版的 DMS："
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "有些插件需要更新版的 HGS："
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "按字母顺序排序"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "标准"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "标准：经典 Material Design 3——面板从下方升起并带有轻微缩放。DMS 默认设置。"
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "标准：经典 Material Design 3——面板从下方升起并带有轻微缩放。HGS 默认设置。"
   },
   "Start": {
     "Start": "开始"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "终端附加参数"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "终端回退失败。请安装受支持的终端模拟器，或手动运行 dms auth sync。"
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "终端回退失败。请安装受支持的终端模拟器，或手动运行 hgs auth sync。"
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "终端回退失败。请安装受支持的终端模拟器之一，或手动运行“dms greeter sync”。"
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "终端回退失败。请安装受支持的终端模拟器之一，或手动运行“hgs greeter sync”。"
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "终端回退已打开。请在那里完成认证配置，结束时会自动关闭。"
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "系统监视器功能需要 dgop。\n请安装 dgop 以使用此功能。"
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "未设置 DMS_SOCKET 环境变量或套接字不可用，无法使用自动插件管理。"
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "未设置 HGS_SOCKET 环境变量或套接字不可用，无法使用自动插件管理。"
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "以下设置将修改您的 GTK 和 QT 配置。如需保留当前配置，请先备份 (qt5ct.conf|qt6ct.conf 和 ~/.config/gtk-3.0|gtk-4.0)。"
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "外部插件警示"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "第三方插件由社区创建，且不被 DankMaterialShell 官方支持。\n\n这些插件可能存在安全和隐私风险——安装时请自行承担风险。"
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "第三方插件由社区创建，且不被 HyprGlassShell 官方支持。\n\n这些插件可能存在安全和隐私风险——安装时请自行承担风险。"
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "此绑定已被 config.kdl 覆盖"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "此设备"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": "当前安装仍在使用 hyprland.conf。请先运行 dms setup 完成迁移，再编辑光标设置。"
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": "当前安装仍在使用 hyprland.conf。请先运行 hgs setup 完成迁移，再编辑光标设置。"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": "当前安装仍在使用 hyprland.conf。请先运行 dms setup 完成迁移，再编辑显示设置。"
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": "当前安装仍在使用 hyprland.conf。请先运行 hgs setup 完成迁移，再编辑显示设置。"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": "当前安装仍在使用 hyprland.conf。请先运行 dms setup 完成迁移，再在设置中编辑快捷键。"
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": "当前安装仍在使用 hyprland.conf。请先运行 hgs setup 完成迁移，再在设置中编辑快捷键。"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": "当前安装仍在使用 hyprland.conf。请先运行 dms setup 完成迁移，再在设置中编辑窗口规则。"
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": "当前安装仍在使用 hyprland.conf。请先运行 hgs setup 完成迁移，再在设置中编辑窗口规则。"
   },
   "This may take a few seconds": {
     "This may take a few seconds": "此操作可能会花费一些时间"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "请运行以下命令以更新："
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "要使用此 DMS 绑定，请删除或更改 config.kdl 中的按键绑定"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "要使用此 HGS 绑定，请删除或更改 config.kdl 中的按键绑定"
   },
   "Toast Messages": {
     "Toast Messages": "弹出式信息"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "卸载失败：%1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "要卸载 DMS 登录界面吗？这将移除配置并恢复之前的显示管理器。将打开终端进行 sudo 认证。"
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "要卸载 HGS 登录界面吗？这将移除配置并恢复之前的显示管理器。将打开终端进行 sudo 认证。"
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "已卸载：%1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "使用 spotlight-bar IPC 动作，并始终打开聚焦搜索栏。"
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "正在使用“设置” → “个性化”中的全局等宽字体"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "欢迎"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "欢迎使用 DankMaterialShell"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "欢迎使用 HyprGlassShell"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "在 Hyprland 特殊工作区点击程序坞窗口时，会拉回该特殊工作区，再聚焦窗口"
@@ -8349,7 +8349,7 @@
     "When enabled, apps are sorted alphabetically. When disabled, apps are sorted by usage frequency.": "启用时，应用按字母顺序排序；禁用时，应用按使用频率排序"
   },
   "When enabled, checks updates on startup. When disabled, only the interval above or a manual refresh runs a check.": {
-    "When enabled, checks updates on startup. When disabled, only the interval above or a manual refresh runs a check.": "启用后，DMS 启动时检查更新。禁用后，仅在以上设置的间隔或手动刷新时检查更新。"
+    "When enabled, checks updates on startup. When disabled, only the interval above or a manual refresh runs a check.": "启用后，HGS 启动时检查更新。禁用后，仅在以上设置的间隔或手动刷新时检查更新。"
   },
   "When locked": {
     "When locked": "何时锁定"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "直接"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "DMS 是一款高度可自定义的现代桌面 Shell，采用受 <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3</a> 启发的设计。<br /><br/>DMS 基于 <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>（用于构建桌面 Shell 的 QT6 框架）和 <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>（静态类型编译型编程语言）开发。"
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "HGS 是一款高度可自定义的现代桌面 Shell，采用受 <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3</a> 启发的设计。<br /><br/>HGS 基于 <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>（用于构建桌面 Shell 的 QT6 框架）和 <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>（静态类型编译型编程语言）开发。"
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "dms/cursor 配置存在，但未被合成器配置文件引用。光标设置将不会生效。"
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "hgs/cursor 配置存在，但未被合成器配置文件引用。光标设置将不会生效。"
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "dms/outputs 配置存在，但未被合成器配置文件引用。显示器配置变更不会保留。"
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "hgs/outputs 配置存在，但未被合成器配置文件引用。显示器配置变更不会保留。"
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": "例如：/usr/bin/my-script --flag"
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "loginctl activate 失败（退出码 %1）"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctl 不可用 - 启用锁定集成需连接 DMS socket"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctl 不可用 - 启用锁定集成需连接 HGS socket"
   },
   "mango: config reloaded": {
     "mango: config reloaded": ""
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "Niri 快捷键设置"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "niri/dms Discord"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "niri/hgs Discord"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "Niri：配置已重新加载"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "上"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "更新 DMS 以集成 NM"
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "更新 HGS 以集成 NM"
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "useradd 失败（退出码 %1）"

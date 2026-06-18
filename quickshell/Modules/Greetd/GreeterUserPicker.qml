@@ -57,7 +57,7 @@ Item {
             elide: Text.ElideRight
         }
 
-        DankIcon {
+        HGSIcon {
             name: "expand_more"
             size: 20
             color: Theme.surfaceVariantText
@@ -76,7 +76,7 @@ Item {
         height: collapsedBarHeight
         visible: !expanded && !GreeterState.username
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "expand_more"
             size: 20
@@ -90,7 +90,7 @@ Item {
         }
     }
 
-    DankListView {
+    HGSListView {
         id: userListView
 
         anchors.left: parent.left
@@ -126,7 +126,7 @@ Item {
                     Layout.preferredWidth: 36
                     Layout.preferredHeight: 36
 
-                    DankCircularImage {
+                    HGSCircularImage {
                         anchors.fill: parent
                         imageSource: root.profileImageSource(userRow.modelData.username)
                         fallbackIcon: "person"

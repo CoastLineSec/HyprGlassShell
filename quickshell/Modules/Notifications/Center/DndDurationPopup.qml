@@ -17,7 +17,7 @@ PanelWindow {
         blurRadius: Theme.cornerRadius
     }
 
-    WlrLayershell.namespace: "dms:dnd-duration-menu"
+    WlrLayershell.namespace: "hgs:dnd-duration-menu"
     WlrLayershell.layer: WlrLayershell.Overlay
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

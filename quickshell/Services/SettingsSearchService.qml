@@ -33,17 +33,12 @@ Singleton {
     }
 
     readonly property var conditionMap: ({
-            "isNiri": () => CompositorService.isNiri,
-            "isHyprland": () => CompositorService.isHyprland,
-            "isMango": () => CompositorService.isMango,
-            "isHyprlandOrNiri": () => CompositorService.isHyprland || CompositorService.isNiri,
-            "windowRulesCapable": () => CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango,
-            "layoutCapable": () => CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango,
+            "isHyprland": () => true,
             "keybindsAvailable": () => KeybindsService.available,
             "soundsAvailable": () => AudioService.soundsAvailable,
             "cupsAvailable": () => CupsService.cupsAvailable,
             "networkNotLegacy": () => !NetworkService.usingLegacy,
-            "dmsConnected": () => DMSService.isConnected && DMSService.apiVersion >= 23,
+            "hgsConnected": () => HGSService.isConnected && HGSService.apiVersion >= 23,
             "matugenAvailable": () => Theme.matugenAvailable
         })
 

@@ -51,7 +51,6 @@ SettingsCard {
     SettingsButtonGroupRow {
         text: I18n.tr("Occupied Color")
         model: ["none", "sec", "s", "sc", "sch", "schh"]
-        visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
         buttonHeight: 22
         minButtonWidth: 36
         buttonPadding: Theme.spacingS
@@ -87,7 +86,6 @@ SettingsCard {
         height: 1
         color: Theme.outline
         opacity: 0.15
-        visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
     }
 
     SettingsButtonGroupRow {
@@ -124,12 +122,10 @@ SettingsCard {
         height: 1
         color: Theme.outline
         opacity: 0.15
-        visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango || CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle
     }
 
     SettingsButtonGroupRow {
         text: I18n.tr("Urgent Color")
-        visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango || CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle
         model: ["err", "pri", "sec", "s", "sc"]
         buttonHeight: 22
         minButtonWidth: 36

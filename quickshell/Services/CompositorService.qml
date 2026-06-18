@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.Common
@@ -13,25 +12,11 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("CompositorService")
 
-    property bool isHyprland: false
-    property bool isNiri: false
-    property bool isMango: false
-    property bool isSway: false
-    property bool isScroll: false
-    property bool isMiracle: false
-    property bool isLabwc: false
-    property string compositor: "unknown"
-    readonly property bool useHyprlandFocusGrab: isHyprland && Quickshell.env("DMS_HYPRLAND_EXCLUSIVE_FOCUS") !== "1"
+    property bool isHyprland: true
+    property string compositor: "hyprland"
+    readonly property bool useHyprlandFocusGrab: Quickshell.env("HGS_HYPRLAND_EXCLUSIVE_FOCUS") !== "1"
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
-    readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
-    readonly property string swaySocket: Quickshell.env("SWAYSOCK")
-    readonly property string scrollSocket: Quickshell.env("SWAYSOCK")
-    readonly property string miracleSocket: Quickshell.env("MIRACLESOCK")
-    readonly property string labwcPid: Quickshell.env("LABWC_PID")
-    readonly property string mangoSignature: Quickshell.env("MANGO_INSTANCE_SIGNATURE")
-    property bool useNiriSorting: isNiri && NiriService
-    property bool useMangoSorting: isMango && MangoService
 
     property var randrScales: ({})
     property bool randrReady: false
@@ -44,7 +29,7 @@ Singleton {
     signal toplevelsChanged
 
     function fetchRandrData() {
-        Proc.runCommand("randr", ["dms", "randr", "--json"], (output, exitCode) => {
+        Proc.runCommand("randr", ["hgs", "randr", "--json"], (output, exitCode) => {
             if (exitCode === 0 && output) {
                 try {
                     const data = JSON.parse(output.trim());
@@ -84,22 +69,10 @@ Singleton {
             }
         }
 
-        if (isNiri && screen) {
-            const niriScale = NiriService.displayScales[screen.name];
-            if (niriScale !== undefined)
-                return niriScale;
-        }
-
-        if (isHyprland && screen) {
-            const hyprlandMonitor = Hyprland.monitors.values.find(m => m.name === screen.name);
+        if (screen) {
+            const hyprlandMonitor = Hyprland.monitors?.values?.find(m => m.name === screen.name);
             if (hyprlandMonitor?.scale !== undefined)
                 return hyprlandMonitor.scale;
-        }
-
-        if (isMango && screen) {
-            const mangoScale = MangoService.getOutputScale(screen.name);
-            if (mangoScale !== undefined && mangoScale > 0)
-                return mangoScale;
         }
 
         return screen?.devicePixelRatio || 1;
@@ -107,15 +80,8 @@ Singleton {
 
     function getFocusedScreen() {
         let screenName = "";
-        if (isHyprland && Hyprland.focusedWorkspace?.monitor)
+        if (Hyprland.focusedWorkspace?.monitor)
             screenName = Hyprland.focusedWorkspace.monitor.name;
-        else if (isNiri && NiriService.currentOutput)
-            screenName = NiriService.currentOutput;
-        else if (isSway || isScroll || isMiracle) {
-            const focusedWs = I3.workspaces?.values?.find(ws => ws.focused === true);
-            screenName = focusedWs?.monitor?.name || "";
-        } else if (isMango && MangoService.activeOutput)
-            screenName = MangoService.activeOutput;
 
         if (!screenName)
             return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
@@ -152,8 +118,8 @@ Singleton {
         }
     }
     Connections {
-        target: isHyprland ? Hyprland : null
-        enabled: isHyprland
+        target: Hyprland
+        enabled: true
 
         function onRawEvent(event) {
             if (event.name === "openwindow" || event.name === "closewindow" || event.name === "movewindow" || event.name === "movewindowv2" || event.name === "workspace" || event.name === "workspacev2" || event.name === "focusedmon" || event.name === "focusedmonv2" || event.name === "activewindow" || event.name === "activewindowv2" || event.name === "changefloatingmode" || event.name === "fullscreen" || event.name === "moveintogroup" || event.name === "moveoutofgroup" || event.name === "activespecial") {
@@ -168,50 +134,21 @@ Singleton {
             }
         }
     }
-    Connections {
-        target: NiriService
-        function onWindowsChanged() {
-            root.scheduleSort();
-        }
-    }
-
     Component.onCompleted: {
         fetchRandrData();
         detectCompositor();
         updateHyprlandVisibleSpecialWorkspaces(null);
         scheduleSort();
         Qt.callLater(() => {
-            NiriService.generateNiriLayoutConfig();
             HyprlandService.generateLayoutConfig();
         });
-    }
-
-    Connections {
-        target: MangoService
-        function onStateChanged() {
-            if (isMango)
-                scheduleSort();
-        }
-        function onWindowsChanged() {
-            if (isMango)
-                scheduleSort();
-        }
     }
 
     function computeSortedToplevels() {
         if (!ToplevelManager.toplevels || !ToplevelManager.toplevels.values)
             return [];
 
-        if (useNiriSorting)
-            return NiriService.sortToplevels(ToplevelManager.toplevels.values);
-
-        if (useMangoSorting)
-            return MangoService.sortToplevels(ToplevelManager.toplevels.values);
-
-        if (isHyprland)
-            return sortHyprlandToplevelsSafe();
-
-        return Array.from(ToplevelManager.toplevels.values);
+        return sortHyprlandToplevelsSafe();
     }
 
     function _get(o, path, fallback) {
@@ -262,11 +199,6 @@ Singleton {
     }
 
     function updateHyprlandVisibleSpecialWorkspaces(event) {
-        if (!isHyprland) {
-            hyprlandVisibleSpecialWorkspaces = ({});
-            return;
-        }
-
         const next = {};
         try {
             const monitors = Hyprland.monitors?.values || [];
@@ -449,32 +381,13 @@ Singleton {
     }
 
     function filterCurrentWorkspace(toplevels, screen) {
-        if (useNiriSorting)
-            return NiriService.filterCurrentWorkspace(toplevels, screen);
-        if (isHyprland)
-            return filterHyprlandCurrentWorkspaceSafe(toplevels, screen);
-        return toplevels;
+        return filterHyprlandCurrentWorkspaceSafe(toplevels, screen);
     }
 
     function filterCurrentDisplay(toplevels, screenName) {
         if (!toplevels || toplevels.length === 0 || !screenName)
             return toplevels;
-        if (useNiriSorting) {
-            const active = ToplevelManager.activeToplevel;
-            if (active && toplevels.length === 1 && toplevels[0] === active) {
-                if (NiriService.currentOutput !== screenName)
-                    return [];
-                const focusedWin = NiriService.windows.find(nw => nw.is_focused);
-                if (!focusedWin)
-                    return [];
-                const screenWsIds = new Set(NiriService.allWorkspaces.filter(ws => ws.output === screenName).map(ws => ws.id));
-                return screenWsIds.has(focusedWin.workspace_id) ? toplevels : [];
-            }
-            return NiriService.filterCurrentDisplay(toplevels, screenName);
-        }
-        if (isHyprland)
-            return filterHyprlandCurrentDisplaySafe(toplevels, screenName);
-        return toplevels;
+        return filterHyprlandCurrentDisplaySafe(toplevels, screenName);
     }
 
     function _screenName(screenOrName) {
@@ -501,33 +414,9 @@ Singleton {
         if (!screenName)
             return false;
 
-        if (isNiri) {
-            const active = ToplevelManager.activeToplevel;
-            if (active?.fullscreen && active?.activated && _toplevelOnScreen(active, screenName))
-                return true;
-
-            const filtered = filterCurrentWorkspace(sortedToplevels, screenName);
-            for (let i = 0; i < filtered.length; i++) {
-                if (filtered[i]?.fullscreen)
-                    return true;
-            }
-            return false;
-        }
-
-        if (isHyprland) {
-            const filtered = filterCurrentWorkspace(sortedToplevels, screenName);
-            for (let i = 0; i < filtered.length; i++) {
-                if (filtered[i]?.fullscreen)
-                    return true;
-            }
-            return false;
-        }
-
-        if (!ToplevelManager.toplevels?.values)
-            return false;
-
-        for (const toplevel of ToplevelManager.toplevels.values) {
-            if (toplevel?.fullscreen && _toplevelOnScreen(toplevel, screenName))
+        const filtered = filterCurrentWorkspace(sortedToplevels, screenName);
+        for (let i = 0; i < filtered.length; i++) {
+            if (filtered[i]?.fullscreen)
                 return true;
         }
         return false;
@@ -551,7 +440,7 @@ Singleton {
 
     function hyprlandVisibleSpecialWorkspaceOnScreen(screenOrName) {
         const screenName = _screenName(screenOrName);
-        if (!isHyprland || !screenName)
+        if (!screenName)
             return "";
         hyprlandVisibleSpecialWorkspaces;
         const trackedName = hyprlandVisibleSpecialWorkspaces[screenName] ?? "";
@@ -567,7 +456,7 @@ Singleton {
 
     function hyprlandSpecialWorkspaceBlocksConnectedFrame(screenOrName) {
         const screenName = _screenName(screenOrName);
-        if (!isHyprland || !screenName || !Hyprland.toplevels?.values)
+        if (!screenName || !Hyprland.toplevels?.values)
             return false;
         const visibleSpecialWorkspace = hyprlandVisibleSpecialWorkspaceOnScreen(screenName);
         if (!visibleSpecialWorkspace)
@@ -665,7 +554,7 @@ Singleton {
     }
 
     function hyprlandDockOverlapForSmartAutoHide(screenName, dockPosition, dockThickness, screenWidth, screenHeight) {
-        if (!isHyprland || !screenName || !Hyprland.toplevels?.values)
+        if (!screenName || !Hyprland.toplevels?.values)
             return false;
 
         const filtered = filterCurrentWorkspace(sortedToplevels, screenName);
@@ -694,51 +583,6 @@ Singleton {
                 continue;
             if (hyprlandToplevelOverlapsDockEdge(hyprToplevel, screenName, dockPosition, dockThickness, screenWidth, screenHeight))
                 return true;
-        }
-        return false;
-    }
-
-    // Mango clients carry absolute geometry + tags; count those on the screen's
-    // active tags (not minimized), made screen-relative via the monitor offset.
-    function mangoDockOverlapForSmartAutoHide(screenName, dockPosition, dockThickness, screenWidth, screenHeight) {
-        if (!isMango || !screenName || !MangoService.windows)
-            return false;
-
-        const out = MangoService.outputs[screenName];
-        const active = new Set((out?.activeTags) || []);
-        const monX = out?.x ?? 0;
-        const monY = out?.y ?? 0;
-
-        for (let i = 0; i < MangoService.windows.length; i++) {
-            const win = MangoService.windows[i];
-            if (!win || win.monitor !== screenName || win.is_minimized)
-                continue;
-            if (active.size > 0 && !(win.tags || []).some(t => active.has(t)))
-                continue;
-
-            const winX = (win.x ?? 0) - monX;
-            const winY = (win.y ?? 0) - monY;
-            const winW = win.width ?? 0;
-            const winH = win.height ?? 0;
-
-            switch (dockPosition) {
-            case SettingsData.Position.Top:
-                if (winY < dockThickness)
-                    return true;
-                break;
-            case SettingsData.Position.Bottom:
-                if (winY + winH > screenHeight - dockThickness)
-                    return true;
-                break;
-            case SettingsData.Position.Left:
-                if (winX < dockThickness)
-                    return true;
-                break;
-            case SettingsData.Position.Right:
-                if (winX + winW > screenWidth - dockThickness)
-                    return true;
-                break;
-            }
         }
         return false;
     }
@@ -833,167 +677,25 @@ Singleton {
         onTriggered: {
             detectCompositor();
             Qt.callLater(() => {
-                NiriService.generateNiriLayoutConfig();
                 HyprlandService.generateLayoutConfig();
-                MangoService.generateLayoutConfig();
             });
         }
     }
 
     function detectCompositor() {
-        if (mangoSignature && mangoSignature.length > 0) {
-            isHyprland = false;
-            isNiri = false;
-            isMango = true;
-            isSway = false;
-            isScroll = false;
-            isMiracle = false;
-            isLabwc = false;
-            compositor = "mango";
-            log.info("Detected MangoWM via MANGO_INSTANCE_SIGNATURE");
-            return;
-        }
-
-        if (hyprlandSignature && hyprlandSignature.length > 0 && !niriSocket && !swaySocket && !scrollSocket && !miracleSocket && !labwcPid) {
-            isHyprland = true;
-            isNiri = false;
-            isMango = false;
-            isSway = false;
-            isScroll = false;
-            isMiracle = false;
-            isLabwc = false;
-            compositor = "hyprland";
+        if (hyprlandSignature && hyprlandSignature.length > 0) {
             log.info("Detected Hyprland");
             return;
         }
 
-        if (niriSocket && niriSocket.length > 0) {
-            Proc.runCommand("niriSocketCheck", ["test", "-S", niriSocket], (output, exitCode) => {
-                if (exitCode === 0) {
-                    isNiri = true;
-                    isHyprland = false;
-                    isMango = false;
-                    isSway = false;
-                    isScroll = false;
-                    isMiracle = false;
-                    isLabwc = false;
-                    compositor = "niri";
-                    log.info("Detected Niri with socket:", niriSocket);
-                    NiriService.generateNiriBlurrule();
-                }
-            }, 0);
-            return;
-        }
-
-        if (swaySocket && swaySocket.length > 0 && !scrollSocket && scrollSocket.length == 0 && !miracleSocket) {
-            Proc.runCommand("swaySocketCheck", ["test", "-S", swaySocket], (output, exitCode) => {
-                if (exitCode === 0) {
-                    isNiri = false;
-                    isHyprland = false;
-                    isSway = true;
-                    isScroll = false;
-                    isMiracle = false;
-                    isLabwc = false;
-                    compositor = "sway";
-                    log.info("Detected Sway with socket:", swaySocket);
-                }
-            }, 0);
-            return;
-        }
-
-        if (miracleSocket && miracleSocket.length > 0) {
-            Proc.runCommand("miracleSocketCheck", ["test", "-S", miracleSocket], (output, exitCode) => {
-                if (exitCode === 0) {
-                    isNiri = false;
-                    isHyprland = false;
-                    isMango = false;
-                    isSway = false;
-                    isScroll = false;
-                    isMiracle = true;
-                    isLabwc = false;
-                    compositor = "miracle";
-                    log.info("Detected Miracle WM with socket:", miracleSocket);
-                }
-            }, 0);
-            return;
-        }
-
-        if (scrollSocket && scrollSocket.length > 0 && !miracleSocket) {
-            Proc.runCommand("scrollSocketCheck", ["test", "-S", scrollSocket], (output, exitCode) => {
-                if (exitCode === 0) {
-                    isNiri = false;
-                    isHyprland = false;
-                    isMango = false;
-                    isSway = false;
-                    isScroll = true;
-                    isMiracle = false;
-                    isLabwc = false;
-                    compositor = "scroll";
-                    log.info("Detected Scroll with socket:", scrollSocket);
-                }
-            }, 0);
-            return;
-        }
-
-        if (labwcPid && labwcPid.length > 0) {
-            isHyprland = false;
-            isNiri = false;
-            isMango = false;
-            isSway = false;
-            isScroll = false;
-            isMiracle = false;
-            isLabwc = true;
-            compositor = "labwc";
-            log.info("Detected LabWC with PID:", labwcPid);
-            return;
-        }
-
-        isHyprland = false;
-        isNiri = false;
-        isMango = false;
-        isSway = false;
-        isScroll = false;
-        isMiracle = false;
-        isLabwc = false;
-        compositor = "unknown";
-        log.warn("No compositor detected");
+        log.warn("HYPRLAND_INSTANCE_SIGNATURE is missing; HGS expects a Hyprland session");
     }
 
     function powerOffMonitors() {
-        if (isNiri)
-            return NiriService.powerOffMonitors();
-        if (isHyprland)
-            return HyprlandService.dpmsOff();
-        if (isMango)
-            return MangoService.powerOffMonitors();
-        if (isSway || isScroll || isMiracle) {
-            try {
-                I3.dispatch("output * dpms off");
-            } catch (_) {}
-            return;
-        }
-        if (isLabwc) {
-            Quickshell.execDetached(["dms", "dpms", "off"]);
-        }
-        log.warn("Cannot power off monitors, unknown compositor");
+        return HyprlandService.dpmsOff();
     }
 
     function powerOnMonitors() {
-        if (isNiri)
-            return NiriService.powerOnMonitors();
-        if (isHyprland)
-            return HyprlandService.dpmsOn();
-        if (isMango)
-            return MangoService.powerOnMonitors();
-        if (isSway || isScroll || isMiracle) {
-            try {
-                I3.dispatch("output * dpms on");
-            } catch (_) {}
-            return;
-        }
-        if (isLabwc) {
-            Quickshell.execDetached(["dms", "dpms", "on"]);
-        }
-        log.warn("Cannot power on monitors, unknown compositor");
+        return HyprlandService.dpmsOn();
     }
 }

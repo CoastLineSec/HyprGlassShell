@@ -72,7 +72,7 @@ StyledRect {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 id: headerIcon
                 name: root.iconName
                 size: Theme.iconSize
@@ -107,7 +107,7 @@ StyledRect {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: resetButton
                 anchors.verticalCenter: parent.verticalCenter
                 buttonSize: 36
@@ -124,7 +124,7 @@ StyledRect {
             }
         }
 
-        DankSlider {
+        HGSSlider {
             id: slider
             width: parent.width
             height: 32

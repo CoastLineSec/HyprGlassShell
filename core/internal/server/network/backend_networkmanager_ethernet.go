@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/Wifx/gonetworkmanager/v2"
 )
 

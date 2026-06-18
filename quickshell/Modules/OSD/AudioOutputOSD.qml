@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+HGSOSD {
     id: root
 
     property string deviceName: ""
@@ -41,7 +41,7 @@ DankOSD {
         width: parent.width - Theme.spacingS * 2
         height: 40
 
-        DankIcon {
+        HGSIcon {
             id: iconItem
             width: Theme.iconSize
             height: Theme.iconSize

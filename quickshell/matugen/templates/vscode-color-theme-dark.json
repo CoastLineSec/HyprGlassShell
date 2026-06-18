@@ -1,6 +1,6 @@
 {
   "$schema": "vscode://schemas/color-theme",
-  "name": "Dynamic Base16 DankShell Dark",
+  "name": "Dynamic Base16 HGSShell Dark",
   "semanticHighlighting": true,
   "colors": {
     //
@@ -167,26 +167,26 @@
     "scrollbarSlider.hoverBackground": "{{colors.on_surface_variant.dark.hex}}80",
     "scrollbarSlider.activeBackground": "{{colors.on_surface_variant.dark.hex}}AA",
     //
-    // Terminal (Dank16)
+    // Terminal (HGS16)
     //
     "terminal.background": "{{colors.background.dark.hex}}",
     "terminal.foreground": "{{colors.on_surface.dark.hex}}",
-    "terminal.ansiBlack": "{{dank16.color0.dark.hex}}",
-    "terminal.ansiRed": "{{dank16.color1.dark.hex}}",
-    "terminal.ansiGreen": "{{dank16.color2.dark.hex}}",
-    "terminal.ansiYellow": "{{dank16.color3.dark.hex}}",
-    "terminal.ansiBlue": "{{dank16.color4.dark.hex}}",
-    "terminal.ansiMagenta": "{{dank16.color5.dark.hex}}",
-    "terminal.ansiCyan": "{{dank16.color6.dark.hex}}",
-    "terminal.ansiWhite": "{{dank16.color7.dark.hex}}",
-    "terminal.ansiBrightBlack": "{{dank16.color8.dark.hex}}",
-    "terminal.ansiBrightRed": "{{dank16.color9.dark.hex}}",
-    "terminal.ansiBrightGreen": "{{dank16.color10.dark.hex}}",
-    "terminal.ansiBrightYellow": "{{dank16.color11.dark.hex}}",
-    "terminal.ansiBrightBlue": "{{dank16.color12.dark.hex}}",
-    "terminal.ansiBrightMagenta": "{{dank16.color13.dark.hex}}",
-    "terminal.ansiBrightCyan": "{{dank16.color14.dark.hex}}",
-    "terminal.ansiBrightWhite": "{{dank16.color15.dark.hex}}",
+    "terminal.ansiBlack": "{{hgs16.color0.dark.hex}}",
+    "terminal.ansiRed": "{{hgs16.color1.dark.hex}}",
+    "terminal.ansiGreen": "{{hgs16.color2.dark.hex}}",
+    "terminal.ansiYellow": "{{hgs16.color3.dark.hex}}",
+    "terminal.ansiBlue": "{{hgs16.color4.dark.hex}}",
+    "terminal.ansiMagenta": "{{hgs16.color5.dark.hex}}",
+    "terminal.ansiCyan": "{{hgs16.color6.dark.hex}}",
+    "terminal.ansiWhite": "{{hgs16.color7.dark.hex}}",
+    "terminal.ansiBrightBlack": "{{hgs16.color8.dark.hex}}",
+    "terminal.ansiBrightRed": "{{hgs16.color9.dark.hex}}",
+    "terminal.ansiBrightGreen": "{{hgs16.color10.dark.hex}}",
+    "terminal.ansiBrightYellow": "{{hgs16.color11.dark.hex}}",
+    "terminal.ansiBrightBlue": "{{hgs16.color12.dark.hex}}",
+    "terminal.ansiBrightMagenta": "{{hgs16.color13.dark.hex}}",
+    "terminal.ansiBrightCyan": "{{hgs16.color14.dark.hex}}",
+    "terminal.ansiBrightWhite": "{{hgs16.color15.dark.hex}}",
     "terminal.selectionBackground": "{{colors.primary_container.dark.hex}}99"
   },
   //
@@ -196,43 +196,43 @@
     {
       "scope": ["comment"],
       "settings": {
-        "foreground": "{{dank16.color8.dark.hex}}"
+        "foreground": "{{hgs16.color8.dark.hex}}"
       }
     },
     {
       "scope": ["keyword"],
       "settings": {
-        "foreground": "{{dank16.color6.dark.hex}}"
+        "foreground": "{{hgs16.color6.dark.hex}}"
       }
     },
     {
       "scope": ["string"],
       "settings": {
-        "foreground": "{{dank16.color3.dark.hex}}"
+        "foreground": "{{hgs16.color3.dark.hex}}"
       }
     },
     {
       "scope": ["constant", "constant.language", "constant.numeric"],
       "settings": {
-        "foreground": "{{dank16.color12.dark.hex}}"
+        "foreground": "{{hgs16.color12.dark.hex}}"
       }
     },
     {
       "scope": ["variable"],
       "settings": {
-        "foreground": "{{dank16.color15.dark.hex}}"
+        "foreground": "{{hgs16.color15.dark.hex}}"
       }
     },
     {
       "scope": ["entity.name.function"],
       "settings": {
-        "foreground": "{{dank16.color2.dark.hex}}"
+        "foreground": "{{hgs16.color2.dark.hex}}"
       }
     },
     {
       "scope": ["entity.name.class", "support.type"],
       "settings": {
-        "foreground": "{{dank16.color12.dark.hex}}"
+        "foreground": "{{hgs16.color12.dark.hex}}"
       }
     },
     {
@@ -257,13 +257,13 @@
     {
       "scope": ["source.yaml string.unquoted", "source.yaml string.quoted"],
       "settings": {
-        "foreground": "{{dank16.color3.dark.hex}}"
+        "foreground": "{{hgs16.color3.dark.hex}}"
       }
     },
     {
       "scope": ["constant.language.boolean.yaml", "constant.language.null.yaml"],
       "settings": {
-        "foreground": "{{dank16.color12.dark.hex}}"
+        "foreground": "{{hgs16.color12.dark.hex}}"
       }
     },
     {
@@ -281,13 +281,13 @@
     {
       "scope": ["string.quoted.single.basic.line.toml", "string.quoted.double.basic.line.toml"],
       "settings": {
-        "foreground": "{{dank16.color3.dark.hex}}"
+        "foreground": "{{hgs16.color3.dark.hex}}"
       }
     },
     {
       "scope": ["constant.language.boolean.toml", "constant.numeric.toml"],
       "settings": {
-        "foreground": "{{dank16.color12.dark.hex}}"
+        "foreground": "{{hgs16.color12.dark.hex}}"
       }
     },
     {
@@ -302,28 +302,28 @@
   //
   "semanticTokenColors": {
     "variable": {
-      "foreground": "{{dank16.color15.dark.hex}}"
+      "foreground": "{{hgs16.color15.dark.hex}}"
     },
     "parameter": {
-      "foreground": "{{dank16.color7.dark.hex}}"
+      "foreground": "{{hgs16.color7.dark.hex}}"
     },
     "property": {
-      "foreground": "{{dank16.color4.dark.hex}}"
+      "foreground": "{{hgs16.color4.dark.hex}}"
     },
     "function": {
-      "foreground": "{{dank16.color2.dark.hex}}"
+      "foreground": "{{hgs16.color2.dark.hex}}"
     },
     "string": {
-      "foreground": "{{dank16.color3.dark.hex}}"
+      "foreground": "{{hgs16.color3.dark.hex}}"
     },
     "number": {
-      "foreground": "{{dank16.color12.dark.hex}}"
+      "foreground": "{{hgs16.color12.dark.hex}}"
     },
     "keyword": {
-      "foreground": "{{dank16.color6.dark.hex}}"
+      "foreground": "{{hgs16.color6.dark.hex}}"
     },
     "comment": {
-      "foreground": "{{dank16.color8.dark.hex}}"
+      "foreground": "{{hgs16.color8.dark.hex}}"
     }
   }
 }

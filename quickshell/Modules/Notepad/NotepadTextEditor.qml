@@ -12,8 +12,8 @@ Column {
     id: root
 
     Component.onCompleted: {
-        if (PluginService.isPluginLoaded("dankNotepadModule")) {
-            pluginHighlightedHtml = SettingsData.getBuiltInPluginSetting("dankNotepadModule", "highlightedHtml", "");
+        if (PluginService.isPluginLoaded("hgsNotepadModule")) {
+            pluginHighlightedHtml = SettingsData.getBuiltInPluginSetting("hgsNotepadModule", "highlightedHtml", "");
         }
     }
 
@@ -283,7 +283,7 @@ Column {
     }
 
     function syncContentToPlugin() {
-        if (!PluginService.isPluginLoaded("dankNotepadModule"))
+        if (!PluginService.isPluginLoaded("hgsNotepadModule"))
             return;
         if (!currentTab)
             return;
@@ -292,16 +292,16 @@ Column {
         const ext = baseName.includes('.') ? baseName.split('.').pop().toLowerCase() : "";
         const content = textArea.text;
 
-        if (content === lastPluginContent && SettingsData.getBuiltInPluginSetting("dankNotepadModule", "previewActive", false) === inlinePreviewVisible) {
+        if (content === lastPluginContent && SettingsData.getBuiltInPluginSetting("hgsNotepadModule", "previewActive", false) === inlinePreviewVisible) {
             return;
         }
 
         lastPluginContent = content;
-        SettingsData.setBuiltInPluginSetting("dankNotepadModule", "previewActive", inlinePreviewVisible);
-        SettingsData.setBuiltInPluginSetting("dankNotepadModule", "currentFilePath", filePath);
-        SettingsData.setBuiltInPluginSetting("dankNotepadModule", "currentFileExtension", ext);
-        SettingsData.setBuiltInPluginSetting("dankNotepadModule", "sourceContent", content);
-        SettingsData.setBuiltInPluginSetting("dankNotepadModule", "updatedAt", Date.now());
+        SettingsData.setBuiltInPluginSetting("hgsNotepadModule", "previewActive", inlinePreviewVisible);
+        SettingsData.setBuiltInPluginSetting("hgsNotepadModule", "currentFilePath", filePath);
+        SettingsData.setBuiltInPluginSetting("hgsNotepadModule", "currentFileExtension", ext);
+        SettingsData.setBuiltInPluginSetting("hgsNotepadModule", "sourceContent", content);
+        SettingsData.setBuiltInPluginSetting("hgsNotepadModule", "updatedAt", Date.now());
     }
 
     function hideSearch() {
@@ -349,7 +349,7 @@ Column {
         id: clipboardCopyProcComp
         Process {
             property string content: ""
-            command: ["sh", "-c", "printf '%s' \"$CONTENT\" | dms clipboard copy"]
+            command: ["sh", "-c", "printf '%s' \"$CONTENT\" | hgs clipboard copy"]
             environment: ({
                     "CONTENT": content
                 })
@@ -383,7 +383,7 @@ Column {
             spacing: Theme.spacingS
 
             // Search icon
-            DankIcon {
+            HGSIcon {
                 Layout.alignment: Qt.AlignVCenter
                 name: "search"
                 size: Theme.iconSize - 2
@@ -465,7 +465,7 @@ Column {
             }
 
             // Navigation buttons
-            DankActionButton {
+            HGSActionButton {
                 id: prevButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "keyboard_arrow_up"
@@ -475,7 +475,7 @@ Column {
                 onClicked: root.findPrevious()
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: nextButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "keyboard_arrow_down"
@@ -485,7 +485,7 @@ Column {
                 onClicked: root.findNext()
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: closeSearchButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "close"
@@ -518,7 +518,7 @@ Column {
                 Layout.preferredWidth: inlinePreviewVisible ? parent.width * 0.55 : parent.width
                 clip: true
 
-                DankFlickable {
+                HGSFlickable {
                     id: flickable
                     anchors.fill: parent
                     clip: true
@@ -697,7 +697,7 @@ Column {
                                     root.showSearch();
                                     break;
                                 case Qt.Key_P:
-                                    if (PluginService.isPluginLoaded("dankNotepadModule")) {
+                                    if (PluginService.isPluginLoaded("hgsNotepadModule")) {
                                         event.accepted = true;
                                         root.previewRequested();
                                     }
@@ -760,7 +760,7 @@ Column {
                         spacing: Theme.spacingS
 
                         // Copy plain text button
-                        DankActionButton {
+                        HGSActionButton {
                             iconName: "content_copy"
                             iconSize: Theme.iconSize - 4
                             iconColor: Theme.surfaceTextMedium
@@ -782,7 +782,7 @@ Column {
                         }
 
                         // Copy HTML button
-                        DankActionButton {
+                        HGSActionButton {
                             iconName: "code"
                             iconSize: Theme.iconSize - 4
                             iconColor: Theme.surfaceTextMedium
@@ -798,7 +798,7 @@ Column {
                     }
                 }
 
-                DankFlickable {
+                HGSFlickable {
                     id: previewFlickable
                     anchors.top: previewHeader.bottom
                     anchors.left: parent.left
@@ -845,7 +845,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "save"
                         iconSize: Theme.iconSize - 2
                         iconColor: Theme.primary
@@ -862,7 +862,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "folder_open"
                         iconSize: Theme.iconSize - 2
                         iconColor: Theme.secondary
@@ -878,7 +878,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "note_add"
                         iconSize: Theme.iconSize - 2
                         iconColor: Theme.surfaceText
@@ -894,8 +894,8 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    visible: PluginService.isPluginLoaded("dankNotepadModule")
-                    DankActionButton {
+                    visible: PluginService.isPluginLoaded("hgsNotepadModule")
+                    HGSActionButton {
                         iconName: inlinePreviewVisible ? "visibility" : "visibility_off"
                         iconSize: Theme.iconSize - 2
                         iconColor: Theme.surfaceText
@@ -917,7 +917,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingS
 
-                DankActionButton {
+                HGSActionButton {
                     visible: !root.inPopout
                     iconName: "open_in_new"
                     iconSize: Theme.iconSize - 2
@@ -925,7 +925,7 @@ Column {
                     onClicked: root.popoutRequested()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     visible: root.inPopout
                     iconName: "dock_to_right"
                     iconSize: Theme.iconSize - 2
@@ -933,7 +933,7 @@ Column {
                     onClicked: root.dockRequested()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     iconName: "more_horiz"
                     iconSize: Theme.iconSize - 2
                     iconColor: Theme.surfaceText
@@ -964,7 +964,7 @@ Column {
                     anchors.rightMargin: Theme.spacingM
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: currentTab && currentTab.isTemporary ? "draft" : "description"
                         size: Theme.iconSize - 4
                         color: Theme.surfaceVariantText
@@ -980,7 +980,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: copyPathButton
                         iconName: "content_copy"
                         iconSize: Theme.iconSize - 6
@@ -1057,7 +1057,7 @@ Column {
                     }
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "info"
                     iconSize: Theme.iconSizeSmall
@@ -1120,8 +1120,8 @@ Column {
     Connections {
         target: SettingsData
         function onBuiltInPluginSettingsChanged() {
-            if (PluginService.isPluginLoaded("dankNotepadModule")) {
-                pluginHighlightedHtml = SettingsData.getBuiltInPluginSetting("dankNotepadModule", "highlightedHtml", "");
+            if (PluginService.isPluginLoaded("hgsNotepadModule")) {
+                pluginHighlightedHtml = SettingsData.getBuiltInPluginSetting("hgsNotepadModule", "highlightedHtml", "");
             }
         }
     }

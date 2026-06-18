@@ -28,11 +28,11 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	clipboardstore "github.com/AvengeMedia/DankMaterialShell/core/internal/clipboard"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/ext_data_control"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
-	wlclient "github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	clipboardstore "github.com/CoastLineSec/HyprGlassShell/core/internal/clipboard"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/proto/ext_data_control"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlcontext"
+	wlclient "github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 )
 
 var errEntryNotFound = errors.New("entry not found")
@@ -1871,7 +1871,7 @@ func (m *Manager) EntryToFile(entry *Entry) string {
 		if err != nil {
 			return ""
 		}
-		clipDir := filepath.Join(cacheDir, "dms", "clipboard")
+		clipDir := filepath.Join(cacheDir, "hgs", "clipboard")
 		if err := os.MkdirAll(clipDir, 0o755); err != nil {
 			return ""
 		}

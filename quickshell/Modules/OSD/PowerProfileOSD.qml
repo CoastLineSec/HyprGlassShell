@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+HGSOSD {
     id: root
 
     property int currentProfile: 0
@@ -34,7 +34,7 @@ DankOSD {
         }
     }
 
-    content: DankIcon {
+    content: HGSIcon {
         anchors.centerIn: parent
         name: root.profileIcon
         size: Theme.iconSize

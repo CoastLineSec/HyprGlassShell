@@ -206,7 +206,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingM
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: settingsModal.isCompactMode
                         circular: false
                         iconName: "menu"
@@ -218,7 +218,7 @@ FloatingWindow {
                         }
                     }
 
-                    DankIcon {
+                    HGSIcon {
                         name: "settings"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -241,7 +241,7 @@ FloatingWindow {
                     anchors.topMargin: Theme.spacingM
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         circular: false
                         iconName: settingsModal.maximized ? "fullscreen_exit" : "fullscreen"
@@ -250,7 +250,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         circular: false
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
@@ -288,7 +288,7 @@ FloatingWindow {
                     anchors.rightMargin: Theme.spacingM
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "info"
                         size: Theme.iconSize
                         color: Theme.warning
@@ -306,7 +306,7 @@ FloatingWindow {
                         wrapMode: Text.WordWrap
                     }
 
-                    DankButton {
+                    HGSButton {
                         id: copySettingsButton
 
                         visible: SettingsData._isReadOnly && SettingsData._hasUnsavedChanges
@@ -318,12 +318,12 @@ FloatingWindow {
                         horizontalPadding: Theme.spacingM
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: {
-                            Quickshell.execDetached(["dms", "cl", "copy", SettingsData.getCurrentSettingsJson()]);
+                            Quickshell.execDetached(["hgs", "cl", "copy", SettingsData.getCurrentSettingsJson()]);
                             ToastService.showInfo(I18n.tr("Copied to clipboard"));
                         }
                     }
 
-                    DankButton {
+                    HGSButton {
                         id: copySessionButton
 
                         visible: SessionData._isReadOnly && SessionData._hasUnsavedChanges
@@ -335,7 +335,7 @@ FloatingWindow {
                         horizontalPadding: Theme.spacingM
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: {
-                            Quickshell.execDetached(["dms", "cl", "copy", SessionData.getCurrentSessionJson()]);
+                            Quickshell.execDetached(["hgs", "cl", "copy", SessionData.getCurrentSessionJson()]);
                             ToastService.showInfo(I18n.tr("Copied to clipboard"));
                         }
                     }

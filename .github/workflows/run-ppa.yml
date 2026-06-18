@@ -8,11 +8,11 @@ on:
         required: true
         type: choice
         options:
-          - dms
-          - dms-greeter
-          - dms-git
+          - hgs
+          - hgs-greeter
+          - hgs-git
           - all
-        default: "dms"
+        default: "hgs"
       rebuild_release:
         description: "Release number for rebuilds (e.g., 2, 3, 4 for ppa2, ppa3, ppa4)"
         required: false
@@ -47,7 +47,7 @@ jobs:
           chmod +x distro/scripts/ppa-sync-plan.sh
 
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            PACKAGE="dms-git"
+            PACKAGE="hgs-git"
           else
             PACKAGE="${{ github.event.inputs.package }}"
           fi
@@ -85,7 +85,7 @@ jobs:
       matrix:
         target: ${{ fromJson(needs.check-updates.outputs.targets_json) }}
     concurrency:
-      group: ppa-dms-${{ matrix.target }}
+      group: ppa-hgs-${{ matrix.target }}
       cancel-in-progress: false
 
     steps:
@@ -130,9 +130,9 @@ jobs:
           IFS=':' read -r PACKAGE UBUNTU_SERIES PPA_NUM <<< "$TARGET"
 
           case "$PACKAGE" in
-            dms) PPA_NAME="dms" ;;
-            dms-git) PPA_NAME="dms-git" ;;
-            dms-greeter) PPA_NAME="danklinux" ;;
+            hgs) PPA_NAME="hgs" ;;
+            hgs-git) PPA_NAME="hgs-git" ;;
+            hgs-greeter) PPA_NAME="coastlinesec" ;;
             *) echo "::error::Unknown package $PACKAGE"; exit 1 ;;
           esac
 
@@ -145,6 +145,6 @@ jobs:
           echo "### PPA Package Upload" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Target:** ${{ matrix.target }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **DMS PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms/+packages" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **DMS-Git PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms-git/+packages" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **DankLinux PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/danklinux/+packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **HGS PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/hgs/+packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **HGS-Git PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/hgs-git/+packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **CoastLineSec PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/coastlinesec/+packages" >> "$GITHUB_STEP_SUMMARY"

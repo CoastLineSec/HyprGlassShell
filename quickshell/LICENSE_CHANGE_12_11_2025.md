@@ -1,8 +1,8 @@
-# DankMaterialShell License Change
+# HyprGlassShell License Change
 
 Relicensing from GPL-3.0 to MIT.
 
-Consent and documentation is available in [pull request #686](https://github.com/AvengeMedia/DankMaterialShell/pull/686) and is summarized below.
+Consent and documentation is available in [pull request #686](https://github.com/CoastLineSec/HyprGlassShell/pull/686) and is summarized below.
 
 ## Contributors
 

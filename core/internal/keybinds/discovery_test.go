@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 func TestDefaultDiscoveryConfig(t *testing.T) {
@@ -37,7 +37,7 @@ func TestDefaultDiscoveryConfig(t *testing.T) {
 			configDirs:     "",
 			expectedCount:  1,
 			checkFirstPath: true,
-			firstPath:      "/custom/config/DankMaterialShell/cheatsheets",
+			firstPath:      "/custom/config/HyprGlassShell/cheatsheets",
 		},
 		{
 			name:          "with XDG_CONFIG_DIRS set",

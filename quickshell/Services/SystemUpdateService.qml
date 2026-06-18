@@ -34,12 +34,12 @@ Singleton {
     readonly property bool helperAvailable: sysupdateAvailable && backends.length > 0
 
     Connections {
-        target: DMSService
+        target: HGSService
         function onCapabilitiesReceived() {
             root.checkCapabilities();
         }
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (HGSService.isConnected) {
                 root.checkCapabilities();
             } else {
                 root.sysupdateAvailable = false;
@@ -63,19 +63,19 @@ Singleton {
     }
 
     Component.onCompleted: {
-        if (DMSService.dmsAvailable) {
+        if (HGSService.hgsAvailable) {
             checkCapabilities();
         }
         Qt.callLater(() => root._maybeStartupCheck());
     }
 
     function checkCapabilities() {
-        if (!DMSService.capabilities || !Array.isArray(DMSService.capabilities)) {
+        if (!HGSService.capabilities || !Array.isArray(HGSService.capabilities)) {
             sysupdateAvailable = false;
             Qt.callLater(() => root._maybeStartupCheck());
             return;
         }
-        const has = DMSService.capabilities.includes("sysupdate");
+        const has = HGSService.capabilities.includes("sysupdate");
         if (has && !sysupdateAvailable) {
             sysupdateAvailable = true;
             requestState();
@@ -86,10 +86,10 @@ Singleton {
     }
 
     function requestState() {
-        if (!DMSService.isConnected || !sysupdateAvailable) {
+        if (!HGSService.isConnected || !sysupdateAvailable) {
             return;
         }
-        DMSService.sysupdateGetState(resp => {
+        HGSService.sysupdateGetState(resp => {
             if (resp && resp.result) {
                 _applyState(resp.result);
             }
@@ -144,7 +144,7 @@ Singleton {
     }
 
     function checkForUpdates() {
-        DMSService.sysupdateRefresh(false, null);
+        HGSService.sysupdateRefresh(false, null);
     }
 
     function runUpdates(opts) {
@@ -153,15 +153,15 @@ Singleton {
             _runCustomTerminalCommand();
             return;
         }
-        DMSService.sysupdateUpgrade(params, null);
+        HGSService.sysupdateUpgrade(params, null);
     }
 
     function cancelUpdates() {
-        DMSService.sysupdateCancel(null);
+        HGSService.sysupdateCancel(null);
     }
 
     function setInterval(seconds) {
-        DMSService.sysupdateSetInterval(seconds, null);
+        HGSService.sysupdateSetInterval(seconds, null);
     }
 
     function _runCustomTerminalCommand() {
@@ -199,7 +199,7 @@ Singleton {
             return;
         if (_startupCheckDone)
             return;
-        if (!DMSService.isConnected || !sysupdateAvailable)
+        if (!HGSService.isConnected || !sysupdateAvailable)
             return;
         _startupCheckDone = true;
         Qt.callLater(() => root.checkForUpdates());
@@ -222,10 +222,10 @@ Singleton {
         }
         _acquired = want;
         if (want) {
-            DMSService.sysupdateAcquire(null);
+            HGSService.sysupdateAcquire(null);
             return;
         }
-        DMSService.sysupdateRelease(null);
+        HGSService.sysupdateRelease(null);
     }
 
 }

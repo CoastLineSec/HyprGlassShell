@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/plugins"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/plugins"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 )
 
 func HandleListInstalled(conn net.Conn, req models.Request) {
@@ -58,9 +58,9 @@ func HandleListInstalled(conn net.Conn, req models.Request) {
 				Capabilities: plugin.Capabilities,
 				Compositors:  plugin.Compositors,
 				Dependencies: plugin.Dependencies,
-				FirstParty:   strings.HasPrefix(plugin.Repo, "https://github.com/AvengeMedia"),
+				FirstParty:   strings.HasPrefix(plugin.Repo, "https://github.com/CoastLineSec"),
 				HasUpdate:    hasUpdate,
-				RequiresDMS:  plugin.RequiresDMS,
+				RequiresHGS:  plugin.RequiresHGS,
 			})
 		} else {
 			result = append(result, PluginInfo{

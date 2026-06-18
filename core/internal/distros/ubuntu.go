@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 func init() {
@@ -54,8 +54,8 @@ func (u *UbuntuDistribution) DetectDependencies(ctx context.Context, wm deps.Win
 func (u *UbuntuDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	// DMS at the top (shell is prominent)
-	dependencies = append(dependencies, u.detectDMS())
+	// HGS at the top (shell is prominent)
+	dependencies = append(dependencies, u.detectHGS())
 
 	// Terminal with choice support
 	dependencies = append(dependencies, u.detectSpecificTerminal(terminal))
@@ -64,18 +64,13 @@ func (u *UbuntuDistribution) DetectDependenciesWithTerminal(ctx context.Context,
 	dependencies = append(dependencies, u.detectGit())
 	dependencies = append(dependencies, u.detectWindowManager(wm))
 	dependencies = append(dependencies, u.detectQuickshell())
-	dependencies = append(dependencies, u.detectDMSGreeter())
+	dependencies = append(dependencies, u.detectHGSGreeter())
 	dependencies = append(dependencies, u.detectXDGPortal())
 	dependencies = append(dependencies, u.detectAccountsService())
 
 	// Hyprland-specific tools
 	if wm == deps.WindowManagerHyprland {
 		dependencies = append(dependencies, u.detectHyprlandTools()...)
-	}
-
-	// Niri-specific tools
-	if wm == deps.WindowManagerNiri {
-		dependencies = append(dependencies, u.detectXwaylandSatellite())
 	}
 
 	dependencies = append(dependencies, u.detectMatugen())
@@ -88,16 +83,12 @@ func (u *UbuntuDistribution) detectXDGPortal() deps.Dependency {
 	return u.detectPackage("xdg-desktop-portal-gtk", "Desktop integration portal for GTK", u.packageInstalled("xdg-desktop-portal-gtk"))
 }
 
-func (u *UbuntuDistribution) detectXwaylandSatellite() deps.Dependency {
-	return u.detectCommand("xwayland-satellite", "Xwayland support")
-}
-
 func (u *UbuntuDistribution) detectAccountsService() deps.Dependency {
 	return u.detectPackage("accountsservice", "D-Bus interface for user account query and manipulation", u.packageInstalled("accountsservice"))
 }
 
-func (u *UbuntuDistribution) detectDMSGreeter() deps.Dependency {
-	return u.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", u.packageInstalled("dms-greeter"))
+func (u *UbuntuDistribution) detectHGSGreeter() deps.Dependency {
+	return u.detectOptionalPackage("hgs-greeter", "HyprGlassShell greetd greeter", u.packageInstalled("hgs-greeter"))
 }
 
 func (u *UbuntuDistribution) packageInstalled(pkg string) bool {
@@ -117,13 +108,13 @@ func (u *UbuntuDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
 		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
 
-		// DMS packages from PPAs
-		"dms (DankMaterialShell)": u.getDmsMapping(variants["dms (DankMaterialShell)"]),
-		"quickshell":              u.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             {Name: "dms-greeter", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"},
-		"matugen":                 {Name: "matugen", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"},
-		"dgop":                    {Name: "dgop", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"},
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"},
+		// HGS packages from PPAs
+		"hgs (HyprGlassShell)": u.getHgsMapping(variants["hgs (HyprGlassShell)"]),
+		"quickshell":           u.getQuickshellMapping(variants["quickshell"]),
+		"hgs-greeter":          {Name: "hgs-greeter", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"},
+		"matugen":              {Name: "matugen", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"},
+		"dgop":                 {Name: "dgop", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"},
+		"ghostty":              {Name: "ghostty", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"},
 	}
 
 	switch wm {
@@ -132,41 +123,23 @@ func (u *UbuntuDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		packages["hyprland"] = PackageMapping{Name: "hyprland", Repository: RepoTypePPA, RepoURL: "ppa:cppiber/hyprland"}
 		packages["hyprctl"] = PackageMapping{Name: "hyprland", Repository: RepoTypePPA, RepoURL: "ppa:cppiber/hyprland"}
 		packages["jq"] = PackageMapping{Name: "jq", Repository: RepoTypeSystem}
-	case deps.WindowManagerNiri:
-		niriVariant := variants["niri"]
-		packages["niri"] = u.getNiriMapping(niriVariant)
-		packages["xwayland-satellite"] = u.getXwaylandSatelliteMapping(niriVariant)
 	}
 
 	return packages
 }
 
-func (u *UbuntuDistribution) getDmsMapping(variant deps.PackageVariant) PackageMapping {
+func (u *UbuntuDistribution) getHgsMapping(variant deps.PackageVariant) PackageMapping {
 	if variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/dms-git"}
+		return PackageMapping{Name: "hgs-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/hgs-git"}
 	}
-	return PackageMapping{Name: "dms", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/dms"}
+	return PackageMapping{Name: "hgs", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/hgs"}
 }
 
 func (u *UbuntuDistribution) getQuickshellMapping(variant deps.PackageVariant) PackageMapping {
 	if forceQuickshellGit || variant == deps.VariantGit {
-		return PackageMapping{Name: "quickshell-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
+		return PackageMapping{Name: "quickshell-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"}
 	}
-	return PackageMapping{Name: "quickshell", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
-}
-
-func (u *UbuntuDistribution) getNiriMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "niri-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
-	}
-	return PackageMapping{Name: "niri", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
-}
-
-func (u *UbuntuDistribution) getXwaylandSatelliteMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "xwayland-satellite-git", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
-	}
-	return PackageMapping{Name: "xwayland-satellite", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/danklinux"}
+	return PackageMapping{Name: "quickshell", Repository: RepoTypePPA, RepoURL: "ppa:avengemedia/coastlinesec"}
 }
 
 func (u *UbuntuDistribution) InstallPrerequisites(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
@@ -332,8 +305,8 @@ func (u *UbuntuDistribution) InstallPackages(ctx context.Context, dependencies [
 		u.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := u.EnableDMSService(ctx, wm); err != nil {
-		u.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := u.EnableHGSService(ctx, wm); err != nil {
+		u.log(fmt.Sprintf("Warning: failed to enable hgs service: %v", err))
 	}
 
 	// Phase 7: Complete
@@ -522,23 +495,6 @@ func (u *UbuntuDistribution) installBuildDependencies(ctx context.Context, manua
 
 	for _, pkg := range manualPkgs {
 		switch pkg {
-		case "niri":
-			buildDeps["curl"] = true
-			buildDeps["libxkbcommon-dev"] = true
-			buildDeps["libwayland-dev"] = true
-			buildDeps["libudev-dev"] = true
-			buildDeps["libinput-dev"] = true
-			buildDeps["libdisplay-info-dev"] = true
-			buildDeps["libpango1.0-dev"] = true
-			buildDeps["libcairo-dev"] = true
-			buildDeps["libpipewire-0.3-dev"] = true
-			buildDeps["libc6-dev"] = true
-			buildDeps["clang"] = true
-			buildDeps["libseat-dev"] = true
-			buildDeps["libgbm-dev"] = true
-			buildDeps["alacritty"] = true
-			buildDeps["fuzzel"] = true
-			buildDeps["libxcb-cursor-dev"] = true
 		case "quickshell":
 			buildDeps["qt6-base-dev"] = true
 			buildDeps["qt6-base-private-dev"] = true
@@ -569,7 +525,7 @@ func (u *UbuntuDistribution) installBuildDependencies(ctx context.Context, manua
 
 	for _, pkg := range manualPkgs {
 		switch pkg {
-		case "niri", "matugen":
+		case "matugen":
 			if err := u.installRust(ctx, sudoPassword, progressChan); err != nil {
 				return fmt.Errorf("failed to install Rust: %w", err)
 			}

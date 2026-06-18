@@ -82,8 +82,7 @@ Item {
         WeatherService.addRef();
         UserInfoService.getUserInfo();
 
-        if (CompositorService.isHyprland)
-            updateHyprlandLayout();
+        updateHyprlandLayout();
 
         lockerReadyArmed = true;
     }
@@ -98,8 +97,8 @@ Item {
         if (root.unlocking)
             return;
         lockerReadySent = true;
-        if (SessionService.loginctlAvailable && DMSService.apiVersion >= 2) {
-            DMSService.sendRequest("loginctl.lockerReady", null, resp => {
+        if (SessionService.loginctlAvailable && HGSService.apiVersion >= 2) {
+            HGSService.sendRequest("loginctl.lockerReady", null, resp => {
                 if (resp?.error)
                     log.warn("lockerReady failed:", resp.error);
                 else
@@ -137,9 +136,7 @@ Item {
     onOpacityChanged: maybeSend()
 
     function updateHyprlandLayout() {
-        if (CompositorService.isHyprland) {
-            hyprlandLayoutProcess.running = true;
-        }
+        hyprlandLayoutProcess.running = true;
     }
 
     Process {
@@ -173,8 +170,8 @@ Item {
     }
 
     Connections {
-        target: CompositorService.isHyprland ? Hyprland : null
-        enabled: CompositorService.isHyprland
+        target: Hyprland
+        enabled: true
 
         function onRawEvent(event) {
             if (event.name === "activelayout")
@@ -190,7 +187,7 @@ Item {
         }
         asynchronous: true
 
-        sourceComponent: DankBackdrop {
+        sourceComponent: HGSBackdrop {
             screenName: root.screenName
         }
     }
@@ -460,7 +457,7 @@ Item {
                         anchors.centerIn: parent
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "notifications"
                             size: Theme.iconSize
                             color: "white"
@@ -509,7 +506,7 @@ Item {
                                     width: parent.width
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "notifications"
                                         size: Theme.iconSize - 4
                                         color: "white"
@@ -686,7 +683,7 @@ Item {
                 spacing: Theme.spacingL
                 Layout.fillWidth: true
 
-                DankCircularImage {
+                HGSCircularImage {
                     Layout.preferredWidth: 60
                     Layout.preferredHeight: 60
                     imageSource: {
@@ -719,7 +716,7 @@ Item {
                         width: 20
                         height: 20
 
-                        DankIcon {
+                        HGSIcon {
                             id: lockIcon
 
                             anchors.centerIn: parent
@@ -997,7 +994,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: revealButton
 
                         anchors.right: virtualKeyboardButton.visible ? virtualKeyboardButton.left : (securityKeyButton.visible ? securityKeyButton.left : (enterButton.visible ? enterButton.left : (loadingSpinner.visible ? loadingSpinner.left : parent.right)))
@@ -1009,7 +1006,7 @@ Item {
                         enabled: visible
                         onClicked: parent.showPassword = !parent.showPassword
                     }
-                    DankActionButton {
+                    HGSActionButton {
                         id: securityKeyButton
 
                         anchors.right: enterButton.visible ? enterButton.left : (loadingSpinner.visible ? loadingSpinner.left : parent.right)
@@ -1025,7 +1022,7 @@ Item {
                             pam.u2f.startForAlternativeAuth();
                         }
                     }
-                    DankActionButton {
+                    HGSActionButton {
                         id: virtualKeyboardButton
 
                         anchors.right: securityKeyButton.visible ? securityKeyButton.left : (enterButton.visible ? enterButton.left : (loadingSpinner.visible ? loadingSpinner.left : parent.right))
@@ -1056,7 +1053,7 @@ Item {
                         color: "transparent"
                         visible: !demoMode && (pam.passwd.active || root.unlocking)
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "check_circle"
                             size: 20
@@ -1126,7 +1123,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: enterButton
 
                         anchors.right: parent.right
@@ -1187,9 +1184,9 @@ Item {
             anchors.topMargin: Theme.spacingS
             anchors.horizontalCenter: passwordLayout.horizontalCenter
             spacing: 4
-            opacity: DMSService.capsLockState ? 1 : 0
+            opacity: HGSService.capsLockState ? 1 : 0
 
-            DankIcon {
+            HGSIcon {
                 name: "shift_lock"
                 size: 14
                 color: Theme.error
@@ -1233,14 +1230,7 @@ Item {
                 width: keyboardLayoutRow.width
                 height: keyboardLayoutRow.height
                 anchors.verticalCenter: parent.verticalCenter
-                visible: {
-                    if (CompositorService.isNiri) {
-                        return NiriService.keyboardLayoutNames.length > 1;
-                    } else if (CompositorService.isHyprland) {
-                        return hyprlandLayoutCount > 1;
-                    }
-                    return false;
-                }
+                visible: hyprlandLayoutCount > 1
 
                 Row {
                     id: keyboardLayoutRow
@@ -1250,7 +1240,7 @@ Item {
                         width: Theme.iconSize
                         height: Theme.iconSize
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: "white"
@@ -1263,21 +1253,7 @@ Item {
                         height: Theme.iconSize
 
                         StyledText {
-                            text: {
-                                if (CompositorService.isNiri) {
-                                    const layout = NiriService.getCurrentKeyboardLayoutName();
-                                    if (!layout)
-                                        return "";
-                                    const parts = layout.split(" ");
-                                    if (parts.length > 0) {
-                                        return parts[0].substring(0, 2).toUpperCase();
-                                    }
-                                    return layout.substring(0, 2).toUpperCase();
-                                } else if (CompositorService.isHyprland) {
-                                    return hyprlandCurrentLayout;
-                                }
-                                return "";
-                            }
+                            text: hyprlandCurrentLayout
                             font.pixelSize: Theme.fontSizeMedium
                             font.weight: Font.Light
                             color: "white"
@@ -1293,12 +1269,8 @@ Item {
                     hoverEnabled: enabled
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {
-                        if (CompositorService.isNiri) {
-                            NiriService.cycleKeyboardLayout();
-                        } else if (CompositorService.isHyprland) {
-                            Quickshell.execDetached(["hyprctl", "switchxkblayout", hyprlandKeyboard, "next"]);
-                            updateHyprlandLayout();
-                        }
+                        Quickshell.execDetached(["hyprctl", "switchxkblayout", hyprlandKeyboard, "next"]);
+                        updateHyprlandLayout();
                     }
                 }
             }
@@ -1408,7 +1380,7 @@ Item {
                         visible: MprisController.activePlayer
                         opacity: (MprisController.activePlayer?.canGoPrevious ?? false) ? 1 : 0.3
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "skip_previous"
                             size: 12
@@ -1433,7 +1405,7 @@ Item {
                         color: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing ? Qt.rgba(255, 255, 255, 0.9) : Qt.rgba(255, 255, 255, 0.2)
                         visible: MprisController.activePlayer
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: MprisController.activePlayer?.playbackState === MprisPlaybackState.Playing ? "pause" : "play_arrow"
                             size: 14
@@ -1458,7 +1430,7 @@ Item {
                         visible: MprisController.activePlayer
                         opacity: (MprisController.activePlayer?.canGoNext ?? false) ? 1 : 0.3
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "skip_next"
                             size: 12
@@ -1490,7 +1462,7 @@ Item {
                 visible: WeatherService.weather.available
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     name: WeatherService.getWeatherIcon(WeatherService.weather.wCode)
                     size: Theme.iconSize
                     color: "white"
@@ -1519,15 +1491,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: NetworkService.networkAvailable || (BluetoothService.available && BluetoothService.enabled) || (AudioService.sink && AudioService.sink.audio)
 
-                DankIcon {
-                    name: "screen_record"
-                    size: Theme.iconSize - 2
-                    color: NiriService.hasActiveCast ? "white" : Qt.rgba(255, 255, 255, 0.5)
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: NiriService.hasCasts
-                }
-
-                DankIcon {
+                HGSIcon {
                     id: lockNetworkIcon
                     name: {
                         if (NetworkService.wifiToggling)
@@ -1546,13 +1510,13 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: NetworkService.networkAvailable
 
-                    DankBlink {
+                    HGSBlink {
                         target: lockNetworkIcon
                         running: NetworkService.isWifiConnecting
                     }
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: "vpn_lock"
                     size: Theme.iconSize - 2
                     color: "white"
@@ -1560,7 +1524,7 @@ Item {
                     visible: NetworkService.vpnAvailable && NetworkService.vpnConnected
                 }
 
-                DankIcon {
+                HGSIcon {
                     id: lockBluetoothIcon
                     name: "bluetooth"
                     size: Theme.iconSize - 2
@@ -1568,13 +1532,13 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: BluetoothService.available && BluetoothService.enabled
 
-                    DankBlink {
+                    HGSBlink {
                         target: lockBluetoothIcon
                         running: BluetoothService.connecting
                     }
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: {
                         if (!AudioService.sink?.audio) {
                             return "volume_up";
@@ -1608,7 +1572,7 @@ Item {
                 visible: BatteryService.batteryAvailable
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     name: {
                         if (BatteryService.isCharging) {
                             if (BatteryService.batteryLevel >= 90) {
@@ -1715,7 +1679,7 @@ Item {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.margins: Theme.spacingXL

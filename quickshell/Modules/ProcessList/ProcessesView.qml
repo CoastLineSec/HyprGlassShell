@@ -293,7 +293,7 @@ Item {
             color: Theme.outlineLight
         }
 
-        DankListView {
+        HGSListView {
             id: processListView
 
             Layout.fillWidth: true
@@ -359,7 +359,7 @@ Item {
                     anchors.centerIn: parent
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: root.searchText.length > 0 ? "search_off" : "hourglass_empty"
                         size: 32
                         color: Theme.surfaceVariantText
@@ -426,7 +426,7 @@ Item {
                 opacity: headerItem.isActive ? 1 : 0.8
             }
 
-            DankIcon {
+            HGSIcon {
                 name: headerItem.sortAscending ? "arrow_upward" : "arrow_downward"
                 size: Theme.fontSizeSmall
                 color: Theme.primary
@@ -534,7 +534,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: DgopService.getProcessIcon(processItemRoot.processCmd)
                                 size: Theme.iconSize - 4
                                 color: {
@@ -646,7 +646,7 @@ Item {
                         Layout.preferredWidth: 40
                         height: parent.height
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: processItemRoot.isExpanded ? "expand_less" : "expand_more"
                             size: Theme.iconSize - 4
@@ -713,7 +713,7 @@ Item {
                             radius: Theme.cornerRadius - 2
                             color: copyMouseArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.15) : "transparent"
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: "content_copy"
                                 size: 14
@@ -726,7 +726,7 @@ Item {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    Quickshell.execDetached(["dms", "cl", "copy", processItemRoot.processFullCmd]);
+                                    Quickshell.execDetached(["hgs", "cl", "copy", processItemRoot.processFullCmd]);
                                 }
                             }
                         }

@@ -1,195 +1,230 @@
-# DankMaterialShell
+# HyprGlassShell
 
 <div align="center">
-  <a href="https://danklinux.com">
-    <img src="assets/danklogo.svg" alt="DankMaterialShell" width="200">
+  <a href="https://github.com/CoastLineSec/HyprGlassShell">
+    <img src="assets/hgslogo.svg" alt="HyprGlassShell" width="180">
   </a>
 
-### A modern desktop shell for Wayland
+### A Hyprland-first desktop shell and compositor glass experiment
 
-Built with [Quickshell](https://quickshell.org/) and [Go](https://go.dev/)
-
-[![Documentation](https://img.shields.io/badge/docs-danklinux.com-9ccbfb?style=for-the-badge&labelColor=101418)](https://danklinux.com/docs)
-[![GitHub stars](https://img.shields.io/github/stars/AvengeMedia/DankMaterialShell?style=for-the-badge&labelColor=101418&color=ffd700)](https://github.com/AvengeMedia/DankMaterialShell/stargazers)
-[![GitHub License](https://img.shields.io/github/license/AvengeMedia/DankMaterialShell?style=for-the-badge&labelColor=101418&color=b9c8da)](https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/AvengeMedia/DankMaterialShell?style=for-the-badge&labelColor=101418&color=9ccbfb)](https://github.com/AvengeMedia/DankMaterialShell/releases)
-[![Arch version](https://img.shields.io/archlinux/v/extra/x86_64/dms-shell?style=for-the-badge&labelColor=101418&color=9ccbfb)](https://archlinux.org/packages/extra/x86_64/dms-shell/)
-[![AUR version (git)](<https://img.shields.io/aur/version/dms-shell-git?style=for-the-badge&labelColor=101418&color=9ccbfb&label=AUR%20(git)>)](https://aur.archlinux.org/packages/dms-shell-git)
-[![Ko-Fi donate](https://img.shields.io/badge/donate-kofi?style=for-the-badge&logo=ko-fi&logoColor=ffffff&label=ko-fi&labelColor=101418&color=f16061&link=https%3A%2F%2Fko-fi.com%2Fdanklinux)](https://ko-fi.com/danklinux)
+Built with [Quickshell](https://quickshell.org/), [Go](https://go.dev/), and a Hyprland plugin.
 
 </div>
 
-DankMaterialShell is a complete desktop shell for [niri](https://github.com/YaLTeR/niri), [Hyprland](https://hyprland.org/), [MangoWC](https://github.com/DreamMaoMao/mangowc), [Sway](https://swaywm.org), [labwc](https://labwc.github.io/), [Scroll](https://github.com/dawsers/scroll), [Miracle WM](https://github.com/miracle-wm-org/miracle-wm), and other Wayland compositors. It replaces waybar, swaylock, swayidle, mako, fuzzel, polkit, and everything else you'd normally stitch together to make a desktop.
+HyprGlassShell is a Hyprland-first desktop shell forked from DankMaterialShell and redirected toward CoastLineSec goals. The project is currently focused on building a compositor-aware glass material pipeline for Hyprland while retaining a working shell foundation.
+
+This is not a finished Liquid Glass implementation yet. The current milestone proves descriptor publishing, plugin communication, surface matching, coordinate diagnostics, debug overlays, and opt-in compositor material rendering.
+
+## Current Status
+
+HyprGlassShell is in early development. The current foundation includes:
+
+- `hgs hyprglass` CLI commands for descriptor validation, apply, clear, status, debug overlay, and material mode control.
+- A formal HyprGlass descriptor model shared between the shell, Go CLI, and Hyprland plugin.
+- A repo-local `hgs-hyprglass` Hyprland plugin build workflow.
+- Plugin status for absent, loaded, empty, valid, invalid, and cleared descriptor states.
+- Layer-shell surface discovery and descriptor-to-surface matching.
+- Coordinate diagnostics for monitor-local logical, global logical, framebuffer, scale, and transform state.
+- Opt-in compositor debug bounds overlay.
+- Opt-in compositor material modes:
+  - `flat`: rounded/tinted diagnostic material.
+  - `blur-native`: Hyprland native blur plus resolved tint/alpha.
+- Shell-side appearance resolver for neutral glass, color glass, and normalized frost amount.
+- Per-surface QML fallback handoff when plugin status proves compositor material is drawing that descriptor.
+- Lifecycle resync when the plugin appears, reloads, or loses descriptors.
+- Best-effort descriptor cleanup on normal shell shutdown.
+
+Not implemented yet:
+
+- Final Liquid Glass visual design.
+- Custom backdrop sampling.
+- Custom blur shaders.
+- Refraction or lensing.
+- Rim lighting, glossy highlights, shadows, saturation, vibrancy, or adaptive contrast.
+- Fractional-scale proof.
+- Transformed monitor rendering support.
+- Production packaging for the Hyprland plugin.
+
+## Supported Compositor
+
+Hyprland is the supported compositor target.
+
+Other compositor support inherited from DankMaterialShell is being removed instead of maintained as a compatibility target. The HyprGlass compositor material path depends on Hyprland plugin APIs and is not expected to work on Niri, Sway, Mango, Labwc, or other compositors.
 
 ## Repository Structure
 
-This is a monorepo containing both the shell interface and the core backend services:
-
-```
-DankMaterialShell/
-├── quickshell/         # QML-based shell interface
-│   ├── Modules/        # UI components (panels, widgets, overlays)
-│   ├── Services/       # System integration (audio, network, bluetooth)
-│   ├── Widgets/        # Reusable UI controls
-│   └── Common/         # Shared resources and themes
-├── core/               # Go backend and CLI
-│   ├── cmd/            # dms CLI and dankinstall binaries
-│   ├── internal/       # System integration, IPC, distro support
-│   └── pkg/            # Shared packages
-├── distro/             # Distribution packaging
-│   ├── fedora/         # Fedora RPM specs
-│   ├── debian/         # Debian packaging
-│   └── nix/            # NixOS/home-manager modules
-└── flake.nix           # Nix flake for declarative installation
+```text
+HyprGlassShell/
+├── quickshell/              # QML shell interface
+│   ├── Modules/             # Bars, widgets, popouts, settings, overlays
+│   ├── Services/            # Shell services and IPC/status bridges
+│   ├── Widgets/             # Reusable QML controls
+│   └── Common/              # Shared settings, paths, theme, helpers
+├── core/                    # Go backend and hgs CLI
+│   ├── cmd/hgs/             # hgs command line interface
+│   └── internal/hyprglass/  # HyprGlass descriptor/status model
+├── plugins/
+│   └── hgs-hyprglass/       # Hyprland plugin for compositor material work
+├── distro/                  # Distribution packaging inherited from the fork
+└── assets/                  # Desktop/service/icon assets
 ```
 
-## See it in Action
+## Development Build
 
-<div align="center">
+Build the Go CLI:
 
-https://github.com/user-attachments/assets/1200a739-7770-4601-8b85-695ca527819a
-
-</div>
-
-<details><summary><strong>More Screenshots</strong></summary>
-
-<div align="center">
-
-<img src="https://github.com/user-attachments/assets/203a9678-c3b7-4720-bb97-853a511ac5c8" width="600" alt="Desktop" />
-
-<img src="https://github.com/user-attachments/assets/a937cf35-a43b-4558-8c39-5694ff5fcac4" width="600" alt="Dashboard" />
-
-<img src="https://github.com/user-attachments/assets/2da00ea1-8921-4473-a2a9-44a44535a822" width="450" alt="Launcher" />
-
-<img src="https://github.com/user-attachments/assets/732c30de-5f4a-4a2b-a995-c8ab656cecd5" width="600" alt="Control Center" />
-
-</div>
-
-</details>
-
-## Installation
-
-```bash
-curl -fsSL https://install.danklinux.com | sh
+```sh
+make -C core build
 ```
 
-One command installs DMS and all dependencies on Arch, Fedora, Debian, Ubuntu, openSUSE, or Gentoo.
+Run QML lint:
 
-**[Manual installation guide](https://danklinux.com/docs/dankmaterialshell/installation)**
-
-## Features
-
-**Dynamic Theming**
-Wallpaper-based color schemes that automatically theme GTK, Qt, terminals, editors (vscode, vscodium), and more using [matugen](https://github.com/InioX/matugen) and dank16.
-
-**System Monitoring**
-Real-time CPU, RAM, GPU metrics and temperatures with [dgop](https://github.com/AvengeMedia/dgop). Process list with search and management.
-
-**Powerful Launcher**
-Spotlight-style search for applications, files ([dsearch](https://github.com/AvengeMedia/danksearch)), emojis, running windows, calculator, and commands. Extensible with plugins.
-
-**Control Center**
-Unified interface for network, Bluetooth, audio devices, display settings, and night mode.
-
-**Smart Notifications**
-Notification center with grouping, rich text support, and keyboard navigation.
-
-**Media Integration**
-MPRIS player controls, calendar sync, weather widgets, and clipboard history with image previews.
-
-**Session Management**
-Lock screen, idle detection, auto-lock/suspend with separate AC/battery settings, and greeter support.
-
-**Plugin System**
-Extend functionality with the [plugin registry](https://plugins.danklinux.com).
-
-## Supported Compositors
-
-Works best with [niri](https://github.com/YaLTeR/niri), [Hyprland](https://hyprland.org/), [Sway](https://swaywm.org/), [MangoWC](https://github.com/DreamMaoMao/mangowc), [labwc](https://labwc.github.io/), [Scroll](https://github.com/dawsers/scroll), and [Miracle WM](https://github.com/miracle-wm-org/miracle-wm) with full workspace switching, overview integration, and monitor management. Other Wayland compositors work with reduced features.
-
-[Compositor configuration guide](https://danklinux.com/docs/dankmaterialshell/compositors)
-
-## Command Line Interface
-
-Control the shell from the command line or keybinds:
-
-```bash
-dms run              # Start the shell
-dms ipc call spotlight toggle
-dms ipc call audio setvolume 50
-dms ipc call wallpaper set /path/to/image.jpg
-dms brightness list  # List available displays
-dms plugins search   # Browse plugin registry
+```sh
+make lint-qml
 ```
 
-[Full CLI and IPC documentation](https://danklinux.com/docs/dankmaterialshell/keybinds-ipc)
+Run the shell during development:
 
-## Documentation
+```sh
+PATH="$PWD/core/bin:$PATH" qs -p quickshell
+```
 
-- **Website:** [danklinux.com](https://danklinux.com)
-- **Docs:** [danklinux.com/docs](https://danklinux.com/docs/)
-- **Theming:** [Application themes](https://danklinux.com/docs/dankmaterialshell/application-themes) | [Custom themes](https://danklinux.com/docs/dankmaterialshell/custom-themes)
-- **Plugins:** [Development guide](https://danklinux.com/docs/dankmaterialshell/plugins-overview)
-- **Support:** [Ko-fi](https://ko-fi.com/avengemediallc)
+Install locally for user-level testing:
 
-## Development
+```sh
+make -C core build
+make install PREFIX="$HOME/.local"
+systemctl --user daemon-reload
+systemctl --user start hgs.service
+```
 
-See component-specific documentation:
+## HyprGlass Plugin
 
-- **[quickshell/](quickshell/)** - QML shell development, widgets, and modules
-- **[core/](core/)** - Go backend, CLI tools, and system integration
-- **[distro/](distro/)** - Distribution packaging (Fedora, Debian, NixOS)
+Build the Hyprland plugin:
 
-### Building from Source
+```sh
+make -C plugins/hgs-hyprglass build
+```
 
-**Core + Dankinstall:**
+The plugin artifact is written to:
 
-```bash
+```text
+plugins/hgs-hyprglass/build/hgs-hyprglass.so
+```
+
+Load it manually only when testing against the live Hyprland session:
+
+```sh
+hyprctl plugin load "$PWD/plugins/hgs-hyprglass/build/hgs-hyprglass.so"
+```
+
+Unload it:
+
+```sh
+hyprctl plugin unload "$PWD/plugins/hgs-hyprglass/build/hgs-hyprglass.so"
+```
+
+Detailed plugin notes live in [plugins/hgs-hyprglass/README.md](plugins/hgs-hyprglass/README.md).
+
+## HyprGlass CLI
+
+The current development command surface is:
+
+```sh
+hgs hyprglass status
+hgs hyprglass validate <descriptor.json>
+hgs hyprglass apply <descriptor.json>
+hgs hyprglass apply-json <descriptor-json>
+hgs hyprglass clear
+
+hgs hyprglass debug-overlay on
+hgs hyprglass debug-overlay off
+hgs hyprglass debug-overlay toggle
+hgs hyprglass debug-overlay status
+
+hgs hyprglass material off
+hgs hyprglass material flat
+hgs hyprglass material blur-native
+hgs hyprglass material status
+```
+
+The plugin exposes matching Hyprland commands:
+
+```sh
+hyprctl -j hyprglass-status
+hyprctl hyprglass-apply-json '<descriptor-json>'
+hyprctl hyprglass-clear
+hyprctl hyprglass-debug-overlay on|off|toggle|status
+hyprctl hyprglass-material off|flat|blur-native|status
+```
+
+## Shell Appearance Contract
+
+The shell resolves appearance settings before sending descriptors to the plugin. The plugin receives only final material values:
+
+- material preset
+- tint color
+- tint opacity
+- opacity
+- frost amount
+
+The current user-facing model is intentionally small:
+
+- Default glass: automatic neutral light/dark tint.
+- Color Glass: optional resolved color tint, currently backed by custom color settings.
+- Frost Amount: one normalized `0.0` to `1.0` requested frost value.
+
+For `blur-native`, the frost amount maps to Hyprland rectangle-pass blur alpha. The actual blur kernel size and passes still come from global Hyprland `decoration:blur` settings.
+
+## Development Environment Overrides
+
+These are temporary dev/test controls, disabled by default:
+
+```sh
+HGS_HYPRGLASS_ISOLATE_QML_FALLBACK=1
+HGS_HYPRGLASS_MATERIAL_MODE=flat
+HGS_HYPRGLASS_MATERIAL_MODE=blur-native
+HGS_HYPRGLASS_COLOR_ENABLED=1
+HGS_HYPRGLASS_COLOR_SOURCE=custom
+HGS_HYPRGLASS_COLOR="#88AADD"
+HGS_HYPRGLASS_FROST=0.75
+```
+
+`HGS_HYPRGLASS_ISOLATE_QML_FALLBACK=1` is for manual compositor material screenshots only. It bypasses the normal per-descriptor fallback safety checks.
+
+## Validation
+
+Current checkpoint validation:
+
+```sh
 cd core
-make              # Build dms CLI
-make dankinstall  # Build installer
+go test ./internal/hyprglass ./cmd/hgs
+
+cd ..
+make -C core build
+make -C plugins/hgs-hyprglass build
+make lint-qml
 ```
 
-**Shell:**
+## Roadmap
 
-```bash
-quickshell -p quickshell/
-```
+Near-term work should stay focused on foundation before final visual tuning:
 
-**NixOS:**
-
-```nix
-{
-  inputs.dms.url = "github:AvengeMedia/DankMaterialShell";
-
-  # Use in home-manager or NixOS configuration
-  imports = [ inputs.dms.homeModules.dank-material-shell ];
-}
-```
-
-## Contributing
-
-Contributions welcome. Bug fixes, widgets, features, documentation, and plugins all help.
-
-1. Fork the repository
-2. Make your changes
-3. Test thoroughly
-4. Open a pull request
-
-For documentation contributions, see [DankLinux-Docs](https://github.com/AvengeMedia/DankLinux-Docs).
+1. Keep descriptor/status/plugin lifecycle reliable.
+2. Prove fractional-scale and mixed-monitor coordinate behavior.
+3. Keep transformed monitors safely skipped until transform handling is designed.
+4. Improve compositor material only after render order and fallback handoff remain stable.
+5. Add real glass effects incrementally, with status/debug output for every backend capability.
 
 ## Credits
 
-- [quickshell](https://quickshell.org/) - Shell framework
-- [niri](https://github.com/YaLTeR/niri) - Scrolling window manager
-- [Ly-sec](http://github.com/ly-sec) - Wallpaper effects from [Noctalia](https://github.com/noctalia-dev/noctalia-shell)
-- [soramanew](https://github.com/soramanew) - [Caelestia](https://github.com/caelestia-dots/shell) inspiration
-- [end-4](https://github.com/end-4) - [dots-hyprland](https://github.com/end-4/dots-hyprland) inspiration
+HyprGlassShell is forked from DankMaterialShell and keeps that inheritance visible while the project is redirected toward Hyprland-first compositor material work.
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=AvengeMedia/DankMaterialShell&type=date&legend=top-left)](https://www.star-history.com/#AvengeMedia/DankMaterialShell&type=date&legend=top-left)
+- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) - upstream project foundation.
+- [Quickshell](https://quickshell.org/) - QML shell framework.
+- [Hyprland](https://hyprland.org/) - supported compositor target and plugin API.
+- [CoastLineSec](https://github.com/CoastLineSec) - HyprGlassShell direction and downstream development.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.

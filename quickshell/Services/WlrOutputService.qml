@@ -17,14 +17,14 @@ Singleton {
     signal configurationApplied(bool success, string message)
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onCapabilitiesReceived() {
             checkCapabilities();
         }
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (HGSService.isConnected) {
                 checkCapabilities();
                 return;
             }
@@ -40,19 +40,19 @@ Singleton {
     }
 
     Component.onCompleted: {
-        if (!DMSService.dmsAvailable) {
+        if (!HGSService.hgsAvailable) {
             return;
         }
         checkCapabilities();
     }
 
     function checkCapabilities() {
-        if (!DMSService.capabilities || !Array.isArray(DMSService.capabilities)) {
+        if (!HGSService.capabilities || !Array.isArray(HGSService.capabilities)) {
             wlrOutputAvailable = false;
             return;
         }
 
-        const hasWlrOutput = DMSService.capabilities.includes("wlroutput");
+        const hasWlrOutput = HGSService.capabilities.includes("wlroutput");
         if (hasWlrOutput && !wlrOutputAvailable) {
             wlrOutputAvailable = true;
             log.info("wlr-output-management capability detected");
@@ -66,11 +66,11 @@ Singleton {
     }
 
     function requestState() {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!HGSService.isConnected || !wlrOutputAvailable) {
             return;
         }
 
-        DMSService.sendRequest("wlroutput.getState", null, response => {
+        HGSService.sendRequest("wlroutput.getState", null, response => {
             if (!response.result) {
                 return;
             }
@@ -107,7 +107,7 @@ Singleton {
     }
 
     function applyConfiguration(heads, callback) {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!HGSService.isConnected || !wlrOutputAvailable) {
             if (callback) {
                 callback(false, "Not connected");
             }
@@ -119,7 +119,7 @@ Singleton {
             log.debug("Head", index, "- name:", head.name, "enabled:", head.enabled, "modeId:", head.modeId, "customMode:", JSON.stringify(head.customMode), "position:", JSON.stringify(head.position), "scale:", head.scale, "transform:", head.transform, "adaptiveSync:", head.adaptiveSync);
         });
 
-        DMSService.sendRequest("wlroutput.applyConfiguration", {
+        HGSService.sendRequest("wlroutput.applyConfiguration", {
             "heads": heads
         }, response => {
             const success = !response.error;
@@ -139,7 +139,7 @@ Singleton {
     }
 
     function testConfiguration(heads, callback) {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!HGSService.isConnected || !wlrOutputAvailable) {
             if (callback) {
                 callback(false, "Not connected");
             }
@@ -148,7 +148,7 @@ Singleton {
 
         log.debug("Testing configuration for", heads.length, "outputs");
 
-        DMSService.sendRequest("wlroutput.testConfiguration", {
+        HGSService.sendRequest("wlroutput.testConfiguration", {
             "heads": heads
         }, response => {
             const success = !response.error;
@@ -279,7 +279,7 @@ Singleton {
     }
 
     // High-level apply matching the generateOutputsConfig() pattern used by
-    // NiriService, HyprlandService and MangoService.  Instead of writing a
+    // HyprlandService. Instead of writing a
     // config file, the changes are applied directly via the
     // wlr-output-management protocol.
     function applyOutputsConfig(outputsData, connectedOutputs) {

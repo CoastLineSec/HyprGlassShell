@@ -295,7 +295,7 @@ Item {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         Layout.alignment: Qt.AlignVCenter
                         name: "sync_problem"
                         size: Theme.iconSize - 2
@@ -313,7 +313,7 @@ Item {
                         elide: Text.ElideRight
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         Layout.alignment: Qt.AlignVCenter
                         iconName: "close"
                         iconSize: Theme.iconSizeSmall
@@ -637,7 +637,7 @@ Item {
         id: confirmationDialogLoader
         active: false
 
-        DankModal {
+        HGSModal {
             id: confirmationDialog
 
             modalWidth: 400
@@ -780,7 +780,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: Theme.spacingM

@@ -312,7 +312,7 @@ FloatingWindow {
 
     function installPlugin(pluginName, enableAfterInstall) {
         ToastService.showInfo(I18n.tr("Installing: %1", "installation progress").arg(pluginName));
-        DMSService.install(pluginName, response => {
+        HGSService.install(pluginName, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Install failed: %1", "installation error").arg(response.error));
                 return;
@@ -336,9 +336,9 @@ FloatingWindow {
 
     function refreshPlugins() {
         isLoading = true;
-        DMSService.listPlugins();
-        if (DMSService.apiVersion >= 8)
-            DMSService.listInstalled();
+        HGSService.listPlugins();
+        if (HGSService.apiVersion >= 8)
+            HGSService.listInstalled();
     }
 
     function checkPendingInstall() {
@@ -349,7 +349,7 @@ FloatingWindow {
         PopoutService.pendingPluginInstall = "";
         urlInstallConfirm.showWithOptions({
             "title": I18n.tr("Install Plugin", "plugin installation dialog title"),
-            "message": I18n.tr("Install plugin '%1' from the DMS registry?", "plugin installation confirmation").arg(pluginId),
+            "message": I18n.tr("Install plugin '%1' from the HGS registry?", "plugin installation confirmation").arg(pluginId),
             "confirmText": I18n.tr("Install", "install action button"),
             "cancelText": I18n.tr("Cancel"),
             "onConfirm": () => installPlugin(pluginId, true),
@@ -402,7 +402,7 @@ FloatingWindow {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onPluginsListReceived(plugins) {
             root.isLoading = false;
@@ -475,7 +475,7 @@ FloatingWindow {
                     onDoubleClicked: windowControls.tryToggleMaximize()
                 }
 
-                DankIcon {
+                HGSIcon {
                     id: headerIcon
                     name: "store"
                     size: Theme.iconSize
@@ -500,7 +500,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingXS
 
-                    DankButton {
+                    HGSButton {
                         id: thirdPartyButton
                         text: SessionData.showThirdPartyPlugins ? I18n.tr("Hide 3rd Party") : I18n.tr("Show 3rd Party")
                         iconName: SessionData.showThirdPartyPlugins ? "visibility_off" : "visibility"
@@ -517,7 +517,7 @@ FloatingWindow {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: refreshButton
                         iconName: "refresh"
                         iconSize: 18
@@ -526,7 +526,7 @@ FloatingWindow {
                         onClicked: root.refreshPlugins()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
                         iconSize: Theme.iconSize - 2
@@ -534,7 +534,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: closeButton
                         iconName: "close"
                         iconSize: Theme.iconSize - 2
@@ -550,13 +550,13 @@ FloatingWindow {
                 anchors.right: parent.right
                 anchors.top: headerArea.bottom
                 anchors.topMargin: Theme.spacingM
-                text: I18n.tr("Install plugins from the DMS plugin registry", "plugin browser description")
+                text: I18n.tr("Install plugins from the HGS plugin registry", "plugin browser description")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.outline
                 wrapMode: Text.WordWrap
             }
 
-            DankTextField {
+            HGSTextField {
                 id: browserSearchField
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -644,7 +644,7 @@ FloatingWindow {
                                 }
                             }
 
-                            DankRipple {
+                            HGSRipple {
                                 id: chipRipple
                                 cornerRadius: sortChip.radius
                                 rippleColor: sortChip.selected ? Theme.primaryText : Theme.surfaceVariantText
@@ -655,7 +655,7 @@ FloatingWindow {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: modelData.toggle ? "download_done" : "check"
                                     size: 16
                                     anchors.verticalCenter: parent.verticalCenter
@@ -716,7 +716,7 @@ FloatingWindow {
                         Layout.alignment: Qt.AlignVCenter
                     }
 
-                    DankDropdown {
+                    HGSDropdown {
                         id: categoryFilterDropdown
                         Layout.fillWidth: true
                         Layout.preferredHeight: 32
@@ -748,13 +748,13 @@ FloatingWindow {
                     anchors.fill: parent
                     visible: root.isLoading
 
-                    DankSpinner {
+                    HGSSpinner {
                         anchors.centerIn: parent
                         running: root.isLoading
                     }
                 }
 
-                DankListView {
+                HGSListView {
                     id: pluginBrowserList
 
                     anchors.fill: parent
@@ -774,7 +774,7 @@ FloatingWindow {
                     displaced: null
                     move: null
 
-                    ScrollBar.vertical: DankScrollbar {
+                    ScrollBar.vertical: HGSScrollbar {
                         id: browserScrollbar
                     }
 
@@ -786,7 +786,7 @@ FloatingWindow {
                         property bool isInstalled: modelData.installed || false
                         property bool isFirstParty: modelData.firstParty || false
                         property bool isFeatured: modelData.featured || false
-                        property bool isCompatible: PluginService.checkPluginCompatibility(modelData.requires_dms)
+                        property bool isCompatible: PluginService.checkPluginCompatibility(modelData.requires_hgs)
                         color: isSelected ? Theme.primarySelected : Theme.withAlpha(Theme.surfaceVariant, 0.3)
                         border.color: isSelected ? Theme.primary : Theme.withAlpha(Theme.outline, 0.2)
                         border.width: isSelected ? 2 : 1
@@ -801,7 +801,7 @@ FloatingWindow {
                                 width: parent.width
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                HGSIcon {
                                     name: modelData.icon || "extension"
                                     size: Theme.iconSize
                                     color: Theme.primary
@@ -839,7 +839,7 @@ FloatingWindow {
                                                 anchors.centerIn: parent
                                                 spacing: 2
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     name: "star"
                                                     size: 10
                                                     color: Theme.secondary
@@ -962,7 +962,7 @@ FloatingWindow {
                                         anchors.centerIn: parent
                                         spacing: Theme.spacingXS
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: {
                                                 switch (installButton.buttonState) {
                                                 case "installed":
@@ -993,7 +993,7 @@ FloatingWindow {
                                                 case "installed":
                                                     return I18n.tr("Installed", "installed status");
                                                 case "incompatible":
-                                                    return I18n.tr("Requires %1", "version requirement").arg(modelData.requires_dms);
+                                                    return I18n.tr("Requires %1", "version requirement").arg(modelData.requires_hgs);
                                                 default:
                                                     return I18n.tr("Install", "install action button");
                                                 }
@@ -1162,7 +1162,7 @@ FloatingWindow {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "warning"
                             size: Theme.iconSize
                             color: Theme.warning
@@ -1182,7 +1182,7 @@ FloatingWindow {
                             height: 1
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: closeConfirmBtn
                             iconName: "close"
                             iconSize: Theme.iconSize - 2
@@ -1194,7 +1194,7 @@ FloatingWindow {
 
                     StyledText {
                         width: parent.width
-                        text: I18n.tr("Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.")
+                        text: I18n.tr("Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.")
                         font.pixelSize: Theme.fontSizeMedium
                         color: Theme.surfaceText
                         wrapMode: Text.WordWrap
@@ -1232,13 +1232,13 @@ FloatingWindow {
                         anchors.right: parent.right
                         spacing: Theme.spacingM
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Cancel")
                             iconName: "close"
                             onClicked: thirdPartyConfirmModal.hide()
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("I Understand")
                             iconName: "check"
                             onClicked: {

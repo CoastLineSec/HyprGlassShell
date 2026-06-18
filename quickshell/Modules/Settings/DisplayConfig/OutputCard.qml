@@ -14,14 +14,9 @@ StyledRect {
     property bool isConnected: outputData?.connected ?? false
     property bool isDisabled: {
         void (DisplayConfigState.pendingHyprlandChanges);
-        void (DisplayConfigState.pendingNiriChanges);
         if (!root.isConnected)
             return false;
-        if (CompositorService.isHyprland)
-            return DisplayConfigState.getHyprlandSetting(root.outputData, root.outputName, "disabled", false);
-        if (CompositorService.isNiri)
-            return DisplayConfigState.getNiriSetting(root.outputData, root.outputName, "disabled", false);
-        return false;
+        return DisplayConfigState.getHyprlandSetting(root.outputData, root.outputName, "disabled", false);
     }
 
     width: parent.width
@@ -42,7 +37,7 @@ StyledRect {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 name: root.isConnected && !root.isDisabled ? "desktop_windows" : "desktop_access_disabled"
                 size: Theme.iconSize - 4
                 color: root.isConnected && !root.isDisabled ? Theme.primary : Theme.surfaceVariantText
@@ -98,7 +93,7 @@ StyledRect {
                 color: deleteArea.containsMouse ? Theme.errorHover : "transparent"
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: "delete"
                     size: 18
@@ -133,7 +128,7 @@ StyledRect {
             }
         }
 
-        DankDropdown {
+        HGSDropdown {
             width: parent.width
             text: I18n.tr("Resolution & Refresh")
             visible: root.isConnected && !root.isDisabled
@@ -239,7 +234,7 @@ StyledRect {
                         };
                     }
 
-                    DankDropdown {
+                    HGSDropdown {
                         id: scaleDropdown
                         width: parent.width
                         dropdownWidth: parent.width
@@ -259,7 +254,7 @@ StyledRect {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: scaleInput
                         width: parent.width
                         height: 40
@@ -299,7 +294,7 @@ StyledRect {
                     horizontalAlignment: Text.AlignLeft
                 }
 
-                DankDropdown {
+                HGSDropdown {
                     width: parent.width
                     dropdownWidth: parent.width
                     currentValue: {
@@ -314,23 +309,10 @@ StyledRect {
             }
         }
 
-        DankToggle {
+        HGSDropdown {
             width: parent.width
             text: I18n.tr("Variable Refresh Rate")
-            visible: root.isConnected && !root.isDisabled && !CompositorService.isMango && !CompositorService.isHyprland && !CompositorService.isNiri && (DisplayConfigState.outputs[root.outputName]?.vrr_supported ?? false)
-            checked: {
-                const pendingVrr = DisplayConfigState.getPendingValue(root.outputName, "vrr");
-                if (pendingVrr !== undefined)
-                    return pendingVrr;
-                return DisplayConfigState.outputs[root.outputName]?.vrr_enabled ?? false;
-            }
-            onToggled: checked => DisplayConfigState.setPendingChange(root.outputName, "vrr", checked)
-        }
-
-        DankDropdown {
-            width: parent.width
-            text: I18n.tr("Variable Refresh Rate")
-            visible: root.isConnected && !root.isDisabled && CompositorService.isHyprland && (DisplayConfigState.outputs[root.outputName]?.vrr_supported ?? false)
+            visible: root.isConnected && !root.isDisabled && (DisplayConfigState.outputs[root.outputName]?.vrr_supported ?? false)
             options: [I18n.tr("Off"), I18n.tr("On"), I18n.tr("Fullscreen Only")]
             currentValue: {
                 DisplayConfigState.pendingHyprlandChanges;
@@ -350,29 +332,6 @@ StyledRect {
             }
         }
 
-        DankDropdown {
-            width: parent.width
-            text: I18n.tr("Variable Refresh Rate")
-            visible: root.isConnected && !root.isDisabled && CompositorService.isNiri && (DisplayConfigState.outputs[root.outputName]?.vrr_supported ?? false)
-            options: [I18n.tr("Off"), I18n.tr("On"), I18n.tr("On-Demand")]
-            currentValue: {
-                DisplayConfigState.pendingNiriChanges;
-                if (DisplayConfigState.getNiriSetting(root.outputData, root.outputName, "vrrOnDemand", false))
-                    return I18n.tr("On-Demand");
-                const pendingVrr = DisplayConfigState.getPendingValue(root.outputName, "vrr");
-                const vrrEnabled = pendingVrr !== undefined ? pendingVrr : (DisplayConfigState.outputs[root.outputName]?.vrr_enabled ?? false);
-                if (!vrrEnabled)
-                    return I18n.tr("Off");
-                return I18n.tr("On");
-            }
-            onValueChanged: value => {
-                const off = I18n.tr("Off");
-                const onDemand = I18n.tr("On-Demand");
-                DisplayConfigState.setPendingChange(root.outputName, "vrr", value !== off);
-                DisplayConfigState.setNiriSetting(root.outputData, root.outputName, "vrrOnDemand", value === onDemand || null);
-            }
-        }
-
         Rectangle {
             width: parent.width
             height: 1
@@ -383,19 +342,8 @@ StyledRect {
         Loader {
             id: compositorSettingsLoader
             width: parent.width
-            active: root.isConnected && compositorSettingsSource !== ""
-            source: compositorSettingsSource
-
-            property string compositorSettingsSource: {
-                switch (CompositorService.compositor) {
-                case "niri":
-                    return "NiriOutputSettings.qml";
-                case "hyprland":
-                    return "HyprlandOutputSettings.qml";
-                default:
-                    return "";
-                }
-            }
+            active: root.isConnected
+            source: "HyprlandOutputSettings.qml"
 
             onLoaded: {
                 item.outputName = root.outputName;

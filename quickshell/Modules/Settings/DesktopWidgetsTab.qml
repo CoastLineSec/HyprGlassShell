@@ -28,12 +28,6 @@ Item {
             widgetBrowserLoader.item.show();
     }
 
-    function showDesktopPluginBrowser() {
-        desktopPluginBrowserLoader.active = true;
-        if (desktopPluginBrowserLoader.item)
-            desktopPluginBrowserLoader.item.show();
-    }
-
     LazyLoader {
         id: widgetBrowserLoader
         active: false
@@ -46,17 +40,7 @@ Item {
         }
     }
 
-    LazyLoader {
-        id: desktopPluginBrowserLoader
-        active: false
-
-        PluginBrowser {
-            parentModal: root.parentModal
-            typeFilter: "desktop-widget"
-        }
-    }
-
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -88,20 +72,10 @@ Item {
                         horizontalAlignment: Text.AlignLeft
                     }
 
-                    Row {
-                        spacing: Theme.spacingM
-
-                        DankButton {
-                            text: I18n.tr("Add Widget")
-                            iconName: "add"
-                            onClicked: root.showWidgetBrowser()
-                        }
-
-                        DankButton {
-                            text: I18n.tr("Browse Plugins")
-                            iconName: "store"
-                            onClicked: root.showDesktopPluginBrowser()
-                        }
+                    HGSButton {
+                        text: I18n.tr("Add Widget")
+                        iconName: "add"
+                        onClicked: root.showWidgetBrowser()
                     }
                 }
             }
@@ -131,7 +105,7 @@ Item {
                         spacing: Theme.spacingS
                         width: parent.width
 
-                        DankTextField {
+                        HGSTextField {
                             id: newGroupField
                             width: parent.width - addGroupBtn.width - Theme.spacingS
                             placeholderText: I18n.tr("New group name...")
@@ -146,7 +120,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: addGroupBtn
                             iconName: "add"
                             text: I18n.tr("Add")
@@ -183,7 +157,7 @@ Item {
                                     anchors.rightMargin: Theme.spacingS
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "folder"
                                         size: Theme.iconSizeSmall
                                         color: Theme.surfaceText
@@ -196,7 +170,7 @@ Item {
                                         height: active ? 32 : 0
                                         anchors.verticalCenter: parent.verticalCenter
 
-                                        sourceComponent: DankTextField {
+                                        sourceComponent: HGSTextField {
                                             text: groupItem.modelData.name
                                             onAccepted: {
                                                 if (!text.trim())
@@ -228,7 +202,7 @@ Item {
                                         width: parent.width - Theme.iconSizeSmall - deleteGroupBtn.width - Theme.spacingS * 3
                                     }
 
-                                    DankActionButton {
+                                    HGSActionButton {
                                         id: deleteGroupBtn
                                         iconName: "delete"
                                         backgroundColor: Theme.withAlpha(Theme.error, 0.15)
@@ -281,14 +255,14 @@ Item {
                             anchors.rightMargin: Theme.spacingM
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: (root.groupCollapsedStates[groupSection.groupId] ?? false) ? "expand_more" : "expand_less"
                                 size: Theme.iconSize
                                 color: Theme.surfaceText
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "folder"
                                 size: Theme.iconSize
                                 color: Theme.primary
@@ -407,7 +381,7 @@ Item {
                                     }
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     x: Theme.spacingL - 2
                                     y: Theme.spacingL + (Theme.iconSize / 2) - (size / 2)
                                     name: "drag_indicator"
@@ -454,14 +428,14 @@ Item {
                         anchors.rightMargin: Theme.spacingM
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: (root.groupCollapsedStates["_ungrouped"] ?? false) ? "expand_more" : "expand_less"
                             size: Theme.iconSize
                             color: Theme.surfaceText
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "widgets"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -580,7 +554,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 x: Theme.spacingL - 2
                                 y: Theme.spacingL + (Theme.iconSize / 2) - (size / 2)
                                 name: "drag_indicator"
@@ -631,7 +605,7 @@ Item {
                             radius: 20
                             color: Theme.primarySelected
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: "drag_pan"
                                 size: Theme.iconSize
@@ -673,7 +647,7 @@ Item {
                             radius: 20
                             color: Theme.primarySelected
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: "open_in_full"
                                 size: Theme.iconSize

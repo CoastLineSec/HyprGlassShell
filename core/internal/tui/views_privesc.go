@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -111,7 +111,7 @@ func (m Model) routeToAuthAfterPrivesc() (tea.Model, tea.Cmd) {
 // enterAuthPhase is called when dependency review (or the Gentoo screens)
 // finish. It either routes directly to the sudo/fingerprint flow or shows
 // the privesc-tool selection screen when multiple tools are available and
-// no $DMS_PRIVESC override is set.
+// no $HGS_PRIVESC override is set.
 func (m Model) enterAuthPhase() (tea.Model, tea.Cmd) {
 	tools := privesc.AvailableTools()
 	_, envSet := privesc.EnvOverride()

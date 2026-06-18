@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://danklinux.com/schemas/plugin.json",
-  "title": "DankMaterialShell Plugin Manifest",
-  "description": "Schema for DankMaterialShell plugin.json manifest files",
+  "$id": "https://coastlinesec.com/schemas/plugin.json",
+  "title": "HyprGlassShell Plugin Manifest",
+  "description": "Schema for HyprGlassShell plugin.json manifest files",
   "type": "object",
   "required": [
     "id",
@@ -98,9 +98,9 @@
       "description": "Path to settings component QML file",
       "pattern": "^\\./.*\\.qml$"
     },
-    "requires_dms": {
+    "requires_hgs": {
       "type": "string",
-      "description": "Minimum DMS version requirement (e.g., '>=0.1.18', '>0.1.0')",
+      "description": "Minimum HGS version requirement (e.g., '>=0.1.18', '>0.1.0')",
       "pattern": "^(>=?|<=?|=|>|<)\\d+\\.\\d+\\.\\d+$"
     },
     "requires": {

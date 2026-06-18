@@ -25,7 +25,7 @@ Item {
         NetworkService.removeRef();
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -95,7 +95,7 @@ Item {
 
                 function mergedSavedWifiNetworks() {
                     const saved = NetworkService.savedWifiNetworks || [];
-                    const supportsSavedWifiState = DMSService.apiVersion >= NetworkService.savedWifiStateApiVersion;
+                    const supportsSavedWifiState = HGSService.apiVersion >= NetworkService.savedWifiStateApiVersion;
                     const result = [];
                     const seen = new Set();
 
@@ -193,21 +193,21 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankActionButton {
+                            HGSActionButton {
                                 iconName: "wifi_find"
                                 buttonSize: 32
                                 visible: NetworkService.backend === "networkmanager" && NetworkService.wifiEnabled && !NetworkService.wifiToggling
                                 onClicked: PopoutService.showHiddenNetworkModal()
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 iconName: "refresh"
                                 buttonSize: 32
                                 visible: NetworkService.wifiEnabled && !NetworkService.wifiToggling && !NetworkService.isScanning
                                 onClicked: NetworkService.scanWifi()
                             }
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: NetworkService.wifiEnabled
                                 enabled: !NetworkService.wifiToggling
                                 onToggled: NetworkService.toggleWifiRadio()
@@ -232,7 +232,7 @@ Item {
                             height: 1
                         }
 
-                        DankDropdown {
+                        HGSDropdown {
                             id: wifiDeviceDropdown
                             dropdownWidth: 150
                             popupWidth: 180
@@ -329,7 +329,7 @@ Item {
                                     spacing: Theme.spacingXS
                                     anchors.verticalCenter: parent.verticalCenter
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: {
                                             const s = NetworkService.wifiSignalStrength;
                                             if (s >= 50)
@@ -392,7 +392,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     id: scanningIcon
                                     name: "wifi_find"
                                     size: 32
@@ -499,7 +499,7 @@ Item {
                                                 anchors.rightMargin: Theme.spacingS
                                                 spacing: Theme.spacingS
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     name: {
                                                         const s = modelData.signal || 0;
                                                         if (s >= 50)
@@ -530,7 +530,7 @@ Item {
                                                             elide: Text.ElideRight
                                                         }
 
-                                                        DankIcon {
+                                                        HGSIcon {
                                                             name: "push_pin"
                                                             size: 14
                                                             color: Theme.primary
@@ -538,7 +538,7 @@ Item {
                                                             anchors.verticalCenter: parent.verticalCenter
                                                         }
 
-                                                        DankIcon {
+                                                        HGSIcon {
                                                             name: "visibility_off"
                                                             size: 14
                                                             color: Theme.surfaceVariantText
@@ -614,7 +614,7 @@ Item {
                                                     color: wifiExpandBtn.containsMouse ? Theme.surfacePressed : "transparent"
                                                     visible: isConnected || modelData.saved
 
-                                                    DankIcon {
+                                                    HGSIcon {
                                                         anchors.centerIn: parent
                                                         name: isExpanded ? "expand_less" : "expand_more"
                                                         size: 18
@@ -637,7 +637,7 @@ Item {
                                                     }
                                                 }
 
-                                                DankActionButton {
+                                                HGSActionButton {
                                                     iconName: "qr_code"
                                                     buttonSize: 28
                                                     visible: modelData.secured && modelData.saved && !(modelData.enterprise || false)
@@ -646,7 +646,7 @@ Item {
                                                     }
                                                 }
 
-                                                DankActionButton {
+                                                HGSActionButton {
                                                     iconName: isPinned ? "push_pin" : "push_pin"
                                                     buttonSize: 28
                                                     iconColor: isPinned ? Theme.primary : Theme.surfaceVariantText
@@ -655,7 +655,7 @@ Item {
                                                     }
                                                 }
 
-                                                DankActionButton {
+                                                HGSActionButton {
                                                     iconName: "delete"
                                                     buttonSize: 28
                                                     iconColor: Theme.error
@@ -709,7 +709,7 @@ Item {
                                                         height: NetworkService.networkInfoLoading ? 40 : 0
                                                         visible: NetworkService.networkInfoLoading
 
-                                                        DankSpinner {
+                                                        HGSSpinner {
                                                             anchors.centerIn: parent
                                                             size: 20
                                                         }
@@ -801,9 +801,9 @@ Item {
 
                                                     Row {
                                                         spacing: Theme.spacingS
-                                                        visible: (modelData.saved || isConnected) && DMSService.apiVersion > 13
+                                                        visible: (modelData.saved || isConnected) && HGSService.apiVersion > 13
 
-                                                        DankToggle {
+                                                        HGSToggle {
                                                             id: autoconnectToggle
                                                             text: I18n.tr("Autoconnect")
                                                             checked: modelData.autoconnect || false
@@ -894,7 +894,7 @@ Item {
                                         anchors.rightMargin: Theme.spacingS
                                         spacing: Theme.spacingS
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: {
                                                 if (isOutOfRange)
                                                     return "wifi_off";
@@ -929,7 +929,7 @@ Item {
                                                     width: Math.max(0, parent.width - (savedWifiHiddenIcon.visible ? savedWifiHiddenIcon.width + Theme.spacingXS : 0))
                                                 }
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     id: savedWifiHiddenIcon
                                                     name: "visibility_off"
                                                     size: 14
@@ -969,7 +969,7 @@ Item {
                                             color: savedWifiExpandBtn.containsMouse ? Theme.surfacePressed : "transparent"
                                             visible: !isOutOfRange
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: isExpanded ? "expand_less" : "expand_more"
                                                 size: 18
@@ -991,7 +991,7 @@ Item {
                                             }
                                         }
 
-                                        DankActionButton {
+                                        HGSActionButton {
                                             iconName: "qr_code"
                                             buttonSize: 28
                                             visible: modelData.secured && !(modelData.enterprise || false)
@@ -1000,7 +1000,7 @@ Item {
                                             }
                                         }
 
-                                        DankActionButton {
+                                        HGSActionButton {
                                             iconName: "push_pin"
                                             buttonSize: 28
                                             iconColor: isPinned ? Theme.primary : Theme.surfaceVariantText
@@ -1009,7 +1009,7 @@ Item {
                                             }
                                         }
 
-                                        DankActionButton {
+                                        HGSActionButton {
                                             id: savedWifiMoreButton
                                             iconName: "more_horiz"
                                             buttonSize: 28
@@ -1189,8 +1189,8 @@ Item {
 
                                 MenuItem {
                                     text: modelData.autoconnect ? I18n.tr("Disable Autoconnect") : I18n.tr("Enable Autoconnect")
-                                    height: DMSService.apiVersion > 13 ? 32 : 0
-                                    visible: DMSService.apiVersion > 13
+                                    height: HGSService.apiVersion > 13 ? 32 : 0
+                                    visible: HGSService.apiVersion > 13
 
                                     contentItem: StyledText {
                                         text: parent.text

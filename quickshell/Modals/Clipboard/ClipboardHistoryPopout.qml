@@ -8,10 +8,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+HGSPopout {
     id: root
 
-    layerNamespace: "dms:clipboard-popout"
+    layerNamespace: "hgs:clipboard-popout"
 
     property var parentWidget: null
     property var triggerScreen: null

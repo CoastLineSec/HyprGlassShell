@@ -8,7 +8,7 @@ Each skill is a directory with a `SKILL.md` entrypoint, optional reference docs,
 
 | Skill | Description |
 |-------|-------------|
-| [dms-plugin-dev](dms-plugin-dev/) | Develop plugins for DankMaterialShell - covers all 4 plugin types (widget, daemon, launcher, desktop), manifest creation, QML components, settings UI, data persistence, theme integration, and PopoutService usage. |
+| [hgs-plugin-dev](hgs-plugin-dev/) | Develop plugins for HyprGlassShell - covers all 4 plugin types (widget, daemon, launcher, desktop), manifest creation, QML components, settings UI, data persistence, theme integration, and PopoutService usage. |
 
 ## Installation
 
@@ -22,16 +22,16 @@ Claude Code discovers skills from `.claude/skills/` (project-level) or `~/.claud
 
 ```bash
 mkdir -p .claude/skills
-ln -s ../../.agents/skills/dms-plugin-dev .claude/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .claude/skills/hgs-plugin-dev
 ```
 
 **Personal** (all your projects):
 
 ```bash
-ln -s /path/to/DankMaterialShell/.agents/skills/dms-plugin-dev ~/.claude/skills/dms-plugin-dev
+ln -s /path/to/HyprGlassShell/.agents/skills/hgs-plugin-dev ~/.claude/skills/hgs-plugin-dev
 ```
 
-After linking, the skill appears in Claude Code's `/` menu as `/dms-plugin-dev`, and Claude loads it automatically when you ask about DMS plugin development.
+After linking, the skill appears in Claude Code's `/` menu as `/hgs-plugin-dev`, and Claude loads it automatically when you ask about HGS plugin development.
 
 See the [Claude Code skills docs](https://code.claude.com/docs/en/skills) for more on skill configuration, invocation control, and frontmatter options.
 
@@ -41,7 +41,7 @@ Cursor discovers skills from `.cursor/skills/` in the project root:
 
 ```bash
 mkdir -p .cursor/skills
-ln -s ../../.agents/skills/dms-plugin-dev .cursor/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .cursor/skills/hgs-plugin-dev
 ```
 
 See [Cursor skills docs](https://cursor.com/docs/context/skills) for details.
@@ -52,7 +52,7 @@ VS Code Copilot discovers skills from `.github/skills/` or `.vscode/skills/`:
 
 ```bash
 mkdir -p .github/skills
-ln -s ../../.agents/skills/dms-plugin-dev .github/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .github/skills/hgs-plugin-dev
 ```
 
 See [VS Code skills docs](https://code.visualstudio.com/docs/copilot/customization/agent-skills) for details.
@@ -63,7 +63,7 @@ Gemini CLI discovers skills from `.gemini/skills/` in the project root:
 
 ```bash
 mkdir -p .gemini/skills
-ln -s ../../.agents/skills/dms-plugin-dev .gemini/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .gemini/skills/hgs-plugin-dev
 ```
 
 See [Gemini CLI skills docs](https://geminicli.com/docs/cli/skills/) for details.
@@ -74,7 +74,7 @@ Codex discovers skills from `.codex/skills/` in the project root:
 
 ```bash
 mkdir -p .codex/skills
-ln -s ../../.agents/skills/dms-plugin-dev .codex/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .codex/skills/hgs-plugin-dev
 ```
 
 See [Codex skills docs](https://developers.openai.com/codex/skills/) for details.
@@ -89,7 +89,7 @@ The general pattern is:
 
 ```bash
 mkdir -p .<agent>/skills
-ln -s ../../.agents/skills/dms-plugin-dev .<agent>/skills/dms-plugin-dev
+ln -s ../../.agents/skills/hgs-plugin-dev .<agent>/skills/hgs-plugin-dev
 ```
 
 ## Adding New Skills

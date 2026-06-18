@@ -211,7 +211,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "add_circle"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -233,7 +233,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         circular: false
                         iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
@@ -242,7 +242,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         circular: false
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
@@ -270,7 +270,7 @@ FloatingWindow {
                         wrapMode: Text.WordWrap
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: searchField
                         width: parent.width
                         height: 48
@@ -305,7 +305,7 @@ FloatingWindow {
                         }
                     }
 
-                    DankListView {
+                    HGSListView {
                         id: widgetList
 
                         width: parent.width
@@ -340,7 +340,7 @@ FloatingWindow {
                                     color: Theme.primarySelected
                                     anchors.verticalCenter: parent.verticalCenter
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: delegateRoot.modelData.icon || "widgets"
                                         size: Theme.iconSize
@@ -378,7 +378,7 @@ FloatingWindow {
                                                 anchors.centerIn: parent
                                                 spacing: 2
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     name: "star"
                                                     size: 10
                                                     color: Theme.secondary
@@ -425,7 +425,7 @@ FloatingWindow {
                                     }
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "add"
                                     size: Theme.iconSize - 4
                                     color: Theme.primary

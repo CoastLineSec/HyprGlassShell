@@ -8,11 +8,11 @@ on:
         required: true
         type: choice
         options:
-          - dms
-          - dms-greeter
-          - dms-git
+          - hgs
+          - hgs-greeter
+          - hgs-git
           - all
-        default: "dms"
+        default: "hgs"
       rebuild_release:
         description: "Release number for rebuilds (e.g., 2, 3, 4 to increment spec Release)"
         required: false
@@ -42,48 +42,48 @@ jobs:
           OBS_USERNAME: ${{ secrets.OBS_USERNAME }}
           OBS_PASSWORD: ${{ secrets.OBS_PASSWORD }}
         run: |
-          # Helper function to check dms-git commit
-          check_dms_git() {
+          # Helper function to check hgs-git commit
+          check_hgs_git() {
             local CURRENT_COMMIT=$(git rev-parse --short=8 HEAD)
-            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:dms-git/dms-git/dms-git.spec" 2>/dev/null || echo "")
+            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:hgs-git/hgs-git/hgs-git.spec" 2>/dev/null || echo "")
             local OBS_COMMIT=$(echo "$OBS_SPEC" | grep "^Version:" | grep -oP '\.[a-f0-9]{8}' | tr -d '.' || echo "")
 
             if [[ -n "$OBS_COMMIT" && "$CURRENT_COMMIT" == "$OBS_COMMIT" ]]; then
-              echo "📋 dms-git: Commit $CURRENT_COMMIT already exists, skipping"
+              echo "📋 hgs-git: Commit $CURRENT_COMMIT already exists, skipping"
               return 1  # No update needed
             else
-              echo "📋 dms-git: New commit $CURRENT_COMMIT (OBS has ${OBS_COMMIT:-none})"
+              echo "📋 hgs-git: New commit $CURRENT_COMMIT (OBS has ${OBS_COMMIT:-none})"
               return 0  # Update needed
             fi
           }
 
-          # Helper function to check dms stable tag
+          # Helper function to check hgs stable tag
           # Sets LATEST_TAG variable in parent scope if update needed
-          check_dms_stable() {
-            LATEST_TAG=$(curl -s https://api.github.com/repos/AvengeMedia/DankMaterialShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
-            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:dms/dms/dms.spec" 2>/dev/null || echo "")
+          check_hgs_stable() {
+            LATEST_TAG=$(curl -s https://api.github.com/repos/CoastLineSec/HyprGlassShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
+            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:hgs/hgs/hgs.spec" 2>/dev/null || echo "")
             local OBS_VERSION=$(echo "$OBS_SPEC" | grep "^Version:" | awk '{print $2}' | xargs || echo "")
 
             if [[ -n "$LATEST_TAG" && "$LATEST_TAG" == "$OBS_VERSION" ]]; then
-              echo "📋 dms: Tag $LATEST_TAG already exists, skipping"
+              echo "📋 hgs: Tag $LATEST_TAG already exists, skipping"
               return 1  # No update needed
             else
-              echo "📋 dms: New tag ${LATEST_TAG:-unknown} (OBS has ${OBS_VERSION:-none})"
+              echo "📋 hgs: New tag ${LATEST_TAG:-unknown} (OBS has ${OBS_VERSION:-none})"
               return 0  # Update needed
             fi
           }
 
-          # Helper function to check dms-greeter stable tag
-          check_dms_greeter_stable() {
-            LATEST_TAG=$(curl -s https://api.github.com/repos/AvengeMedia/DankMaterialShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
-            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:danklinux/dms-greeter/dms-greeter.spec" 2>/dev/null || echo "")
+          # Helper function to check hgs-greeter stable tag
+          check_hgs_greeter_stable() {
+            LATEST_TAG=$(curl -s https://api.github.com/repos/CoastLineSec/HyprGlassShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
+            local OBS_SPEC=$(curl -s -u "$OBS_USERNAME:$OBS_PASSWORD" "https://api.opensuse.org/source/home:AvengeMedia:coastlinesec/hgs-greeter/hgs-greeter.spec" 2>/dev/null || echo "")
             local OBS_VERSION=$(echo "$OBS_SPEC" | grep "^Version:" | awk '{print $2}' | xargs | sed 's/^v//')
 
             if [[ -n "$LATEST_TAG" && "$LATEST_TAG" == "v$OBS_VERSION" ]]; then
-              echo "📋 dms-greeter: Tag $LATEST_TAG already exists, skipping"
+              echo "📋 hgs-greeter: Tag $LATEST_TAG already exists, skipping"
               return 1  # No update needed
             else
-              echo "📋 dms-greeter: New tag ${LATEST_TAG:-unknown} (OBS has ${OBS_VERSION:-none})"
+              echo "📋 hgs-greeter: New tag ${LATEST_TAG:-unknown} (OBS has ${OBS_VERSION:-none})"
               return 0  # Update needed
             fi
           }
@@ -93,16 +93,16 @@ jobs:
 
           if [[ "${{ github.ref }}" =~ ^refs/tags/ ]] && [[ -z "${{ github.event.inputs.package }}" ]]; then
             # Run from tag with no package specified - update both stable packages
-            echo "packages=dms dms-greeter" >> $GITHUB_OUTPUT
+            echo "packages=hgs hgs-greeter" >> $GITHUB_OUTPUT
             VERSION="${GITHUB_REF#refs/tags/}"
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "has_updates=true" >> $GITHUB_OUTPUT
             echo "Triggered by tag: $VERSION (always update)"
 
           elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-            # Scheduled run - check dms-git only
-            echo "packages=dms-git" >> $GITHUB_OUTPUT
-            if check_dms_git; then
+            # Scheduled run - check hgs-git only
+            echo "packages=hgs-git" >> $GITHUB_OUTPUT
+            if check_hgs_git; then
               echo "has_updates=true" >> $GITHUB_OUTPUT
             else
               echo "has_updates=false" >> $GITHUB_OUTPUT
@@ -121,14 +121,14 @@ jobs:
             elif [[ "$PKG" == "all" ]]; then
               # Check each stable package and build list of those needing updates
               PACKAGES_TO_UPDATE=()
-              if check_dms_stable; then
-                PACKAGES_TO_UPDATE+=("dms")
+              if check_hgs_stable; then
+                PACKAGES_TO_UPDATE+=("hgs")
                 if [[ -n "$LATEST_TAG" ]]; then
                   echo "version=$LATEST_TAG" >> $GITHUB_OUTPUT
                 fi
               fi
-              if check_dms_greeter_stable; then
-                PACKAGES_TO_UPDATE+=("dms-greeter")
+              if check_hgs_greeter_stable; then
+                PACKAGES_TO_UPDATE+=("hgs-greeter")
                 [[ -n "$LATEST_TAG" ]] && echo "version=$LATEST_TAG" >> $GITHUB_OUTPUT
               fi
 
@@ -142,8 +142,8 @@ jobs:
                 echo "✓ Both packages up to date"
               fi
 
-            elif [[ "$PKG" == "dms-git" ]]; then
-              if check_dms_git; then
+            elif [[ "$PKG" == "hgs-git" ]]; then
+              if check_hgs_git; then
                 echo "packages=$PKG" >> $GITHUB_OUTPUT
                 echo "has_updates=true" >> $GITHUB_OUTPUT
               else
@@ -151,8 +151,8 @@ jobs:
                 echo "has_updates=false" >> $GITHUB_OUTPUT
               fi
 
-            elif [[ "$PKG" == "dms" ]]; then
-              if check_dms_stable; then
+            elif [[ "$PKG" == "hgs" ]]; then
+              if check_hgs_stable; then
                 echo "packages=$PKG" >> $GITHUB_OUTPUT
                 echo "has_updates=true" >> $GITHUB_OUTPUT
                 if [[ -n "$LATEST_TAG" ]]; then
@@ -163,8 +163,8 @@ jobs:
                 echo "has_updates=false" >> $GITHUB_OUTPUT
               fi
 
-            elif [[ "$PKG" == "dms-greeter" ]]; then
-              if check_dms_greeter_stable; then
+            elif [[ "$PKG" == "hgs-greeter" ]]; then
+              if check_hgs_greeter_stable; then
                 echo "packages=$PKG" >> $GITHUB_OUTPUT
                 echo "has_updates=true" >> $GITHUB_OUTPUT
                 if [[ -n "$LATEST_TAG" ]]; then
@@ -212,16 +212,16 @@ jobs:
             echo "version=${{ needs.check-updates.outputs.version }}" >> $GITHUB_OUTPUT
             echo "Using version from check-updates: ${{ needs.check-updates.outputs.version }}"
           elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-            # Scheduled run - dms-git only
+            # Scheduled run - hgs-git only
             echo "packages=${{ needs.check-updates.outputs.packages }}" >> $GITHUB_OUTPUT
             echo "Triggered by schedule: updating git package"
           elif [[ -n "${{ github.event.inputs.package }}" ]]; then
             # Manual workflow dispatch
 
-            # Determine version for dms stable and dms-greeter using the API
+            # Determine version for hgs stable and hgs-greeter using the API
             # GITHUB_REF is unreliable when "Use workflow from" a tag; API works from any ref
-            if [[ "${{ github.event.inputs.package }}" == "dms" ]] || [[ "${{ github.event.inputs.package }}" == "dms-greeter" ]] || [[ "${{ github.event.inputs.package }}" == "all" ]]; then
-              LATEST_TAG=$(curl -s https://api.github.com/repos/AvengeMedia/DankMaterialShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
+            if [[ "${{ github.event.inputs.package }}" == "hgs" ]] || [[ "${{ github.event.inputs.package }}" == "hgs-greeter" ]] || [[ "${{ github.event.inputs.package }}" == "all" ]]; then
+              LATEST_TAG=$(curl -s https://api.github.com/repos/CoastLineSec/HyprGlassShell/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": "\([^"]*\)".*/\1/' || echo "")
               if [[ -n "$LATEST_TAG" ]]; then
                 echo "version=$LATEST_TAG" >> $GITHUB_OUTPUT
                 echo "Using latest release from API: $LATEST_TAG"
@@ -246,47 +246,47 @@ jobs:
             fi
           fi
 
-      - name: Update dms-git spec version
-        if: contains(steps.packages.outputs.packages, 'dms-git')
+      - name: Update hgs-git spec version
+        if: contains(steps.packages.outputs.packages, 'hgs-git')
         run: |
           COMMIT_HASH=$(git rev-parse --short=8 HEAD)
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/dms.spec | head -1 || echo "1.0.2")
+          BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/hgs.spec | head -1 || echo "1.0.2")
           NEW_VERSION="${BASE_VERSION}+git${COMMIT_COUNT}.${COMMIT_HASH}"
-          echo "📦 Updating dms-git.spec to version: $NEW_VERSION"
+          echo "📦 Updating hgs-git.spec to version: $NEW_VERSION"
 
-          sed -i "s/^Version:.*/Version:        $NEW_VERSION/" distro/opensuse/dms-git.spec
+          sed -i "s/^Version:.*/Version:        $NEW_VERSION/" distro/opensuse/hgs-git.spec
 
           # Single changelog entry (git snapshots don't need history)
           DATE_STR=$(date "+%a %b %d %Y")
-          LOCAL_SPEC_HEAD=$(sed -n '1,/%changelog/{ /%changelog/d; p }' distro/opensuse/dms-git.spec)
+          LOCAL_SPEC_HEAD=$(sed -n '1,/%changelog/{ /%changelog/d; p }' distro/opensuse/hgs-git.spec)
           {
             echo "$LOCAL_SPEC_HEAD"
             echo "%changelog"
             echo "* $DATE_STR Avenge Media <AvengeMedia.US@gmail.com> - ${NEW_VERSION}-1"
             echo "- Git snapshot (commit $COMMIT_COUNT: $COMMIT_HASH)"
-          } > distro/opensuse/dms-git.spec
+          } > distro/opensuse/hgs-git.spec
 
-      - name: Update Debian dms-git changelog version
-        if: contains(steps.packages.outputs.packages, 'dms-git')
+      - name: Update Debian hgs-git changelog version
+        if: contains(steps.packages.outputs.packages, 'hgs-git')
         run: |
           COMMIT_HASH=$(git rev-parse --short=8 HEAD)
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/dms.spec | head -1 || echo "1.0.2")
+          BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/hgs.spec | head -1 || echo "1.0.2")
           NEW_VERSION="${BASE_VERSION}+git${COMMIT_COUNT}.${COMMIT_HASH}"
-          echo "📦 Updating Debian dms-git changelog to version: $NEW_VERSION"
+          echo "📦 Updating Debian hgs-git changelog to version: $NEW_VERSION"
 
           # Single changelog entry (git snapshots don't need history)
           CHANGELOG_DATE=$(date -R)
           {
-            echo "dms-git (${NEW_VERSION}db1) nightly; urgency=medium"
+            echo "hgs-git (${NEW_VERSION}db1) nightly; urgency=medium"
             echo ""
             echo "  * Git snapshot (commit $COMMIT_COUNT: $COMMIT_HASH)"
             echo ""
             echo " -- Avenge Media <AvengeMedia.US@gmail.com>  $CHANGELOG_DATE"
-          } > "distro/debian/dms-git/debian/changelog"
+          } > "distro/debian/hgs-git/debian/changelog"
 
-      - name: Update stable version (dms + dms-greeter)
+      - name: Update stable version (hgs + hgs-greeter)
         if: steps.packages.outputs.version != ''
         run: |
           VERSION="${{ steps.packages.outputs.version }}"
@@ -294,53 +294,53 @@ jobs:
           PACKAGES="${{ steps.packages.outputs.packages }}"
           echo "==> Updating packaging files to version: $VERSION_NO_V"
 
-          # Update dms spec and changelog when dms is in the upload list
-          if [[ "$PACKAGES" == *"dms"* ]]; then
-            sed -i "s/^Version:.*/Version:        $VERSION_NO_V/" distro/opensuse/dms.spec
-            UPDATED_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/dms.spec | head -1)
-            echo "✓ dms spec now shows Version: $UPDATED_VERSION"
+          # Update hgs spec and changelog when hgs is in the upload list
+          if [[ "$PACKAGES" == *"hgs"* ]]; then
+            sed -i "s/^Version:.*/Version:        $VERSION_NO_V/" distro/opensuse/hgs.spec
+            UPDATED_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/hgs.spec | head -1)
+            echo "✓ hgs spec now shows Version: $UPDATED_VERSION"
 
             DATE_STR=$(date "+%a %b %d %Y")
-            LOCAL_SPEC_HEAD=$(sed -n '1,/%changelog/{ /%changelog/d; p }' distro/opensuse/dms.spec)
+            LOCAL_SPEC_HEAD=$(sed -n '1,/%changelog/{ /%changelog/d; p }' distro/opensuse/hgs.spec)
             {
               echo "$LOCAL_SPEC_HEAD"
               echo "%changelog"
               echo "* $DATE_STR AvengeMedia <maintainer@avengemedia.com> - ${VERSION_NO_V}-1"
               echo "- Update to stable $VERSION release"
-            } > distro/opensuse/dms.spec
+            } > distro/opensuse/hgs.spec
 
-            if [[ -f "distro/debian/dms/debian/changelog" ]]; then
+            if [[ -f "distro/debian/hgs/debian/changelog" ]]; then
               CHANGELOG_DATE=$(date -R)
               {
-                echo "dms (${VERSION_NO_V}db1) stable; urgency=medium"
+                echo "hgs (${VERSION_NO_V}db1) stable; urgency=medium"
                 echo ""
                 echo "  * Update to $VERSION stable release"
                 echo ""
                 echo " -- Avenge Media <AvengeMedia.US@gmail.com>  $CHANGELOG_DATE"
-              } > "distro/debian/dms/debian/changelog"
-              echo "✓ Updated dms changelog to ${VERSION_NO_V}db1"
+              } > "distro/debian/hgs/debian/changelog"
+              echo "✓ Updated hgs changelog to ${VERSION_NO_V}db1"
             fi
           fi
 
-          # Update dms-greeter changelog when dms-greeter is in the upload list
-          if [[ "$PACKAGES" == *"dms-greeter"* ]] && [[ -f "distro/debian/dms-greeter/debian/changelog" ]]; then
+          # Update hgs-greeter changelog when hgs-greeter is in the upload list
+          if [[ "$PACKAGES" == *"hgs-greeter"* ]] && [[ -f "distro/debian/hgs-greeter/debian/changelog" ]]; then
             CHANGELOG_DATE=$(date -R)
             {
-              echo "dms-greeter (${VERSION_NO_V}db1) unstable; urgency=medium"
+              echo "hgs-greeter (${VERSION_NO_V}db1) unstable; urgency=medium"
               echo ""
               echo "  * Update to $VERSION stable release"
               echo ""
               echo " -- Avenge Media <AvengeMedia.US@gmail.com>  $CHANGELOG_DATE"
-            } > "distro/debian/dms-greeter/debian/changelog"
-            echo "✓ Updated dms-greeter changelog to ${VERSION_NO_V}db1"
+            } > "distro/debian/hgs-greeter/debian/changelog"
+            echo "✓ Updated hgs-greeter changelog to ${VERSION_NO_V}db1"
           fi
 
           # Update Debian _service files for packages in upload list (download_url paths)
           for service in distro/debian/*/_service; do
             if [[ -f "$service" ]]; then
-              # Update tar_scm revision parameter (for dms-git)
+              # Update tar_scm revision parameter (for hgs-git)
               sed -i "s|<param name=\"revision\">v[0-9.]*</param>|<param name=\"revision\">$VERSION</param>|" "$service"
-              # Update download_url paths (for dms, dms-greeter stable)
+              # Update download_url paths (for hgs, hgs-greeter stable)
               sed -i "s|/v[0-9.]\+/|/$VERSION/|g" "$service"
               sed -i "s|/tags/v[0-9.]\+\.tar\.gz|/tags/$VERSION.tar.gz|g" "$service"
             fi
@@ -368,14 +368,14 @@ jobs:
           chmod 600 ~/.config/osc/oscrc
 
       # Cache OBS bundled Go toolchains
-      - name: Cache OBS bundled Go toolchains (dms-git)
-        if: contains(steps.packages.outputs.packages, 'dms-git')
+      - name: Cache OBS bundled Go toolchains (hgs-git)
+        if: contains(steps.packages.outputs.packages, 'hgs-git')
         uses: actions/cache@v4
         with:
-          path: /home/runner/.cache/dms-obs-go-toolchain
-          key: dms-obs-go-toolchain-${{ runner.os }}-${{ hashFiles('core/go.mod') }}
+          path: /home/runner/.cache/hgs-obs-go-toolchain
+          key: hgs-obs-go-toolchain-${{ runner.os }}-${{ hashFiles('core/go.mod') }}
           restore-keys: |
-            dms-obs-go-toolchain-${{ runner.os }}-
+            hgs-obs-go-toolchain-${{ runner.os }}-
 
       - name: Upload to OBS
         id: upload
@@ -401,7 +401,7 @@ jobs:
           UPLOADED_PACKAGES=()
           SKIPPED_PACKAGES=()
 
-          # PACKAGES can be space-separated list (e.g., "dms dms-greeter" from "all" check)
+          # PACKAGES can be space-separated list (e.g., "hgs hgs-greeter" from "all" check)
           # Loop through each package and upload
           for PKG in $PACKAGES; do
             echo ""
@@ -414,8 +414,8 @@ jobs:
 
             LOG_FILE=$(mktemp)
             set +e
-            if [[ "$PKG" == "dms-git" ]]; then
-              bash distro/scripts/obs-upload.sh dms-git "Automated git update" >"$LOG_FILE" 2>&1
+            if [[ "$PKG" == "hgs-git" ]]; then
+              bash distro/scripts/obs-upload.sh hgs-git "Automated git update" >"$LOG_FILE" 2>&1
             else
               bash distro/scripts/obs-upload.sh "$PKG" "$MESSAGE" >"$LOG_FILE" 2>&1
             fi
@@ -498,14 +498,14 @@ jobs:
               fi
 
               case "$PKG" in
-                dms)
-                  echo "- $STATUS_ICON **dms** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:dms/dms)" >> $GITHUB_STEP_SUMMARY
+                hgs)
+                  echo "- $STATUS_ICON **hgs** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:hgs/hgs)" >> $GITHUB_STEP_SUMMARY
                   ;;
-                dms-git)
-                  echo "- $STATUS_ICON **dms-git** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:dms-git/dms-git)" >> $GITHUB_STEP_SUMMARY
+                hgs-git)
+                  echo "- $STATUS_ICON **hgs-git** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:hgs-git/hgs-git)" >> $GITHUB_STEP_SUMMARY
                   ;;
-                dms-greeter)
-                  echo "- $STATUS_ICON **dms-greeter** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:danklinux/dms-greeter)" >> $GITHUB_STEP_SUMMARY
+                hgs-greeter)
+                  echo "- $STATUS_ICON **hgs-greeter** ($STATUS_TEXT) → [View builds](https://build.opensuse.org/package/show/home:AvengeMedia:coastlinesec/hgs-greeter)" >> $GITHUB_STEP_SUMMARY
                   ;;
               esac
             done

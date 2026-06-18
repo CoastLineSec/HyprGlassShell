@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -3,7 +3,7 @@
     "name": "Image Gallery Example",
     "description": "Example launcher plugin demonstrating tile mode with images",
     "version": "1.0.0",
-    "author": "DMS Team",
+    "author": "HGS Team",
     "icon": "photo_library",
     "type": "launcher",
     "trigger": "img",

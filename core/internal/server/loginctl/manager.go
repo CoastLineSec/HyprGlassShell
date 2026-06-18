@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/dbusutil"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/dbusutil"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -381,7 +381,7 @@ func (m *Manager) acquireSleepInhibitor() error {
 		return fmt.Errorf("manager object not available")
 	}
 
-	file, err := m.inhibit("sleep", "DankMaterialShell", "Lock before suspend", "delay")
+	file, err := m.inhibit("sleep", "HyprGlassShell", "Lock before suspend", "delay")
 	if err != nil {
 		return err
 	}

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
 )
@@ -104,7 +104,7 @@ func (m *Manager) claimScreensaverName(handler *screensaverHandler, name, iface 
 		return false
 	}
 	if reply != dbus.RequestNameReplyPrimaryOwner {
-		log.Infof("Screensaver name %s already owned by another process (e.g. hypridle/swayidle)", name)
+		log.Infof("Screensaver name %s already owned by another idle daemon", name)
 		return false
 	}
 	if err := m.exportScreensaverOnPaths(handler, iface, paths...); err != nil {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/keybinds"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/keybinds"
 )
 
 func TestHyprlandAutogenerateComment(t *testing.T) {
@@ -69,7 +69,7 @@ func TestHyprlandLuaBindRoundTripHelpers(t *testing.T) {
 		wantDispatcher string
 		wantParams     string
 	}{
-		{`hl.dsp.exec_cmd([[dms ipc call brightness increment 5 ""]])`, "exec", `dms ipc call brightness increment 5 ""`},
+		{`hl.dsp.exec_cmd([[hgs ipc call brightness increment 5 ""]])`, "exec", `hgs ipc call brightness increment 5 ""`},
 		{`hl.dsp.exec_cmd([[hyprctl dispatch workspace 1]])`, "workspace", "1"},
 		{`hl.dispatch("workspace 2")`, "workspace", "2"},
 		{`hl.dispatch([[customdispatcher arg one]])`, "customdispatcher", "arg one"},
@@ -133,12 +133,12 @@ func TestWriteLuaBindLineMapsSpawnActionForHyprland(t *testing.T) {
 	var sb strings.Builder
 	writeLuaBindLine(&sb, &hyprlandOverrideBind{
 		Key:         "Super+n",
-		Action:      "spawn dms ipc call notepad toggle",
+		Action:      "spawn hgs ipc call notepad toggle",
 		Description: "Notepad: Toggle",
 	})
 
 	want := `hl.unbind("SUPER + N")
-hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"), { description = "Notepad: Toggle" })`
+hl.bind("SUPER + N", hl.dsp.exec_cmd("hgs ipc call notepad toggle"), { description = "Notepad: Toggle" })`
 	if got := strings.TrimSpace(sb.String()); got != want {
 		t.Fatalf("writeLuaBindLine() = %q, want %q", got, want)
 	}
@@ -239,9 +239,9 @@ func TestLuaActionStringLeavesCustomLuaDispatcherRaw(t *testing.T) {
 
 func TestReadLuaOverrideMigratesTrailingCommentToDescription(t *testing.T) {
 	tmpDir := t.TempDir()
-	overridePath := filepath.Join(tmpDir, "binds-user.lua")
+	overridePath := filepath.Join(tmpDir, "user-keybinds.lua")
 	contents := `hl.unbind("SUPER + N")
-hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle")) -- Notepad: Toggle
+hl.bind("SUPER + N", hl.dsp.exec_cmd("hgs ipc call notepad toggle")) -- Notepad: Toggle
 hl.bind("SUPER + H", hl.dsp.exec_cmd("app --help"))
 `
 	if err := os.WriteFile(overridePath, []byte(contents), 0o644); err != nil {
@@ -266,24 +266,24 @@ hl.bind("SUPER + H", hl.dsp.exec_cmd("app --help"))
 
 func TestHyprlandLuaBindsUserOverridesDefaults(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(tmpDir, "hyprland.lua"), []byte(`
-require("dms.binds")
-require("dms.binds-user")
+require("hgs.keybinds")
+require("hgs.user-keybinds")
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds.lua"), []byte(`hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "keybinds.lua"), []byte(`hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(`hl.bind("SUPER + T", hl.dsp.exec_cmd("foot"), { description = "User terminal" })`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(`hl.bind("SUPER + T", hl.dsp.exec_cmd("foot"), { description = "User terminal" })`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	result, err := ParseHyprlandKeysWithDMS(tmpDir)
+	result, err := ParseHyprlandKeysWithHGS(tmpDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,11 +322,11 @@ func TestWriteLuaBindLineEmitsUnbindOnlyForNegativeOverride(t *testing.T) {
 
 func TestReadLuaOverrideRecognizesLoneUnbindAsNegativeOverride(t *testing.T) {
 	tmpDir := t.TempDir()
-	overridePath := filepath.Join(tmpDir, "binds-user.lua")
-	contents := `-- DMS user keybind overrides
+	overridePath := filepath.Join(tmpDir, "user-keybinds.lua")
+	contents := `-- HGS user keybind overrides
 hl.unbind("SUPER + I")
 hl.unbind("SUPER + N")
-hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("hgs ipc call notepad toggle"))
 `
 	if err := os.WriteFile(overridePath, []byte(contents), 0o644); err != nil {
 		t.Fatal(err)
@@ -349,29 +349,29 @@ hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
 	}
 }
 
-func TestParserDropsDMSDefaultsSuppressedByBindsUserUnbind(t *testing.T) {
+func TestParserDropsHGSDefaultsSuppressedByBindsUserUnbind(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(tmpDir, "hyprland.lua"), []byte(`
-require("dms.binds")
-require("dms.binds-user")
+require("hgs.keybinds")
+require("hgs.user-keybinds")
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds.lua"), []byte(
+	if err := os.WriteFile(filepath.Join(hgsDir, "keybinds.lua"), []byte(
 		`hl.bind("SUPER + I", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`,
 	), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(`hl.unbind("SUPER + I")`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(`hl.unbind("SUPER + I")`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	result, err := ParseHyprlandKeysWithDMS(tmpDir)
+	result, err := ParseHyprlandKeysWithHGS(tmpDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -390,7 +390,7 @@ hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`,
 
 	for _, k := range keys {
 		if k == "SUPER+I" {
-			t.Fatalf("expected SUPER+I to be suppressed by binds-user.lua unbind, got: %v", keys)
+			t.Fatalf("expected SUPER+I to be suppressed by user-keybinds.lua unbind, got: %v", keys)
 		}
 	}
 	foundT := false
@@ -406,8 +406,8 @@ hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`,
 
 func TestHyprlandRemoveBindWritesNegativeOverrideForDefault(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -416,7 +416,7 @@ func TestHyprlandRemoveBindWritesNegativeOverrideForDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+	data, err := os.ReadFile(filepath.Join(hgsDir, "user-keybinds.lua"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -442,23 +442,23 @@ func TestHyprlandSetBindLeavesConfOnlyInstallReadOnly(t *testing.T) {
 	if !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("expected read-only error, got %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(tmpDir, "dms", "binds-user.lua")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(tmpDir, "hgs", "user-keybinds.lua")); !os.IsNotExist(err) {
 		t.Fatalf("expected no Lua override to be created for conf-only config, stat err=%v", err)
 	}
 }
 
 func TestHyprlandSetBindUpdatesSpacedLuaOverrideWithoutDuplicates(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	override := `-- DMS user keybind overrides
+	override := `-- HGS user keybind overrides
 
 hl.unbind("SUPER + SHIFT + S")
 hl.bind("SUPER + 1", hl.dsp.exec_cmd("hyprctl dispatch workspace 1"))
 `
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(override), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(override), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -467,7 +467,7 @@ hl.bind("SUPER + 1", hl.dsp.exec_cmd("hyprctl dispatch workspace 1"))
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+	data, err := os.ReadFile(filepath.Join(hgsDir, "user-keybinds.lua"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -488,14 +488,14 @@ hl.bind("SUPER + 1", hl.dsp.exec_cmd("hyprctl dispatch workspace 1"))
 
 func TestHyprlandRemoveBindReplacesExistingOverrideWithNegativeOverride(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	override := `hl.unbind("SUPER + N")
-hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("hgs ipc call notepad toggle"))
 `
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(override), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(override), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -504,7 +504,7 @@ hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+	data, err := os.ReadFile(filepath.Join(hgsDir, "user-keybinds.lua"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -518,14 +518,14 @@ hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
 
 func TestHyprlandResetBindRevertsExistingOverrideToDefault(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	override := `hl.unbind("SUPER + N")
-hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("hgs ipc call notepad toggle"))
 `
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(override), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(override), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -534,7 +534,7 @@ hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+	data, err := os.ReadFile(filepath.Join(hgsDir, "user-keybinds.lua"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -545,22 +545,22 @@ hl.bind("SUPER + N", hl.dsp.exec_cmd("dms ipc call notepad toggle"))
 
 func TestHyprlandHasDefaultSetForOverrideOfDefaultKey(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(tmpDir, "hyprland.lua"), []byte(`
-require("dms.binds")
-require("dms.binds-user")
+require("hgs.keybinds")
+require("hgs.user-keybinds")
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds.lua"), []byte(
+	if err := os.WriteFile(filepath.Join(hgsDir, "keybinds.lua"), []byte(
 		`hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))`,
 	), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(
+	if err := os.WriteFile(filepath.Join(hgsDir, "user-keybinds.lua"), []byte(
 		`hl.unbind("SUPER + T")
 hl.bind("SUPER + T", hl.dsp.exec_cmd("foot"))
 hl.bind("SUPER + Z", hl.dsp.exec_cmd("custom"))`,
@@ -591,7 +591,7 @@ hl.bind("SUPER + Z", hl.dsp.exec_cmd("custom"))`,
 		t.Fatalf("expected SUPER+T override in cheatsheet")
 	}
 	if !foundT.HasDefault {
-		t.Fatalf("expected SUPER+T HasDefault=true (default exists in binds.lua), got %+v", foundT)
+		t.Fatalf("expected SUPER+T HasDefault=true (default exists in keybinds.lua), got %+v", foundT)
 	}
 	if foundZ == nil {
 		t.Fatalf("expected SUPER+Z (user-only) in cheatsheet")

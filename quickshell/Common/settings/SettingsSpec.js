@@ -5,6 +5,14 @@ function percentToUnit(v) {
     return v > 1 ? v / 100 : v;
 }
 
+function clampUnit(v) {
+    if (v === undefined || v === null) return undefined;
+    var n = Number(v);
+    if (isNaN(n)) return undefined;
+    if (n > 1) n = n / 100;
+    return Math.max(0, Math.min(1, n));
+}
+
 var SPEC = {
     currentThemeName: { def: "purple", onChange: "applyStoredTheme" },
     currentThemeCategory: { def: "generic" },
@@ -17,23 +25,20 @@ var SPEC = {
 
     popupTransparency: { def: 1.0, coerce: percentToUnit },
     dockTransparency: { def: 1.0, coerce: percentToUnit },
+    hyprGlassColorGlassEnabled: { def: false },
+    hyprGlassColorSource: { def: "custom" },
+    hyprGlassCustomColor: { def: "#88AADD" },
+    hyprGlassFrostAmount: { def: 0.08, coerce: clampUnit },
 
     widgetBackgroundColor: { def: "sch" },
     widgetColorMode: { def: "default" },
     controlCenterTileColorMode: { def: "primary" },
     buttonColorMode: { def: "primary" },
     cornerRadius: { def: 16, onChange: "updateCompositorLayout" },
-    niriLayoutGapsOverride: { def: -1, onChange: "updateCompositorLayout" },
-    niriLayoutRadiusOverride: { def: -1, onChange: "updateCompositorLayout" },
-    niriLayoutBorderSize: { def: -1, onChange: "updateCompositorLayout" },
     hyprlandLayoutGapsOverride: { def: -1, onChange: "updateCompositorLayout" },
     hyprlandLayoutRadiusOverride: { def: -1, onChange: "updateCompositorLayout" },
     hyprlandLayoutBorderSize: { def: -1, onChange: "updateCompositorLayout" },
     hyprlandResizeOnBorder: { def: false, onChange: "updateCompositorLayout" },
-    mangoLayoutGapsOverride: { def: -1, onChange: "updateCompositorLayout" },
-    mangoLayoutRadiusOverride: { def: -1, onChange: "updateCompositorLayout" },
-    mangoLayoutBorderSize: { def: -1, onChange: "updateCompositorLayout" },
-    mangoTrackpadNaturalScrolling: { def: true, onChange: "updateCompositorCursor" },
 
     firstDayOfWeek: { def: -1 },
     showWeekNumber: { def: false },
@@ -70,8 +75,6 @@ var SPEC = {
     blurBorderCustomColor: { def: "#ffffff" },
     blurBorderOpacity: { def: 0.35, coerce: percentToUnit },
     wallpaperFillMode: { def: "Fill" },
-    blurredWallpaperLayer: { def: false },
-    blurWallpaperOnOverview: { def: false },
 
     showLauncherButton: { def: true },
     showWorkspaceSwitcher: { def: true },
@@ -141,7 +144,6 @@ var SPEC = {
     workspaceFollowFocus: { def: false },
     showOccupiedWorkspacesOnly: { def: false },
     reverseScrolling: { def: false },
-    dwlShowAllTags: { def: false },
     workspaceActiveAppHighlightEnabled: { def: false },
     workspaceColorMode: { def: "default" },
     workspaceOccupiedColorMode: { def: "none" },
@@ -213,20 +215,18 @@ var SPEC = {
     filePickerUsageHistory: { def: {} },
     sortAppsAlphabetically: { def: false },
     appLauncherGridColumns: { def: 4 },
-    spotlightCloseNiriOverview: { def: true },
     rememberLastQuery: { def: false },
     rememberLastMode: { def: true },
     spotlightSectionViewModes: { def: {} },
     appDrawerSectionViewModes: { def: {} },
-    niriOverviewOverlayEnabled: { def: true },
-    dankLauncherV2Size: { def: "compact" },
-    dankLauncherV2BorderEnabled: { def: false },
-    dankLauncherV2BorderThickness: { def: 2 },
-    dankLauncherV2BorderColor: { def: "primary" },
-    dankLauncherV2ShowFooter: { def: true },
-    dankLauncherV2UnloadOnClose: { def: false },
-    dankLauncherV2IncludeFilesInAll: { def: false },
-    dankLauncherV2IncludeFoldersInAll: { def: false },
+    hgsLauncherV2Size: { def: "compact" },
+    hgsLauncherV2BorderEnabled: { def: false },
+    hgsLauncherV2BorderThickness: { def: 2 },
+    hgsLauncherV2BorderColor: { def: "primary" },
+    hgsLauncherV2ShowFooter: { def: true },
+    hgsLauncherV2UnloadOnClose: { def: false },
+    hgsLauncherV2IncludeFilesInAll: { def: false },
+    hgsLauncherV2IncludeFoldersInAll: { def: false },
     launcherUseOverlayLayer: { def: false },
     launcherStyle: { def: "full" },
     spotlightBarShowModeChips: { def: false },
@@ -243,7 +243,7 @@ var SPEC = {
     qt6ctAvailable: { def: false, persist: false },
     gtkAvailable: { def: false, persist: false },
 
-    cursorSettings: { def: { theme: "System Default", size: 24, niri: { hideWhenTyping: false, hideAfterInactiveMs: 0 }, hyprland: { hideOnKeyPress: false, hideOnTouch: false, inactiveTimeout: 0 }, dwl: { cursorHideTimeout: 0 }, mango: { cursorHideTimeout: 0 } }, onChange: "updateCompositorCursor" },
+    cursorSettings: { def: { theme: "System Default", size: 24, hyprland: { hideOnKeyPress: false, hideOnTouch: false, inactiveTimeout: 0 } }, onChange: "updateCompositorCursor" },
     availableCursorThemes: { def: ["System Default"], persist: false },
     systemDefaultCursorTheme: { def: "", persist: false },
 
@@ -320,11 +320,9 @@ var SPEC = {
     muxCustomCommand: { def: "" },
     muxSessionFilter: { def: "" },
 
-    runDmsMatugenTemplates: { def: true },
+    runHgsMatugenTemplates: { def: true },
     matugenTemplateGtk: { def: true },
-    matugenTemplateNiri: { def: true },
     matugenTemplateHyprland: { def: true },
-    matugenTemplateMangowc: { def: true },
     matugenTemplateQt5ct: { def: true },
     matugenTemplateQt6ct: { def: true },
     matugenTemplateFirefox: { def: true },
@@ -359,7 +357,6 @@ var SPEC = {
     dockUseOverlayLayer: { def: false },
     dockGroupByApp: { def: false },
     dockRestoreSpecialWorkspaceOnClick: { def: false },
-    dockOpenOnOverview: { def: false },
     dockPosition: { def: 1 },
     dockSpacing: { def: 4 },
     dockBottomGap: { def: 0 },
@@ -469,7 +466,6 @@ var SPEC = {
     displayNameMode: { def: "system" },
     screenPreferences: { def: {} },
     showOnLastDisplay: { def: {} },
-    niriOutputSettings: { def: {} },
     hyprlandOutputSettings: { def: {} },
     displayProfiles: { def: {} },
     activeDisplayProfile: { def: {} },
@@ -517,14 +513,12 @@ var SPEC = {
             autoHideStrict: false,
             autoHideDelay: 250,
             showOnWindowsOpen: false,
-            openOnOverview: false,
             visible: true,
             popupGapsAuto: true,
             popupGapsManual: 4,
             maximizeDetection: true,
             useOverlayLayer: false,
             scrollEnabled: true,
-            scrollXBehavior: "column",
             scrollYBehavior: "workspace",
             shadowIntensity: 0,
             shadowOpacity: 60,
@@ -595,7 +589,6 @@ var SPEC = {
     frameOpacity: { def: 1.0 },
     frameScreenPreferences: { def: ["all"] },
     frameBarSize: { def: 40 },
-    frameShowOnOverview: { def: false },
     frameBlurEnabled: { def: true },
     frameCloseGaps: { def: true },
     frameLauncherEmergeSide: { def: "bottom" },

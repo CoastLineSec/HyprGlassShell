@@ -65,7 +65,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Theme.spacingXS
 
-        DankIcon {
+        HGSIcon {
             anchors.verticalCenter: parent.verticalCenter
             name: "storage"
             size: Theme.iconSizeLarge
@@ -107,7 +107,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

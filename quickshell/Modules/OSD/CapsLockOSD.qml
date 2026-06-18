@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+HGSOSD {
     id: root
 
     osdWidth: Theme.iconSize + Theme.spacingS * 2
@@ -14,23 +14,23 @@ DankOSD {
     property bool lastCapsLockState: false
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onCapsLockStateChanged() {
-            if (lastCapsLockState !== DMSService.capsLockState && SettingsData.osdCapsLockEnabled) {
+            if (lastCapsLockState !== HGSService.capsLockState && SettingsData.osdCapsLockEnabled) {
                 root.show()
             }
-            lastCapsLockState = DMSService.capsLockState
+            lastCapsLockState = HGSService.capsLockState
         }
     }
 
     Component.onCompleted: {
-        lastCapsLockState = DMSService.capsLockState
+        lastCapsLockState = HGSService.capsLockState
     }
 
-    content: DankIcon {
+    content: HGSIcon {
         anchors.centerIn: parent
-        name: DMSService.capsLockState ? "shift_lock" : "shift_lock_off"
+        name: HGSService.capsLockState ? "shift_lock" : "shift_lock_off"
         size: Theme.iconSize
         color: Theme.primary
     }

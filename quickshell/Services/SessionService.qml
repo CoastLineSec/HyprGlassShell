@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.I3
 import qs.Common
 import qs.Services
 
@@ -44,7 +43,7 @@ Singleton {
     property bool prepareForSleepSubscriptionPending: false
     property double lastResumeSignalTimestamp: 0
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("HGS_SOCKET")
 
     Timer {
         id: sessionInitTimer
@@ -61,9 +60,9 @@ Singleton {
                 return;
             }
             if (socketPath && socketPath.length > 0) {
-                checkDMSCapabilities();
+                checkHGSCapabilities();
             } else {
-                log.debug("DMS_SOCKET not set");
+                log.debug("HGS_SOCKET not set");
             }
         }
     }
@@ -221,7 +220,7 @@ Singleton {
         }
 
         const userPrefix = SettingsData.launchPrefix?.trim() || "";
-        const defaultPrefix = Quickshell.env("DMS_DEFAULT_LAUNCH_PREFIX") || "";
+        const defaultPrefix = Quickshell.env("HGS_DEFAULT_LAUNCH_PREFIX") || "";
         const prefix = userPrefix.length > 0 ? userPrefix : defaultPrefix;
         const workDir = desktopEntry.workingDirectory || Quickshell.env("HOME");
         const cursorEnv = typeof SettingsData.getCursorEnvironment === "function" ? SettingsData.getCursorEnvironment() : {};
@@ -273,7 +272,7 @@ Singleton {
             cmd = [nvidiaCommand].concat(cmd);
 
         const userPrefix = SettingsData.launchPrefix?.trim() || "";
-        const defaultPrefix = Quickshell.env("DMS_DEFAULT_LAUNCH_PREFIX") || "";
+        const defaultPrefix = Quickshell.env("HGS_DEFAULT_LAUNCH_PREFIX") || "";
         const prefix = userPrefix.length > 0 ? userPrefix : defaultPrefix;
         const workDir = desktopEntry.workingDirectory || Quickshell.env("HOME");
         const cursorEnv = typeof SettingsData.getCursorEnvironment === "function" ? SettingsData.getCursorEnvironment() : {};
@@ -308,28 +307,6 @@ Singleton {
 
     function _logout() {
         if (SettingsData.customPowerActionLogout.length === 0) {
-            if (CompositorService.isNiri) {
-                NiriService.quit();
-                return;
-            }
-
-            if (CompositorService.isMango) {
-                MangoService.quit();
-                return;
-            }
-
-            if (CompositorService.isLabwc) {
-                LabwcService.quit();
-                return;
-            }
-
-            if (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle) {
-                try {
-                    I3.dispatch("exit");
-                } catch (_) {}
-                return;
-            }
-
             HyprlandService.exit();
         } else {
             Quickshell.execDetached(["sh", "-c", SettingsData.customPowerActionLogout]);
@@ -414,11 +391,11 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
-                checkDMSCapabilities();
+            if (HGSService.isConnected) {
+                checkHGSCapabilities();
             } else {
                 clearPrepareForSleepSubscriptionState();
             }
@@ -430,11 +407,11 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: HGSService
+        enabled: HGSService.isConnected
 
         function onCapabilitiesChanged() {
-            checkDMSCapabilities();
+            checkHGSCapabilities();
         }
 
         function onDbusSignalReceived(subscriptionId, data) {
@@ -472,7 +449,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
         enabled: SettingsData.loginctlLockIntegration
 
         function onLoginctlStateUpdate(data) {
@@ -480,16 +457,16 @@ Singleton {
         }
     }
 
-    function checkDMSCapabilities() {
-        if (!DMSService.isConnected) {
+    function checkHGSCapabilities() {
+        if (!HGSService.isConnected) {
             return;
         }
 
-        if (DMSService.capabilities.length === 0) {
+        if (HGSService.capabilities.length === 0) {
             return;
         }
 
-        if (DMSService.capabilities.includes("loginctl")) {
+        if (HGSService.capabilities.includes("loginctl")) {
             loginctlAvailable = true;
             if (SettingsData.loginctlLockIntegration && !stateInitialized) {
                 stateInitialized = true;
@@ -498,10 +475,10 @@ Singleton {
             }
         } else {
             loginctlAvailable = false;
-            log.debug("loginctl capability not available in DMS");
+            log.debug("loginctl capability not available in HGS");
         }
 
-        if (DMSService.capabilities.includes("dbus")) {
+        if (HGSService.capabilities.includes("dbus")) {
             ensurePrepareForSleepSubscription();
         } else {
             clearPrepareForSleepSubscriptionState();
@@ -514,7 +491,7 @@ Singleton {
     }
 
     function ensurePrepareForSleepSubscription() {
-        if (!DMSService.isConnected || !DMSService.capabilities.includes("dbus")) {
+        if (!HGSService.isConnected || !HGSService.capabilities.includes("dbus")) {
             return;
         }
 
@@ -523,7 +500,7 @@ Singleton {
         }
 
         prepareForSleepSubscriptionPending = true;
-        DMSService.dbusSubscribe("system", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PrepareForSleep", response => {
+        HGSService.dbusSubscribe("system", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PrepareForSleep", response => {
             prepareForSleepSubscriptionPending = false;
 
             if (response.error) {
@@ -560,7 +537,7 @@ Singleton {
     function getLoginctlState() {
         if (!loginctlAvailable)
             return;
-        DMSService.sendRequest("loginctl.getState", null, response => {
+        HGSService.sendRequest("loginctl.getState", null, response => {
             if (response.result) {
                 updateLoginctlState(response.result);
             }
@@ -570,7 +547,7 @@ Singleton {
     function syncLockBeforeSuspend() {
         if (!loginctlAvailable)
             return;
-        DMSService.sendRequest("loginctl.setLockBeforeSuspend", {
+        HGSService.sendRequest("loginctl.setLockBeforeSuspend", {
             enabled: SettingsData.lockBeforeSuspend
         }, response => {
             if (response.error) {
@@ -584,9 +561,9 @@ Singleton {
     function syncSleepInhibitor() {
         if (!loginctlAvailable)
             return;
-        if (!DMSService.apiVersion || DMSService.apiVersion < 4)
+        if (!HGSService.apiVersion || HGSService.apiVersion < 4)
             return;
-        DMSService.sendRequest("loginctl.setSleepInhibitorEnabled", {
+        HGSService.sendRequest("loginctl.setSleepInhibitorEnabled", {
             enabled: SettingsData.loginctlLockIntegration && SettingsData.lockBeforeSuspend
         }, response => {
             if (response.error) {

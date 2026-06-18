@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 )
 
 func init() {
@@ -61,7 +61,7 @@ func (b archHelperBackend) ID() string      { return b.id }
 func (b archHelperBackend) Repo() RepoKind  { return RepoSystem }
 func (b archHelperBackend) NeedsAuth() bool { return true }
 func (b archHelperBackend) RunsInTerminal() bool {
-	return os.Getenv("DMS_FORCE_PKEXEC") != "1"
+	return os.Getenv("HGS_FORCE_PKEXEC") != "1"
 }
 func (b archHelperBackend) IsAvailable(_ context.Context) bool { return commandExists(b.id) }
 
@@ -98,16 +98,16 @@ func (b archHelperBackend) Upgrade(ctx context.Context, opts UpgradeOptions, onL
 	if !BackendHasTargets(b, opts.Targets, opts.IncludeAUR, opts.IncludeFlatpak) {
 		return nil
 	}
-	if os.Getenv("DMS_FORCE_PKEXEC") == "1" {
+	if os.Getenv("HGS_FORCE_PKEXEC") == "1" {
 		argv := append([]string{"pkexec"}, archHelperUpgradeArgv(b.id, opts.IncludeAUR)...)
 		return Run(ctx, argv, RunOptions{OnLine: onLine, AttachStdio: opts.AttachStdio})
 	}
 	term := findTerminal(opts.Terminal)
 	if term == "" {
-		return fmt.Errorf("no terminal found (pick one in DMS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
+		return fmt.Errorf("no terminal found (pick one in HGS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
 	}
 	cmd := strings.Join(archHelperUpgradeArgv(b.id, opts.IncludeAUR), " ")
-	title := fmt.Sprintf("DMS — System Update (%s)", b.id)
+	title := fmt.Sprintf("HGS — System Update (%s)", b.id)
 	return Run(ctx, wrapInTerminal(term, title, cmd), RunOptions{OnLine: onLine})
 }
 
@@ -216,7 +216,7 @@ func pacmanPrivateDB() (string, error) {
 	if tmp == "" {
 		tmp = "/tmp"
 	}
-	dir := filepath.Join(tmp, fmt.Sprintf("dms-checkup-db-%d", os.Getuid()))
+	dir := filepath.Join(tmp, fmt.Sprintf("hgs-checkup-db-%d", os.Getuid()))
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

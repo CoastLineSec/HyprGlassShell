@@ -3,10 +3,10 @@ import qs.Common
 import qs.Modals.Common
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:input-modal"
+    layerNamespace: "hgs:input-modal"
     keepPopoutsOpen: true
 
     property string inputTitle: ""

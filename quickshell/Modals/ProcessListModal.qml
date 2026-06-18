@@ -204,7 +204,7 @@ FloatingWindow {
                 anchors.centerIn: parent
                 spacing: Theme.spacingL
 
-                DankIcon {
+                HGSIcon {
                     name: "error"
                     size: 48
                     color: Theme.error
@@ -251,7 +251,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "analytics"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -273,7 +273,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         circular: false
                         iconName: processListModal.maximized ? "fullscreen_exit" : "fullscreen"
@@ -282,7 +282,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         circular: false
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
@@ -335,7 +335,7 @@ FloatingWindow {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: modelData.icon
                                     size: Theme.iconSize - 2
                                     color: currentTab === index ? Theme.primary : Theme.surfaceText
@@ -373,7 +373,7 @@ FloatingWindow {
                     Layout.fillWidth: true
                 }
 
-                DankButtonGroup {
+                HGSButtonGroup {
                     id: processFilterGroup
                     model: [I18n.tr("All"), I18n.tr("User"), I18n.tr("System")]
                     currentIndex: 0
@@ -401,7 +401,7 @@ FloatingWindow {
                     }
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: searchField
                     Layout.fillWidth: true
                     Layout.maximumWidth: Math.round(Theme.fontSizeMedium * 18)
@@ -528,7 +528,7 @@ FloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "swap_horiz"
                             size: 14
                             color: Theme.info
@@ -546,7 +546,7 @@ FloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "storage"
                             size: 14
                             color: Theme.warning
@@ -564,7 +564,7 @@ FloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "memory"
                             size: 14
                             color: Theme.primary
@@ -583,7 +583,7 @@ FloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "sd_card"
                             size: 14
                             color: Theme.secondary

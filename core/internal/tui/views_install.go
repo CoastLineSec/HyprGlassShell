@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -120,15 +120,15 @@ func (m Model) viewInstallingPackages() string {
 	return b.String()
 }
 
-func dmsPackageName(distroID string, dependencies []deps.Dependency) string {
+func hgsPackageName(distroID string, dependencies []deps.Dependency) string {
 	config, ok := distros.Registry[distroID]
 	if !ok {
-		return "dms"
+		return "hgs"
 	}
 
 	var isGit bool
 	for _, dep := range dependencies {
-		if dep.Name == "dms (DankMaterialShell)" {
+		if dep.Name == "hgs (HyprGlassShell)" {
 			isGit = dep.Variant == deps.VariantGit
 			break
 		}
@@ -137,16 +137,16 @@ func dmsPackageName(distroID string, dependencies []deps.Dependency) string {
 	switch config.Family {
 	case distros.FamilyArch:
 		if isGit {
-			return "dms-shell-git"
+			return "hgs-shell-git"
 		}
-		return "dms-shell"
+		return "hgs-shell"
 	case distros.FamilyFedora, distros.FamilyUbuntu, distros.FamilyDebian, distros.FamilySUSE:
 		if isGit {
-			return "dms-git"
+			return "hgs-git"
 		}
-		return "dms"
+		return "hgs"
 	default:
-		return "dms"
+		return "hgs"
 	}
 }
 
@@ -156,9 +156,9 @@ func uninstallCommand(distroID string, dependencies []deps.Dependency) string {
 		return ""
 	}
 	if config.Family == distros.FamilyGentoo {
-		return "sudo emerge --deselect gui-apps/dankmaterialshell && sudo emerge --depclean gui-apps/dankmaterialshell"
+		return "sudo emerge --deselect gui-apps/hyprglassshell && sudo emerge --depclean gui-apps/hyprglassshell"
 	}
-	pkg := dmsPackageName(distroID, dependencies)
+	pkg := hgsPackageName(distroID, dependencies)
 	switch config.Family {
 	case distros.FamilyArch:
 		return "sudo pacman -Rs " + pkg
@@ -191,7 +191,7 @@ func (m Model) viewInstallComplete() string {
 		"• Window manager and dependencies installed",
 		"• Terminal and development tools configured",
 		"• Configuration files deployed with backups",
-		"• System optimized for DankMaterialShell",
+		"• System optimized for HyprGlassShell",
 	}
 
 	for _, item := range accomplishments {
@@ -201,16 +201,7 @@ func (m Model) viewInstallComplete() string {
 
 	wm := m.selectedWindowManager()
 
-	// mango launches DMS via `exec-once=dms run` (not a systemd session target)
-	loginHint := "If you do not have a greeter, login with \"niri-session\" or \"Hyprland\""
-	switch wm {
-	case deps.WindowManagerNiri:
-		loginHint = "If you do not have a greeter, login with \"niri-session\""
-	case deps.WindowManagerHyprland:
-		loginHint = "If you do not have a greeter, login with \"Hyprland\""
-	case deps.WindowManagerMango:
-		loginHint = "If you do not have a greeter, login with \"mango\""
-	}
+	loginHint := "If you do not have a greeter, login with \"Hyprland\""
 
 	b.WriteString("\n")
 	info := m.styles.Normal.Render("Your system is ready! Log out and log back in to start using\nyour new desktop environment.\n" + loginHint)
@@ -222,12 +213,9 @@ func (m Model) viewInstallComplete() string {
 	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Subtle))
 
 	b.WriteString(labelStyle.Render("Troubleshooting:") + "\n")
-	if wm == deps.WindowManagerMango {
-		b.WriteString(labelStyle.Render("  Disable autostart: ") + cmdStyle.Render("remove 'exec-once=dms run' from ~/.config/mango/config.conf") + "\n")
-		b.WriteString(labelStyle.Render("  View logs:         ") + cmdStyle.Render("qs -p ~/.config/quickshell/dms log") + "\n")
-	} else {
-		b.WriteString(labelStyle.Render("  Disable autostart: ") + cmdStyle.Render("systemctl --user disable dms") + "\n")
-		b.WriteString(labelStyle.Render("  View logs:         ") + cmdStyle.Render("journalctl --user -u dms") + "\n")
+	if wm == deps.WindowManagerHyprland {
+		b.WriteString(labelStyle.Render("  Disable autostart: ") + cmdStyle.Render("systemctl --user disable hgs") + "\n")
+		b.WriteString(labelStyle.Render("  View logs:         ") + cmdStyle.Render("journalctl --user -u hgs") + "\n")
 	}
 
 	if m.osInfo != nil {

@@ -61,7 +61,7 @@ CATEGORY_KEYWORDS = {
     "Personalization": ["customize", "custom", "personal", "appearance"],
     "Time & Weather": ["clock", "forecast", "date"],
     "Keyboard Shortcuts": ["keys", "bindings", "hotkey"],
-    "Dank Bar": ["panel", "topbar", "statusbar"],
+    "HGS Bar": ["panel", "topbar", "statusbar"],
     "Applications": ["apps", "programs", "window", "rules", "matching", "floating"],
     "Dock": ["taskbar", "launcher bar"],
     "Network": ["connectivity", "online"],
@@ -95,12 +95,12 @@ TAB_INDEX_MAP = {
     "WallpaperTab.qml": 0,
     "TimeWeatherTab.qml": 1,
     "KeybindsTab.qml": 2,
-    "DankBarTab.qml": 3,
+    "HGSBarTab.qml": 3,
     "WorkspacesTab.qml": 4,
     "CompositorLayoutTab.qml": 37,
     "WindowRulesTab.qml": 38,
     "DockTab.qml": 5,
-    "DankBarAppearanceTab.qml": 6,
+    "HGSBarAppearanceTab.qml": 6,
     "WorkspaceAppearanceCard.qml": 6,
     "NetworkStatusTab.qml": 7,
     "NetworkEthernetTab.qml": 39,
@@ -140,10 +140,10 @@ TAB_CATEGORY_MAP = {
     0: "Personalization",
     1: "Time & Weather",
     2: "Keyboard Shortcuts",
-    3: "Dank Bar",
-    4: "Dank Bar",
+    3: "HGS Bar",
+    4: "HGS Bar",
     5: "Dock",
-    6: "Dank Bar",
+    6: "HGS Bar",
     7: "Network",
     8: "System",
     9: "Launcher",
@@ -159,7 +159,7 @@ TAB_CATEGORY_MAP = {
     19: "Running Apps",
     20: "System Updater",
     21: "Power & Sleep",
-    22: "Dank Bar",
+    22: "HGS Bar",
     23: "System",
     24: "Displays",
     25: "Displays",
@@ -374,8 +374,8 @@ def find_settings_components(content, filename):
                     condition_key = "cupsAvailable"
                 elif "NetworkService.usingLegacy" in visible_raw:
                     condition_key = "networkNotLegacy"
-                elif "DMSService.isConnected" in visible_raw:
-                    condition_key = "dmsConnected"
+                elif "HGSService.isConnected" in visible_raw:
+                    condition_key = "hgsConnected"
                 elif "Theme.matugenAvailable" in visible_raw:
                     condition_key = "matugenAvailable"
                 elif "CompositorService.isDwl" in visible_raw:
@@ -428,9 +428,9 @@ def parse_tabs_from_sidebar(sidebar_file):
             ("shortcutsOnly", "keybindsAvailable"),
             ("soundsOnly", "soundsAvailable"),
             ("cupsOnly", "cupsAvailable"),
-            ("dmsOnly", "dmsConnected"),
+            ("hgsOnly", "hgsConnected"),
             ("hyprlandNiriOnly", "isHyprlandOrNiri"),
-            ("clipboardOnly", "dmsConnected"),
+            ("clipboardOnly", "hgsConnected"),
             ("niriOnly", "isNiri"),
             ("windowRulesCapable", "windowRulesCapable"),
             ("layoutCapable", "layoutCapable"),

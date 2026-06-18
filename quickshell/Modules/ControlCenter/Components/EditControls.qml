@@ -47,7 +47,7 @@ Row {
         visible: false
         color: "transparent"
 
-        WlrLayershell.namespace: "dms:control-center-widget-library"
+        WlrLayershell.namespace: "hgs:control-center-widget-library"
         WlrLayershell.layer: WlrLayershell.Overlay
         WlrLayershell.exclusiveZone: -1
         WlrLayershell.keyboardFocus: PopoutManager.screenshotActive ? WlrKeyboardFocus.None : (visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None)
@@ -120,7 +120,7 @@ Row {
                     anchors.right: parent.right
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "add_circle"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -135,7 +135,7 @@ Row {
                     }
                 }
 
-                DankListView {
+                HGSListView {
                     id: widgetList
 
                     anchors.top: headerRow.bottom
@@ -161,7 +161,7 @@ Row {
                             anchors.margins: Theme.spacingM
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: modelData.icon
                                 size: Theme.iconSize
                                 color: Theme.primary
@@ -192,7 +192,7 @@ Row {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "add"
                                 size: Theme.iconSize - 4
                                 color: Theme.primary
@@ -227,7 +227,7 @@ Row {
             anchors.centerIn: parent
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: "add"
                 size: Theme.iconSize - 2
                 color: Theme.primary
@@ -261,7 +261,7 @@ Row {
             anchors.centerIn: parent
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: "settings_backup_restore"
                 size: Theme.iconSize - 2
                 color: Theme.warning
@@ -295,7 +295,7 @@ Row {
             anchors.centerIn: parent
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: "clear_all"
                 size: Theme.iconSize - 2
                 color: Theme.error

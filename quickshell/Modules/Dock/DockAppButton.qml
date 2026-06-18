@@ -136,7 +136,7 @@ Item {
     }
 
     function getHyprToplevelForWayland(waylandToplevel) {
-        if (!waylandToplevel || !CompositorService.isHyprland || !Hyprland.toplevels)
+        if (!waylandToplevel || !Hyprland.toplevels)
             return null;
         const hyprToplevels = Array.from(Hyprland.toplevels.values);
         for (let i = 0; i < hyprToplevels.length; i++) {
@@ -157,7 +157,7 @@ Item {
     }
 
     function restoreSpecialWorkspaceWindow(waylandToplevel) {
-        if (!SettingsData.dockRestoreSpecialWorkspaceOnClick || !CompositorService.isHyprland || !waylandToplevel)
+        if (!SettingsData.dockRestoreSpecialWorkspaceOnClick || !waylandToplevel)
             return false;
 
         const specialName = getSpecialWorkspaceName(waylandToplevel);
@@ -344,7 +344,7 @@ Item {
                         groupedToplevel.activate();
                     }
                 } else if (contextMenu) {
-                    const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms";
+                    const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "io.github.coastlinesec.hgs";
                     contextMenu.showForButton(root, appData, root.height + 25, shouldHidePin, cachedDesktopEntry, parentDockScreen, dockApps);
                 }
                 break;
@@ -391,7 +391,7 @@ Item {
                     break;
                 case "grouped":
                     if (contextMenu) {
-                        const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms";
+                        const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "io.github.coastlinesec.hgs";
                         contextMenu.showForButton(root, appData, root.height, shouldHidePin, cachedDesktopEntry, parentDockScreen, dockApps);
                     }
                     break;
@@ -414,7 +414,7 @@ Item {
             } else if (mouse.button === Qt.RightButton) {
                 if (!contextMenu)
                     return;
-                const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms";
+                const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "io.github.coastlinesec.hgs";
                 contextMenu.showForButton(root, appData, root.height, shouldHidePin, cachedDesktopEntry, parentDockScreen, dockApps);
             }
         }
@@ -471,7 +471,7 @@ Item {
             id: iconImg
 
             anchors.centerIn: parent
-            implicitSize: appData && (appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms") ? actualIconSize * 0.85 : actualIconSize
+            implicitSize: appData && (appData.appId === "org.quickshell" || appData.appId === "io.github.coastlinesec.hgs") ? actualIconSize * 0.85 : actualIconSize
             source: {
                 if (!appData || appData.appId === "__SEPARATOR__") {
                     return "";
@@ -485,7 +485,7 @@ Item {
             smooth: true
             asynchronous: true
             visible: status === Image.Ready && !coreIcon.visible
-            layer.enabled: appData && (appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms")
+            layer.enabled: appData && (appData.appId === "org.quickshell" || appData.appId === "io.github.coastlinesec.hgs")
             layer.smooth: true
             layer.mipmap: true
             layer.effect: MultiEffect {
@@ -526,7 +526,7 @@ Item {
             }
         }
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             size: actualIconSize
             name: "sports_esports"

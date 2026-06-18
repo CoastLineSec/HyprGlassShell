@@ -6,10 +6,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:keybinds"
+    layerNamespace: "hgs:keybinds"
     useOverlayLayer: true
     property real scrollStep: 60
     property var activeFlickable: null
@@ -81,7 +81,7 @@ DankModal {
                         color: Theme.primary
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: searchField
                         Layout.alignment: Qt.AlignRight
                         leftIconName: "search"
@@ -103,7 +103,7 @@ DankModal {
                     }
                 }
 
-                DankFlickable {
+                HGSFlickable {
                     id: mainFlickable
                     width: parent.width
                     height: parent.height - parent.spacing - 40

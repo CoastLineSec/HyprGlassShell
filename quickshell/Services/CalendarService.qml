@@ -16,11 +16,11 @@ Singleton {
         switch (backendPref) {
         case "khal":
             return "khal";
-        case "dankcal":
-            return "dankcal";
+        case "hgscal":
+            return "hgscal";
         default:
-            if (dankBackend.connected)
-                return "dankcal";
+            if (hgsBackend.connected)
+                return "hgscal";
             if (khalBackend.installed)
                 return "khal";
             return "none";
@@ -28,15 +28,15 @@ Singleton {
     }
 
     readonly property bool calendarAvailable: activeBackend !== "none"
-    readonly property bool isDankActive: activeBackend === "dankcal"
-    readonly property bool canCreateEvents: isDankActive && dankBackend.connected
+    readonly property bool isHGSActive: activeBackend === "hgscal"
+    readonly property bool canCreateEvents: isHGSActive && hgsBackend.connected
     property bool khalAvailable: true // compatibility alias - calendar card UI gate
 
-    readonly property bool dankConnected: dankBackend.connected
-    readonly property bool dankBinaryExists: dankBackend.binaryExists
-    readonly property bool dankNeedsLaunch: backendPref === "dankcal" && !dankBackend.connected && !dankBackend.socketFound
+    readonly property bool hgsConnected: hgsBackend.connected
+    readonly property bool hgsBinaryExists: hgsBackend.binaryExists
+    readonly property bool hgsNeedsLaunch: backendPref === "hgscal" && !hgsBackend.connected && !hgsBackend.socketFound
 
-    property var calendars: dankBackend.calendars
+    property var calendars: hgsBackend.calendars
     property var eventsByDate: ({})
     property var taskEventsByDate: ({})
     property var localTasks: ({})
@@ -59,9 +59,9 @@ Singleton {
         onEventsByDateChanged: root.mergeEvents()
     }
 
-    CalendarDankBackend {
-        id: dankBackend
-        enabled: root.backendPref === "dankcal" || root.backendPref === "auto"
+    CalendarHGSBackend {
+        id: hgsBackend
+        enabled: root.backendPref === "hgscal" || root.backendPref === "auto"
         onEventsByDateChanged: root.mergeEvents()
         onConnectedChanged: {
             if (connected && root._rangeSet)
@@ -74,8 +74,8 @@ Singleton {
         root.lastEndDate = endDate;
         root._rangeSet = true;
         switch (activeBackend) {
-        case "dankcal":
-            dankBackend.loadEvents(startDate, endDate);
+        case "hgscal":
+            hgsBackend.loadEvents(startDate, endDate);
             break;
         case "khal":
             khalBackend.loadEvents(startDate, endDate);
@@ -85,8 +85,8 @@ Singleton {
 
     function _activeBackendEventsByDate() {
         switch (activeBackend) {
-        case "dankcal":
-            return dankBackend.eventsByDate;
+        case "hgscal":
+            return hgsBackend.eventsByDate;
         case "khal":
             return khalBackend.eventsByDate;
         default:
@@ -104,20 +104,20 @@ Singleton {
     }
 
     function writableCalendars() {
-        return isDankActive ? dankBackend.writableCalendars() : [];
+        return isHGSActive ? hgsBackend.writableCalendars() : [];
     }
 
     function defaultCalendar() {
-        return isDankActive ? dankBackend.defaultCalendar() : null;
+        return isHGSActive ? hgsBackend.defaultCalendar() : null;
     }
 
-    function launchDankCalendar() {
-        dankBackend.launch();
+    function launchHGSCalendar() {
+        hgsBackend.launch();
     }
 
     function createEvent(fields, callback) {
-        if (isDankActive) {
-            dankBackend.createEvent(fields, callback);
+        if (isHGSActive) {
+            hgsBackend.createEvent(fields, callback);
             return;
         }
         if (callback)
@@ -127,8 +127,8 @@ Singleton {
     }
 
     function updateEvent(id, fields, callback) {
-        if (isDankActive) {
-            dankBackend.updateEvent(id, fields, callback);
+        if (isHGSActive) {
+            hgsBackend.updateEvent(id, fields, callback);
             return;
         }
         if (callback)
@@ -138,8 +138,8 @@ Singleton {
     }
 
     function deleteEvent(id, callback) {
-        if (isDankActive) {
-            dankBackend.deleteEvent(id, callback);
+        if (isHGSActive) {
+            hgsBackend.deleteEvent(id, callback);
             return;
         }
         if (callback)
@@ -163,7 +163,7 @@ Singleton {
     }
 
     function saveTasks() {
-        let dir = Quickshell.env("HOME") + "/.config/niri-calendar-todo";
+        let dir = Quickshell.env("HOME") + "/.config/HyprGlassShell/calendar";
         Quickshell.execDetached(["mkdir", "-p", dir]);
         tasksFileView.setText(JSON.stringify(root.localTasks, null, 2));
     }
@@ -202,7 +202,7 @@ Singleton {
         let tasks = Object.assign({}, root.localTasks);
         if (!tasks[dateKey])
             tasks[dateKey] = [];
-        let taskId = (new Date().getTime()) + "-dms";
+        let taskId = (new Date().getTime()) + "-hgs";
         tasks[dateKey].push({
             "id": taskId,
             "text": text,
@@ -338,7 +338,7 @@ Singleton {
 
     FileView {
         id: tasksFileView
-        path: Quickshell.env("HOME") + "/.config/niri-calendar-todo/tasks.json"
+        path: Quickshell.env("HOME") + "/.config/HyprGlassShell/calendar/tasks.json"
         blockLoading: false
         blockWrites: false
         atomicWrites: true

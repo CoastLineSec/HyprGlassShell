@@ -1,6 +1,6 @@
 # Hyprland Lua Migration
 
-Hyprland 0.55 moved configuration toward Lua. DMS now follows that path for new
+Hyprland 0.55 moved configuration toward Lua. HGS now follows that path for new
 Hyprland setup and migration.
 
 This guide covers what changes, where files live, and how to check that your
@@ -8,50 +8,50 @@ session is using the new config.
 
 ## Quick Summary
 
-DMS now deploys Hyprland as:
+HGS now deploys Hyprland as:
 
 ```text
 ~/.config/hypr/hyprland.lua
-~/.config/hypr/dms/*.lua
+~/.config/hypr/hgs/*.lua
 ```
 
 The old hyprlang files are moved out of the active config tree:
 
 ```text
 ~/.config/hypr/hyprland.conf
-~/.config/hypr/dms/*.conf
+~/.config/hypr/hgs/*.conf
 ```
 
 Backups are stored here:
 
 ```text
-~/.config/hypr/.dms-backups/<timestamp>/
+~/.config/hypr/.hgs-backups/<timestamp>/
 ```
 
-## What `dms setup` Does
+## What `hgs setup` Does
 
-When Hyprland is selected, `dms setup` writes a Lua main config and DMS Lua
+When Hyprland is selected, `hgs setup` writes a Lua main config and HGS Lua
 fragments.
 
 | File | Purpose |
 | --- | --- |
 | `hyprland.lua` | Main Hyprland config. |
-| `dms/colors.lua` | Theme colors. |
-| `dms/outputs.lua` | Monitors and display settings. |
-| `dms/layout.lua` | Layout, gaps, borders, and decoration. |
-| `dms/cursor.lua` | Cursor settings. |
-| `dms/binds.lua` | DMS-managed default shortcuts. |
-| `dms/binds-user.lua` | User shortcut overrides. |
-| `dms/windowrules.lua` | Window rules. |
+| `hgs/colors.lua` | Theme colors. |
+| `hgs/outputs.lua` | Monitors and display settings. |
+| `hgs/layout.lua` | Layout, gaps, borders, and decoration. |
+| `hgs/cursor.lua` | Cursor settings. |
+| `hgs/binds.lua` | HGS-managed default shortcuts. |
+| `hgs/binds-user.lua` | User shortcut overrides. |
+| `hgs/windowrules.lua` | Window rules. |
 
-`dms/binds.lua` is managed by DMS and may be refreshed by setup. Put custom
-keyboard shortcuts in `dms/binds-user.lua`, or use the Keyboard Shortcuts page in
-DMS Settings.
+`hgs/binds.lua` is managed by HGS and may be refreshed by setup. Put custom
+keyboard shortcuts in `hgs/binds-user.lua`, or use the Keyboard Shortcuts page in
+HGS Settings.
 
 Stock configs include a 3-finger horizontal touchpad gesture for workspace
-switching (`hl.gesture` in `dms/binds.lua`) and basic touchpad settings
+switching (`hl.gesture` in `hgs/binds.lua`) and basic touchpad settings
 (`tap_to_click`, `natural_scroll` in `hyprland.lua`). To customize or disable
-gestures, add your own `hl.gesture(...)` lines to `dms/binds-user.lua`, or unset
+gestures, add your own `hl.gesture(...)` lines to `hgs/binds-user.lua`, or unset
 a stock gesture with `action = "unset"` matching the original fingers,
 direction, and modifiers.
 
@@ -59,49 +59,49 @@ Most other existing non-empty Lua fragments are preserved.
 
 ## Legacy Config Migration
 
-During migration, DMS moves legacy active files into the backup folder so
+During migration, HGS moves legacy active files into the backup folder so
 Hyprland does not see both config formats at once.
 
-DMS also migrates legacy `monitor = ...` lines from `hyprland.conf` into
-`dms/outputs.lua` when `outputs.lua` is empty or missing. If you already have a
-custom `outputs.lua`, DMS leaves it alone.
+HGS also migrates legacy `monitor = ...` lines from `hyprland.conf` into
+`hgs/outputs.lua` when `outputs.lua` is empty or missing. If you already have a
+custom `outputs.lua`, HGS leaves it alone.
 
-## DMS Settings Support
+## HGS Settings Support
 
-DMS Settings now targets Lua files for Hyprland:
+HGS Settings now targets Lua files for Hyprland:
 
 | Settings page | Lua file |
 | --- | --- |
-| Keyboard Shortcuts | `dms/binds-user.lua` |
-| Displays | `dms/outputs.lua` |
-| Theme Colors | `dms/colors.lua` |
-| Cursor | `dms/cursor.lua` |
-| Window Rules | `dms/windowrules.lua` |
+| Keyboard Shortcuts | `hgs/binds-user.lua` |
+| Displays | `hgs/outputs.lua` |
+| Theme Colors | `hgs/colors.lua` |
+| Cursor | `hgs/cursor.lua` |
+| Window Rules | `hgs/windowrules.lua` |
 
-The main config should include the DMS fragments:
+The main config should include the HGS fragments:
 
 ```lua
-require("dms.colors")
-require("dms.outputs")
-require("dms.layout")
-require("dms.cursor")
-require("dms.binds")
-require("dms.binds-user")
-require("dms.windowrules")
+require("hgs.colors")
+require("hgs.outputs")
+require("hgs.layout")
+require("hgs.cursor")
+require("hgs.binds")
+require("hgs.binds-user")
+require("hgs.windowrules")
 ```
 
 ### Keyboard Shortcuts: Delete and Reset
 
-The Keyboard Shortcuts page exposes two actions on any DMS-managed bind:
+The Keyboard Shortcuts page exposes two actions on any HGS-managed bind:
 
-- **Delete** — removes the shortcut entirely. For default DMS shortcuts (from
-  `dms/binds.lua`), this saves an `hl.unbind("KEY")` line into
-  `dms/binds-user.lua` so the removal sticks across `dms setup` runs.
+- **Delete** — removes the shortcut entirely. For default HGS shortcuts (from
+  `hgs/binds.lua`), this saves an `hl.unbind("KEY")` line into
+  `hgs/binds-user.lua` so the removal sticks across `hgs setup` runs.
 - **Reset to default** — only visible when you are editing a user override of
-  a DMS default. It drops your override so the original DMS default re-applies.
+  a HGS default. It drops your override so the original HGS default re-applies.
 
-Binds from your own `hyprland.lua` (outside the `dms/` folder) are read-only
-in Settings — DMS does not write into files it does not manage.
+Binds from your own `hyprland.lua` (outside the `hgs/` folder) are read-only
+in Settings — HGS does not write into files it does not manage.
 
 ## Starting Hyprland
 
@@ -112,14 +112,14 @@ Hyprland -c ~/.config/hypr/hyprland.lua
 ```
 
 If Hyprland warns that it is using an autogenerated config, or the warning
-mentions `hyprland.conf`, the session is not using the DMS Lua config yet.
+mentions `hyprland.conf`, the session is not using the HGS Lua config yet.
 
 ## Verify Everything
 
-After updating DMS, run:
+After updating HGS, run:
 
 ```sh
-dms setup
+hgs setup
 hyprctl reload
 hyprctl configerrors
 ```
@@ -132,17 +132,17 @@ Useful file checks:
 ```sh
 test -f ~/.config/hypr/hyprland.lua
 test ! -f ~/.config/hypr/hyprland.conf
-ls ~/.config/hypr/dms
+ls ~/.config/hypr/hgs
 ```
 
-The live `dms` folder should contain Lua files like `binds.lua`,
+The live `hgs` folder should contain Lua files like `binds.lua`,
 `binds-user.lua`, `outputs.lua`, and `windowrules.lua`.
 
 Note: Hyprland 0.55 still auto-generates `hyprland.conf` if you launch it
-without `-c ~/.config/hypr/hyprland.lua`. DMS sweeps any stray
-`hyprland.conf` into `.dms-backups/<timestamp>/` on the next `dms run`
+without `-c ~/.config/hypr/hyprland.lua`. HGS sweeps any stray
+`hyprland.conf` into `.hgs-backups/<timestamp>/` on the next `hgs run`
 startup, so the second check above is the right long-term state. If you see
-`hyprland.conf` persist between `dms run` invocations, the session was not
+`hyprland.conf` persist between `hgs run` invocations, the session was not
 started from `hyprland.lua` — restart Hyprland with the `-c` flag (or update
 your session/desktop entry to include it).
 
@@ -151,18 +151,18 @@ your session/desktop entry to include it).
 If shortcuts do not work, confirm `hyprland.lua` includes both:
 
 ```lua
-require("dms.binds")
-require("dms.binds-user")
+require("hgs.binds")
+require("hgs.binds-user")
 ```
 
-If `hyprctl configerrors` reports errors in `dms/binds.lua`, rerun `dms setup`
-with the latest DMS binary so the DMS-managed shortcut file is refreshed.
+If `hyprctl configerrors` reports errors in `hgs/binds.lua`, rerun `hgs setup`
+with the latest HGS binary so the HGS-managed shortcut file is refreshed.
 
 If a migrated monitor setup looks wrong, compare:
 
 ```text
-~/.config/hypr/dms/outputs.lua
-~/.config/hypr/.dms-backups/<timestamp>/
+~/.config/hypr/hgs/outputs.lua
+~/.config/hypr/.hgs-backups/<timestamp>/
 ```
 
 Your previous config should be available in the timestamped backup folder.
@@ -171,25 +171,25 @@ Your previous config should be available in the timestamped backup folder.
 
 ```text
 ~/.config/hypr/
-|-- hyprland.lua             # Main DMS Hyprland config
-|-- .dms-backups/            # Timestamped backups from setup/migration
-`-- dms/
+|-- hyprland.lua             # Main HGS Hyprland config
+|-- .hgs-backups/            # Timestamped backups from setup/migration
+`-- hgs/
     |-- colors.lua           # Theme colors
     |-- outputs.lua          # Monitor/output config
     |-- layout.lua           # Layout, gaps, borders, decoration
     |-- cursor.lua           # Cursor settings
-    |-- binds.lua            # DMS-managed default shortcuts
+    |-- binds.lua            # HGS-managed default shortcuts
     |-- binds-user.lua       # User shortcut overrides
-    `-- windowrules.lua      # DMS-managed window rules
+    `-- windowrules.lua      # HGS-managed window rules
 ```
 
-Legacy files such as `hyprland.conf` and `dms/*.conf` should live in
-`.dms-backups/<timestamp>/` after migration, not in the active config tree.
+Legacy files such as `hyprland.conf` and `hgs/*.conf` should live in
+`.hgs-backups/<timestamp>/` after migration, not in the active config tree.
 
 ## Maintainer Note
 
 Embedded source files live in `core/internal/config/embedded/` and use names like
-`hypr-binds.lua`. Installed user files use shorter names like `dms/binds.lua`.
+`hypr-binds.lua`. Installed user files use shorter names like `hgs/binds.lua`.
 
 After changing Hyprland config deployment or parsing, run:
 

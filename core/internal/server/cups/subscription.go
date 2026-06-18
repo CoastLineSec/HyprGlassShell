@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/ipp"
 )
 
 type SubscriptionManager struct {
@@ -59,7 +59,7 @@ func (sm *SubscriptionManager) Start() error {
 func (sm *SubscriptionManager) createSubscription() (int, error) {
 	req := ipp.NewRequest(ipp.OperationCreatePrinterSubscriptions, 1)
 	req.OperationAttributes[ipp.AttributePrinterURI] = fmt.Sprintf("%s/", sm.baseURL)
-	req.OperationAttributes[ipp.AttributeRequestingUserName] = "dms"
+	req.OperationAttributes[ipp.AttributeRequestingUserName] = "hgs"
 
 	// Subscription attributes go in SubscriptionAttributes (subscription-attributes-tag in IPP)
 	req.SubscriptionAttributes = map[string]any{
@@ -146,7 +146,7 @@ func (sm *SubscriptionManager) notificationLoop() {
 func (sm *SubscriptionManager) fetchNotificationsWithWait() (bool, error) {
 	req := ipp.NewRequest(ipp.OperationGetNotifications, 1)
 	req.OperationAttributes[ipp.AttributePrinterURI] = fmt.Sprintf("%s/", sm.baseURL)
-	req.OperationAttributes[ipp.AttributeRequestingUserName] = "dms"
+	req.OperationAttributes[ipp.AttributeRequestingUserName] = "hgs"
 	req.OperationAttributes["notify-subscription-ids"] = sm.subscriptionID
 	if sm.sequenceNumber > 0 {
 		req.OperationAttributes["notify-sequence-numbers"] = sm.sequenceNumber
@@ -233,7 +233,7 @@ func (sm *SubscriptionManager) Stop() {
 func (sm *SubscriptionManager) cancelSubscription() {
 	req := ipp.NewRequest(ipp.OperationCancelSubscription, 1)
 	req.OperationAttributes[ipp.AttributePrinterURI] = fmt.Sprintf("%s/", sm.baseURL)
-	req.OperationAttributes[ipp.AttributeRequestingUserName] = "dms"
+	req.OperationAttributes[ipp.AttributeRequestingUserName] = "hgs"
 	req.OperationAttributes["notify-subscription-id"] = sm.subscriptionID
 
 	_, err := sm.client.SendRequest(fmt.Sprintf("%s/", sm.baseURL), req, nil)

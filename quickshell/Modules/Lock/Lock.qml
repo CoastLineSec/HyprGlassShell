@@ -49,18 +49,18 @@ Scope {
     }
 
     function notifyLoginctl(lockAction: bool) {
-        if (!SettingsData.loginctlLockIntegration || !DMSService.isConnected)
+        if (!SettingsData.loginctlLockIntegration || !HGSService.isConnected)
             return;
         if (lockAction)
-            DMSService.lockSession(() => {});
+            HGSService.lockSession(() => {});
         else
-            DMSService.unlockSession(() => {});
+            HGSService.unlockSession(() => {});
     }
 
     function lock() {
         if (SettingsData.customPowerActionLock?.length > 0) {
             Quickshell.execDetached(["sh", "-c", SettingsData.customPowerActionLock]);
-            // The custom locker manages its own surface; DMS never engages
+            // The custom locker manages its own surface; HGS never engages
             // WlSessionLock here, so isShellLocked stays false and the fade
             // overlay would never be dismissed. Hand off by dismissing it now.
             IdleService.dismissFadeToLock();

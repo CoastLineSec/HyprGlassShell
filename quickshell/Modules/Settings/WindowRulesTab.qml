@@ -25,14 +25,14 @@ Item {
             "configFormat": "",
             "readOnly": false
         })
-    readonly property bool readOnly: CompositorService.isHyprland && windowRulesIncludeStatus.readOnly === true
+    readonly property bool readOnly: windowRulesIncludeStatus.readOnly === true
     property bool checkingInclude: false
     property bool fixingInclude: false
     property var windowRules: []
     property var externalRules: []
     property var activeWindows: getActiveWindows()
     property string expandedExternalId: ""
-    readonly property string dmsRulesFileName: CompositorService.isNiri ? "dms/windowrules.kdl" : CompositorService.isMango ? "dms/windowrules.conf" : "dms/windowrules.lua"
+    readonly property string hgsRulesFileName: "hgs/rules.lua"
 
     Component.onDestruction: SettingsSearchService.unregisterCard("windowRules")
 
@@ -161,44 +161,17 @@ Item {
 
     function getWindowRulesConfigPaths() {
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        switch (CompositorService.compositor) {
-        case "niri":
-            return {
-                "configFile": configDir + "/niri/config.kdl",
-                "rulesFile": configDir + "/niri/dms/windowrules.kdl",
-                "grepPattern": 'include.*"dms/windowrules.kdl"',
-                "includeLine": 'include "dms/windowrules.kdl"'
-            };
-        case "hyprland":
-            return {
-                "configFile": configDir + "/hypr/hyprland.lua",
-                "rulesFile": configDir + "/hypr/dms/windowrules.lua",
-                "grepPattern": "dms.windowrules",
-                "includeLine": "require(\"dms.windowrules\")"
-            };
-        case "mango":
-            return {
-                "configFile": configDir + "/mango/config.conf",
-                "rulesFile": configDir + "/mango/dms/windowrules.conf",
-                "grepPattern": "dms/windowrules.conf",
-                "includeLine": "source=./dms/windowrules.conf"
-            };
-        default:
-            return null;
-        }
+        return {
+            "configFile": configDir + "/hypr/hyprland.lua",
+            "rulesFile": configDir + "/hypr/hgs/rules.lua",
+            "grepPattern": "hgs.rules",
+            "includeLine": "require(\"hgs.rules\")"
+        };
     }
 
     function loadWindowRules() {
-        const compositor = CompositorService.compositor;
-        if (compositor !== "niri" && compositor !== "hyprland" && compositor !== "mango") {
-            checkingInclude = false;
-            windowRules = [];
-            externalRules = [];
-            return;
-        }
-
         checkingInclude = true;
-        Proc.runCommand("load-windowrules", ["dms", "config", "windowrules", "list", compositor], (output, exitCode) => {
+        Proc.runCommand("load-windowrules", ["hgs", "config", "windowrules", "list", "hyprland"], (output, exitCode) => {
             checkingInclude = false;
             if (exitCode !== 0) {
                 windowRules = [];
@@ -208,14 +181,14 @@ Item {
             try {
                 const result = JSON.parse(output.trim());
                 const allRules = result.rules || [];
-                windowRules = allRules.filter(r => (r.source || "").includes("dms/windowrules"));
-                externalRules = allRules.filter(r => !(r.source || "").includes("dms/windowrules"));
-                if (result.dmsStatus) {
+                windowRules = allRules.filter(r => (r.source || "").includes("hgs/windowrules"));
+                externalRules = allRules.filter(r => !(r.source || "").includes("hgs/windowrules"));
+                if (result.hgsStatus) {
                     windowRulesIncludeStatus = {
-                        "exists": result.dmsStatus.exists,
-                        "included": result.dmsStatus.included,
-                        "configFormat": result.dmsStatus.configFormat ?? "",
-                        "readOnly": result.dmsStatus.readOnly === true
+                        "exists": result.hgsStatus.exists,
+                        "included": result.hgsStatus.included,
+                        "configFormat": result.hgsStatus.configFormat ?? "",
+                        "readOnly": result.hgsStatus.readOnly === true
                     };
                 }
             } catch (e) {
@@ -230,14 +203,8 @@ Item {
             showHyprlandReadOnlyWarning();
             return;
         }
-        const compositor = CompositorService.compositor;
-        if (compositor !== "niri" && compositor !== "hyprland" && compositor !== "mango")
-            return;
-
-        Proc.runCommand("remove-windowrule", ["dms", "config", "windowrules", "remove", compositor, ruleId], (output, exitCode) => {
+        Proc.runCommand("remove-windowrule", ["hgs", "config", "windowrules", "remove", "hyprland", ruleId], (output, exitCode) => {
             if (exitCode === 0) {
-                if (CompositorService.isMango)
-                    MangoService.reloadConfig();
                 loadWindowRules();
                 rulesChanged();
             }
@@ -252,18 +219,12 @@ Item {
         if (fromIndex === toIndex)
             return;
 
-        const compositor = CompositorService.compositor;
-        if (compositor !== "niri" && compositor !== "hyprland" && compositor !== "mango")
-            return;
-
         let ids = windowRules.map(r => r.id);
         const [moved] = ids.splice(fromIndex, 1);
         ids.splice(toIndex, 0, moved);
 
-        Proc.runCommand("reorder-windowrules", ["dms", "config", "windowrules", "reorder", compositor, JSON.stringify(ids)], (output, exitCode) => {
+        Proc.runCommand("reorder-windowrules", ["hgs", "config", "windowrules", "reorder", "hyprland", JSON.stringify(ids)], (output, exitCode) => {
             if (exitCode === 0) {
-                if (CompositorService.isMango)
-                    MangoService.reloadConfig();
                 loadWindowRules();
                 rulesChanged();
             }
@@ -292,8 +253,6 @@ Item {
             fixingInclude = false;
             if (exitCode !== 0)
                 return;
-            if (CompositorService.isMango)
-                MangoService.reloadConfig();
             loadWindowRules();
         });
     }
@@ -326,7 +285,7 @@ Item {
         }
     }
 
-    function copyRuleToDms(rule) {
+    function copyRuleToHgs(rule) {
         if (readOnly) {
             showHyprlandReadOnlyWarning();
             return;
@@ -341,19 +300,18 @@ Item {
     }
 
     function showHyprlandReadOnlyWarning() {
-        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings."), "dms setup", "hyprland-migration");
+        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings."), "hgs setup", "hyprland-migration");
     }
 
     Component.onCompleted: {
         componentReady = true;
         Qt.callLater(() => {
             SettingsSearchService.registerCard("windowRules", headerSection, flickable);
-            if (CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango)
-                loadWindowRules();
+            loadWindowRules();
         });
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: flickable
         anchors.fill: parent
         clip: true
@@ -384,7 +342,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "select_window"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -404,7 +362,7 @@ Item {
                             }
 
                             StyledText {
-                                text: I18n.tr("Define rules for window behavior. Saves to %1").arg(root.dmsRulesFileName)
+                                text: I18n.tr("Define rules for window behavior. Saves to %1").arg(root.hgsRulesFileName)
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.WordWrap
@@ -412,7 +370,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             Layout.preferredWidth: 40
                             Layout.preferredHeight: 40
                             circular: false
@@ -439,7 +397,7 @@ Item {
                             Layout.alignment: Qt.AlignVCenter
                         }
 
-                        DankDropdown {
+                        HGSDropdown {
                             id: windowSelector
                             Layout.fillWidth: true
                             dropdownWidth: 400
@@ -478,7 +436,7 @@ Item {
                 color: (showLegacy || showError || showSetup) ? Theme.withAlpha(Theme.warning, 0.15) : "transparent"
                 border.color: (showLegacy || showError || showSetup) ? Theme.withAlpha(Theme.warning, 0.3) : "transparent"
                 border.width: 1
-                visible: (showLegacy || showError || showSetup) && !root.checkingInclude && (CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango)
+                visible: (showLegacy || showError || showSetup) && !root.checkingInclude
 
                 Row {
                     id: warningSection
@@ -486,7 +444,7 @@ Item {
                     anchors.margins: Theme.spacingL
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "warning"
                         size: Theme.iconSize
                         color: Theme.warning
@@ -508,8 +466,8 @@ Item {
                         }
 
                         StyledText {
-                            readonly property string rulesFile: root.dmsRulesFileName
-                            text: warningBox.showLegacy ? I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.") : (warningBox.showSetup ? I18n.tr("Click 'Setup' to create %1 and add include to your compositor config.").arg(rulesFile) : I18n.tr("%1 exists but is not included. Window rules won't apply.").arg(rulesFile))
+                            readonly property string rulesFile: root.hgsRulesFileName
+                            text: warningBox.showLegacy ? I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.") : (warningBox.showSetup ? I18n.tr("Click 'Setup' to create %1 and add include to your compositor config.").arg(rulesFile) : I18n.tr("%1 exists but is not included. Window rules won't apply.").arg(rulesFile))
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.surfaceVariantText
                             wrapMode: Text.WordWrap
@@ -518,7 +476,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    HGSButton {
                         id: fixButton
                         visible: !warningBox.showLegacy && (warningBox.showError || warningBox.showSetup)
                         text: root.fixingInclude ? I18n.tr("Fixing...") : (warningBox.showSetup ? I18n.tr("Setup") : I18n.tr("Fix Now"))
@@ -548,7 +506,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "list"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -574,7 +532,7 @@ Item {
                             height: Theme.spacingM
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "select_window"
                             size: 40
                             color: Theme.surfaceVariantText
@@ -719,7 +677,7 @@ Item {
                                             Layout.alignment: Qt.AlignVCenter
                                             spacing: 2
 
-                                            DankActionButton {
+                                            HGSActionButton {
                                                 buttonSize: 28
                                                 iconName: "edit"
                                                 iconSize: 16
@@ -732,7 +690,7 @@ Item {
                                                 onClicked: root.editRule(ruleDelegateItem.liveRuleData)
                                             }
 
-                                            DankActionButton {
+                                            HGSActionButton {
                                                 id: deleteBtn
                                                 property bool hovered: false
                                                 buttonSize: 28
@@ -784,7 +742,7 @@ Item {
                                     }
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     x: Theme.spacingM - 2
                                     y: (ruleCard.height / 2) - (size / 2)
                                     name: "drag_indicator"
@@ -824,7 +782,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "description"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -844,7 +802,7 @@ Item {
                             }
 
                             StyledText {
-                                text: I18n.tr("Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.")
+                                text: I18n.tr("Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.")
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.WordWrap
@@ -992,14 +950,14 @@ Item {
                                             }
                                         }
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: externalCard.expanded ? "expand_less" : "expand_more"
                                             size: 20
                                             color: Theme.surfaceVariantText
                                             Layout.alignment: Qt.AlignVCenter
                                         }
 
-                                        DankActionButton {
+                                        HGSActionButton {
                                             buttonSize: 28
                                             iconName: "content_copy"
                                             iconSize: 16
@@ -1008,9 +966,9 @@ Item {
                                             enabled: !root.readOnly
                                             opacity: enabled ? 1 : 0.5
                                             Layout.alignment: Qt.AlignVCenter
-                                            tooltipText: I18n.tr("Convert to DMS")
+                                            tooltipText: I18n.tr("Convert to HGS")
                                             tooltipSide: "left"
-                                            onClicked: root.copyRuleToDms(externalCard.modelData)
+                                            onClicked: root.copyRuleToHgs(externalCard.modelData)
                                         }
                                     }
 

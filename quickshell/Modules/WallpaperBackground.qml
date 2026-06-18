@@ -89,7 +89,7 @@ Variants {
             property bool useNextForEffect: false
             property string pendingWallpaper: ""
             property string _deferredSource: ""
-            readonly property bool overviewBlurActive: CompositorService.isNiri && SettingsData.blurWallpaperOnOverview && NiriService.inOverview && currentWallpaper.source !== ""
+            readonly property bool overviewBlurActive: false
             readonly property var backingWindow: Window.window
             readonly property bool renderActive: !source || effectActive || overviewBlurActive || pendingWallpaper !== "" || _deferredSource !== "" || currentWallpaper.status === Image.Loading || nextWallpaper.status === Image.Loading
             property int _settleFrames: 3
@@ -147,14 +147,6 @@ Variants {
                 if (newScale !== root.screenScale) {
                     log.info("screen scale corrected for", modelData.name + ":", root.screenScale, "->", newScale);
                     root.screenScale = newScale;
-                }
-            }
-
-            Connections {
-                target: NiriService
-                function onDisplayScalesChanged() {
-                    root._recheckScreenScale();
-                    root.invalidate();
                 }
             }
 
@@ -240,10 +232,6 @@ Variants {
                     setWallpaperImmediate(formattedSource);
                     return;
                 }
-                if (CompositorService.isNiri && SessionData.isSwitchingMode) {
-                    setWallpaperImmediate(formattedSource);
-                    return;
-                }
                 changeWallpaper(formattedSource);
             }
 
@@ -326,7 +314,7 @@ Variants {
                 active: !root.source || root.isColorSource || currentWallpaper.status === Image.Error
                 asynchronous: true
 
-                sourceComponent: DankBackdrop {
+                sourceComponent: HGSBackdrop {
                     screenName: modelData.name
                 }
             }

@@ -39,7 +39,7 @@ Rectangle {
         return mouseArea.containsMouse ? Theme.primaryHoverLight : Theme.withAlpha(Theme.surfaceContainerHigh, Theme.popupTransparency);
     }
 
-    DankRipple {
+    HGSRipple {
         id: rippleLayer
         rippleColor: Theme.surfaceText
         cornerRadius: root.radius
@@ -78,7 +78,7 @@ Rectangle {
             visible: root.showPinnedIndicator
 
             // Status indicator only; the Pin action remains hidden.
-            DankIcon {
+            HGSIcon {
                 anchors.centerIn: parent
                 name: "push_pin"
                 size: Theme.iconSize - 6
@@ -86,7 +86,7 @@ Rectangle {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             iconName: "push_pin"
             iconSize: Theme.iconSize - 6
             iconColor: (entry.pinned || hasPinnedDuplicate) ? Theme.primary : Theme.surfaceText
@@ -105,7 +105,7 @@ Rectangle {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             iconName: "edit"
             iconSize: Theme.iconSize - 6
             iconColor: Theme.surfaceText
@@ -119,7 +119,7 @@ Rectangle {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             iconName: "close"
             iconSize: Theme.iconSize - 6
             iconColor: Theme.surfaceText

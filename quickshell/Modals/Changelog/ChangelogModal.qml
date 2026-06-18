@@ -66,7 +66,7 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXS
 
-                DankActionButton {
+                HGSActionButton {
                     visible: windowControls.canMaximize
                     iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
                     iconSize: Theme.iconSize - 4
@@ -74,20 +74,20 @@ FloatingWindow {
                     onClicked: windowControls.tryToggleMaximize()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     iconName: "close"
                     iconSize: Theme.iconSize - 4
                     iconColor: Theme.surfaceText
                     onClicked: root.dismiss()
 
-                    DankTooltip {
+                    HGSTooltip {
                         text: i18n("Close")
                     }
                 }
             }
         }
 
-        DankFlickable {
+        HGSFlickable {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: headerRow.bottom
@@ -124,15 +124,15 @@ FloatingWindow {
                 anchors.centerIn: parent
                 spacing: Theme.spacingM
 
-                DankButton {
+                HGSButton {
                     text: i18n("Read Full Release Notes")
                     iconName: "open_in_new"
                     backgroundColor: Theme.surfaceContainerHighest
                     textColor: Theme.surfaceText
-                    onClicked: Qt.openUrlExternally("https://danklinux.com/blog/v1-4-release")
+                    onClicked: Qt.openUrlExternally("https://coastlinesec.com/blog/v1-4-release")
                 }
 
-                DankButton {
+                HGSButton {
                     text: i18n("Got It")
                     iconName: "check"
                     backgroundColor: Theme.primary

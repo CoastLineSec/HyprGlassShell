@@ -21,7 +21,7 @@ Singleton {
     property string colorSchemeCommand: ""
     property string pendingProfileImage: ""
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("HGS_SOCKET")
 
     function init() {
     }
@@ -32,7 +32,7 @@ Singleton {
         const username = Quickshell.env("USER");
         if (!username)
             return;
-        DMSService.sendRequest("freedesktop.accounts.getUserIconFile", {
+        HGSService.sendRequest("freedesktop.accounts.getUserIconFile", {
             "username": username
         }, response => {
             if (response.result && response.result.success) {
@@ -52,7 +52,7 @@ Singleton {
             profileImage = "";
             return;
         }
-        if (Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true") {
+        if (Quickshell.env("HGS_RUN_GREETER") === "1" || Quickshell.env("HGS_RUN_GREETER") === "true") {
             profileImage = "";
             return;
         }
@@ -62,7 +62,7 @@ Singleton {
             return;
         }
 
-        DMSService.sendRequest("freedesktop.accounts.getUserIconFile", {
+        HGSService.sendRequest("freedesktop.accounts.getUserIconFile", {
             "username": username
         }, response => {
             if (response.result && response.result.success) {
@@ -93,7 +93,7 @@ Singleton {
         }
         if (!freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.settings.getColorScheme", null, response => {
+        HGSService.sendRequest("freedesktop.settings.getColorScheme", null, response => {
             if (response.result) {
                 systemColorScheme = response.result.value || 0;
             }
@@ -125,7 +125,7 @@ Singleton {
     function setSystemIconTheme(themeName) {
         if (!settingsPortalAvailable || !freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.settings.setIconTheme", {
+        HGSService.sendRequest("freedesktop.settings.setIconTheme", {
             "iconTheme": themeName
         }, response => {
             if (response.error) {
@@ -137,7 +137,7 @@ Singleton {
     function setSystemProfileImage(imagePath) {
         if (!accountsServiceAvailable || !freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.accounts.setIconFile", {
+        HGSService.sendRequest("freedesktop.accounts.setIconFile", {
             "path": imagePath || ""
         }, response => {
             if (response.error) {
@@ -156,7 +156,7 @@ Singleton {
                     userMessage = I18n.tr("Failed to set profile image: %1").arg(errorMsg.split(":").pop().trim());
                 }
 
-                Quickshell.execDetached(["notify-send", "-u", "normal", "-a", "DMS", "-i", "error", I18n.tr("Profile Image Error"), userMessage]);
+                Quickshell.execDetached(["notify-send", "-u", "normal", "-a", "HGS", "-i", "error", I18n.tr("Profile Image Error"), userMessage]);
 
                 pendingProfileImage = "";
             } else {
@@ -169,54 +169,54 @@ Singleton {
 
     Component.onCompleted: {
         if (socketPath && socketPath.length > 0) {
-            checkDMSCapabilities();
+            checkHGSCapabilities();
         } else {
-            log.info("DMS_SOCKET not set");
+            log.info("HGS_SOCKET not set");
         }
         colorSchemeDetector.running = true;
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
-                checkDMSCapabilities();
+            if (HGSService.isConnected) {
+                checkHGSCapabilities();
             }
         }
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: HGSService
+        enabled: HGSService.isConnected
 
         function onCapabilitiesChanged() {
-            checkDMSCapabilities();
+            checkHGSCapabilities();
         }
     }
 
-    function checkDMSCapabilities() {
-        if (!DMSService.isConnected) {
+    function checkHGSCapabilities() {
+        if (!HGSService.isConnected) {
             return;
         }
 
-        if (DMSService.capabilities.length === 0) {
+        if (HGSService.capabilities.length === 0) {
             return;
         }
 
-        freedeskAvailable = DMSService.capabilities.includes("freedesktop");
+        freedeskAvailable = HGSService.capabilities.includes("freedesktop");
         if (freedeskAvailable) {
             checkAccountsService();
             checkSettingsPortal();
         } else {
-            log.info("freedesktop capability not available in DMS");
+            log.info("freedesktop capability not available in HGS");
         }
     }
 
     function checkAccountsService() {
         if (!freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.getState", null, response => {
+        HGSService.sendRequest("freedesktop.getState", null, response => {
             if (response.result && response.result.accounts) {
                 accountsServiceAvailable = response.result.accounts.available || false;
                 if (accountsServiceAvailable) {
@@ -229,7 +229,7 @@ Singleton {
     function checkSettingsPortal() {
         if (!freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.getState", null, response => {
+        HGSService.sendRequest("freedesktop.getState", null, response => {
             if (response.result && response.result.settings) {
                 settingsPortalAvailable = response.result.settings.available || false;
                 if (settingsPortalAvailable && SettingsData.syncModeWithPortal) {

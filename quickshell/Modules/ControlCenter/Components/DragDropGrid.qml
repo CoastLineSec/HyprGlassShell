@@ -426,12 +426,12 @@ Column {
             width: parent.width
             height: 60
             primaryMessage: {
-                if (!DMSService.dmsAvailable) {
-                    return I18n.tr("DMS_SOCKET not available");
+                if (!HGSService.hgsAvailable) {
+                    return I18n.tr("HGS_SOCKET not available");
                 }
                 return I18n.tr("NM not supported");
             }
-            secondaryMessage: I18n.tr("update dms for NM integration.")
+            secondaryMessage: I18n.tr("update hgs for NM integration.")
         }
     }
 

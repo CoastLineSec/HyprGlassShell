@@ -1,7 +1,7 @@
-[templates.dmsgtk3]
+[templates.hgsgtk3]
 input_path = 'SHELL_DIR/matugen/templates/gtk-light-colors.css'
-output_path = 'CONFIG_DIR/gtk-3.0/dank-colors.css'
+output_path = 'CONFIG_DIR/gtk-3.0/hgs-colors.css'
 
-[templates.dmsgtk4]
+[templates.hgsgtk4]
 input_path = 'SHELL_DIR/matugen/templates/gtk-colors.css'
-output_path = 'CONFIG_DIR/gtk-4.0/dank-colors.css'
+output_path = 'CONFIG_DIR/gtk-4.0/hgs-colors.css'

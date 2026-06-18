@@ -16,31 +16,31 @@ packages:
   net:
     interfaces:
       Conn:
-  github.com/AvengeMedia/danklinux/internal/plugins:
+  github.com/AvengeMedia/coastlinesec/internal/plugins:
     interfaces:
       GitClient:
   github.com/godbus/dbus/v5:
     interfaces:
       BusObject:
-  github.com/AvengeMedia/danklinux/internal/server/brightness:
+  github.com/AvengeMedia/coastlinesec/internal/server/brightness:
     config:
       dir: "internal/mocks/brightness"
       outpkg: mocks_brightness
     interfaces:
       DBusConn:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/geolocation:
     config:
       dir: "internal/mocks/geolocation"
       outpkg: mocks_geolocation
     interfaces:
       Client:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/network:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/server/network:
     config:
       dir: "internal/mocks/network"
       outpkg: mocks_network
     interfaces:
       Backend:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/server/cups:
     config:
       dir: "internal/mocks/cups"
       outpkg: mocks_cups
@@ -50,31 +50,31 @@ packages:
         config:
           dir: "internal/mocks/cups_pkhelper"
           outpkg: mocks_cups_pkhelper
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/server/evdev:
     config:
       dir: "internal/mocks/evdev"
       outpkg: mocks_evdev
     interfaces:
       EvdevDevice:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/version:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/version:
     config:
       dir: "internal/mocks/version"
       outpkg: mocks_version
     interfaces:
       VersionFetcher:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlcontext:
     config:
       dir: "internal/mocks/wlcontext"
       outpkg: mocks_wlcontext
     interfaces:
       WaylandContext:
-  github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client:
+  github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client:
     config:
       dir: "internal/mocks/wlclient"
       outpkg: mocks_wlclient
     interfaces:
       WaylandDisplay:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/utils:
+  github.com/CoastLineSec/HyprGlassShell/core/internal/utils:
     config:
       dir: "internal/mocks/utils"
       outpkg: mocks_utils

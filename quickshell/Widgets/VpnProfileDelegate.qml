@@ -18,7 +18,7 @@ Rectangle {
     signal toggleExpand
     signal deleteRequested
 
-    readonly property bool isActive: DMSNetworkService.activeUuids?.includes(profile?.uuid) ?? false
+    readonly property bool isActive: HGSNetworkService.activeUuids?.includes(profile?.uuid) ?? false
     readonly property bool isHovered: rowArea.containsMouse || expandBtn.containsMouse || deleteBtn.containsMouse
     readonly property var configData: (!isTransient && isExpanded) ? VPNService.editConfig : null
     readonly property var configFields: buildConfigFields()
@@ -28,7 +28,7 @@ Rectangle {
     color: isHovered ? Theme.primaryHoverLight : (isActive ? Theme.primaryPressed : Theme.surfaceLight)
     border.width: isActive ? 2 : 1
     border.color: isActive ? Theme.primary : Theme.outlineLight
-    opacity: DMSNetworkService.isBusy ? 0.5 : 1.0
+    opacity: HGSNetworkService.isBusy ? 0.5 : 1.0
     clip: true
 
     function buildConfigFields() {
@@ -92,9 +92,9 @@ Rectangle {
         id: rowArea
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: DMSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
-        enabled: !DMSNetworkService.isBusy
-        onClicked: DMSNetworkService.toggle(profile.uuid)
+        cursorShape: HGSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
+        enabled: !HGSNetworkService.isBusy
+        onClicked: HGSNetworkService.toggle(profile.uuid)
     }
 
     Column {
@@ -107,7 +107,7 @@ Rectangle {
             height: 46 - Theme.spacingS * 2
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: isActive ? "vpn_lock" : "vpn_key_off"
                 size: 20
                 color: isActive ? Theme.primary : Theme.surfaceText
@@ -153,7 +153,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: canExpand
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: isExpanded ? "expand_less" : "expand_more"
                     size: 18
@@ -177,7 +177,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: canDelete
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: "delete"
                     size: 18
@@ -211,7 +211,7 @@ Rectangle {
                 height: VPNService.configLoading ? 40 : 0
                 visible: VPNService.configLoading
 
-                DankSpinner {
+                HGSSpinner {
                     anchors.centerIn: parent
                     size: 20
                 }
@@ -259,7 +259,7 @@ Rectangle {
                 }
             }
 
-            DankToggle {
+            HGSToggle {
                 width: parent.width
                 text: I18n.tr("Autoconnect")
                 checked: configData ? (configData.autoconnect || false) : false

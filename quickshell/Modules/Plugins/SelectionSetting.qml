@@ -78,7 +78,7 @@ Column {
         return null
     }
 
-    DankDropdown {
+    HGSDropdown {
         width: parent.width
         text: root.label
         description: root.description

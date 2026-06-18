@@ -148,7 +148,7 @@ Item {
             if (wasDragging || mouse.button !== Qt.LeftButton)
                 return;
 
-            PopoutService.toggleDankLauncherV2(dockApps?.usesOverlayLayer ?? false);
+            PopoutService.toggleHGSLauncherV2(dockApps?.usesOverlayLayer ?? false);
         }
         onPositionChanged: mouse => {
             if (longPressing && !dragging) {
@@ -198,7 +198,7 @@ Item {
             width: actualIconSize
             height: actualIconSize
 
-            DankIcon {
+            HGSIcon {
                 visible: SettingsData.dockLauncherLogoMode === "apps"
                 anchors.centerIn: parent
                 name: "apps"
@@ -217,14 +217,14 @@ Item {
             }
 
             IconImage {
-                visible: SettingsData.dockLauncherLogoMode === "dank"
+                visible: SettingsData.dockLauncherLogoMode === "hgs"
                 anchors.centerIn: parent
                 width: actualIconSize + SettingsData.dockLauncherLogoSizeOffset
                 height: actualIconSize + SettingsData.dockLauncherLogoSizeOffset
                 smooth: true
                 mipmap: true
                 asynchronous: true
-                source: "file://" + Theme.shellDir + "/assets/danklogo.svg"
+                source: "file://" + Theme.shellDir + "/assets/hgslogo.svg"
                 layer.enabled: effectiveLogoColor !== ""
                 layer.smooth: true
                 layer.mipmap: true
@@ -236,30 +236,13 @@ Item {
             }
 
             IconImage {
-                visible: SettingsData.dockLauncherLogoMode === "compositor" && (CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango || CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle || CompositorService.isLabwc)
+                visible: SettingsData.dockLauncherLogoMode === "compositor"
                 anchors.centerIn: parent
                 width: actualIconSize + SettingsData.dockLauncherLogoSizeOffset
                 height: actualIconSize + SettingsData.dockLauncherLogoSizeOffset
                 smooth: true
                 asynchronous: true
-                source: {
-                    if (CompositorService.isNiri) {
-                        return "file://" + Theme.shellDir + "/assets/niri.svg";
-                    } else if (CompositorService.isHyprland) {
-                        return "file://" + Theme.shellDir + "/assets/hyprland.svg";
-                    } else if (CompositorService.isMango) {
-                        return "file://" + Theme.shellDir + "/assets/mango.png";
-                    } else if (CompositorService.isSway) {
-                        return "file://" + Theme.shellDir + "/assets/sway.svg";
-                    } else if (CompositorService.isScroll) {
-                        return "file://" + Theme.shellDir + "/assets/sway.svg";
-                    } else if (CompositorService.isMiracle) {
-                        return "file://" + Theme.shellDir + "/assets/miraclewm.svg";
-                    } else if (CompositorService.isLabwc) {
-                        return "file://" + Theme.shellDir + "/assets/labwc.png";
-                    }
-                    return "";
-                }
+                source: "file://" + Theme.shellDir + "/assets/hyprland.svg"
                 layer.enabled: effectiveLogoColor !== ""
                 layer.effect: MultiEffect {
                     saturation: 0

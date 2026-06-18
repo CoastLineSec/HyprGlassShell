@@ -10,7 +10,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 type RunOptions struct {
@@ -120,13 +120,13 @@ func findTerminal(override string) string {
 }
 
 func wrapInTerminal(term, title, shellCmd string) []string {
-	const appID = "com.danklinux.dms"
+	const appID = "io.github.coastlinesec.hgs"
 	banner := fmt.Sprintf(
 		`printf '\033[1;36m=== %s ===\033[0m\n'; printf '\033[2m$ %s\033[0m\n'; printf '\033[33mYou may be prompted for your sudo password to apply system updates.\033[0m\n\n'`,
 		title, shellCmd,
 	)
 	closer := `printf '\n\033[1;32m=== Done. Press Enter to close. ===\033[0m\n'; read`
-	export := `export SUDO_PROMPT="[DMS] sudo password for %u: "; `
+	export := `export SUDO_PROMPT="[HGS] sudo password for %u: "; `
 	full := export + banner + "; " + shellCmd + "; " + closer
 
 	switch term {

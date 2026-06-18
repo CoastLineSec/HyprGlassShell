@@ -32,7 +32,7 @@
 package ext_data_control
 
 import (
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 	"golang.org/x/sys/unix"
 )
 

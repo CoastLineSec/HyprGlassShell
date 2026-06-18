@@ -121,14 +121,14 @@ func GetDBPath() (string, error) {
 		cacheDir = filepath.Join(homeDir, ".cache")
 	}
 
-	newDir := filepath.Join(cacheDir, "DankMaterialShell", "clipboard")
+	newDir := filepath.Join(cacheDir, "HyprGlassShell", "clipboard")
 	newPath := filepath.Join(newDir, "db")
 
 	if _, err := os.Stat(newPath); err == nil {
 		return newPath, nil
 	}
 
-	oldDir := filepath.Join(cacheDir, "dms-clipboard")
+	oldDir := filepath.Join(cacheDir, "hgs-clipboard")
 	oldPath := filepath.Join(oldDir, "db")
 
 	if _, err := os.Stat(oldPath); err == nil {

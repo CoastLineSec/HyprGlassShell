@@ -56,7 +56,7 @@ Rectangle {
         }
     }
 
-    DankIcon {
+    HGSIcon {
         anchors.centerIn: parent
         name: iconName
         size: Theme.iconSize
@@ -65,7 +65,7 @@ Rectangle {
         onRotationCompleted: root.iconRotationCompleted()
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

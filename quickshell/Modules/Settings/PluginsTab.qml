@@ -41,11 +41,11 @@ FocusScope {
 
     focus: true
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: sharedTooltip
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -77,7 +77,7 @@ FocusScope {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "extension"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -99,7 +99,7 @@ FocusScope {
                             }
 
                             StyledText {
-                                text: I18n.tr("Manage and configure plugins for extending DMS functionality")
+                                text: I18n.tr("Manage and configure plugins for extending HGS functionality")
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                                 width: parent.width
@@ -110,15 +110,15 @@ FocusScope {
 
                     StyledRect {
                         width: parent.width
-                        height: dmsWarningColumn.implicitHeight + Theme.spacingM * 2
+                        height: hgsWarningColumn.implicitHeight + Theme.spacingM * 2
                         radius: Theme.cornerRadius
                         color: Theme.withAlpha(Theme.warning, 0.1)
                         border.color: Theme.warning
                         border.width: 1
-                        visible: !DMSService.dmsAvailable
+                        visible: !HGSService.hgsAvailable
 
                         Column {
-                            id: dmsWarningColumn
+                            id: hgsWarningColumn
                             anchors.fill: parent
                             anchors.margins: Theme.spacingM
                             spacing: Theme.spacingXS
@@ -126,7 +126,7 @@ FocusScope {
                             Row {
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "warning"
                                     size: 16
                                     color: Theme.warning
@@ -134,7 +134,7 @@ FocusScope {
                                 }
 
                                 StyledText {
-                                    text: I18n.tr("DMS Plugin Manager Unavailable")
+                                    text: I18n.tr("HGS Plugin Manager Unavailable")
                                     font.pixelSize: Theme.fontSizeSmall
                                     color: Theme.warning
                                     font.weight: Font.Medium
@@ -143,7 +143,7 @@ FocusScope {
                             }
 
                             StyledText {
-                                text: I18n.tr("The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.")
+                                text: I18n.tr("The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.")
                                 font.pixelSize: Theme.fontSizeSmall - 1
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.WordWrap
@@ -179,7 +179,7 @@ FocusScope {
                             Row {
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "error"
                                     size: 16
                                     color: Theme.error
@@ -196,7 +196,7 @@ FocusScope {
                             }
 
                             StyledText {
-                                text: I18n.tr("Some plugins require a newer version of DMS:") + " " + incompatWarning.incompatPlugins.map(p => p.name + " (" + p.requires_dms + ")").join(", ")
+                                text: I18n.tr("Some plugins require a newer version of HGS:") + " " + incompatWarning.incompatPlugins.map(p => p.name + " (" + p.requires_hgs + ")").join(", ")
                                 font.pixelSize: Theme.fontSizeSmall - 1
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.WordWrap
@@ -227,29 +227,29 @@ FocusScope {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Browse")
                             iconName: "store"
-                            enabled: DMSService.dmsAvailable
+                            enabled: HGSService.hgsAvailable
                             onClicked: {
                                 showPluginBrowser();
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Scan")
                             iconName: "refresh"
                             onClicked: {
                                 pluginsTab.isRefreshingPlugins = true;
                                 PluginService.scanPlugins();
-                                if (DMSService.dmsAvailable) {
-                                    DMSService.listInstalled();
+                                if (HGSService.hgsAvailable) {
+                                    HGSService.listInstalled();
                                 }
                                 pluginsTab.refreshPluginList();
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: PluginService.pluginDirectoryExists ? I18n.tr("Open Dir") : I18n.tr("Create Dir")
                             iconName: PluginService.pluginDirectoryExists ? "folder_open" : "create_new_folder"
                             onClicked: {
@@ -339,7 +339,7 @@ FocusScope {
                             height: 1
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: searchIconBtn
                             iconName: "search"
                             iconSize: 20
@@ -358,7 +358,7 @@ FocusScope {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: pluginSearchField
                         width: parent.width
                         visible: pluginsTab.isSearchExpanded || height > 0
@@ -402,7 +402,7 @@ FocusScope {
                                 pluginData: modelData
                                 expandedPluginId: pluginsTab.expandedPluginId
                                 hasUpdate: {
-                                    if (DMSService.apiVersion < 8)
+                                    if (HGSService.apiVersion < 8)
                                         return false;
                                     return pluginsTab.installedPluginsData[pluginId] || pluginsTab.installedPluginsData[pluginName] || false;
                                 }
@@ -450,8 +450,8 @@ FocusScope {
             }
         }
         function onPluginListUpdated() {
-            if (DMSService.apiVersion >= 8) {
-                DMSService.listInstalled();
+            if (HGSService.apiVersion >= 8) {
+                HGSService.listInstalled();
             }
             refreshPluginList();
         }
@@ -468,7 +468,7 @@ FocusScope {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
         function onPluginsListReceived(plugins) {
             if (!pluginBrowserLoader.item)
                 return;
@@ -501,8 +501,8 @@ FocusScope {
 
     Component.onCompleted: {
         updateFilteredPlugins();
-        if (DMSService.dmsAvailable && DMSService.apiVersion >= 8)
-            DMSService.listInstalled();
+        if (HGSService.hgsAvailable && HGSService.apiVersion >= 8)
+            HGSService.listInstalled();
         if (PopoutService.pendingPluginInstall)
             Qt.callLater(showPluginBrowser);
     }

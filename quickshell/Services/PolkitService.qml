@@ -9,7 +9,7 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("PolkitService")
 
-    readonly property bool disablePolkitIntegration: Quickshell.env("DMS_DISABLE_POLKIT") === "1"
+    readonly property bool disablePolkitIntegration: Quickshell.env("HGS_DISABLE_POLKIT") === "1"
 
     readonly property bool polkitAvailable: !disablePolkitIntegration
     readonly property alias agent: polkitAgentInstance

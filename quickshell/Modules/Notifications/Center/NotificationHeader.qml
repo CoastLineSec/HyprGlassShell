@@ -32,7 +32,7 @@ Item {
     width: parent.width
     height: headerColumn.implicitHeight
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: sharedTooltip
     }
 
@@ -59,7 +59,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     id: doNotDisturbButton
                     iconName: SessionData.doNotDisturb ? "notifications_off" : "notifications"
                     iconColor: SessionData.doNotDisturb ? Theme.error : Theme.surfaceText
@@ -78,7 +78,7 @@ Item {
                     onExited: sharedTooltip.hide()
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     id: dndScheduleButton
                     iconName: root.showDndMenu ? "expand_less" : "schedule"
                     iconColor: root.showDndMenu ? Theme.primary : Theme.surfaceText
@@ -100,7 +100,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXS
 
-                DankActionButton {
+                HGSActionButton {
                     id: helpButton
                     iconName: "info"
                     iconColor: (keyboardController && keyboardController.showKeyboardHints) ? Theme.primary : Theme.surfaceText
@@ -113,7 +113,7 @@ Item {
                     }
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     id: settingsButton
                     iconName: "settings"
                     iconColor: root.showSettings ? Theme.primary : Theme.surfaceText
@@ -137,7 +137,7 @@ Item {
                         anchors.centerIn: parent
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "delete_sweep"
                             size: Theme.iconSizeSmall
                             color: clearArea.containsMouse ? Theme.primary : Theme.surfaceText
@@ -177,7 +177,7 @@ Item {
             onDismissed: root.showDndMenu = false
         }
 
-        DankButtonGroup {
+        HGSButtonGroup {
             id: tabGroup
             width: parent.width
             currentIndex: root.currentTab

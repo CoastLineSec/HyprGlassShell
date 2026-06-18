@@ -22,7 +22,7 @@ Singleton {
         onTriggered: root.suppressSound = false
     }
 
-    readonly property string preferredBatteryOverride: Quickshell.env("DMS_PREFERRED_BATTERY")
+    readonly property string preferredBatteryOverride: Quickshell.env("HGS_PREFERRED_BATTERY")
 
     // List of laptop batteries
     readonly property var batteries: UPower.devices.values.filter(dev => dev.isLaptopBattery)

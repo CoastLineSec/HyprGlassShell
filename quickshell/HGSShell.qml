@@ -1,0 +1,1358 @@
+import QtQuick
+import Quickshell
+import qs.Common
+import qs.Modals
+import qs.Modals.Changelog
+import qs.Modals.Clipboard
+import qs.Modals.Common
+import qs.Modals.Greeter
+import qs.Modals.Settings
+import qs.Modals.HGSLauncherV2
+import qs.Modules
+import qs.Modules.AppDrawer
+import qs.Modules.HGSDash
+import qs.Modules.ControlCenter
+import qs.Modules.Dock
+import qs.Modules.Lock
+import qs.Modules.Notepad
+import qs.Modules.Notifications.Center
+import qs.Widgets
+import qs.Modules.Notifications.Popup
+import qs.Modules.OSD
+import qs.Modules.ProcessList
+import qs.Modules.HGSBar
+import qs.Modules.HGSBar.Popouts
+import qs.Modules.Frame
+import qs.Modules.WorkspaceOverlays
+import qs.Modules.Settings.DisplayConfig
+import qs.Services
+
+Item {
+    id: root
+    readonly property var log: Log.scoped("HGSShell")
+    readonly property var _sessionsServiceRef: SessionsService
+
+    property bool osdSurfacesLoaded: true
+    property int pendingOsdResumeReloads: 0
+
+    function recreateOsdSurfaces() {
+        OSDManager.currentOSDsByScreen = ({});
+        osdSurfacesLoaded = false;
+        osdSurfaceReloadTimer.restart();
+    }
+
+    Instantiator {
+        id: daemonPluginInstantiator
+        asynchronous: true
+        model: Object.keys(PluginService.pluginDaemonComponents)
+
+        delegate: Loader {
+            id: daemonLoader
+            property string pluginId: modelData
+            sourceComponent: PluginService.pluginDaemonComponents[pluginId]
+
+            onLoaded: {
+                if (item) {
+                    item.pluginService = PluginService;
+                    if (item.popoutService !== undefined) {
+                        item.popoutService = PopoutService;
+                    }
+                    item.pluginId = pluginId;
+                    log.info("Daemon plugin loaded:", pluginId);
+                }
+            }
+        }
+    }
+
+    WallpaperBackground {}
+
+    DesktopWidgetLayer {}
+
+    Lock {
+        id: lock
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Loader {
+            id: fadeWindowLoader
+            required property var modelData
+            active: SettingsData.fadeToLockEnabled
+            asynchronous: false
+
+            sourceComponent: FadeToLockWindow {
+                screen: fadeWindowLoader.modelData
+
+                onFadeCompleted: {
+                    IdleService.lockRequested();
+                }
+
+                onFadeCancelled: {
+                    log.debug("Fade to lock cancelled by user on screen:", fadeWindowLoader.modelData.name);
+                }
+            }
+
+            Connections {
+                target: IdleService
+                enabled: fadeWindowLoader.item !== null
+
+                function onFadeToLockRequested() {
+                    if (fadeWindowLoader.item) {
+                        fadeWindowLoader.item.startFade();
+                    }
+                }
+
+                function onCancelFadeToLock() {
+                    if (fadeWindowLoader.item) {
+                        fadeWindowLoader.item.cancelFade();
+                    }
+                }
+
+                function onDismissFadeToLock() {
+                    if (fadeWindowLoader.item) {
+                        fadeWindowLoader.item.dismiss();
+                    }
+                }
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Loader {
+            id: fadeDpmsWindowLoader
+            required property var modelData
+            active: SettingsData.fadeToDpmsEnabled
+            asynchronous: false
+
+            sourceComponent: FadeToDpmsWindow {
+                screen: fadeDpmsWindowLoader.modelData
+
+                onFadeCompleted: {
+                    IdleService.requestMonitorOff();
+                }
+
+                onFadeCancelled: {
+                    log.debug("Fade to DPMS cancelled by user on screen:", fadeDpmsWindowLoader.modelData.name);
+                }
+            }
+
+            Connections {
+                target: IdleService
+                enabled: fadeDpmsWindowLoader.item !== null
+
+                function onFadeToDpmsRequested() {
+                    if (fadeDpmsWindowLoader.item) {
+                        fadeDpmsWindowLoader.item.startFade();
+                    }
+                }
+
+                function onCancelFadeToDpms() {
+                    if (fadeDpmsWindowLoader.item) {
+                        fadeDpmsWindowLoader.item.cancelFade();
+                    }
+                }
+
+                function onRequestMonitorOn() {
+                    if (!fadeDpmsWindowLoader.item)
+                        return;
+                    fadeDpmsWindowLoader.item.cancelFade();
+                }
+            }
+        }
+    }
+
+    property bool barSurfacesLoaded: true
+
+    function recreateBarSurfaces() {
+        log.info("Recreating bar surfaces, screens:", Quickshell.screens.length,
+                 Quickshell.screens.map(s => s.name).join(","));
+        if (barSurfacesLoaded)
+            barSurfacesLoaded = false;
+        barSurfaceReloadAction.schedule();
+    }
+
+    DeferredAction {
+        id: barSurfaceReloadAction
+        onTriggered: root.barSurfacesLoaded = true
+    }
+
+    property string _barLayoutStateJson: {
+        if (!barSurfacesLoaded)
+            return "[]";
+        const configs = SettingsData.barConfigs;
+        const mapped = configs.map(c => ({
+                    id: c.id,
+                    position: c.position,
+                    autoHide: c.autoHide,
+                    visible: c.visible
+                })).sort((a, b) => {
+            const aVertical = a.position === SettingsData.Position.Left || a.position === SettingsData.Position.Right;
+            const bVertical = b.position === SettingsData.Position.Left || b.position === SettingsData.Position.Right;
+            if (aVertical !== bVertical) {
+                return aVertical - bVertical;
+            }
+            return String(a.id).localeCompare(String(b.id));
+        });
+        return JSON.stringify(mapped);
+    }
+
+    on_BarLayoutStateJsonChanged: {
+        if (typeof dockRecreateDebounce !== "undefined") {
+            dockRecreateDebounce.restart();
+        }
+    }
+
+    Connections {
+        target: SettingsData
+        function onFrameEnabledChanged() {
+            root.recreateBarSurfaces();
+        }
+        function onConnectedFrameModeActiveChanged() {
+            root.recreateBarSurfaces();
+        }
+        function onForceHGSBarLayoutRefresh() {
+            root.recreateBarSurfaces();
+        }
+    }
+
+    property bool frameSurfacesLoaded: true
+
+    Loader {
+        active: root.frameSurfacesLoaded
+        asynchronous: false
+        sourceComponent: Frame {}
+    }
+
+    DeferredAction {
+        id: frameSurfaceReloadAction
+        onTriggered: root.frameSurfacesLoaded = true
+    }
+
+    Repeater {
+        id: hgsBarRepeater
+        model: ScriptModel {
+            id: barRepeaterModel
+            values: JSON.parse(root._barLayoutStateJson)
+        }
+
+        property var hyprlandOverviewLoaderRef: hyprlandOverviewLoader
+
+        delegate: Loader {
+            id: barLoader
+            required property var modelData
+            property var barConfig: SettingsData.barConfigs.find(cfg => cfg.id === modelData.id) || null
+            active: root.barSurfacesLoaded && (barConfig?.enabled ?? false)
+            asynchronous: false
+
+            sourceComponent: HGSBar {
+                barConfig: barLoader.barConfig
+                hyprlandOverviewLoader: hgsBarRepeater.hyprlandOverviewLoaderRef
+
+                onColorPickerRequested: {
+                    if (colorPickerModal.shouldBeVisible) {
+                        colorPickerModal.close();
+                    } else {
+                        colorPickerModal.show();
+                    }
+                }
+            }
+        }
+    }
+
+    property bool dockEnabled: false
+
+    Timer {
+        id: dockRecreateDebounce
+        interval: 500
+        repeat: false
+        onTriggered: {
+            root.dockEnabled = false;
+            Qt.callLater(() => {
+                root.dockEnabled = true;
+            });
+        }
+    }
+
+    Timer {
+        id: loginSoundTimer
+        // Half a second delay before playing login sound, otherwise the sound may be cut off
+        // 50 is the minimum that seems to work, but 500 is safer
+        interval: 500
+        repeat: false
+        onTriggered: {
+            AudioService.playLoginSoundIfApplicable();
+        }
+    }
+
+    Timer {
+        id: osdResumeRecreateTimer
+        interval: 400
+        repeat: false
+        onTriggered: {
+            root.recreateOsdSurfaces();
+            root.pendingOsdResumeReloads--;
+
+            if (root.pendingOsdResumeReloads <= 0) {
+                root.pendingOsdResumeReloads = 0;
+                interval = 400;
+                return;
+            }
+
+            interval = 1400;
+            restart();
+        }
+    }
+
+    Timer {
+        id: osdSurfaceReloadTimer
+        interval: 120
+        repeat: false
+        onTriggered: root.osdSurfacesLoaded = true
+    }
+
+    property bool hadRealScreen: true
+    property var previousRealScreenNames: []
+
+    function _getRealScreenNames() {
+        const names = [];
+        for (let i = 0; i < Quickshell.screens.length; i++) {
+            if (Quickshell.screens[i].name.length > 0)
+                names.push(Quickshell.screens[i].name);
+        }
+        return names;
+    }
+
+    function _hasRealScreen() {
+        for (let i = 0; i < Quickshell.screens.length; i++) {
+            if (Quickshell.screens[i].name.length > 0)
+                return true;
+        }
+        return false;
+    }
+
+    function triggerSurfaceRecovery(source) {
+        log.info("Surface recovery triggered by:", source,
+                 "screens:", Quickshell.screens.length,
+                 Quickshell.screens.map(s => s.name).join(","),
+                 "barLoaded:", root.barSurfacesLoaded,
+                 "frameLoaded:", root.frameSurfacesLoaded,
+                 "dockEnabled:", root.dockEnabled);
+        surfaceResumeRecoveryTimer.pass = 0;
+        surfaceResumeRecoveryTimer.interval = 800;
+        surfaceResumeRecoveryTimer.restart();
+    }
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            const hasReal = root._hasRealScreen();
+            const currentNames = root._getRealScreenNames();
+            log.info("Screens changed:", Quickshell.screens.length,
+                     Quickshell.screens.map(s => "'" + s.name + "'").join(","),
+                     "hasReal:", hasReal, "hadReal:", root.hadRealScreen);
+            const fullReconnect = !root.hadRealScreen && hasReal;
+            const partialReconnect = root.previousRealScreenNames.length > 0
+                && currentNames.some(name => !root.previousRealScreenNames.includes(name));
+            if (fullReconnect || partialReconnect) {
+                log.info("Screen reconnect detected, triggering surface recovery",
+                         "full:", fullReconnect, "partial:", partialReconnect);
+                root.triggerSurfaceRecovery("screen-reconnect");
+            }
+            root.hadRealScreen = hasReal;
+            root.previousRealScreenNames = currentNames;
+        }
+    }
+
+    Timer {
+        id: surfaceResumeRecoveryTimer
+        interval: 800
+        repeat: false
+        property int pass: 0
+        onTriggered: {
+            pass++;
+            log.info("Surface recovery pass", pass,
+                     "screens:", Quickshell.screens.length,
+                     Quickshell.screens.map(s => s.name).join(","));
+
+            root.recreateBarSurfaces();
+
+            if (root.frameSurfacesLoaded) {
+                root.frameSurfacesLoaded = false;
+                frameSurfaceReloadAction.schedule();
+            }
+
+            root.dockEnabled = false;
+            Qt.callLater(() => {
+                root.dockEnabled = true;
+            });
+
+            if (pass < 2) {
+                interval = 2000;
+                restart();
+            } else {
+                pass = 0;
+                interval = 800;
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        dockRecreateDebounce.start();
+        // Force PolkitService singleton to initialize
+        PolkitService.polkitAvailable;
+        // Force DisplayConfigState singleton to initialize so auto-config runs at startup
+        DisplayConfigState.hasOutputBackend;
+        loginSoundTimer.start();
+    }
+
+    Loader {
+        id: dockLoader
+        active: root.dockEnabled
+        asynchronous: false
+
+        property var currentPosition: SettingsData.dockPosition
+        property bool initialized: false
+
+        sourceComponent: Dock {
+            contextMenu: dockContextMenuLoader.item ? dockContextMenuLoader.item : null
+            trashContextMenu: dockTrashContextMenuLoader.item ? dockTrashContextMenuLoader.item : null
+        }
+
+        onLoaded: {
+            if (item) {
+                dockContextMenuLoader.active = true;
+                if (SettingsData.dockShowTrash) {
+                    dockTrashContextMenuLoader.active = true;
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            initialized = true;
+        }
+
+        onCurrentPositionChanged: {
+            if (!initialized)
+                return;
+            const comp = sourceComponent;
+            sourceComponent = null;
+            sourceComponent = comp;
+        }
+    }
+
+    Loader {
+        id: hgsDashPopoutLoader
+
+        active: false
+        asynchronous: false
+
+        Component.onCompleted: {
+            PopoutService.hgsDashPopoutLoader = hgsDashPopoutLoader;
+        }
+
+        onLoaded: {
+            if (item) {
+                PopoutService.hgsDashPopout = item;
+                PopoutService._onHGSDashPopoutLoaded();
+            }
+        }
+
+        sourceComponent: Component {
+            HGSDashPopout {
+                id: hgsDashPopout
+            }
+        }
+    }
+
+    LazyLoader {
+        id: dockContextMenuLoader
+
+        active: false
+
+        DockContextMenu {
+            id: dockContextMenu
+        }
+    }
+
+    LazyLoader {
+        id: dockTrashContextMenuLoader
+
+        active: false
+
+        DockTrashContextMenu {
+            id: dockTrashContextMenu
+        }
+    }
+
+    Connections {
+        target: SettingsData
+        function onDockShowTrashChanged() {
+            if (SettingsData.dockShowTrash) {
+                dockTrashContextMenuLoader.active = true;
+            }
+        }
+    }
+
+    ConfirmModal {
+        id: emptyTrashConfirm
+    }
+
+    Connections {
+        target: TrashService
+        function onEmptyTrashConfirmRequested(itemCount) {
+            emptyTrashConfirm.showWithOptions({
+                title: I18n.tr("Empty Trash?"),
+                message: I18n.tr("Permanently delete %1 item(s)? This cannot be undone.").arg(itemCount),
+                confirmText: I18n.tr("Empty"),
+                cancelText: I18n.tr("Cancel"),
+                confirmColor: Theme.error,
+                onConfirm: () => TrashService.emptyTrash()
+            });
+        }
+    }
+
+    LazyLoader {
+        id: notificationCenterLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.notificationCenterLoader = notificationCenterLoader;
+        }
+
+        NotificationCenterPopout {
+            id: notificationCenter
+            onPopoutClosed: PopoutService.unloadNotificationCenter()
+
+            Component.onCompleted: {
+                PopoutService.notificationCenterPopout = notificationCenter;
+            }
+        }
+    }
+
+    Variants {
+        model: SettingsData.notificationFocusedMonitor ? Quickshell.screens : SettingsData.getFilteredScreens("notifications")
+
+        delegate: NotificationPopupManager {
+            modelData: item
+        }
+    }
+
+    LazyLoader {
+        id: controlCenterLoader
+
+        active: false
+
+        property var modalRef: colorPickerModal
+        property LazyLoader powerModalLoaderRef: powerMenuModalLoader
+
+        Component.onCompleted: {
+            PopoutService.controlCenterLoader = controlCenterLoader;
+        }
+
+        ControlCenterPopout {
+            id: controlCenterPopout
+            colorPickerModal: controlCenterLoader.modalRef
+            powerMenuModalLoader: controlCenterLoader.powerModalLoaderRef
+            onPopoutClosed: PopoutService.unloadControlCenter()
+
+            onLockRequested: {
+                lock.activate();
+            }
+
+            Component.onCompleted: {
+                PopoutService.controlCenterPopout = controlCenterPopout;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: wifiPasswordModalLoader
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.wifiPasswordModalLoader = wifiPasswordModalLoader;
+        }
+
+        WifiPasswordModal {
+            id: wifiPasswordModalItem
+
+            Component.onCompleted: {
+                PopoutService.wifiPasswordModal = wifiPasswordModalItem;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: wifiQRCodeModalLoader
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.wifiQRCodeModalLoader = wifiQRCodeModalLoader;
+        }
+
+        WifiQRCodeModal {
+            id: wifiQRCodeModalItem
+
+            Component.onCompleted: {
+                PopoutService.wifiQRCodeModal = wifiQRCodeModalItem;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: polkitAuthModalLoader
+        active: false
+
+        PolkitAuthModal {
+            id: polkitAuthModal
+
+            Component.onCompleted: {
+                PopoutService.polkitAuthModal = polkitAuthModal;
+            }
+        }
+    }
+
+    Connections {
+        target: PolkitService.agent
+        enabled: PolkitService.polkitAvailable
+
+        function onAuthenticationRequestStarted() {
+            if (PopoutService.systemUpdatePopout?.shouldBeVisible)
+                return;
+            polkitAuthModalLoader.active = true;
+            if (polkitAuthModalLoader.item)
+                polkitAuthModalLoader.item.show();
+        }
+    }
+
+    BluetoothPairingModal {
+        id: bluetoothPairingModal
+
+        Component.onCompleted: {
+            PopoutService.bluetoothPairingModal = bluetoothPairingModal;
+        }
+    }
+
+    property string lastCredentialsToken: ""
+    property var lastCredentialsTime: 0
+
+    Connections {
+        target: NetworkService
+
+        function onCredentialsNeeded(token, ssid, setting, fields, hints, reason, connType, connName, vpnService, fieldsInfo) {
+            const now = Date.now();
+            const timeSinceLastPrompt = now - lastCredentialsTime;
+
+            wifiPasswordModalLoader.active = true;
+            if (!wifiPasswordModalLoader.item)
+                return;
+
+            if (wifiPasswordModalLoader.item.shouldBeVisible && timeSinceLastPrompt < 1000) {
+                NetworkService.cancelCredentials(lastCredentialsToken);
+                lastCredentialsToken = token;
+                lastCredentialsTime = now;
+                wifiPasswordModalLoader.item.showFromPrompt(token, ssid, setting, fields, hints, reason, connType, connName, vpnService, fieldsInfo);
+                return;
+            }
+
+            lastCredentialsToken = token;
+            lastCredentialsTime = now;
+            wifiPasswordModalLoader.item.showFromPrompt(token, ssid, setting, fields, hints, reason, connType, connName, vpnService, fieldsInfo);
+        }
+    }
+
+    LazyLoader {
+        id: networkInfoModalLoader
+
+        active: false
+
+        NetworkInfoModal {
+            id: networkInfoModal
+
+            Component.onCompleted: {
+                PopoutService.networkInfoModal = networkInfoModal;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: batteryPopoutLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.batteryPopoutLoader = batteryPopoutLoader;
+        }
+
+        BatteryPopout {
+            id: batteryPopout
+            onPopoutClosed: PopoutService.unloadBattery()
+
+            Component.onCompleted: {
+                PopoutService.batteryPopout = batteryPopout;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: vpnPopoutLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.vpnPopoutLoader = vpnPopoutLoader;
+        }
+
+        VpnPopout {
+            id: vpnPopout
+            onPopoutClosed: PopoutService.unloadVpn()
+
+            Component.onCompleted: {
+                PopoutService.vpnPopout = vpnPopout;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: processListPopoutLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.processListPopoutLoader = processListPopoutLoader;
+        }
+
+        ProcessListPopout {
+            id: processListPopout
+            onPopoutClosed: PopoutService.unloadProcessListPopout()
+
+            Component.onCompleted: {
+                PopoutService.processListPopout = processListPopout;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: settingsModalLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.settingsModalLoader = settingsModalLoader;
+        }
+
+        onActiveChanged: {
+            if (active && item) {
+                PopoutService.settingsModal = item;
+                PopoutService._onSettingsModalLoaded();
+            }
+        }
+
+        SettingsModal {
+            id: settingsModal
+            property bool wasShown: false
+
+            onVisibleChanged: {
+                if (visible) {
+                    wasShown = true;
+                } else if (wasShown) {
+                    PopoutService.unloadSettings();
+                }
+            }
+        }
+    }
+
+    LazyLoader {
+        id: appDrawerLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.appDrawerLoader = appDrawerLoader;
+        }
+
+        AppDrawerPopout {
+            id: appDrawerPopout
+            onPopoutClosed: PopoutService.unloadAppDrawer()
+
+            Component.onCompleted: {
+                PopoutService.appDrawerPopout = appDrawerPopout;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: hgsLauncherV2ModalLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.hgsLauncherV2ModalLoader = hgsLauncherV2ModalLoader;
+        }
+
+        HGSLauncherV2Modal {
+            id: hgsLauncherV2Modal
+
+            Component.onCompleted: {
+                PopoutService.hgsLauncherV2Modal = hgsLauncherV2Modal;
+                PopoutService._onHGSLauncherV2ModalLoaded();
+            }
+        }
+    }
+
+    LazyLoader {
+        id: spotlightBarModalLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.spotlightBarModalLoader = spotlightBarModalLoader;
+        }
+
+        HGSLauncherV2ModalSpotlight {
+            id: spotlightBarModal
+
+            Component.onCompleted: {
+                PopoutService.spotlightBarModal = spotlightBarModal;
+                PopoutService._onSpotlightBarModalLoaded();
+            }
+        }
+    }
+
+    LazyLoader {
+        id: clipboardHistoryPopoutLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.clipboardHistoryPopoutLoader = clipboardHistoryPopoutLoader;
+        }
+
+        ClipboardHistoryPopout {
+            id: clipboardHistoryPopout
+            onPopoutClosed: PopoutService.unloadClipboardHistoryPopout()
+
+            Component.onCompleted: {
+                PopoutService.clipboardHistoryPopout = clipboardHistoryPopout;
+            }
+        }
+    }
+
+    MuxModal {
+        id: muxModal
+    }
+
+    ClipboardHistoryModal {
+        id: clipboardHistoryModalPopup
+
+        Component.onCompleted: {
+            PopoutService.clipboardHistoryModal = clipboardHistoryModalPopup;
+        }
+    }
+
+    NotificationModal {
+        id: notificationModal
+
+        Component.onCompleted: {
+            PopoutService.notificationModal = notificationModal;
+        }
+    }
+
+    BrowserPickerModal {
+        id: browserPickerModal
+    }
+
+    AppPickerModal {
+        id: filePickerModal
+        title: I18n.tr("Open with...")
+        viewMode: SettingsData.appPickerViewMode || "grid"
+
+        onViewModeChanged: {
+            SettingsData.set("appPickerViewMode", viewMode);
+        }
+
+        function shellEscape(str) {
+            return "'" + str.replace(/'/g, "'\\''") + "'";
+        }
+
+        onApplicationSelected: (app, filePath) => {
+            if (!app)
+                return;
+            let cmd = app.exec || "";
+            const escapedPath = shellEscape(filePath);
+            const escapedUri = shellEscape("file://" + filePath);
+
+            let hasField = false;
+            if (cmd.includes("%f")) {
+                cmd = cmd.replace("%f", escapedPath);
+                hasField = true;
+            } else if (cmd.includes("%F")) {
+                cmd = cmd.replace("%F", escapedPath);
+                hasField = true;
+            } else if (cmd.includes("%u")) {
+                cmd = cmd.replace("%u", escapedUri);
+                hasField = true;
+            } else if (cmd.includes("%U")) {
+                cmd = cmd.replace("%U", escapedUri);
+                hasField = true;
+            }
+
+            cmd = cmd.replace(/%[ikc]/g, "");
+
+            if (!hasField) {
+                cmd += " " + escapedPath;
+            }
+
+            log.debug("FilePicker: Launching", cmd);
+
+            Quickshell.execDetached({
+                command: ["sh", "-c", cmd]
+            });
+        }
+    }
+
+    Connections {
+        target: HGSService
+        function onOpenUrlRequested(url) {
+            if (url.startsWith("hgs://theme/install/")) {
+                var themeId = url.replace("hgs://theme/install/", "").split(/[?#]/)[0];
+                if (themeId) {
+                    PopoutService.pendingThemeInstall = themeId;
+                    PopoutService.openSettingsWithTab("theme");
+                }
+                return;
+            }
+            browserPickerModal.url = url;
+            browserPickerModal.open();
+        }
+
+        function onAppPickerRequested(data) {
+            log.debug("App picker requested with data:", JSON.stringify(data));
+
+            if (!data || !data.target) {
+                log.warn("Invalid app picker request data");
+                return;
+            }
+
+            filePickerModal.targetData = data.target;
+            filePickerModal.targetDataLabel = data.requestType || "file";
+            filePickerModal.mimeType = data.mimeType || "";
+            filePickerModal.rememberMimeTypes = [];
+
+            if (data.categories && data.categories.length > 0) {
+                filePickerModal.categoryFilter = data.categories;
+            } else {
+                filePickerModal.categoryFilter = [];
+            }
+
+            filePickerModal.usageHistoryKey = "filePickerUsageHistory";
+            filePickerModal.open();
+        }
+    }
+
+    Connections {
+        target: SessionService
+
+        function onSessionResumed() {
+            log.info("Session resumed: screens:", Quickshell.screens.length,
+                     Quickshell.screens.map(s => s.name).join(","),
+                     "barLoaded:", root.barSurfacesLoaded,
+                     "frameLoaded:", root.frameSurfacesLoaded,
+                     "dockEnabled:", root.dockEnabled);
+
+            root.pendingOsdResumeReloads = 2;
+            osdResumeRecreateTimer.interval = 400;
+            osdResumeRecreateTimer.restart();
+
+            root.triggerSurfaceRecovery("sessionResumed");
+        }
+    }
+
+    HGSColorPickerModal {
+        id: colorPickerModal
+
+        Component.onCompleted: {
+            PopoutService.colorPickerModal = colorPickerModal;
+        }
+    }
+
+    LazyLoader {
+        id: workspaceRenameModalLoader
+
+        active: false
+
+        Component.onCompleted: PopoutService.workspaceRenameModalLoader = workspaceRenameModalLoader
+
+        WorkspaceRenameModal {
+            id: workspaceRenameModal
+        }
+    }
+
+    LazyLoader {
+        id: windowRuleModalLoader
+
+        active: false
+
+        Component.onCompleted: PopoutService.windowRuleModalLoader = windowRuleModalLoader
+
+        WindowRuleModal {
+            id: windowRuleModal
+        }
+    }
+
+    LazyLoader {
+        id: processListModalLoader
+
+        active: false
+
+        Component.onCompleted: PopoutService.processListModalLoader = processListModalLoader
+
+        ProcessListModal {
+            id: processListModal
+            property bool wasShown: false
+
+            Component.onCompleted: {
+                PopoutService.processListModal = processListModal;
+            }
+
+            onVisibleChanged: {
+                if (visible) {
+                    wasShown = true;
+                } else if (wasShown) {
+                    PopoutService.unloadProcessListModal();
+                }
+            }
+        }
+    }
+
+    LazyLoader {
+        id: systemUpdateLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.systemUpdateLoader = systemUpdateLoader;
+        }
+
+        SystemUpdatePopout {
+            id: systemUpdatePopout
+            onPopoutClosed: {
+                if (systemUpdatePopout._reopenAfterUpgrade) {
+                    return;
+                }
+                PopoutService.unloadSystemUpdate();
+            }
+
+            Component.onCompleted: {
+                PopoutService.systemUpdatePopout = systemUpdatePopout;
+            }
+        }
+    }
+
+    Variants {
+        id: notepadSlideoutVariants
+        model: SettingsData.getFilteredScreens("notepad")
+
+        delegate: HGSSlideout {
+            id: notepadSlideout
+            modelData: item
+            title: I18n.tr("Notepad")
+            slideoutWidth: 480
+            expandable: true
+            expandedWidthValue: 960
+            edgeGap: SettingsData.notepadEffectiveEdgeGap
+            slideEdge: SettingsData.notepadSlideoutSide
+
+            onIsVisibleChanged: {
+                if (isVisible)
+                    PopoutService.notepadPopout?.hide();
+            }
+
+            content: Component {
+                Notepad {
+                    slideout: notepadSlideout
+                    onHideRequested: notepadSlideout.hide()
+                    onPopoutRequested: {
+                        notepadSlideout.hide();
+                        PopoutService.openNotepadPopout();
+                    }
+                }
+            }
+
+            function toggle() {
+                if (isVisible) {
+                    hide();
+                } else {
+                    show();
+                }
+            }
+        }
+
+        onInstancesChanged: PopoutService.notepadSlideouts = instances
+        Component.onCompleted: PopoutService.notepadSlideouts = instances
+    }
+
+    LazyLoader {
+        id: notepadPopoutLoader
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.notepadPopoutLoader = notepadPopoutLoader;
+        }
+
+        onActiveChanged: {
+            if (active && item) {
+                PopoutService.notepadPopout = item;
+                PopoutService._onNotepadPopoutLoaded();
+            }
+        }
+
+        NotepadPopoutWindow {}
+    }
+
+    LazyLoader {
+        id: powerMenuModalLoader
+
+        active: false
+
+        PowerMenuModal {
+            id: powerMenuModal
+
+            onPowerActionRequested: (action, title, message) => {
+                PopoutService.closeControlCenter();
+                switch (action) {
+                case "logout":
+                    SessionService.logout();
+                    break;
+                case "suspend":
+                    SessionService.suspend();
+                    break;
+                case "hibernate":
+                    SessionService.hibernate();
+                    break;
+                case "reboot":
+                    SessionService.reboot();
+                    break;
+                case "poweroff":
+                    SessionService.poweroff();
+                    break;
+                }
+            }
+
+            onLockRequested: {
+                PopoutService.closeControlCenter();
+                lock.activate();
+            }
+
+            onSwitchUserRequested: {
+                switchUserModalLoader.active = true;
+                Qt.callLater(() => {
+                    if (switchUserModalLoader.item)
+                        switchUserModalLoader.item.showFromPowerMenu();
+                });
+            }
+
+            Component.onCompleted: {
+                PopoutService.powerMenuModal = powerMenuModal;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: switchUserModalLoader
+
+        active: false
+
+        SwitchUserModal {
+            id: switchUserModal
+        }
+    }
+
+    LazyLoader {
+        id: hyprKeybindsModalLoader
+
+        active: false
+
+        KeybindsModal {
+            id: keybindsModal
+
+            Component.onCompleted: {
+                PopoutService.hyprKeybindsModal = keybindsModal;
+            }
+        }
+    }
+
+    LazyLoader {
+        id: powerProfileModalLoader
+
+        active: false
+
+        PowerProfileModal {
+            id: powerProfileModal
+
+            Component.onCompleted: {
+                PopoutService.powerProfileModal = powerProfileModal;
+            }
+        }
+
+        Component.onCompleted: {
+            PopoutService.powerProfileModalLoader = powerProfileModalLoader;
+        }
+    }
+
+    HGSShellIPC {
+        powerMenuModalLoader: powerMenuModalLoader
+        processListModalLoader: processListModalLoader
+        controlCenterLoader: controlCenterLoader
+        hgsDashPopoutLoader: hgsDashPopoutLoader
+        notepadSlideoutVariants: notepadSlideoutVariants
+        hyprKeybindsModalLoader: hyprKeybindsModalLoader
+        hgsBarRepeater: hgsBarRepeater
+        hyprlandOverviewLoader: hyprlandOverviewLoader
+        workspaceRenameModalLoader: workspaceRenameModalLoader
+        windowRuleModalLoader: windowRuleModalLoader
+    }
+
+    Variants {
+        model: SettingsData.getFilteredScreens("toast")
+
+        delegate: Toast {
+            modelData: item
+            visible: ToastService.toastVisible
+        }
+    }
+
+    Loader {
+        id: osdSurfacesLoader
+        active: root.osdSurfacesLoaded
+        asynchronous: false
+
+        sourceComponent: Component {
+            Item {
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: VolumeOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: MediaVolumeOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: MediaPlaybackOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: MicVolumeOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: BrightnessOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: IdleInhibitorOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.osdPowerProfileEnabled ? SettingsData.getFilteredScreens("osd") : []
+
+                    delegate: PowerProfileOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: CapsLockOSD {
+                        modelData: item
+                    }
+                }
+
+                Variants {
+                    model: SettingsData.getFilteredScreens("osd")
+
+                    delegate: AudioOutputOSD {
+                        modelData: item
+                    }
+                }
+            }
+        }
+    }
+
+    LazyLoader {
+        id: hyprlandOverviewLoader
+        active: true
+        component: HyprlandOverview {
+            id: hyprlandOverview
+        }
+    }
+
+    Loader {
+        id: greeterLoader
+        active: false
+        sourceComponent: GreeterModal {
+            onGreeterCompleted: greeterLoader.active = false
+            Component.onCompleted: show()
+        }
+
+        Connections {
+            target: FirstLaunchService
+            function onGreeterRequested() {
+                if (greeterLoader.active && greeterLoader.item) {
+                    greeterLoader.item.show();
+                    return;
+                }
+                greeterLoader.active = true;
+            }
+        }
+    }
+
+    Loader {
+        id: changelogLoader
+        active: false
+        sourceComponent: ChangelogModal {
+            onChangelogDismissed: changelogLoader.active = false
+            Component.onCompleted: show()
+        }
+
+        Connections {
+            target: ChangelogService
+            function onChangelogRequested() {
+                if (changelogLoader.active && changelogLoader.item) {
+                    changelogLoader.item.show();
+                    return;
+                }
+                changelogLoader.active = true;
+            }
+        }
+    }
+}

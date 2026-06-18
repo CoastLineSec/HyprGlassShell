@@ -93,7 +93,7 @@ PluginComponent {
                             spacing: Theme.spacingS
                             enabled: false
 
-                            DankIcon {
+                            HGSIcon {
                                 name: detailRoot.currentSelection === modelData ? "radio_button_checked" : "radio_button_unchecked"
                                 color: detailRoot.currentSelection === modelData ? Theme.primary : Theme.surfaceVariantText
                                 size: Theme.iconSize
@@ -117,7 +117,7 @@ PluginComponent {
         Row {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            HGSIcon {
                 name: root.isEnabled ? "settings" : "settings_off"
                 color: root.isEnabled ? Theme.primary : Theme.surfaceVariantText
                 font.pixelSize: Theme.iconSize - 4

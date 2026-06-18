@@ -62,7 +62,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 4
 
-        DankIcon {
+        HGSIcon {
             name: BatteryService.getBatteryIcon()
             size: Theme.iconSizeLarge
             color: {
@@ -89,7 +89,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

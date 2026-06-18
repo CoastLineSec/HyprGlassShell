@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 )
 
 type Result struct {

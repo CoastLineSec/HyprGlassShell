@@ -84,7 +84,7 @@ cd quickshell
 touch .qmlls.ini
 ```
 
-4. Restart dms to generate the `.qmlls.ini` file
+4. Restart hgs to generate the `.qmlls.ini` file
 
 5. Run `make lint-qml` from the repo root to lint QML entrypoints (requires the `.qmlls.ini` generated above). The script needs the **Qt 6** `qmllint`; it checks `qmllint6`, Fedora's `qmllint-qt6`, `/usr/lib/qt6/bin/qmllint`, then `qmllint` in `PATH`. If your Qt 6 binary lives elsewhere, set `QMLLINT=/path/to/qmllint`.
 

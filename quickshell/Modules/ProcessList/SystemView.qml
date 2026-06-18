@@ -34,7 +34,7 @@ Item {
                 Row {
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "computer"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -106,7 +106,7 @@ Item {
                 Row {
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "developer_board"
                         size: Theme.iconSize
                         color: Theme.secondary
@@ -128,7 +128,7 @@ Item {
                     color: Theme.outlineLight
                 }
 
-                DankListView {
+                HGSListView {
                     id: gpuListView
 
                     Layout.fillWidth: true
@@ -179,7 +179,7 @@ Item {
                             anchors.margins: Theme.spacingM
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "developer_board"
                                 size: Theme.iconSize + 4
                                 color: {
@@ -251,7 +251,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "thermostat"
                                         size: 16
                                         color: {
@@ -339,7 +339,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "developer_board_off"
                                 size: 32
                                 color: Theme.surfaceVariantText

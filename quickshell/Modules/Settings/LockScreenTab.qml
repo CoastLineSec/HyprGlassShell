@@ -64,7 +64,7 @@ Item {
         onFileSelected: path => SettingsData.set("lockScreenVideoPath", path)
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -163,7 +163,7 @@ Item {
                 settingKey: "lockBehavior"
 
                 StyledText {
-                    text: I18n.tr("loginctl not available - lock integration requires DMS socket connection")
+                    text: I18n.tr("loginctl not available - lock integration requires HGS socket connection")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.warning
                     visible: !SessionService.loginctlAvailable
@@ -208,7 +208,7 @@ Item {
                     settingKey: "lockAtStartup"
                     tags: ["lock", "screen", "startup", "start", "boot", "login", "automatic"]
                     text: I18n.tr("Lock at startup")
-                    description: I18n.tr("Automatically lock the screen when DMS starts")
+                    description: I18n.tr("Automatically lock the screen when HGS starts")
                     checked: SettingsData.lockAtStartup
                     onToggled: checked => SettingsData.set("lockAtStartup", checked)
                 }
@@ -309,7 +309,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingS
 
-                        DankTextField {
+                        HGSTextField {
                             id: videoPathField
                             width: parent.width - browseVideoButton.width - Theme.spacingS
                             placeholderText: I18n.tr("/path/to/videos")
@@ -322,7 +322,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: browseVideoButton
                             text: I18n.tr("Browse")
                             onClicked: videoBrowserModal.open()

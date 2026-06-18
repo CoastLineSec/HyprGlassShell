@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	mocks_wlcontext "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/wlcontext"
+	mocks_wlcontext "github.com/CoastLineSec/HyprGlassShell/core/internal/mocks/wlcontext"
 )
 
 type clipboardTestConn struct {

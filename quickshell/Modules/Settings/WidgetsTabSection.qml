@@ -14,7 +14,7 @@ Column {
     property string titleIcon: "widgets"
     property string sectionId: ""
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: sharedTooltip
     }
 
@@ -58,7 +58,7 @@ Column {
     Row {
         spacing: Theme.spacingM
 
-        DankIcon {
+        HGSIcon {
             name: root.titleIcon
             size: Theme.iconSize
             color: Theme.primary
@@ -103,7 +103,7 @@ Column {
                     border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.2)
                     border.width: 0
 
-                    DankIcon {
+                    HGSIcon {
                         name: "drag_indicator"
                         size: Theme.iconSize - 4
                         color: Theme.outline
@@ -113,7 +113,7 @@ Column {
                         opacity: 0.8
                     }
 
-                    DankIcon {
+                    HGSIcon {
                         name: modelData.icon
                         size: Theme.iconSize
                         color: modelData.enabled ? Theme.primary : Theme.outline
@@ -169,7 +169,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingXS
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: gpuMenuButton
                             visible: modelData.id === "gpuTemp"
                             buttonSize: 32
@@ -207,7 +207,7 @@ Column {
                             width: 120
                             height: 32
                             visible: modelData.id === "diskUsage"
-                            DankDropdown {
+                            HGSDropdown {
                                 id: diskMountDropdown
                                 anchors.fill: parent
                                 currentValue: {
@@ -235,7 +235,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: diskMenuButton
                             visible: modelData.id === "diskUsage"
                             buttonSize: 32
@@ -268,7 +268,7 @@ Column {
                             height: 32
                             visible: modelData.warning !== undefined && modelData.warning !== ""
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "warning"
                                 size: 20
                                 color: Theme.error
@@ -320,7 +320,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: minimumWidthButton
                             buttonSize: 28
                             visible: modelData.id === "cpuUsage" || modelData.id === "memUsage" || modelData.id === "cpuTemp" || modelData.id === "gpuTemp" || modelData.id === "diskUsage"
@@ -341,7 +341,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: hideWhenIdleButton
                             buttonSize: 28
                             visible: modelData.id === "systemUpdate"
@@ -360,7 +360,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: memMenuButton
                             visible: modelData.id === "memUsage"
                             buttonSize: 32
@@ -394,7 +394,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: focusedWindowMenuButton
                             buttonSize: 32
                             visible: modelData.id === "focusedWindow"
@@ -427,7 +427,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: musicMenuButton
                             visible: modelData.id === "music"
                             buttonSize: 32
@@ -460,7 +460,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: runningAppsMenuButton
                             visible: modelData.id === "runningApps"
                             buttonSize: 32
@@ -497,7 +497,7 @@ Column {
                             spacing: Theme.spacingXS
                             visible: modelData.id === "clock" || modelData.id === "keyboard_layout_name" || modelData.id === "appsDock" || modelData.id === "systemTray"
 
-                            DankActionButton {
+                            HGSActionButton {
                                 id: compactModeButton
                                 buttonSize: 28
                                 visible: modelData.id === "clock" || modelData.id === "keyboard_layout_name"
@@ -560,7 +560,7 @@ Column {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 id: kbdLayoutCtxMenuButton
                                 buttonSize: 32
                                 visible: modelData.id === "keyboard_layout_name"
@@ -594,7 +594,7 @@ Column {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 id: appsDockMenuButton
                                 buttonSize: 32
                                 visible: modelData.id === "appsDock"
@@ -627,7 +627,7 @@ Column {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 id: trayMenuButton
                                 buttonSize: 32
                                 visible: modelData.id === "systemTray"
@@ -691,7 +691,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: ccMenuButton
                             visible: modelData.id === "controlCenterButton"
                             buttonSize: 32
@@ -726,7 +726,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: privacyMenuButton
                             visible: modelData.id === "privacyIndicator"
                             buttonSize: 32
@@ -760,7 +760,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: visibilityButton
                             visible: modelData.id !== "spacer"
                             buttonSize: 32
@@ -784,7 +784,7 @@ Column {
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "remove"
                                 iconSize: 14
@@ -803,7 +803,7 @@ Column {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "add"
                                 iconSize: 14
@@ -816,7 +816,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             buttonSize: 32
                             iconName: "close"
                             iconSize: 18
@@ -951,7 +951,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "swap_horiz"
                             size: 16
                             color: Theme.surfaceText
@@ -967,7 +967,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: swapToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1004,7 +1004,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "straighten"
                             size: 16
                             color: Theme.surfaceText
@@ -1020,7 +1020,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: gbToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1089,7 +1089,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "arrow_selector_tool"
                             size: 16
                             color: Theme.surfaceText
@@ -1105,7 +1105,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: trayOverflowToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1140,7 +1140,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "view_week"
                             size: 16
                             color: Theme.surfaceText
@@ -1156,7 +1156,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: trayPopupLineToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1193,7 +1193,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "responsive_layout"
                             size: 16
                             color: Theme.surfaceText
@@ -1209,7 +1209,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: trayAutoOverflowToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1244,7 +1244,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "low_priority"
                             size: 16
                             color: Theme.surfaceText
@@ -1276,7 +1276,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
 
-                        DankActionButton {
+                        HGSActionButton {
                             buttonSize: 28
                             iconName: "remove"
                             iconSize: 16
@@ -1288,7 +1288,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             buttonSize: 28
                             iconName: "add"
                             iconSize: 16
@@ -1353,7 +1353,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "visibility"
                             size: 16
                             color: Theme.surfaceText
@@ -1369,7 +1369,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: kbdLayoutCtxMenuIconToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1438,7 +1438,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "zoom_in"
                             size: 16
                             color: Theme.surfaceText
@@ -1454,7 +1454,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: fwCompactToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -1524,7 +1524,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: modelData.icon
                                 size: 18
                                 color: isSelected() ? Theme.primary : Theme.surfaceText
@@ -1540,7 +1540,7 @@ Column {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
                             anchors.verticalCenter: parent.verticalCenter
@@ -1655,7 +1655,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: modelData.icon
                                 size: 16
                                 color: isSelected() ? Theme.primary : Theme.surfaceText
@@ -1671,7 +1671,7 @@ Column {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
                             anchors.verticalCenter: parent.verticalCenter
@@ -2132,7 +2132,7 @@ Column {
                                                 height: 16
                                                 anchors.verticalCenter: parent.verticalCenter
 
-                                                DankIcon {
+                                                HGSIcon {
                                                     anchors.centerIn: parent
                                                     name: "drag_indicator"
                                                     size: 16
@@ -2172,7 +2172,7 @@ Column {
                                                 }
                                             }
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 name: rowData.icon
                                                 size: 16
                                                 color: Theme.surfaceText
@@ -2188,7 +2188,7 @@ Column {
                                             }
                                         }
 
-                                        DankToggle {
+                                        HGSToggle {
                                             id: toggle
                                             anchors.right: parent.right
                                             anchors.rightMargin: Theme.spacingS
@@ -2306,7 +2306,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "mic"
                             size: 16
                             color: Theme.surfaceText
@@ -2322,7 +2322,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: micToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2358,7 +2358,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "camera_video"
                             size: 16
                             color: Theme.surfaceText
@@ -2374,7 +2374,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: cameraToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2410,7 +2410,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "screen_share"
                             size: 16
                             color: Theme.surfaceText
@@ -2426,7 +2426,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: screenshareToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2507,7 +2507,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "memory"
                                 size: 18
                                 color: isSelected ? Theme.primary : Theme.surfaceText
@@ -2535,7 +2535,7 @@ Column {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             id: checkIcon
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
@@ -2635,7 +2635,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: modelData.icon
                                 size: 18
                                 color: isSelected() ? Theme.primary : Theme.surfaceText
@@ -2651,7 +2651,7 @@ Column {
                             }
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
                             anchors.verticalCenter: parent.verticalCenter
@@ -2736,7 +2736,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "zoom_in"
                             size: 16
                             color: Theme.surfaceText
@@ -2751,7 +2751,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: raCompactToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2788,7 +2788,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "apps"
                             size: 16
                             color: Theme.surfaceText
@@ -2803,7 +2803,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: raGroupToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2840,7 +2840,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "workspaces"
                             size: 16
                             color: Theme.surfaceText
@@ -2855,7 +2855,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: raWorkspaceToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -2892,7 +2892,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "monitor"
                             size: 16
                             color: Theme.surfaceText
@@ -2907,7 +2907,7 @@ Column {
                         }
                     }
 
-                    DankToggle {
+                    HGSToggle {
                         id: raDisplayToggle
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -3002,7 +3002,7 @@ Column {
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "remove"
                                 iconSize: 14
@@ -3026,7 +3026,7 @@ Column {
                                 width: 30
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "add"
                                 iconSize: 14
@@ -3056,7 +3056,7 @@ Column {
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "remove"
                                 iconSize: 14
@@ -3080,7 +3080,7 @@ Column {
                                 width: 30
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "add"
                                 iconSize: 14
@@ -3113,7 +3113,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "notifications"
                                 size: 16
                                 color: Theme.surfaceText
@@ -3129,7 +3129,7 @@ Column {
                             }
                         }
 
-                        DankToggle {
+                        HGSToggle {
                             id: badgeToggle
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
@@ -3182,7 +3182,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "visibility_off"
                                 size: 16
                                 color: Theme.surfaceText
@@ -3198,7 +3198,7 @@ Column {
                             }
                         }
 
-                        DankToggle {
+                        HGSToggle {
                             id: hideIndicatorsToggle
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
@@ -3235,7 +3235,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "palette"
                                 size: 16
                                 color: Theme.surfaceText
@@ -3251,7 +3251,7 @@ Column {
                             }
                         }
 
-                        DankToggle {
+                        HGSToggle {
                             id: colorizeActiveToggle
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
@@ -3290,7 +3290,7 @@ Column {
                             width: 90
                         }
 
-                        DankButtonGroup {
+                        HGSButtonGroup {
                             anchors.verticalCenter: parent.verticalCenter
                             model: ["pri", "sec", "pc", "err", "ok"]
                             buttonHeight: 22
@@ -3334,7 +3334,7 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "zoom_in"
                                 size: 16
                                 color: Theme.surfaceText
@@ -3350,7 +3350,7 @@ Column {
                             }
                         }
 
-                        DankToggle {
+                        HGSToggle {
                             id: enlargeOnHoverToggle
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS
@@ -3392,7 +3392,7 @@ Column {
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "remove"
                                 iconSize: 14
@@ -3413,7 +3413,7 @@ Column {
                                 width: 50
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "add"
                                 iconSize: 14
@@ -3443,7 +3443,7 @@ Column {
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "remove"
                                 iconSize: 14
@@ -3464,7 +3464,7 @@ Column {
                                 width: 50
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 24
                                 iconName: "add"
                                 iconSize: 14

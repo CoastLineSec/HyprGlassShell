@@ -66,7 +66,7 @@ StyledRect {
                     anchors.leftMargin: Theme.spacingS
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: sortBy === modelData?.value ? "check" : ""
                         size: Theme.iconSizeSmall
                         color: Theme.primary
@@ -120,7 +120,7 @@ StyledRect {
                 anchors.leftMargin: Theme.spacingS
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: "arrow_upward"
                     size: Theme.iconSizeSmall
                     color: sortAscending ? Theme.primary : Theme.surfaceText
@@ -158,7 +158,7 @@ StyledRect {
                 anchors.leftMargin: Theme.spacingS
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: "arrow_downward"
                     size: Theme.iconSizeSmall
                     color: !sortAscending ? Theme.primary : Theme.surfaceText

@@ -65,7 +65,7 @@ Rectangle {
         anchors.rightMargin: Theme.spacingM
         spacing: Theme.spacingM
 
-        DankIcon {
+        HGSIcon {
             name: root.iconName
             size: Theme.iconSize
             color: isActive ? Theme.ccTileActiveText : Theme.ccTileInactiveIcon
@@ -109,7 +109,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

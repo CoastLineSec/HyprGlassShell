@@ -1,0 +1,17 @@
+[Unit]
+Description=Hypr Glass Shell (HGS)
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=org.freedesktop.Notifications
+ExecStart=/usr/bin/hgs run --session
+ExecReload=/usr/bin/pkill -USR1 -x hgs
+Restart=on-failure
+RestartSec=1.23
+TimeoutStopSec=10
+
+[Install]
+WantedBy=graphical-session.target

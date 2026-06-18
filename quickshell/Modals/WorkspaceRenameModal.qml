@@ -34,13 +34,7 @@ FloatingWindow {
     }
 
     function renameWorkspace(name) {
-        if (CompositorService.isNiri) {
-            NiriService.renameWorkspace(name);
-        } else if (CompositorService.isHyprland) {
-            HyprlandService.renameWorkspace(name);
-        } else {
-            log.warn("rename not supported for this compositor");
-        }
+        HyprlandService.renameWorkspace(name);
     }
 
     onVisibleChanged: {
@@ -95,7 +89,7 @@ FloatingWindow {
                     anchors.right: parent.right
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
                         iconSize: Theme.iconSize - 4
@@ -103,7 +97,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -125,7 +119,7 @@ FloatingWindow {
                     onClicked: nameInput.forceActiveFocus()
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: nameInput
 
                     anchors.fill: parent

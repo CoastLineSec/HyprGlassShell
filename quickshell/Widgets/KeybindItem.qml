@@ -407,7 +407,7 @@ Item {
                             visible: root.hasOverride && !root.hasConfigConflict
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "warning"
                             size: Theme.iconSizeSmall
                             color: Theme.primary
@@ -427,7 +427,7 @@ Item {
                     }
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: root.isExpanded ? "expand_less" : "expand_more"
                     size: Theme.iconSize - 4
                     color: Theme.surfaceVariantText
@@ -496,7 +496,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "warning"
                                 size: Theme.iconSizeSmall
                                 color: Theme.primary
@@ -521,7 +521,7 @@ Item {
                         }
 
                         StyledText {
-                            text: I18n.tr("To use this DMS bind, remove or change the keybind in your config.kdl")
+                            text: I18n.tr("To use this HGS bind, remove or change the keybind in your config.kdl")
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.surfaceVariantText
                             width: parent.width
@@ -600,7 +600,7 @@ Item {
                                 color: addKeyArea.pressed ? Theme.surfaceTextHover : (addKeyArea.containsMouse && !root.addingNewKey ? Theme.surfaceTextHover : "transparent")
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "add"
                                 size: Theme.iconSizeSmall
                                 color: root.addingNewKey ? Theme.primaryText : Theme.surfaceVariantText
@@ -673,7 +673,7 @@ Item {
                                     elide: Text.ElideRight
                                 }
 
-                                DankActionButton {
+                                HGSActionButton {
                                     id: recordBtn
                                     width: root._chipHeight
                                     height: root._chipHeight
@@ -799,7 +799,7 @@ Item {
                             color: singleAddKeyArea.pressed ? Theme.surfaceTextHover : (singleAddKeyArea.containsMouse && !root.addingNewKey ? Theme.surfaceTextHover : "transparent")
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "add"
                             size: Theme.iconSizeSmall + 2
                             color: root.addingNewKey ? Theme.primaryText : Theme.surfaceVariantText
@@ -822,7 +822,7 @@ Item {
                     visible: root.hasConflict
                     Layout.leftMargin: root._labelWidth + Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "warning"
                         size: Theme.iconSizeSmall
                         color: Theme.primary
@@ -863,8 +863,8 @@ Item {
                                 required property int index
 
                                 readonly property var tooltipTexts: ({
-                                        "dms": I18n.tr("DMS shell actions (launcher, clipboard, etc.)"),
-                                        "compositor": I18n.tr("Niri compositor actions (focus, move, etc.)"),
+                                        "hgs": I18n.tr("HGS shell actions (launcher, clipboard, etc.)"),
+                                        "compositor": I18n.tr("Hyprland compositor actions (focus, move, etc.)"),
                                         "spawn": I18n.tr("Run a program (e.g., firefox, kitty)"),
                                         "shell": I18n.tr("Run a shell command (e.g., notify-send)")
                                     })
@@ -883,7 +883,7 @@ Item {
                                     anchors.rightMargin: Theme.spacingS
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: typeDelegate.modelData.icon
                                         size: Theme.iconSizeSmall
                                         color: root._actionType === typeDelegate.modelData.id ? Theme.surfaceText : Theme.surfaceVariantText
@@ -909,10 +909,10 @@ Item {
                                         if (root.readOnly)
                                             return;
                                         switch (typeDelegate.modelData.id) {
-                                        case "dms":
+                                        case "hgs":
                                             root.updateEdit({
-                                                "action": KeybindsService.dmsActions[0].id,
-                                                "desc": KeybindsService.dmsActions[0].label
+                                                "action": KeybindsService.hgsActions[0].id,
+                                                "desc": KeybindsService.hgsActions[0].label
                                             });
                                             break;
                                         case "compositor":
@@ -947,7 +947,7 @@ Item {
                         }
                     }
 
-                    DankTooltipV2 {
+                    HGSTooltipV2 {
                         id: typeTooltip
                     }
                 }
@@ -955,7 +955,7 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
-                    visible: root._actionType === "dms"
+                    visible: root._actionType === "hgs"
 
                     StyledText {
                         text: I18n.tr("Action")
@@ -965,17 +965,17 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankDropdown {
+                    HGSDropdown {
                         Layout.fillWidth: true
                         compactMode: true
                         currentValue: KeybindsService.getActionLabel(root.editAction) || I18n.tr("Select...")
-                        options: KeybindsService.getDmsActions().map(a => a.label)
+                        options: KeybindsService.getHgsActions().map(a => a.label)
                         enableFuzzySearch: true
                         maxPopupHeight: 300
                         onValueChanged: value => {
                             if (root.readOnly)
                                 return;
-                            const actions = KeybindsService.getDmsActions();
+                            const actions = KeybindsService.getHgsActions();
                             for (const act of actions) {
                                 if (act.label === value) {
                                     root.updateEdit({
@@ -990,18 +990,18 @@ Item {
                 }
 
                 RowLayout {
-                    id: dmsArgsRow
+                    id: hgsArgsRow
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
                     readonly property var argConfig: Actions.getActionArgConfig(KeybindsService.currentProvider, root.editAction)
-                    readonly property var parsedArgs: argConfig?.type === "dms" ? Actions.parseDmsActionArgs(root.editAction) : null
-                    readonly property var dmsActionArgs: Actions.getDmsActionArgs()
-                    readonly property bool hasAmountArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "amount") ?? false) : false
-                    readonly property bool hasDeviceArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "device") ?? false) : false
-                    readonly property bool hasTabArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "tab") ?? false) : false
+                    readonly property var parsedArgs: argConfig?.type === "hgs" ? Actions.parseHgsActionArgs(root.editAction) : null
+                    readonly property var hgsActionArgs: Actions.getHgsActionArgs()
+                    readonly property bool hasAmountArg: parsedArgs?.base ? (hgsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "amount") ?? false) : false
+                    readonly property bool hasDeviceArg: parsedArgs?.base ? (hgsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "device") ?? false) : false
+                    readonly property bool hasTabArg: parsedArgs?.base ? (hgsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "tab") ?? false) : false
 
-                    visible: root._actionType === "dms" && argConfig?.type === "dms"
+                    visible: root._actionType === "hgs" && argConfig?.type === "hgs"
 
                     StyledText {
                         text: I18n.tr("Amount")
@@ -1009,36 +1009,36 @@ Item {
                         font.weight: Font.Medium
                         color: Theme.surfaceVariantText
                         Layout.preferredWidth: root._labelWidth
-                        visible: dmsArgsRow.hasAmountArg
+                        visible: hgsArgsRow.hasAmountArg
                     }
 
-                    DankTextField {
-                        id: dmsAmountField
+                    HGSTextField {
+                        id: hgsAmountField
                         Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 5.5)
                         Layout.preferredHeight: root._inputHeight
                         placeholderText: "5"
-                        visible: dmsArgsRow.hasAmountArg
+                        visible: hgsArgsRow.hasAmountArg
 
                         Connections {
-                            target: dmsArgsRow
+                            target: hgsArgsRow
                             function onParsedArgsChanged() {
-                                const newText = dmsArgsRow.parsedArgs?.args?.amount || "";
-                                if (dmsAmountField.text !== newText)
-                                    dmsAmountField.text = newText;
+                                const newText = hgsArgsRow.parsedArgs?.args?.amount || "";
+                                if (hgsAmountField.text !== newText)
+                                    hgsAmountField.text = newText;
                             }
                         }
 
                         Component.onCompleted: {
-                            text = dmsArgsRow.parsedArgs?.args?.amount || "";
+                            text = hgsArgsRow.parsedArgs?.args?.amount || "";
                         }
 
                         onEditingFinished: {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!hgsArgsRow.parsedArgs)
                                 return;
                             const oldAction = root.editAction;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, hgsArgsRow.parsedArgs.args);
                             newArgs.amount = text || "5";
-                            const newAction = Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs);
+                            const newAction = Actions.buildHgsAction(hgsArgsRow.parsedArgs.base, newArgs);
                             const changes = {
                                 "action": newAction
                             };
@@ -1052,7 +1052,7 @@ Item {
                         text: "%"
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceVariantText
-                        visible: dmsArgsRow.hasAmountArg
+                        visible: hgsArgsRow.hasAmountArg
                     }
 
                     StyledText {
@@ -1060,45 +1060,45 @@ Item {
                         font.pixelSize: Theme.fontSizeSmall
                         font.weight: Font.Medium
                         color: Theme.surfaceVariantText
-                        Layout.leftMargin: dmsArgsRow.hasAmountArg ? Theme.spacingM : 0
-                        Layout.preferredWidth: dmsArgsRow.hasAmountArg ? -1 : root._labelWidth
-                        visible: dmsArgsRow.hasDeviceArg
+                        Layout.leftMargin: hgsArgsRow.hasAmountArg ? Theme.spacingM : 0
+                        Layout.preferredWidth: hgsArgsRow.hasAmountArg ? -1 : root._labelWidth
+                        visible: hgsArgsRow.hasDeviceArg
                     }
 
-                    DankTextField {
-                        id: dmsDeviceField
+                    HGSTextField {
+                        id: hgsDeviceField
                         Layout.fillWidth: true
                         Layout.preferredHeight: root._inputHeight
                         placeholderText: I18n.tr("leave empty for default")
-                        visible: dmsArgsRow.hasDeviceArg
+                        visible: hgsArgsRow.hasDeviceArg
 
                         Connections {
-                            target: dmsArgsRow
+                            target: hgsArgsRow
                             function onParsedArgsChanged() {
-                                const newText = dmsArgsRow.parsedArgs?.args?.device || "";
-                                if (dmsDeviceField.text !== newText)
-                                    dmsDeviceField.text = newText;
+                                const newText = hgsArgsRow.parsedArgs?.args?.device || "";
+                                if (hgsDeviceField.text !== newText)
+                                    hgsDeviceField.text = newText;
                             }
                         }
 
                         Component.onCompleted: {
-                            text = dmsArgsRow.parsedArgs?.args?.device || "";
+                            text = hgsArgsRow.parsedArgs?.args?.device || "";
                         }
 
                         onEditingFinished: {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!hgsArgsRow.parsedArgs)
                                 return;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, hgsArgsRow.parsedArgs.args);
                             newArgs.device = text;
                             root.updateEdit({
-                                "action": Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs)
+                                "action": Actions.buildHgsAction(hgsArgsRow.parsedArgs.base, newArgs)
                             });
                         }
                     }
 
                     Item {
                         Layout.fillWidth: true
-                        visible: !dmsArgsRow.hasDeviceArg && !dmsArgsRow.hasTabArg
+                        visible: !hgsArgsRow.hasDeviceArg && !hgsArgsRow.hasTabArg
                     }
 
                     StyledText {
@@ -1107,16 +1107,16 @@ Item {
                         font.weight: Font.Medium
                         color: Theme.surfaceVariantText
                         Layout.preferredWidth: root._labelWidth
-                        visible: dmsArgsRow.hasTabArg
+                        visible: hgsArgsRow.hasTabArg
                     }
 
-                    DankDropdown {
-                        id: dmsTabDropdown
+                    HGSDropdown {
+                        id: hgsTabDropdown
                         Layout.fillWidth: true
                         compactMode: true
-                        visible: dmsArgsRow.hasTabArg
+                        visible: hgsArgsRow.hasTabArg
                         currentValue: {
-                            const tab = dmsArgsRow.parsedArgs?.args?.tab || "";
+                            const tab = hgsArgsRow.parsedArgs?.args?.tab || "";
                             switch (tab) {
                             case "media":
                                 return I18n.tr("Media");
@@ -1130,9 +1130,9 @@ Item {
                         }
                         options: [I18n.tr("Overview"), I18n.tr("Media"), I18n.tr("Wallpaper"), I18n.tr("Weather")]
                         onValueChanged: value => {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!hgsArgsRow.parsedArgs)
                                 return;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, hgsArgsRow.parsedArgs.args);
                             switch (value) {
                             case I18n.tr("Media"):
                                 newArgs.tab = "media";
@@ -1148,7 +1148,7 @@ Item {
                                 break;
                             }
                             root.updateEdit({
-                                "action": Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs)
+                                "action": Actions.buildHgsAction(hgsArgsRow.parsedArgs.base, newArgs)
                             });
                         }
                     }
@@ -1167,7 +1167,7 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankDropdown {
+                    HGSDropdown {
                         id: compositorCatDropdown
                         Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 8.5)
                         compactMode: true
@@ -1186,7 +1186,7 @@ Item {
                         options: KeybindsService.getCompositorCategories()
                     }
 
-                    DankDropdown {
+                    HGSDropdown {
                         Layout.fillWidth: true
                         compactMode: true
                         currentValue: KeybindsService.getActionLabel(root.editAction) || I18n.tr("Select...")
@@ -1219,7 +1219,7 @@ Item {
                             color: customToggleArea.pressed ? Theme.surfaceTextHover : (customToggleArea.containsMouse ? Theme.surfaceTextHover : "transparent")
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "edit"
                             size: Theme.iconSizeSmall + 2
                             color: Theme.surfaceVariantText
@@ -1261,7 +1261,7 @@ Item {
                         Layout.fillWidth: true
                         spacing: Theme.spacingS
 
-                        DankTextField {
+                        HGSTextField {
                             id: argValueField
                             Layout.fillWidth: true
                             Layout.preferredHeight: root._inputHeight
@@ -1321,7 +1321,7 @@ Item {
                             }
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 id: focusToggle
                                 checked: optionsRow.parsedArgs?.args?.focus !== false
                                 onToggled: newChecked => {
@@ -1355,7 +1355,7 @@ Item {
                                 visible: optionsRow.argConfig?.base !== "screenshot-window"
                                 spacing: Theme.spacingXS
 
-                                DankToggle {
+                                HGSToggle {
                                     id: showPointerToggle
                                     checked: optionsRow.parsedArgs?.args["show-pointer"] === true
                                     onToggled: newChecked => {
@@ -1380,7 +1380,7 @@ Item {
                                 visible: optionsRow.argConfig?.base !== "screenshot"
                                 spacing: Theme.spacingXS
 
-                                DankToggle {
+                                HGSToggle {
                                     id: writeToDiskToggle
                                     checked: optionsRow.parsedArgs?.args["write-to-disk"] === true
                                     onToggled: newChecked => {
@@ -1406,7 +1406,7 @@ Item {
                             visible: optionsRow.argConfig?.base === "quit"
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: optionsRow.parsedArgs?.args["skip-confirmation"] === true
                                 onToggled: newChecked => {
                                     const args = newChecked ? {
@@ -1440,11 +1440,11 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: customCompositorField
                         Layout.fillWidth: true
                         Layout.preferredHeight: root._inputHeight
-                        placeholderText: KeybindsService.currentProvider === "hyprland" ? I18n.tr("e.g., hl.dsp.focus({ workspace = \"3\" })") : I18n.tr("e.g., focus-workspace 3, resize-column -10")
+                        placeholderText: I18n.tr("e.g., hl.dsp.focus({ workspace = \"3\" })")
                         text: root._actionType === "compositor" ? root.editAction : ""
                         onTextChanged: {
                             if (root._actionType !== "compositor")
@@ -1467,7 +1467,7 @@ Item {
                             color: presetToggleArea.pressed ? Theme.surfaceTextHover : (presetToggleArea.containsMouse ? Theme.surfaceTextHover : "transparent")
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             name: "list"
                             size: Theme.iconSizeSmall + 2
                             color: Theme.surfaceVariantText
@@ -1505,7 +1505,7 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: spawnTextField
                         Layout.fillWidth: true
                         Layout.preferredHeight: root._inputHeight
@@ -1537,7 +1537,7 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: shellTextField
                         Layout.fillWidth: true
                         Layout.preferredHeight: root._inputHeight
@@ -1566,7 +1566,7 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: titleField
                         Layout.fillWidth: true
                         Layout.preferredHeight: root._inputHeight
@@ -1581,8 +1581,6 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "hyprland"
-
                     StyledText {
                         text: I18n.tr("Flags")
                         font.pixelSize: Theme.fontSizeSmall
@@ -1598,7 +1596,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: root.editFlags.indexOf("e") !== -1
                                 onToggled: newChecked => {
                                     let flags = root.editFlags.split("").filter(f => f !== "e");
@@ -1620,7 +1618,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: root.editFlags.indexOf("l") !== -1
                                 onToggled: newChecked => {
                                     let flags = root.editFlags.split("").filter(f => f !== "l");
@@ -1642,7 +1640,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: root.editFlags.indexOf("r") !== -1
                                 onToggled: newChecked => {
                                     let flags = root.editFlags.split("").filter(f => f !== "r");
@@ -1664,7 +1662,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            HGSToggle {
                                 checked: root.editFlags.indexOf("o") !== -1
                                 onToggled: newChecked => {
                                     let flags = root.editFlags.split("").filter(f => f !== "o");
@@ -1685,134 +1683,6 @@ Item {
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "niri"
-
-                    StyledText {
-                        text: I18n.tr("Cooldown")
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Medium
-                        color: Theme.surfaceVariantText
-                        Layout.preferredWidth: root._labelWidth
-                    }
-
-                    DankTextField {
-                        id: cooldownField
-                        Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 7)
-                        Layout.preferredHeight: root._inputHeight
-                        placeholderText: "0"
-
-                        Connections {
-                            target: root
-                            function onEditCooldownMsChanged() {
-                                const newText = root.editCooldownMs > 0 ? String(root.editCooldownMs) : "";
-                                if (cooldownField.text !== newText)
-                                    cooldownField.text = newText;
-                            }
-                        }
-
-                        Component.onCompleted: {
-                            text = root.editCooldownMs > 0 ? String(root.editCooldownMs) : "";
-                        }
-
-                        onTextChanged: {
-                            const val = parseInt(text) || 0;
-                            if (val !== root.editCooldownMs)
-                                root.updateEdit({
-                                    "cooldownMs": val
-                                });
-                        }
-                    }
-
-                    StyledText {
-                        text: I18n.tr("ms")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.surfaceVariantText
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "niri"
-
-                    StyledText {
-                        text: I18n.tr("Options")
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Medium
-                        color: Theme.surfaceVariantText
-                        Layout.preferredWidth: root._labelWidth
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: Theme.spacingM
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editRepeat !== false
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "repeat": newChecked ? undefined : false
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Repeat")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editAllowWhenLocked
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "allowWhenLocked": newChecked
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("When locked")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editAllowInhibiting !== false
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "allowInhibiting": newChecked ? undefined : false
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Inhibitable")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-                    }
-                }
-
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 1
@@ -1823,18 +1693,18 @@ Item {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
-                    DankActionButton {
+                    HGSActionButton {
                         Layout.preferredWidth: root._buttonHeight
                         Layout.preferredHeight: root._buttonHeight
                         circular: false
                         iconName: "delete"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.error
-                        visible: root.editingKeyIndex >= 0 && root.editingKeyIndex < root.keys.length && (root.keys[root.editingKeyIndex].isDMSManaged || root.keys[root.editingKeyIndex].isOverride) && !root.isNew && !root.readOnly
+                        visible: root.editingKeyIndex >= 0 && root.editingKeyIndex < root.keys.length && (root.keys[root.editingKeyIndex].isHGSManaged || root.keys[root.editingKeyIndex].isOverride) && !root.isNew && !root.readOnly
                         onClicked: root.removeBind(root._originalKey)
                     }
 
-                    DankButton {
+                    HGSButton {
                         text: I18n.tr("Reset to default")
                         buttonHeight: root._buttonHeight
                         backgroundColor: Theme.surfaceContainer
@@ -1854,7 +1724,7 @@ Item {
                         visible: !root.isNew
                     }
 
-                    DankButton {
+                    HGSButton {
                         text: I18n.tr("Cancel")
                         buttonHeight: root._buttonHeight
                         backgroundColor: Theme.surfaceContainer
@@ -1870,7 +1740,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    HGSButton {
                         text: root.isNew ? I18n.tr("Add") : I18n.tr("Save")
                         buttonHeight: root._buttonHeight
                         enabled: root.canSave()

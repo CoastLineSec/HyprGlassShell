@@ -1,6 +1,6 @@
 {
   "$schema": "vscode://schemas/color-theme",
-  "name": "Dynamic Base16 DankShell Light",
+  "name": "Dynamic Base16 HGSShell Light",
   "semanticHighlighting": true,
   "colors": {
     "foreground": "{{colors.on_surface.light.hex}}",
@@ -119,22 +119,22 @@
     "panelTitle.inactiveForeground": "{{colors.outline.light.hex}}",
     "terminal.background": "{{colors.background.light.hex}}",
     "terminal.foreground": "{{colors.on_surface.light.hex}}",
-    "terminal.ansiBlack": "{{dank16.color0.light.hex}}",
-    "terminal.ansiRed": "{{dank16.color1.light.hex}}",
-    "terminal.ansiGreen": "{{dank16.color2.light.hex}}",
-    "terminal.ansiYellow": "{{dank16.color3.light.hex}}",
-    "terminal.ansiBlue": "{{dank16.color4.light.hex}}",
-    "terminal.ansiMagenta": "{{dank16.color5.light.hex}}",
-    "terminal.ansiCyan": "{{dank16.color6.light.hex}}",
-    "terminal.ansiWhite": "{{dank16.color7.light.hex}}",
-    "terminal.ansiBrightBlack": "{{dank16.color8.light.hex}}",
-    "terminal.ansiBrightRed": "{{dank16.color9.light.hex}}",
-    "terminal.ansiBrightGreen": "{{dank16.color10.light.hex}}",
-    "terminal.ansiBrightYellow": "{{dank16.color11.light.hex}}",
-    "terminal.ansiBrightBlue": "{{dank16.color12.light.hex}}",
-    "terminal.ansiBrightMagenta": "{{dank16.color13.light.hex}}",
-    "terminal.ansiBrightCyan": "{{dank16.color14.light.hex}}",
-    "terminal.ansiBrightWhite": "{{dank16.color15.light.hex}}",
+    "terminal.ansiBlack": "{{hgs16.color0.light.hex}}",
+    "terminal.ansiRed": "{{hgs16.color1.light.hex}}",
+    "terminal.ansiGreen": "{{hgs16.color2.light.hex}}",
+    "terminal.ansiYellow": "{{hgs16.color3.light.hex}}",
+    "terminal.ansiBlue": "{{hgs16.color4.light.hex}}",
+    "terminal.ansiMagenta": "{{hgs16.color5.light.hex}}",
+    "terminal.ansiCyan": "{{hgs16.color6.light.hex}}",
+    "terminal.ansiWhite": "{{hgs16.color7.light.hex}}",
+    "terminal.ansiBrightBlack": "{{hgs16.color8.light.hex}}",
+    "terminal.ansiBrightRed": "{{hgs16.color9.light.hex}}",
+    "terminal.ansiBrightGreen": "{{hgs16.color10.light.hex}}",
+    "terminal.ansiBrightYellow": "{{hgs16.color11.light.hex}}",
+    "terminal.ansiBrightBlue": "{{hgs16.color12.light.hex}}",
+    "terminal.ansiBrightMagenta": "{{hgs16.color13.light.hex}}",
+    "terminal.ansiBrightCyan": "{{hgs16.color14.light.hex}}",
+    "terminal.ansiBrightWhite": "{{hgs16.color15.light.hex}}",
     "terminal.selectionBackground": "{{colors.primary_container.light.hex}}99",
     "gitDecoration.modifiedResourceForeground": "{{colors.primary.light.hex}}",
     "gitDecoration.addedResourceForeground": "{{colors.secondary.light.hex}}",
@@ -190,7 +190,7 @@
         "storage.type"
       ],
       "settings": {
-        "foreground": "{{dank16.color6.light.hex}}"
+        "foreground": "{{hgs16.color6.light.hex}}"
       }
     },
     {
@@ -200,7 +200,7 @@
         "string punctuation.section.embedded source"
       ],
       "settings": {
-        "foreground": "{{dank16.color2.light.hex}}"
+        "foreground": "{{hgs16.color2.light.hex}}"
       }
     },
     {
@@ -212,7 +212,7 @@
         "constant.character"
       ],
       "settings": {
-        "foreground": "{{dank16.color0.light.hex}}"
+        "foreground": "{{hgs16.color0.light.hex}}"
       }
     },
     {
@@ -256,13 +256,13 @@
     {
       "scope": ["source.yaml string.unquoted", "source.yaml string.quoted"],
       "settings": {
-        "foreground": "{{dank16.color3.light.hex}}"
+        "foreground": "{{hgs16.color3.light.hex}}"
       }
     },
     {
       "scope": ["constant.language.boolean.yaml", "constant.language.null.yaml"],
       "settings": {
-        "foreground": "{{dank16.color0.light.hex}}"
+        "foreground": "{{hgs16.color0.light.hex}}"
       }
     },
     {
@@ -274,13 +274,13 @@
     {
       "scope": ["string.quoted.single.basic.line.toml", "string.quoted.double.basic.line.toml"],
       "settings": {
-        "foreground": "{{dank16.color2.light.hex}}"
+        "foreground": "{{hgs16.color2.light.hex}}"
       }
     },
     {
       "scope": ["constant.language.boolean.toml", "constant.numeric.toml"],
       "settings": {
-        "foreground": "{{dank16.color0.light.hex}}"
+        "foreground": "{{hgs16.color0.light.hex}}"
       }
     },
     {
@@ -290,7 +290,7 @@
         "support.function"
       ],
       "settings": {
-        "foreground": "{{dank16.color4.light.hex}}"
+        "foreground": "{{hgs16.color4.light.hex}}"
       }
     },
     {
@@ -313,7 +313,7 @@
         "support.constant"
       ],
       "settings": {
-        "foreground": "{{dank16.color4.light.hex}}"
+        "foreground": "{{hgs16.color4.light.hex}}"
       }
     },
     {
@@ -399,7 +399,7 @@
         "markup.inline.raw"
       ],
       "settings": {
-        "foreground": "{{dank16.color4.light.hex}}"
+        "foreground": "{{hgs16.color4.light.hex}}"
       }
     }
   ],
@@ -408,19 +408,19 @@
       "foreground": "{{colors.on_surface.light.hex}}"
     },
     "variable.readonly": {
-      "foreground": "{{dank16.color1.light.hex}}"
+      "foreground": "{{hgs16.color1.light.hex}}"
     },
     "parameter": {
       "foreground": "{{colors.on_surface.light.hex}}"
     },
     "property": {
-      "foreground": "{{dank16.color4.light.hex}}"
+      "foreground": "{{hgs16.color4.light.hex}}"
     },
     "function": {
-      "foreground": "{{dank16.color4.light.hex}}"
+      "foreground": "{{hgs16.color4.light.hex}}"
     },
     "method": {
-      "foreground": "{{dank16.color4.light.hex}}"
+      "foreground": "{{hgs16.color4.light.hex}}"
     },
     "type": {
       "foreground": "{{colors.secondary.light.hex}}"
@@ -432,19 +432,19 @@
       "foreground": "{{colors.tertiary.light.hex}}"
     },
     "enumMember": {
-      "foreground": "{{dank16.color1.light.hex}}"
+      "foreground": "{{hgs16.color1.light.hex}}"
     },
     "string": {
-      "foreground": "{{dank16.color2.light.hex}}"
+      "foreground": "{{hgs16.color2.light.hex}}"
     },
     "number": {
-      "foreground": "{{dank16.color1.light.hex}}"
+      "foreground": "{{hgs16.color1.light.hex}}"
     },
     "comment": {
       "foreground": "{{colors.outline.light.hex}}"
     },
     "keyword": {
-      "foreground": "{{dank16.color6.light.hex}}"
+      "foreground": "{{hgs16.color6.light.hex}}"
     },
     "operator": {
       "foreground": "{{colors.on_surface.light.hex}}"

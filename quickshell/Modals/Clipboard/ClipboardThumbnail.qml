@@ -133,7 +133,7 @@ Item {
             };
             thumbnailImage.activeEntryId = requestedId;
             thumbnailImage.activeRequest = request;
-            DMSService.sendRequest("clipboard.getEntry", {
+            HGSService.sendRequest("clipboard.getEntry", {
                 "id": requestedId
             }, function (response) {
                 if (request.cancelled) {
@@ -263,7 +263,7 @@ Item {
         }
     }
 
-    DankIcon {
+    HGSIcon {
         visible: !(entryType === "image" && thumbnailImage.status === Image.Ready && thumbnailImage.source != "")
         name: {
             switch (entryType) {

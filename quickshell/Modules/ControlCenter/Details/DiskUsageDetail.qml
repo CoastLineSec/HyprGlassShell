@@ -28,7 +28,7 @@ Rectangle {
         DgopService.removeRef(["diskmounts"]);
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: diskContent
         anchors.top: parent.top
         anchors.left: parent.left
@@ -53,7 +53,7 @@ Rectangle {
                     anchors.centerIn: parent
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.horizontalCenter: parent.horizontalCenter
                         name: DgopService.dgopAvailable ? "storage" : "error"
                         size: 32
@@ -93,7 +93,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "storage"
                                 size: Theme.iconSize
                                 color: {
@@ -155,7 +155,7 @@ Rectangle {
                         }
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: mountRipple
                         cornerRadius: parent.radius
                     }

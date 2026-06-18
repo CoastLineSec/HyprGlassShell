@@ -5,7 +5,7 @@
   ...
 }@args:
 let
-  cfg = config.programs.dank-material-shell;
+  cfg = config.programs.hypr-glass-shell;
   common = import ./common.nix {
     inherit
       config
@@ -18,14 +18,14 @@ in
   imports = [
     (import ./options.nix args)
   ];
-  options.programs.dank-material-shell.systemd.target = lib.mkOption {
+  options.programs.hypr-glass-shell.systemd.target = lib.mkOption {
     type = lib.types.str;
     description = "Systemd target to bind to.";
     default = "graphical-session.target";
   };
   config = lib.mkIf cfg.enable {
-    systemd.user.services.dms = lib.mkIf cfg.systemd.enable {
-      description = "DankMaterialShell";
+    systemd.user.services.hgs = lib.mkIf cfg.systemd.enable {
+      description = "HyprGlassShell";
       path = lib.mkForce [ ];
 
       partOf = [ cfg.systemd.target ];
@@ -42,7 +42,7 @@ in
     environment.systemPackages = [ cfg.quickshell.package ] ++ common.packages;
 
     environment.etc = lib.mapAttrs' (name: value: {
-      name = "xdg/quickshell/dms-plugins/${name}";
+      name = "xdg/quickshell/hgs-plugins/${name}";
       inherit value;
     }) common.plugins;
 

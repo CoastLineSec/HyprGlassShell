@@ -67,7 +67,7 @@ read_ini_value() {
 
 print_vfs_recovery() {
     printf 'Generate it by starting the local shell config once, for example:\n' >&2
-    printf '  dms -c %q run\n' "${quickshell_dir}" >&2
+    printf '  hgs -c %q run\n' "${quickshell_dir}" >&2
     printf '  qs -p %q\n' "${quickshell_dir}" >&2
 }
 
@@ -102,8 +102,8 @@ fi
 
 targets=(
     "${quickshell_dir}/shell.qml"
-    "${quickshell_dir}/DMSShell.qml"
-    "${quickshell_dir}/DMSGreeter.qml"
+    "${quickshell_dir}/HGSShell.qml"
+    "${quickshell_dir}/HGSGreeter.qml"
 )
 
 qmllint_args=(

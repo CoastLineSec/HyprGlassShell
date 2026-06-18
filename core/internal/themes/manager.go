@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/spf13/afero"
 )
 
@@ -34,7 +34,7 @@ func getThemesDir() string {
 		log.Error("failed to get user config dir", "err", err)
 		return ""
 	}
-	return filepath.Join(configDir, "DankMaterialShell", "themes")
+	return filepath.Join(configDir, "HyprGlassShell", "themes")
 }
 
 func (m *Manager) IsInstalled(theme Theme) (bool, error) {

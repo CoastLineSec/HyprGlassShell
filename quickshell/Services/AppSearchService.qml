@@ -163,66 +163,66 @@ Singleton {
         });
     }
 
-    readonly property string dmsLogoPath: Qt.resolvedUrl("../assets/danklogo2.svg")
+    readonly property string hgsLogoPath: Qt.resolvedUrl("../assets/hgslogo2.svg")
 
     readonly property var builtInPlugins: ({
-            "dms_settings": {
-                id: "dms_settings",
+            "hgs_settings": {
+                id: "hgs_settings",
                 name: I18n.tr("Settings", "settings window title"),
-                icon: "svg+corner:" + dmsLogoPath + "|settings",
+                icon: "svg+corner:" + hgsLogoPath + "|settings",
                 cornerIcon: "settings",
-                comment: "DMS",
+                comment: "HGS",
                 action: "ipc:settings",
                 categories: ["Settings", "System"],
                 defaultTrigger: "",
                 isLauncher: false
             },
-            "dms_notepad": {
-                id: "dms_notepad",
+            "hgs_notepad": {
+                id: "hgs_notepad",
                 name: I18n.tr("Notepad", "Notepad"),
-                icon: "svg+corner:" + dmsLogoPath + "|description",
+                icon: "svg+corner:" + hgsLogoPath + "|description",
                 cornerIcon: "description",
-                comment: "DMS",
+                comment: "HGS",
                 action: "ipc:notepad",
                 categories: ["Office", "Utility"],
                 defaultTrigger: "",
                 isLauncher: false
             },
-            "dms_sysmon": {
-                id: "dms_sysmon",
+            "hgs_sysmon": {
+                id: "hgs_sysmon",
                 name: I18n.tr("System Monitor", "sysmon window title"),
-                icon: "svg+corner:" + dmsLogoPath + "|monitor_heart",
+                icon: "svg+corner:" + hgsLogoPath + "|monitor_heart",
                 cornerIcon: "monitor_heart",
-                comment: "DMS",
+                comment: "HGS",
                 action: "ipc:processlist",
                 categories: ["System", "Monitor"],
                 defaultTrigger: "",
                 isLauncher: false
             },
-            "dms_colorpicker": {
-                id: "dms_colorpicker",
+            "hgs_colorpicker": {
+                id: "hgs_colorpicker",
                 name: I18n.tr("Color Picker"),
-                icon: "svg+corner:" + dmsLogoPath + "|palette",
+                icon: "svg+corner:" + hgsLogoPath + "|palette",
                 cornerIcon: "palette",
-                comment: "DMS",
+                comment: "HGS",
                 action: "ipc:color-picker",
                 categories: ["Graphics", "Utility"],
                 defaultTrigger: "",
                 isLauncher: false
             },
-            "dms_settings_search": {
-                id: "dms_settings_search",
+            "hgs_settings_search": {
+                id: "hgs_settings_search",
                 name: I18n.tr("Settings Search"),
                 cornerIcon: "search",
-                comment: I18n.tr("DMS Settings"),
+                comment: I18n.tr("HGS Settings"),
                 defaultTrigger: "?",
                 isLauncher: true
             },
-            "dms_clipboard_search": {
-                id: "dms_clipboard_search",
+            "hgs_clipboard_search": {
+                id: "hgs_clipboard_search",
                 name: I18n.tr("Clipboard"),
                 cornerIcon: "content_paste",
-                comment: "DMS",
+                comment: "HGS",
                 defaultTrigger: "cb",
                 isLauncher: true,
                 viewMode: "list",
@@ -296,7 +296,7 @@ Singleton {
     }
 
     function getBuiltInLauncherItems(pluginId, query) {
-        if (pluginId === "dms_clipboard_search") {
+        if (pluginId === "hgs_clipboard_search") {
             const trimmed = (query || "").toString().trim();
             const entries = ClipboardService.internalEntries.length > 0 ? ClipboardService.getLauncherEntries(trimmed, 20, 0) : ClipboardService.getCachedLauncherSearchEntries(trimmed, 20);
             return entries.map(entry => ({
@@ -305,7 +305,7 @@ Singleton {
                     }));
         }
 
-        if (pluginId !== "dms_settings_search")
+        if (pluginId !== "hgs_settings_search")
             return [];
 
         const results = SettingsSearchService.searchForLauncher(query);
@@ -727,7 +727,7 @@ Singleton {
             appCategories.forEach(cat => categories.add(cat));
         }
 
-        // Include categories from core apps (e.g. DMS Settings)
+        // Include categories from core apps (e.g. HGS Settings)
         for (const app of coreApps) {
             const appCategories = getCategoriesForApp(app);
             appCategories.forEach(cat => categories.add(cat));
@@ -940,7 +940,7 @@ Singleton {
         if (typeof instance.getPasteText === "function") {
             const text = instance.getPasteText(item);
             if (text)
-                return ["dms", "cl", "copy", text];
+                return ["hgs", "cl", "copy", text];
         }
 
         return null;

@@ -1,22 +1,22 @@
 # IPC Commands Reference
 
-DankMaterialShell provides comprehensive IPC (Inter-Process Communication) functionality that allows external control of the shell through command-line commands. All IPC commands follow the format:
+HyprGlassShell provides comprehensive IPC (Inter-Process Communication) functionality that allows external control of the shell through command-line commands. All IPC commands follow the format:
 
 ```bash
-dms ipc call <target> <function> [parameters...]
+hgs ipc call <target> <function> [parameters...]
 ```
 
 ## Discovering IPC commands
 
-List all available targets and functions while DMS is running:
+List all available targets and functions while HGS is running:
 
 ```bash
-dms ipc list
-dms ipc          # same
-dms ipc --help   # same, plus usage text
+hgs ipc list
+hgs ipc          # same
+hgs ipc --help   # same, plus usage text
 ```
 
-Live listing requires DMS to be running. If listing fails, use this document or the [Keybinds & IPC docs](https://danklinux.com/docs/dankmaterialshell/keybinds-ipc) as an offline reference.
+Live listing requires HGS to be running. If listing fails, use this document or the [Keybinds & IPC docs](https://coastlinesec.com/docs/hyprglassshell/keybinds-ipc) as an offline reference.
 
 ## Target: `audio`
 
@@ -56,9 +56,9 @@ Audio system control and information.
 
 ### Examples
 ```bash
-dms ipc call audio setvolume 50
-dms ipc call audio increment 10
-dms ipc call audio mute
+hgs ipc call audio setvolume 50
+hgs ipc call audio increment 10
+hgs ipc call audio mute
 ```
 
 ## Target: `brightness`
@@ -98,9 +98,9 @@ Display brightness control for internal and external displays.
 
 ### Examples
 ```bash
-dms ipc call brightness set 80
-dms ipc call brightness increment 10 ""
-dms ipc call brightness decrement 5 "intel_backlight"
+hgs ipc call brightness set 80
+hgs ipc call brightness increment 10 ""
+hgs ipc call brightness decrement 5 "intel_backlight"
 ```
 
 ## Target: `night`
@@ -153,11 +153,11 @@ Night mode (gamma/color temperature) control.
 
 ### Examples
 ```bash
-dms ipc call night toggle
-dms ipc call night temperature 4000
-dms ipc call night automation time
-dms ipc call night schedule 20:00 06:00
-dms ipc call night location 40.7128 -74.0060
+hgs ipc call night toggle
+hgs ipc call night temperature 4000
+hgs ipc call night automation time
+hgs ipc call night schedule 20:00 06:00
+hgs ipc call night location 40.7128 -74.0060
 ```
 
 ## Target: `mpris`
@@ -196,8 +196,8 @@ Media player control via MPRIS interface.
 
 ### Examples
 ```bash
-dms ipc call mpris playPause
-dms ipc call mpris next
+hgs ipc call mpris playPause
+hgs ipc call mpris next
 ```
 
 ## Target: `lock`
@@ -220,8 +220,8 @@ Screen lock control and status.
 
 ### Examples
 ```bash
-dms ipc call lock lock
-dms ipc call lock isLocked
+hgs ipc call lock lock
+hgs ipc call lock isLocked
 ```
 
 ## Target: `sessions`
@@ -231,7 +231,7 @@ Logind session enumeration and seat-local session switching. Wraps `loginctl lis
 ### Functions
 
 **`list`**
-- Print every session DMS knows about as tab-separated columns: `sessionId\tusername\tseat\ttty\ttype\tcurrent-marker`
+- Print every session HGS knows about as tab-separated columns: `sessionId\tusername\tseat\ttty\ttype\tcurrent-marker`
 - Returns: Multi-line string. The current session is marked with `*current*`.
 
 **`refresh`**
@@ -256,19 +256,19 @@ Logind session enumeration and seat-local session switching. Wraps `loginctl lis
 ### Examples
 ```bash
 # Inspect what's switchable
-dms ipc call sessions list
+hgs ipc call sessions list
 
 # Open the picker (useful for a keybind)
-dms ipc call sessions open
+hgs ipc call sessions open
 
 # Jump straight to another logged-in user without the picker
-dms ipc call sessions switchTo testuser2
+hgs ipc call sessions switchTo testuser2
 
 # Or by session ID, when the user has multiple sessions
-dms ipc call sessions activate 4
+hgs ipc call sessions activate 4
 ```
 
-The dedicated `dms switch-user [target]` CLI command wraps the same behavior with a friendlier error path (it prints the switchable list when no target matches).
+The dedicated `hgs switch-user [target]` CLI command wraps the same behavior with a friendlier error path (it prints the switchable list when no target matches).
 
 ## Target: `inhibit`
 
@@ -290,13 +290,13 @@ Idle inhibitor control to prevent automatic sleep/lock.
 
 ### Examples
 ```bash
-dms ipc call inhibit toggle
-dms ipc call inhibit enable
+hgs ipc call inhibit toggle
+hgs ipc call inhibit enable
 ```
 
 ## Target: `powerprofile`
 
-Power profile control via `power-profiles-daemon`. Changes stay in sync with DMS UI and trigger the power profile OSD when enabled.
+Power profile control via `power-profiles-daemon`. Changes stay in sync with HGS UI and trigger the power profile OSD when enabled.
 
 Requires `power-profiles-daemon` to be installed and running. Works on all compositors.
 
@@ -333,12 +333,12 @@ Requires `power-profiles-daemon` to be installed and running. Works on all compo
 
 ### Examples
 ```bash
-dms ipc call powerprofile status
-dms ipc call powerprofile list
-dms ipc call powerprofile cycle
-dms ipc call powerprofile set balanced
-dms ipc call powerprofile set performance
-dms ipc call powerprofile toggle
+hgs ipc call powerprofile status
+hgs ipc call powerprofile list
+hgs ipc call powerprofile cycle
+hgs ipc call powerprofile set balanced
+hgs ipc call powerprofile set performance
+hgs ipc call powerprofile toggle
 ```
 
 ## Target: `wallpaper`
@@ -396,36 +396,36 @@ Wallpaper management and retrieval with support for per-monitor configurations.
 
 **Global wallpaper mode:**
 ```bash
-dms ipc call wallpaper get
-dms ipc call wallpaper set /path/to/image.jpg
-dms ipc call wallpaper next
-dms ipc call wallpaper clear
+hgs ipc call wallpaper get
+hgs ipc call wallpaper set /path/to/image.jpg
+hgs ipc call wallpaper next
+hgs ipc call wallpaper clear
 ```
 
 **Per-monitor wallpaper mode:**
 ```bash
 # Set different wallpapers for each monitor
-dms ipc call wallpaper setFor DP-2 /path/to/image1.jpg
-dms ipc call wallpaper setFor eDP-1 /path/to/image2.jpg
+hgs ipc call wallpaper setFor DP-2 /path/to/image1.jpg
+hgs ipc call wallpaper setFor eDP-1 /path/to/image2.jpg
 
 # Get wallpaper for specific monitor
-dms ipc call wallpaper getFor DP-2
+hgs ipc call wallpaper getFor DP-2
 
 # Cycle wallpapers for specific monitor
-dms ipc call wallpaper nextFor eDP-1
-dms ipc call wallpaper prevFor DP-2
+hgs ipc call wallpaper nextFor eDP-1
+hgs ipc call wallpaper prevFor DP-2
 
 # Clear all wallpapers and return to global mode
-dms ipc call wallpaper clear
+hgs ipc call wallpaper clear
 ```
 
 **Error handling:**
 When per-monitor mode is enabled, legacy functions will return helpful error messages:
 ```bash
-dms ipc call wallpaper get
+hgs ipc call wallpaper get
 # Returns: "ERROR: Per-monitor mode enabled. Use getFor(screenName) instead."
 
-dms ipc call wallpaper set /path/to/image.jpg
+hgs ipc call wallpaper set /path/to/image.jpg
 # Returns: "ERROR: Per-monitor mode enabled. Use setFor(screenName, path) instead."
 ```
 
@@ -450,9 +450,9 @@ User profile image management.
 
 ### Examples
 ```bash
-dms ipc call profile getImage
-dms ipc call profile setImage /path/to/avatar.png
-dms ipc call profile clearImage
+hgs ipc call profile getImage
+hgs ipc call profile setImage /path/to/avatar.png
+hgs ipc call profile clearImage
 ```
 
 ## Target: `theme`
@@ -479,8 +479,8 @@ Theme mode control (light/dark mode switching).
 
 ### Examples
 ```bash
-dms ipc call theme toggle
-dms ipc call theme dark
+hgs ipc call theme toggle
+hgs ipc call theme dark
 ```
 
 ## Target: `bar`
@@ -511,10 +511,10 @@ Top bar visibility control.
 
 ### Examples
 ```bash
-dms ipc call bar toggle
-dms ipc call bar toggleReveal index 0
-dms ipc call bar hide
-dms ipc call bar status
+hgs ipc call bar toggle
+hgs ipc call bar toggleReveal index 0
+hgs ipc call bar hide
+hgs ipc call bar status
 ```
 
 ## Target: `systemupdater`
@@ -538,10 +538,10 @@ System updater widget control and background update checks.
 
 ### Examples
 ```bash
-dms ipc call systemupdater toggle
-dms ipc call systemupdater open
-dms ipc call systemupdater close
-dms ipc call systemupdater updatestatus
+hgs ipc call systemupdater toggle
+hgs ipc call systemupdater open
+hgs ipc call systemupdater close
+hgs ipc call systemupdater updatestatus
 ```
 
 ## Target: `defaultApp`
@@ -588,8 +588,8 @@ Launch applications configured in Settings > Default Apps.
 
 ### Examples
 ```bash
-dms ipc call defaultApp browser
-dms ipc call defaultApp fileManager
+hgs ipc call defaultApp browser
+hgs ipc call defaultApp fileManager
 ```
 
 ## Modal Controls
@@ -672,9 +672,9 @@ Control Center popout containing network, bluetooth, audio, power, and other qui
 
 **Examples**
 ```bash
-dms ipc call control-center toggle
-dms ipc call control-center open
-dms ipc call control-center close
+hgs ipc call control-center toggle
+hgs ipc call control-center open
+hgs ipc call control-center close
 ```
 
 ### Target: `notepad`
@@ -701,11 +701,11 @@ Dashboard popup control with tab selection for overview, media, and weather info
   - Parameters: `tab` - Tab to open when showing: "", "overview", "media", or "weather"
   - Returns: Success/failure message
 
-### Target: `dankdash`
-DankDash wallpaper browser control.
+### Target: `hgsdash`
+HGSDash wallpaper browser control.
 
 **Functions:**
-- `wallpaper` - Toggle DankDash popup on focused screen with wallpaper tab selected
+- `wallpaper` - Toggle HGSDash popup on focused screen with wallpaper tab selected
   - Returns: Success/failure message
 
 ### Target: `file`
@@ -730,12 +730,12 @@ In-shell color picker modal for theme and settings color selection.
 - `toggle` - Toggle color picker modal visibility
 - `toggleInstant` - Toggle color picker modal visibility without animation on hide
 
-**Note:** This controls the in-shell modal. To pick a pixel from the screen via CLI, use `dms color pick` instead (see [Color Picker CLI](https://danklinux.com/docs/dankmaterialshell/cli-color-picker)).
+**Note:** This controls the in-shell modal. To pick a pixel from the screen via CLI, use `hgs color pick` instead (see [Color Picker CLI](https://coastlinesec.com/docs/hyprglassshell/cli-color-picker)).
 
 **Examples:**
 ```bash
-dms ipc call color-picker toggle
-dms ipc call color-picker openColor "#3f51b5"
+hgs ipc call color-picker toggle
+hgs ipc call color-picker openColor "#3f51b5"
 ```
 
 ### Target: `hypr`
@@ -779,66 +779,66 @@ Displays a live overview of all workspaces across all monitors with window previ
 ### Modal Examples
 ```bash
 # Open application launcher
-dms ipc call spotlight toggle
+hgs ipc call spotlight toggle
 
 # Open spotlight with pre-filled search
-dms ipc call spotlight openQuery browser
-dms ipc call spotlight toggleQuery "!"
+hgs ipc call spotlight openQuery browser
+hgs ipc call spotlight toggleQuery "!"
 
 # Show clipboard history
-dms ipc call clipboard open
+hgs ipc call clipboard open
 
 # Toggle notification center
-dms ipc call notifications toggle
+hgs ipc call notifications toggle
 
 # Show settings
-dms ipc call settings open
+hgs ipc call settings open
 
 # Show system monitor
-dms ipc call processlist toggle
+hgs ipc call processlist toggle
 
 # Show power menu
-dms ipc call powermenu toggle
+hgs ipc call powermenu toggle
 
 # Cycle or set power profile (requires power-profiles-daemon)
-dms ipc call powerprofile cycle
-dms ipc call powerprofile toggle
+hgs ipc call powerprofile cycle
+hgs ipc call powerprofile toggle
 
 # Open notepad
-dms ipc call notepad toggle
+hgs ipc call notepad toggle
 
 # Open the active notepad expanded
-dms ipc call notepad expand
+hgs ipc call notepad expand
 
 # Collapse the active notepad width
-dms ipc call notepad collapse
+hgs ipc call notepad collapse
 
 # Toggle the active notepad width
-dms ipc call notepad toggleExpand
+hgs ipc call notepad toggleExpand
 
 # Show dashboard with specific tabs
-dms ipc call dash open overview
-dms ipc call dash toggle media
-dms ipc call dash open weather
+hgs ipc call dash open overview
+hgs ipc call dash toggle media
+hgs ipc call dash open weather
 
 # Open wallpaper browser
-dms ipc call dankdash wallpaper
+hgs ipc call hgsdash wallpaper
 
 # Open file browsers
-dms ipc call file browse wallpaper
-dms ipc call file browse profile
+hgs ipc call file browse wallpaper
+hgs ipc call file browse profile
 
 # Open color picker
-dms ipc call color-picker toggle
+hgs ipc call color-picker toggle
 
 # Show Hyprland keybinds cheatsheet (Hyprland only)
-dms ipc call hypr toggleBinds
-dms ipc call hypr openBinds
+hgs ipc call hypr toggleBinds
+hgs ipc call hypr openBinds
 
 # Show Hyprland workspace overview (Hyprland only)
-dms ipc call hypr toggleOverview
-dms ipc call hypr openOverview
-dms ipc call hypr closeOverview
+hgs ipc call hypr toggleOverview
+hgs ipc call hypr openOverview
+hgs ipc call hypr closeOverview
 ```
 
 ## Common Usage Patterns
@@ -847,32 +847,18 @@ dms ipc call hypr closeOverview
 
 These IPC commands are designed to be used with window manager keybindings.
 
-**Example niri configuration:**
-```kdl
-binds {
-    Mod+Space { spawn "qs" "-c" "dms" "ipc" "call" "spotlight" "toggle"; }
-    Mod+V { spawn "qs" "-c" "dms" "ipc" "call" "clipboard" "toggle"; }
-    Mod+P { spawn "qs" "-c" "dms" "ipc" "call" "notepad" "toggle"; }
-    Mod+Shift+P { spawn "qs" "-c" "dms" "ipc" "call" "notepad" "expand"; }
-    Mod+Ctrl+P { spawn "qs" "-c" "dms" "ipc" "call" "notepad" "toggleExpand"; }
-    Mod+X { spawn "qs" "-c" "dms" "ipc" "call" "powermenu" "toggle"; }
-    XF86AudioRaiseVolume { spawn "qs" "-c" "dms" "ipc" "call" "audio" "increment" "3"; }
-    XF86MonBrightnessUp { spawn "qs" "-c" "dms" "ipc" "call" "brightness" "increment" "5" ""; }
-}
-```
-
 **Example Hyprland configuration:**
 ```conf
-bind = SUPER, Space, exec, qs -c dms ipc call spotlight toggle
-bind = SUPER, V, exec, qs -c dms ipc call clipboard toggle
-bind = SUPER, P, exec, qs -c dms ipc call notepad toggle
-bind = SUPER SHIFT, P, exec, qs -c dms ipc call notepad expand
-bind = SUPER CTRL, P, exec, qs -c dms ipc call notepad toggleExpand
-bind = SUPER, X, exec, qs -c dms ipc call powermenu toggle
-bind = SUPER, slash, exec, qs -c dms ipc call hypr toggleBinds
-bind = SUPER, Tab, exec, qs -c dms ipc call hypr toggleOverview
-bind = , XF86AudioRaiseVolume, exec, qs -c dms ipc call audio increment 3
-bind = , XF86MonBrightnessUp, exec, qs -c dms ipc call brightness increment 5 ""
+bind = SUPER, Space, exec, qs -c hgs ipc call spotlight toggle
+bind = SUPER, V, exec, qs -c hgs ipc call clipboard toggle
+bind = SUPER, P, exec, qs -c hgs ipc call notepad toggle
+bind = SUPER SHIFT, P, exec, qs -c hgs ipc call notepad expand
+bind = SUPER CTRL, P, exec, qs -c hgs ipc call notepad toggleExpand
+bind = SUPER, X, exec, qs -c hgs ipc call powermenu toggle
+bind = SUPER, slash, exec, qs -c hgs ipc call hypr toggleBinds
+bind = SUPER, Tab, exec, qs -c hgs ipc call hypr toggleOverview
+bind = , XF86AudioRaiseVolume, exec, qs -c hgs ipc call audio increment 3
+bind = , XF86MonBrightnessUp, exec, qs -c hgs ipc call brightness increment 5 ""
 ```
 
 ### Scripting and Automation
@@ -884,9 +870,9 @@ IPC commands can be used in scripts for automation:
 # Toggle night mode based on time of day
 hour=$(date +%H)
 if [ $hour -ge 20 ] || [ $hour -le 6 ]; then
-    dms ipc call night enable
+    hgs ipc call night enable
 else
-    dms ipc call night disable
+    hgs ipc call night disable
 fi
 ```
 
@@ -896,9 +882,9 @@ Many commands provide status information useful for scripts:
 
 ```bash
 # Check if screen is locked before performing action
-if dms ipc call lock isLocked | grep -q "false"; then
+if hgs ipc call lock isLocked | grep -q "false"; then
     # Perform action only if unlocked
-    dms ipc call notifications open
+    hgs ipc call notifications open
 fi
 ```
 

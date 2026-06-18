@@ -16,7 +16,7 @@ Row {
     visible: saveMode
     spacing: Theme.spacingM
 
-    DankTextField {
+    HGSTextField {
         id: fileNameInput
 
         width: parent.width - saveButton.width - Theme.spacingM

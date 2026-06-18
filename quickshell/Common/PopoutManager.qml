@@ -10,7 +10,7 @@ Singleton {
     property var currentPopoutsByScreen: ({})
     property var currentPopoutTriggers: ({})
 
-    // Set by the screenshot IPC handshake (dms screenshot region select); cleared by end() or any popout/modal open.
+    // Set by the screenshot IPC handshake (hgs screenshot region select); cleared by end() or any popout/modal open.
     property bool screenshotActive: false
 
     signal popoutOpening

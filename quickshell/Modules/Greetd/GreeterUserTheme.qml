@@ -10,7 +10,7 @@ Singleton {
     id: root
 
     readonly property var log: Log.scoped("GreeterUserTheme")
-    readonly property string greetCfgDir: Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter"
+    readonly property string greetCfgDir: Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter"
 
     property string activeUsername: ""
 

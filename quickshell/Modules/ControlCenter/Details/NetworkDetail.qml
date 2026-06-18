@@ -54,9 +54,9 @@ Rectangle {
     }
 
     property int currentPreferenceIndex: {
-        if (DMSService.apiVersion < 5)
+        if (HGSService.apiVersion < 5)
             return 1;
-        if (NetworkService.backend !== "networkmanager" || DMSService.apiVersion <= 10)
+        if (NetworkService.backend !== "networkmanager" || HGSService.apiVersion <= 10)
             return 1;
         if (!hasEthernetAvailable)
             return 1;
@@ -103,7 +103,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingS
 
-            DankDropdown {
+            HGSDropdown {
                 id: wifiDeviceDropdown
                 anchors.verticalCenter: parent.verticalCenter
                 visible: currentPreferenceIndex === 1 && (NetworkService.wifiDevices?.length ?? 0) > 1
@@ -127,10 +127,10 @@ Rectangle {
                 }
             }
 
-            DankButtonGroup {
+            HGSButtonGroup {
                 id: preferenceControls
                 anchors.verticalCenter: parent.verticalCenter
-                visible: hasBothConnectionTypes && NetworkService.backend === "networkmanager" && DMSService.apiVersion > 10
+                visible: hasBothConnectionTypes && NetworkService.backend === "networkmanager" && HGSService.apiVersion > 10
                 buttonHeight: 28
                 textSize: Theme.fontSizeSmall
 
@@ -144,7 +144,7 @@ Rectangle {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 anchors.verticalCenter: parent.verticalCenter
                 iconName: "settings"
                 buttonSize: 28
@@ -173,7 +173,7 @@ Rectangle {
             anchors.centerIn: parent
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "sync"
                 size: 32
@@ -215,7 +215,7 @@ Rectangle {
             spacing: Theme.spacingL
             width: parent.width
 
-            DankIcon {
+            HGSIcon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "wifi_off"
                 size: 48
@@ -279,7 +279,7 @@ Rectangle {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: wiredContent
         anchors.top: headerRow.bottom
         anchors.left: parent.left
@@ -287,7 +287,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.margins: Theme.spacingM
         anchors.topMargin: Theme.spacingM
-        visible: currentPreferenceIndex === 0 && NetworkService.backend === "networkmanager" && DMSService.apiVersion > 10
+        visible: currentPreferenceIndex === 0 && NetworkService.backend === "networkmanager" && HGSService.apiVersion > 10
         contentHeight: wiredColumn.height
         clip: true
 
@@ -321,7 +321,7 @@ Rectangle {
                         anchors.leftMargin: Theme.spacingM
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "lan"
                             size: Theme.iconSize - 4
                             color: wiredDelegate.isActive ? Theme.primary : Theme.surfaceText
@@ -343,7 +343,7 @@ Rectangle {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: wiredOptionsButton
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingS
@@ -362,7 +362,7 @@ Rectangle {
                         }
                     }
 
-                    DankRipple {
+                    HGSRipple {
                         id: wiredRipple
                         cornerRadius: parent.radius
                     }
@@ -490,7 +490,7 @@ Rectangle {
         anchors.topMargin: Theme.spacingM
         visible: currentPreferenceIndex === 1 && NetworkService.wifiEnabled && !NetworkService.wifiToggling && NetworkService.wifiInterface && (NetworkService.wifiNetworks?.length ?? 0) < 1 && NetworkService.isScanning
 
-        DankIcon {
+        HGSIcon {
             anchors.centerIn: parent
             name: "refresh"
             size: 48
@@ -507,7 +507,7 @@ Rectangle {
         }
     }
 
-    DankListView {
+    HGSListView {
         id: wifiContent
         anchors.top: headerRow.bottom
         anchors.left: parent.left
@@ -583,7 +583,7 @@ Rectangle {
                 anchors.leftMargin: Theme.spacingM
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: {
                         if (wifiDelegate.signalStrength >= 50)
                             return "wifi";
@@ -634,7 +634,7 @@ Rectangle {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: optionsButton
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingS
@@ -673,7 +673,7 @@ Rectangle {
                     anchors.centerIn: parent
                     spacing: 4
 
-                    DankIcon {
+                    HGSIcon {
                         name: "push_pin"
                         size: 16
                         color: wifiDelegate.isPinned ? Theme.primary : Theme.surfaceText
@@ -688,7 +688,7 @@ Rectangle {
                     }
                 }
 
-                DankRipple {
+                HGSRipple {
                     id: pinRipple
                     cornerRadius: parent.radius
                 }
@@ -720,7 +720,7 @@ Rectangle {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: qrCodeButton
                 visible: modelData.secured && modelData.saved && !(modelData.enterprise || false)
                 anchors.right: parent.right
@@ -733,7 +733,7 @@ Rectangle {
                 }
             }
 
-            DankRipple {
+            HGSRipple {
                 id: wifiRipple
                 cornerRadius: parent.radius
             }
@@ -835,8 +835,8 @@ Rectangle {
 
         MenuItem {
             text: networkContextMenu.currentAutoconnect ? I18n.tr("Disable Autoconnect") : I18n.tr("Enable Autoconnect")
-            height: networkContextMenu.showSavedOptions && DMSService.apiVersion > 13 ? 32 : 0
-            visible: networkContextMenu.showSavedOptions && DMSService.apiVersion > 13
+            height: networkContextMenu.showSavedOptions && HGSService.apiVersion > 13 ? 32 : 0
+            visible: networkContextMenu.showSavedOptions && HGSService.apiVersion > 13
 
             contentItem: StyledText {
                 text: parent.text

@@ -14,8 +14,8 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("Theme")
 
-    readonly property string stateDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.GenericCacheLocation).toString()) + "/DankMaterialShell"
-    readonly property bool envDisableMatugen: Quickshell.env("DMS_DISABLE_MATUGEN") === "1" || Quickshell.env("DMS_DISABLE_MATUGEN") === "true"
+    readonly property string stateDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.GenericCacheLocation).toString()) + "/HyprGlassShell"
+    readonly property bool envDisableMatugen: Quickshell.env("HGS_DISABLE_MATUGEN") === "1" || Quickshell.env("HGS_DISABLE_MATUGEN") === "true"
     readonly property string defaultFontFamily: "Inter Variable"
     readonly property string defaultMonoFontFamily: "Fira Code"
 
@@ -106,10 +106,10 @@ Singleton {
     property var _pendingGenerateParams: null
 
     property bool themeModeAutomationActive: false
-    property bool dmsServiceWasDisconnected: true
+    property bool hgsServiceWasDisconnected: true
 
-    readonly property var dank16: {
-        const raw = matugenColors?.dank16;
+    readonly property var hgs16: {
+        const raw = matugenColors?.hgs16;
         if (!raw)
             return null;
 
@@ -284,8 +284,8 @@ Singleton {
 
         function onLatitudeChanged() {
             if (root.themeModeAutomationActive && SessionData.themeModeAutoMode === "location") {
-                if (!SessionData.nightModeUseIPLocation && SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0 && typeof DMSService !== "undefined") {
-                    DMSService.sendRequest("wayland.gamma.setLocation", {
+                if (!SessionData.nightModeUseIPLocation && SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0 && typeof HGSService !== "undefined") {
+                    HGSService.sendRequest("wayland.gamma.setLocation", {
                         "latitude": SessionData.latitude,
                         "longitude": SessionData.longitude
                     });
@@ -297,8 +297,8 @@ Singleton {
 
         function onLongitudeChanged() {
             if (root.themeModeAutomationActive && SessionData.themeModeAutoMode === "location") {
-                if (!SessionData.nightModeUseIPLocation && SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0 && typeof DMSService !== "undefined") {
-                    DMSService.sendRequest("wayland.gamma.setLocation", {
+                if (!SessionData.nightModeUseIPLocation && SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0 && typeof HGSService !== "undefined") {
+                    HGSService.sendRequest("wayland.gamma.setLocation", {
                         "latitude": SessionData.latitude,
                         "longitude": SessionData.longitude
                     });
@@ -310,12 +310,12 @@ Singleton {
 
         function onNightModeUseIPLocationChanged() {
             if (root.themeModeAutomationActive && SessionData.themeModeAutoMode === "location") {
-                if (typeof DMSService !== "undefined") {
-                    DMSService.sendRequest("wayland.gamma.setUseIPLocation", {
+                if (typeof HGSService !== "undefined") {
+                    HGSService.sendRequest("wayland.gamma.setUseIPLocation", {
                         "use": SessionData.nightModeUseIPLocation
                     }, response => {
                         if (!response.error && !SessionData.nightModeUseIPLocation && SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0) {
-                            DMSService.sendRequest("wayland.gamma.setLocation", {
+                            HGSService.sendRequest("wayland.gamma.setLocation", {
                                 "latitude": SessionData.latitude,
                                 "longitude": SessionData.longitude
                             });
@@ -341,7 +341,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onThemeAutoStateUpdate(data) {
             if (!SessionData.themeModeAutoEnabled) {
@@ -351,16 +351,16 @@ Singleton {
         }
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected && SessionData.themeModeAutoMode === "time") {
+            if (HGSService.isConnected && SessionData.themeModeAutoMode === "time") {
                 root.syncTimeThemeSchedule();
             }
 
-            if (DMSService.isConnected && SessionData.themeModeAutoMode === "location") {
+            if (HGSService.isConnected && SessionData.themeModeAutoMode === "location") {
                 root.syncLocationThemeSchedule();
             }
 
             if (themeAutoBackendAvailable() && SessionData.themeModeAutoEnabled) {
-                DMSService.sendRequest("theme.auto.getState", null, response => {
+                HGSService.sendRequest("theme.auto.getState", null, response => {
                     if (response && response.result) {
                         applyThemeAutoState(response.result);
                     }
@@ -371,9 +371,9 @@ Singleton {
                 return;
             }
 
-            if (DMSService.isConnected && SessionData.themeModeAutoMode === "location") {
+            if (HGSService.isConnected && SessionData.themeModeAutoMode === "location") {
                 if (SessionData.nightModeUseIPLocation) {
-                    DMSService.sendRequest("wayland.gamma.setUseIPLocation", {
+                    HGSService.sendRequest("wayland.gamma.setUseIPLocation", {
                         "use": true
                     }, response => {
                         if (!response.error) {
@@ -381,11 +381,11 @@ Singleton {
                         }
                     });
                 } else if (SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0) {
-                    DMSService.sendRequest("wayland.gamma.setUseIPLocation", {
+                    HGSService.sendRequest("wayland.gamma.setUseIPLocation", {
                         "use": false
                     }, response => {
                         if (!response.error) {
-                            DMSService.sendRequest("wayland.gamma.setLocation", {
+                            HGSService.sendRequest("wayland.gamma.setLocation", {
                                 "latitude": SessionData.latitude,
                                 "longitude": SessionData.longitude
                             }, locationResponse => {
@@ -420,7 +420,7 @@ Singleton {
             root.evaluateThemeMode();
             return;
         }
-        DMSService.sendRequest("theme.auto.trigger", {});
+        HGSService.sendRequest("theme.auto.trigger", {});
     }
 
     function applyGreeterTheme(themeName) {
@@ -1216,9 +1216,6 @@ Singleton {
     }
 
     function screenTransition() {
-        if (CompositorService.isNiri) {
-            NiriService.doScreenTransition();
-        }
     }
 
     function switchTheme(themeName, savePrefs = true, enableTransition = true) {
@@ -1495,13 +1492,13 @@ Singleton {
 
     function barTextSize(barThickness, fontScale, maximizeText) {
         const scale = barThickness / 48;
-        const dankBarScale = fontScale !== undefined ? fontScale : 1.0;
+        const hgsBarScale = fontScale !== undefined ? fontScale : 1.0;
         const maxScale = (maximizeText ?? false) ? 1.5 : 1.0;
         if (scale <= 0.75)
-            return Math.round(fontSizeSmall * 0.9 * dankBarScale * maxScale);
+            return Math.round(fontSizeSmall * 0.9 * hgsBarScale * maxScale);
         if (scale >= 1.25)
-            return Math.round(fontSizeMedium * dankBarScale * maxScale);
-        return Math.round(fontSizeSmall * dankBarScale * maxScale);
+            return Math.round(fontSizeMedium * hgsBarScale * maxScale);
+        return Math.round(fontSizeSmall * hgsBarScale * maxScale);
     }
 
     function getBatteryIcon(level, isCharging, batteryAvailable) {
@@ -1607,10 +1604,6 @@ Singleton {
 
         log.info("Setting desired theme -", kind, "mode:", isLight ? "light" : "dark", stockColors ? "(stock colors)" : "(dynamic)");
 
-        if (typeof NiriService !== "undefined" && CompositorService.isNiri) {
-            NiriService.suppressNextToast();
-        }
-
         const desired = {
             "kind": kind,
             "value": value,
@@ -1623,7 +1616,7 @@ Singleton {
         log.debug("Starting matugen worker");
         workerRunning = true;
 
-        const args = ["dms", "matugen", "queue", "--state-dir", stateDir, "--shell-dir", shellDir, "--config-dir", configDir, "--kind", desired.kind, "--value", desired.value, "--mode", desired.mode, "--icon-theme", desired.iconTheme, "--matugen-type", desired.matugenType,];
+        const args = ["hgs", "matugen", "queue", "--state-dir", stateDir, "--shell-dir", shellDir, "--config-dir", configDir, "--kind", desired.kind, "--value", desired.value, "--mode", desired.mode, "--icon-theme", desired.iconTheme, "--matugen-type", desired.matugenType,];
 
         if (!desired.runUserTemplates) {
             args.push("--run-user-templates=false");
@@ -1643,17 +1636,13 @@ Singleton {
 
         if (typeof SettingsData !== "undefined") {
             const skipTemplates = [];
-            if (!SettingsData.runDmsMatugenTemplates) {
-                skipTemplates.push("gtk", "nvim", "niri", "qt5ct", "qt6ct", "firefox", "pywalfox", "zenbrowser", "vesktop", "vencord", "equibop", "ghostty", "kitty", "foot", "alacritty", "wezterm", "dgop", "kcolorscheme", "vscode", "emacs", "zed");
+            if (!SettingsData.runHgsMatugenTemplates) {
+                skipTemplates.push("gtk", "nvim", "qt5ct", "qt6ct", "firefox", "pywalfox", "zenbrowser", "vesktop", "vencord", "equibop", "ghostty", "kitty", "foot", "alacritty", "wezterm", "dgop", "kcolorscheme", "vscode", "emacs", "zed");
             } else {
                 if (!SettingsData.matugenTemplateGtk)
                     skipTemplates.push("gtk");
-                if (!SettingsData.matugenTemplateNiri)
-                    skipTemplates.push("niri");
                 if (!SettingsData.matugenTemplateHyprland)
                     skipTemplates.push("hyprland");
-                if (!SettingsData.matugenTemplateMangowc)
-                    skipTemplates.push("mangowc");
                 if (!SettingsData.matugenTemplateQt5ct)
                     skipTemplates.push("qt5ct");
                 if (!SettingsData.matugenTemplateQt6ct)
@@ -1878,7 +1867,7 @@ Singleton {
         const isLight = (typeof SessionData !== "undefined" && SessionData.isLightMode) ? "true" : "false";
         Proc.runCommand("gtkApplier", [shellDir + "/scripts/gtk.sh", configDir, isLight, shellDir], (output, exitCode) => {
             if (exitCode === 0) {
-                if (typeof ToastService !== "undefined" && typeof NiriService !== "undefined" && !NiriService.matugenSuppression) {
+                if (typeof ToastService !== "undefined") {
                     ToastService.showInfo(I18n.tr("GTK colors applied successfully"));
                 }
             } else {
@@ -2090,7 +2079,7 @@ Singleton {
         }
     }
 
-    readonly property string _greeterCacheDir: Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter"
+    readonly property string _greeterCacheDir: Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter"
 
     property string greeterColorsBaseDir: root._greeterCacheDir
 
@@ -2112,7 +2101,7 @@ Singleton {
         path: {
             if (SessionData.isGreeterMode)
                 return root.greeterColorsBaseDir ? (root.greeterColorsBaseDir + "/colors.json") : "";
-            return stateDir + "/dms-colors.json";
+            return stateDir + "/hgs-colors.json";
         }
         blockLoading: false
         watchChanges: !SessionData.isGreeterMode
@@ -2192,7 +2181,7 @@ Singleton {
         onTriggered: root._executeThemeGeneration()
     }
 
-    // These timers are for screen transitions, since sometimes QML still beats the niri call
+    // These timers keep theme transitions ordered when shell state updates race compositor effects.
     Timer {
         id: themeTransitionTimer
         interval: 50
@@ -2225,7 +2214,7 @@ Singleton {
 
     // Theme mode automation functions
     function themeAutoBackendAvailable() {
-        return typeof DMSService !== "undefined" && DMSService.isConnected && Array.isArray(DMSService.capabilities) && DMSService.capabilities.includes("theme.auto");
+        return typeof HGSService !== "undefined" && HGSService.isConnected && Array.isArray(HGSService.capabilities) && HGSService.capabilities.includes("theme.auto");
     }
 
     function applyThemeAutoState(state) {
@@ -2244,11 +2233,11 @@ Singleton {
     }
 
     function syncTimeThemeSchedule() {
-        if (typeof SessionData === "undefined" || typeof DMSService === "undefined") {
+        if (typeof SessionData === "undefined" || typeof HGSService === "undefined") {
             return;
         }
 
-        if (!DMSService.isConnected) {
+        if (!HGSService.isConnected) {
             return;
         }
 
@@ -2258,7 +2247,7 @@ Singleton {
             return;
         }
 
-        DMSService.sendRequest("theme.auto.setMode", {
+        HGSService.sendRequest("theme.auto.setMode", {
             "mode": "time"
         });
 
@@ -2268,7 +2257,7 @@ Singleton {
         const endHour = shareSettings ? SessionData.nightModeEndHour : SessionData.themeModeEndHour;
         const endMinute = shareSettings ? SessionData.nightModeEndMinute : SessionData.themeModeEndMinute;
 
-        DMSService.sendRequest("theme.auto.setSchedule", {
+        HGSService.sendRequest("theme.auto.setSchedule", {
             "startHour": startHour,
             "startMinute": startMinute,
             "endHour": endHour,
@@ -2279,18 +2268,18 @@ Singleton {
             }
         });
 
-        DMSService.sendRequest("theme.auto.setEnabled", {
+        HGSService.sendRequest("theme.auto.setEnabled", {
             "enabled": true
         });
-        DMSService.sendRequest("theme.auto.trigger", {});
+        HGSService.sendRequest("theme.auto.trigger", {});
     }
 
     function syncLocationThemeSchedule() {
-        if (typeof SessionData === "undefined" || typeof DMSService === "undefined") {
+        if (typeof SessionData === "undefined" || typeof HGSService === "undefined") {
             return;
         }
 
-        if (!DMSService.isConnected) {
+        if (!HGSService.isConnected) {
             return;
         }
 
@@ -2300,30 +2289,30 @@ Singleton {
             return;
         }
 
-        DMSService.sendRequest("theme.auto.setMode", {
+        HGSService.sendRequest("theme.auto.setMode", {
             "mode": "location"
         });
 
         if (SessionData.nightModeUseIPLocation) {
-            DMSService.sendRequest("theme.auto.setUseIPLocation", {
+            HGSService.sendRequest("theme.auto.setUseIPLocation", {
                 "use": true
             });
         } else {
-            DMSService.sendRequest("theme.auto.setUseIPLocation", {
+            HGSService.sendRequest("theme.auto.setUseIPLocation", {
                 "use": false
             });
             if (SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0) {
-                DMSService.sendRequest("theme.auto.setLocation", {
+                HGSService.sendRequest("theme.auto.setLocation", {
                     "latitude": SessionData.latitude,
                     "longitude": SessionData.longitude
                 });
             }
         }
 
-        DMSService.sendRequest("theme.auto.setEnabled", {
+        HGSService.sendRequest("theme.auto.setEnabled", {
             "enabled": true
         });
-        DMSService.sendRequest("theme.auto.trigger", {});
+        HGSService.sendRequest("theme.auto.trigger", {});
     }
 
     function evaluateThemeMode() {
@@ -2332,7 +2321,7 @@ Singleton {
         }
 
         if (themeAutoBackendAvailable()) {
-            DMSService.sendRequest("theme.auto.getState", null, response => {
+            HGSService.sendRequest("theme.auto.getState", null, response => {
                 if (response && response.result) {
                     applyThemeAutoState(response.result);
                 }
@@ -2439,16 +2428,16 @@ Singleton {
 
     // Helper function to send location to backend
     function sendLocationToBackend() {
-        if (typeof SessionData === "undefined" || typeof DMSService === "undefined") {
+        if (typeof SessionData === "undefined" || typeof HGSService === "undefined") {
             return false;
         }
 
-        if (!DMSService.isConnected) {
+        if (!HGSService.isConnected) {
             return false;
         }
 
         if (SessionData.nightModeUseIPLocation) {
-            DMSService.sendRequest("wayland.gamma.setUseIPLocation", {
+            HGSService.sendRequest("wayland.gamma.setUseIPLocation", {
                 "use": true
             }, response => {
                 if (response?.error) {
@@ -2457,11 +2446,11 @@ Singleton {
             });
             return true;
         } else if (SessionData.latitude !== 0.0 && SessionData.longitude !== 0.0) {
-            DMSService.sendRequest("wayland.gamma.setUseIPLocation", {
+            HGSService.sendRequest("wayland.gamma.setUseIPLocation", {
                 "use": false
             }, response => {
                 if (!response.error) {
-                    DMSService.sendRequest("wayland.gamma.setLocation", {
+                    HGSService.sendRequest("wayland.gamma.setLocation", {
                         "latitude": SessionData.latitude,
                         "longitude": SessionData.longitude
                     }, locResp => {
@@ -2515,8 +2504,8 @@ Singleton {
 
     function stopThemeModeAutomation() {
         root.themeModeAutomationActive = false;
-        if (typeof DMSService !== "undefined" && DMSService.isConnected) {
-            DMSService.sendRequest("theme.auto.setEnabled", {
+        if (typeof HGSService !== "undefined" && HGSService.isConnected) {
+            HGSService.sendRequest("theme.auto.setEnabled", {
                 "enabled": false
             });
         }

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const qrCodeTmpPrefix = "/tmp/dank-wifi-qrcode-"
+const qrCodeTmpPrefix = "/tmp/hgs-wifi-qrcode-"
 
 func FormatWiFiQRString(securityType, ssid, password string) string {
 	return fmt.Sprintf("WIFI:T:%s;S:%s;P:%s;;", securityType, ssid, password)

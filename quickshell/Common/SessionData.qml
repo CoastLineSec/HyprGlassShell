@@ -16,7 +16,7 @@ Singleton {
 
     readonly property int sessionConfigVersion: 3
 
-    readonly property bool isGreeterMode: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
+    readonly property bool isGreeterMode: Quickshell.env("HGS_RUN_GREETER") === "1" || Quickshell.env("HGS_RUN_GREETER") === "true"
     property bool _parseError: false
     property bool _hasLoaded: false
     property bool _isReadOnly: false
@@ -193,7 +193,6 @@ Singleton {
     property string launcherLastQuery: ""
     property var launcherQueryHistory: []
     property string appDrawerLastMode: "apps"
-    property string niriOverviewLastMode: "apps"
     property string settingsSidebarExpandedIds: ","
     property string settingsSidebarCollapsedIds: ","
 
@@ -1248,11 +1247,6 @@ Singleton {
         saveSettings();
     }
 
-    function setNiriOverviewLastMode(mode) {
-        niriOverviewLastMode = mode;
-        saveSettings();
-    }
-
     function setSettingsSidebarState(expandedIds, collapsedIds) {
         settingsSidebarExpandedIds = expandedIds;
         settingsSidebarCollapsedIds = collapsedIds;
@@ -1352,7 +1346,7 @@ Singleton {
     FileView {
         id: settingsFile
 
-        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/DankMaterialShell/session.json"
+        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/HyprGlassShell/session.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
@@ -1369,7 +1363,7 @@ Singleton {
         }
     }
 
-    readonly property string _greeterCacheDir: Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter"
+    readonly property string _greeterCacheDir: Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter"
 
     property string greeterSessionBaseDir: root._greeterCacheDir
 

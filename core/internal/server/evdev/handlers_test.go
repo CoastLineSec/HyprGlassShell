@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mocks "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/evdev"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	mocks "github.com/CoastLineSec/HyprGlassShell/core/internal/mocks/evdev"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 )
 
 type mockNetConn struct {

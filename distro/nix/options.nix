@@ -1,6 +1,6 @@
 {
   lib,
-  dmsPkgs,
+  hgsPkgs,
   pkgs,
   ...
 }:
@@ -8,10 +8,10 @@ let
   inherit (lib) types;
   path = [
     "programs"
-    "dank-material-shell"
+    "hypr-glass-shell"
   ];
   jsonFormat = pkgs.formats.json { };
-  builtInRemovedMsg = "This is now built-in in DMS and doesn't need additional dependencies.";
+  builtInRemovedMsg = "This is now built-in in HGS and doesn't need additional dependencies.";
 in
 {
   imports = [
@@ -20,22 +20,22 @@ in
     (lib.mkRemovedOptionModule (path ++ [ "enableClipboard" ]) builtInRemovedMsg)
     (lib.mkRemovedOptionModule (
       path ++ [ "enableSystemSound" ]
-    ) "qtmultimedia is now included on dms-shell package.")
-    ./dms-rename.nix
+    ) "qtmultimedia is now included on hgs-shell package.")
+    ./hgs-rename.nix
   ];
 
-  options.programs.dank-material-shell = {
-    enable = lib.mkEnableOption "DankMaterialShell";
-    package = lib.mkPackageOption dmsPkgs "dms-shell" {
-      extraDescription = "The DankMaterialShell package to use (defaults to be built from source)";
+  options.programs.hypr-glass-shell = {
+    enable = lib.mkEnableOption "HyprGlassShell";
+    package = lib.mkPackageOption hgsPkgs "hgs-shell" {
+      extraDescription = "The HyprGlassShell package to use (defaults to be built from source)";
     };
 
     systemd = {
-      enable = lib.mkEnableOption "DankMaterialShell systemd startup";
+      enable = lib.mkEnableOption "HyprGlassShell systemd startup";
       restartIfChanged = lib.mkOption {
         type = types.bool;
         default = true;
-        description = "Auto-restart dms.service when dank-material-shell changes";
+        description = "Auto-restart hgs.service when hypr-glass-shell changes";
       };
     };
 
@@ -107,13 +107,13 @@ in
         }
       );
       default = { };
-      description = "DMS Plugins to install and enable";
+      description = "HGS Plugins to install and enable";
       example = lib.literalExpression ''
         {
           DockerManager = {
             src = pkgs.fetchFromGitHub {
               owner = "LuckShiba";
-              repo = "DmsDockerManager";
+              repo = "HgsDockerManager";
               rev = "v1.2.0";
               sha256 = "sha256-VoJCaygWnKpv0s0pqTOmzZnPM922qPDMHk4EPcgVnaU=";
             };

@@ -41,7 +41,7 @@ StyledRect {
                     anchors.leftMargin: Theme.spacingM
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: modelData?.icon ?? ""
                         size: Theme.iconSize - 2
                         color: currentPath === modelData?.path ? Theme.primary : Theme.surfaceText

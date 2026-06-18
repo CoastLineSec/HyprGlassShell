@@ -1,0 +1,85 @@
+# AppArmor profile for hgs-greeter
+#
+# Managed by HGS — regenerated on every `hgs greeter install` / `hgs greeter sync`.
+# Manual edits will be overwritten on next sync.
+#
+# Mode: complain  (denials are logged, nothing is blocked)
+# To switch to enforce after validating with `aa-logprof`:
+#   sudo aa-enforce /etc/apparmor.d/usr.bin.hgs-greeter
+#
+#include <tunables/global>
+
+profile hgs-greeter /usr/bin/hgs-greeter flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+
+  # The launcher script itself
+  /usr/bin/hgs-greeter r,
+
+  # Cache directory — created by hgs greeter sync/enable with greeter:greeter ownership
+  /var/cache/hgs-greeter/     rw,
+  /var/cache/hgs-greeter/**   rwlk,
+
+  # HGS config — packaged path
+  /usr/share/quickshell/hgs-greeter/    r,
+  /usr/share/quickshell/hgs-greeter/**  r,
+  /usr/share/quickshell/               r,
+  /usr/share/quickshell/**             r,
+
+  # HGS config — system and user overrides
+  /etc/hgs/    r,
+  /etc/hgs/**  r,
+  /usr/share/hgs/    r,
+  /usr/share/hgs/**  r,
+  /home/*/.config/quickshell/    r,
+  /home/*/.config/quickshell/**  r,
+  /root/.config/quickshell/     r,
+  /root/.config/quickshell/**   r,
+
+  # greetd / PAM — read-only for session setup
+  /etc/greetd/    r,
+  /etc/greetd/**  r,
+  /etc/pam.d/     r,
+  /etc/pam.d/**   r,
+  /usr/lib/pam.d/ r,
+  /usr/lib/pam.d/** r,
+
+  # Hyprland compositor binary — run unconfined so Hyprland uses its own profile
+  /usr/bin/hyprland    Ux,
+  /usr/bin/Hyprland    Ux,
+
+  # Quickshell — run unconfined (has its own compositor profile on some distros)
+  /usr/bin/qs          Ux,
+  /usr/bin/quickshell  Ux,
+
+  # Wayland / XDG runtime (pipewire, wireplumber, wayland socket)
+  /run/user/[0-9]*/               rw,
+  /run/user/[0-9]*/**             rw,
+
+  # DRM / GPU devices (required for Wayland compositor startup)
+  /dev/dri/      r,
+  /dev/dri/*     rw,
+  /dev/udmabuf   rw,
+
+  # Input devices
+  /dev/input/    r,
+  /dev/input/*   r,
+
+  # Systemd journal / logging
+  /run/systemd/journal/socket  rw,
+  /dev/log                     rw,
+
+  # Shell helper binaries invoked by the launcher script
+  /usr/bin/env      ix,
+  /usr/bin/mkdir    ix,
+  /usr/bin/cat      ix,
+  /usr/bin/grep     ix,
+  /usr/bin/dirname  ix,
+  /usr/bin/basename ix,
+  /usr/bin/command  ix,
+  /bin/env          ix,
+  /bin/mkdir        ix,
+
+  # Signal management (compositor lifecycle)
+  signal (send, receive) set=("term", "int", "hup", "kill"),
+}

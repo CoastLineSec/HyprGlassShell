@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -278,7 +278,7 @@ func (m Model) tryFingerprint() tea.Cmd {
 		_ = privesc.ClearCache(context.Background())
 
 		tmpDir := os.TempDir()
-		askpassScript := filepath.Join(tmpDir, fmt.Sprintf("danklinux-fp-%d.sh", time.Now().UnixNano()))
+		askpassScript := filepath.Join(tmpDir, fmt.Sprintf("coastlinesec-fp-%d.sh", time.Now().UnixNano()))
 
 		scriptContent := "#!/bin/sh\nexit 1\n"
 		if err := os.WriteFile(askpassScript, []byte(scriptContent), 0o700); err != nil {

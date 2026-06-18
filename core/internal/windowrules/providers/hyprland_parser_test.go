@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/windowrules"
 )
 
 func TestParseWindowRuleV1(t *testing.T) {
@@ -154,13 +154,13 @@ func TestHyprlandWritableProvider(t *testing.T) {
 		t.Errorf("Name() = %q, want hyprland", provider.Name())
 	}
 
-	expectedPath := filepath.Join(tmpDir, "dms", "windowrules.lua")
+	expectedPath := filepath.Join(tmpDir, "hgs", "rules.lua")
 	if provider.GetOverridePath() != expectedPath {
 		t.Errorf("GetOverridePath() = %q, want %q", provider.GetOverridePath(), expectedPath)
 	}
 }
 
-func TestHyprlandSetAndLoadDMSRules(t *testing.T) {
+func TestHyprlandSetAndLoadHGSRules(t *testing.T) {
 	tmpDir := t.TempDir()
 	provider := NewHyprlandWritableProvider(tmpDir)
 
@@ -171,9 +171,9 @@ func TestHyprlandSetAndLoadDMSRules(t *testing.T) {
 		t.Fatalf("SetRule failed: %v", err)
 	}
 
-	rules, err := provider.LoadDMSRules()
+	rules, err := provider.LoadHGSRules()
 	if err != nil {
-		t.Fatalf("LoadDMSRules failed: %v", err)
+		t.Fatalf("LoadHGSRules failed: %v", err)
 	}
 
 	if len(rules) != 1 {
@@ -204,7 +204,7 @@ func TestHyprlandSetRuleLeavesConfOnlyInstallReadOnly(t *testing.T) {
 	if !strings.Contains(err.Error(), "read-only") {
 		t.Fatalf("expected read-only error, got %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(tmpDir, "dms", "windowrules.lua")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(tmpDir, "hgs", "rules.lua")); !os.IsNotExist(err) {
 		t.Fatalf("expected no Lua windowrules file to be created for conf-only config, stat err=%v", err)
 	}
 }
@@ -225,7 +225,7 @@ func TestHyprlandRemoveRule(t *testing.T) {
 		t.Fatalf("RemoveRule failed: %v", err)
 	}
 
-	rules, _ := provider.LoadDMSRules()
+	rules, _ := provider.LoadHGSRules()
 	if len(rules) != 1 {
 		t.Fatalf("expected 1 rule after removal, got %d", len(rules))
 	}
@@ -253,7 +253,7 @@ func TestHyprlandReorderRules(t *testing.T) {
 		t.Fatalf("ReorderRules failed: %v", err)
 	}
 
-	rules, _ := provider.LoadDMSRules()
+	rules, _ := provider.LoadHGSRules()
 	if len(rules) != 3 {
 		t.Fatalf("expected 3 rules, got %d", len(rules))
 	}
@@ -296,13 +296,13 @@ windowrulev2 = tile, class:^(extraapp)$
 
 func TestParseHyprlandLuaRequiresFragment(t *testing.T) {
 	tmpDir := t.TempDir()
-	dmsDir := filepath.Join(tmpDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0755); err != nil {
+	hgsDir := filepath.Join(tmpDir, "hgs")
+	if err := os.MkdirAll(hgsDir, 0755); err != nil {
 		t.Fatal(err)
 	}
 
 	mainLua := filepath.Join(tmpDir, "hyprland.lua")
-	fragLua := filepath.Join(dmsDir, "windowrules.lua")
+	fragLua := filepath.Join(hgsDir, "rules.lua")
 
 	if err := os.WriteFile(fragLua, []byte(`
 hl.window_rule({ match = { class = "^test$" }, float = true })
@@ -311,7 +311,7 @@ hl.window_rule({ match = { class = "^test$" }, float = true })
 	}
 
 	if err := os.WriteFile(mainLua, []byte(`
-require("dms.windowrules")
+require("hgs.rules")
 `), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -323,8 +323,8 @@ require("dms.windowrules")
 	if len(res.Rules) != 1 {
 		t.Fatalf("expected 1 rule, got %d", len(res.Rules))
 	}
-	if !res.DMSRulesIncluded {
-		t.Fatal("expected dms.windowrules fragment to be marked included")
+	if !res.HGSRulesIncluded {
+		t.Fatal("expected hgs.rules fragment to be marked included")
 	}
 	wr := ConvertHyprlandRulesToWindowRules(res.Rules)[0]
 	if wr.MatchCriteria.AppID != "^test$" || wr.Actions.OpenFloating == nil || !*wr.Actions.OpenFloating {

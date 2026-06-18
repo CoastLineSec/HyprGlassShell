@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 // ManualPackageInstaller provides methods for installing packages from source
@@ -55,17 +55,13 @@ func (m *ManualPackageInstaller) InstallManualPackages(ctx context.Context, pack
 	for _, pkg := range packages {
 		variant := variantMap[pkg]
 		switch pkg {
-		case "dms (DankMaterialShell)", "dms":
-			if err := m.installDankMaterialShell(ctx, variant, sudoPassword, progressChan); err != nil {
-				return fmt.Errorf("failed to install DankMaterialShell: %w", err)
+		case "hgs (HyprGlassShell)", "hgs":
+			if err := m.installHyprGlassShell(ctx, variant, sudoPassword, progressChan); err != nil {
+				return fmt.Errorf("failed to install HyprGlassShell: %w", err)
 			}
 		case "dgop":
 			if err := m.installDgop(ctx, sudoPassword, progressChan); err != nil {
 				return fmt.Errorf("failed to install dgop: %w", err)
-			}
-		case "niri":
-			if err := m.installNiri(ctx, sudoPassword, progressChan); err != nil {
-				return fmt.Errorf("failed to install niri: %w", err)
 			}
 		case "quickshell":
 			if err := m.installQuickshell(ctx, variant, sudoPassword, progressChan); err != nil {
@@ -83,10 +79,6 @@ func (m *ManualPackageInstaller) InstallManualPackages(ctx context.Context, pack
 			if err := m.installMatugen(ctx, sudoPassword, progressChan); err != nil {
 				return fmt.Errorf("failed to install matugen: %w", err)
 			}
-		case "xwayland-satellite":
-			if err := m.installXwaylandSatellite(ctx, sudoPassword, progressChan); err != nil {
-				return fmt.Errorf("failed to install xwayland-satellite: %w", err)
-			}
 		default:
 			m.log(fmt.Sprintf("Warning: No manual build method for %s", pkg))
 		}
@@ -103,7 +95,7 @@ func (m *ManualPackageInstaller) installDgop(ctx context.Context, sudoPassword s
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "hgsinstall")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -155,80 +147,6 @@ func (m *ManualPackageInstaller) installDgop(ctx context.Context, sudoPassword s
 	return nil
 }
 
-func (m *ManualPackageInstaller) installNiri(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	m.log("Installing niri from source...")
-
-	homeDir, _ := os.UserHomeDir()
-	buildDir := filepath.Join(homeDir, ".cache", "dankinstall", "niri-build")
-	tmpDir := filepath.Join(homeDir, ".cache", "dankinstall", "tmp")
-	if err := os.MkdirAll(buildDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create build directory: %w", err)
-	}
-	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create temp directory: %w", err)
-	}
-	defer func() {
-		os.RemoveAll(buildDir)
-		os.RemoveAll(tmpDir)
-	}()
-
-	progressChan <- InstallProgressMsg{
-		Phase:       PhaseSystemPackages,
-		Progress:    0.2,
-		Step:        "Cloning niri repository...",
-		IsComplete:  false,
-		CommandInfo: "git clone https://github.com/YaLTeR/niri.git",
-	}
-
-	cloneCmd := exec.CommandContext(ctx, "git", "clone", "https://github.com/YaLTeR/niri.git", buildDir)
-	if err := cloneCmd.Run(); err != nil {
-		return fmt.Errorf("failed to clone niri: %w", err)
-	}
-
-	checkoutCmd := exec.CommandContext(ctx, "git", "-C", buildDir, "checkout", "v25.08")
-	if err := checkoutCmd.Run(); err != nil {
-		m.log(fmt.Sprintf("Warning: failed to checkout v25.08, using main: %v", err))
-	}
-
-	if !m.commandExists("cargo-deb") {
-		cargoDebInstallCmd := exec.CommandContext(ctx, "cargo", "install", "cargo-deb")
-		cargoDebInstallCmd.Env = append(os.Environ(), "TMPDIR="+tmpDir)
-		if err := m.runWithProgressStep(cargoDebInstallCmd, progressChan, PhaseSystemPackages, 0.3, 0.35, "Installing cargo-deb..."); err != nil {
-			return fmt.Errorf("failed to install cargo-deb: %w", err)
-		}
-	}
-
-	buildDebCmd := exec.CommandContext(ctx, "cargo", "deb")
-	buildDebCmd.Dir = buildDir
-	buildDebCmd.Env = append(os.Environ(), "TMPDIR="+tmpDir)
-	if err := m.runWithProgressStep(buildDebCmd, progressChan, PhaseSystemPackages, 0.35, 0.95, "Building niri deb package..."); err != nil {
-		return fmt.Errorf("failed to build niri deb: %w", err)
-	}
-
-	progressChan <- InstallProgressMsg{
-		Phase:       PhaseSystemPackages,
-		Progress:    0.95,
-		Step:        "Installing niri deb package...",
-		IsComplete:  false,
-		NeedsSudo:   true,
-		CommandInfo: "dpkg -i niri.deb",
-	}
-
-	installDebCmd := privesc.ExecCommand(ctx, sudoPassword,
-		fmt.Sprintf("dpkg -i %s/target/debian/niri_*.deb", buildDir))
-
-	output, err := installDebCmd.CombinedOutput()
-	if err != nil {
-		m.log(fmt.Sprintf("dpkg install failed. Output:\n%s", string(output)))
-		return fmt.Errorf("failed to install niri deb package: %w\nOutput:\n%s", err, string(output))
-	}
-
-	m.log(fmt.Sprintf("dpkg install successful. Output:\n%s", string(output)))
-
-	m.log("niri installed successfully from source")
-	return nil
-}
-
 func (m *ManualPackageInstaller) installQuickshell(ctx context.Context, variant deps.PackageVariant, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
 	m.log("Installing quickshell from source...")
 
@@ -237,7 +155,7 @@ func (m *ManualPackageInstaller) installQuickshell(ctx context.Context, variant 
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "hgsinstall")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -343,7 +261,7 @@ func (m *ManualPackageInstaller) installHyprland(ctx context.Context, sudoPasswo
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "hgsinstall")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -406,7 +324,7 @@ func (m *ManualPackageInstaller) installGhostty(ctx context.Context, sudoPasswor
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "hgsinstall")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -505,41 +423,41 @@ func (m *ManualPackageInstaller) installMatugen(ctx context.Context, sudoPasswor
 	return nil
 }
 
-func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, variant deps.PackageVariant, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	m.log("Installing DankMaterialShell (DMS)...")
+func (m *ManualPackageInstaller) installHyprGlassShell(ctx context.Context, variant deps.PackageVariant, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
+	m.log("Installing HyprGlassShell (HGS)...")
 
-	if err := m.installDMSBinary(ctx, sudoPassword, progressChan); err != nil {
-		m.logError("Failed to install DMS binary", err)
+	if err := m.installHGSBinary(ctx, sudoPassword, progressChan); err != nil {
+		m.logError("Failed to install HGS binary", err)
 	}
 
-	dmsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/dms")
+	hgsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/hgs")
 
-	if _, err := os.Stat(dmsPath); os.IsNotExist(err) {
+	if _, err := os.Stat(hgsPath); os.IsNotExist(err) {
 		progressChan <- InstallProgressMsg{
 			Phase:       PhaseSystemPackages,
 			Progress:    0.90,
-			Step:        "Cloning DankMaterialShell...",
+			Step:        "Cloning HyprGlassShell...",
 			IsComplete:  false,
-			CommandInfo: "git clone https://github.com/AvengeMedia/DankMaterialShell.git",
+			CommandInfo: "git clone https://github.com/CoastLineSec/HyprGlassShell.git",
 		}
 
-		configDir := filepath.Dir(dmsPath)
+		configDir := filepath.Dir(hgsPath)
 		if err := os.MkdirAll(configDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create quickshell config directory: %w", err)
 		}
 
 		cloneCmd := exec.CommandContext(ctx, "git", "clone",
-			"https://github.com/AvengeMedia/DankMaterialShell.git", dmsPath)
+			"https://github.com/CoastLineSec/HyprGlassShell.git", hgsPath)
 		if err := cloneCmd.Run(); err != nil {
-			return fmt.Errorf("failed to clone DankMaterialShell: %w", err)
+			return fmt.Errorf("failed to clone HyprGlassShell: %w", err)
 		}
 
-		if forceDMSGit || variant == deps.VariantGit {
+		if forceHGSGit || variant == deps.VariantGit {
 			m.log("Using git variant (master branch)")
 			return nil
 		}
 
-		tagCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "describe", "--tags", "--abbrev=0", "origin/master")
+		tagCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "describe", "--tags", "--abbrev=0", "origin/master")
 		tagOutput, err := tagCmd.Output()
 		if err != nil {
 			m.log("Using default branch (no tags found)")
@@ -547,33 +465,33 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 		}
 
 		latestTag := strings.TrimSpace(string(tagOutput))
-		checkoutCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "checkout", latestTag)
+		checkoutCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "checkout", latestTag)
 		if err := checkoutCmd.Run(); err != nil {
 			m.logError(fmt.Sprintf("Failed to checkout tag %s", latestTag), err)
 			return nil
 		}
 
 		m.log(fmt.Sprintf("Checked out latest tag: %s", latestTag))
-		m.log("DankMaterialShell cloned successfully")
+		m.log("HyprGlassShell cloned successfully")
 		return nil
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseSystemPackages,
 		Progress:    0.90,
-		Step:        "Updating DankMaterialShell...",
+		Step:        "Updating HyprGlassShell...",
 		IsComplete:  false,
-		CommandInfo: "Updating ~/.config/quickshell/dms",
+		CommandInfo: "Updating ~/.config/quickshell/hgs",
 	}
 
-	fetchCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "fetch", "origin", "--tags", "--force")
+	fetchCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "fetch", "origin", "--tags", "--force")
 	if err := fetchCmd.Run(); err != nil {
 		m.logError("Failed to fetch updates", err)
 		return nil
 	}
 
-	if forceDMSGit || variant == deps.VariantGit {
-		branchCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "rev-parse", "--abbrev-ref", "HEAD")
+	if forceHGSGit || variant == deps.VariantGit {
+		branchCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "rev-parse", "--abbrev-ref", "HEAD")
 		branchOutput, err := branchCmd.Output()
 		if err != nil {
 			m.logError("Failed to get current branch", err)
@@ -585,17 +503,17 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 			branch = "master"
 		}
 
-		pullCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "pull", "origin", branch)
+		pullCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "pull", "origin", branch)
 		if err := pullCmd.Run(); err != nil {
 			m.logError("Failed to pull updates", err)
 			return nil
 		}
 
-		m.log("DankMaterialShell updated successfully (git variant)")
+		m.log("HyprGlassShell updated successfully (git variant)")
 		return nil
 	}
 
-	latestTagCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "describe", "--tags", "--abbrev=0", "origin/master")
+	latestTagCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "describe", "--tags", "--abbrev=0", "origin/master")
 	tagOutput, err := latestTagCmd.Output()
 	if err != nil {
 		m.logError("Failed to get latest tag", err)
@@ -603,53 +521,12 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 	}
 
 	latestTag := strings.TrimSpace(string(tagOutput))
-	checkoutCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "checkout", latestTag)
+	checkoutCmd := exec.CommandContext(ctx, "git", "-C", hgsPath, "checkout", latestTag)
 	if err := checkoutCmd.Run(); err != nil {
 		m.logError(fmt.Sprintf("Failed to checkout tag %s", latestTag), err)
 		return nil
 	}
 
 	m.log(fmt.Sprintf("Updated to tag: %s", latestTag))
-	return nil
-}
-
-func (m *ManualPackageInstaller) installXwaylandSatellite(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	m.log("Installing xwayland-satellite from source...")
-
-	progressChan <- InstallProgressMsg{
-		Phase:       PhaseSystemPackages,
-		Progress:    0.1,
-		Step:        "Installing xwayland-satellite via cargo...",
-		IsComplete:  false,
-		CommandInfo: "cargo install --git https://github.com/Supreeeme/xwayland-satellite --tag v0.7",
-	}
-
-	installCmd := exec.CommandContext(ctx, "cargo", "install", "--git", "https://github.com/Supreeeme/xwayland-satellite", "--tag", "v0.7")
-	if err := m.runWithProgressStep(installCmd, progressChan, PhaseSystemPackages, 0.1, 0.7, "Building xwayland-satellite..."); err != nil {
-		return fmt.Errorf("failed to install xwayland-satellite: %w", err)
-	}
-
-	homeDir := os.Getenv("HOME")
-	sourcePath := filepath.Join(homeDir, ".cargo", "bin", "xwayland-satellite")
-	targetPath := "/usr/local/bin/xwayland-satellite"
-
-	progressChan <- InstallProgressMsg{
-		Phase:       PhaseSystemPackages,
-		Progress:    0.7,
-		Step:        "Installing xwayland-satellite binary to system...",
-		IsComplete:  false,
-		NeedsSudo:   true,
-		CommandInfo: fmt.Sprintf("sudo cp %s %s", sourcePath, targetPath),
-	}
-
-	if err := privesc.Run(ctx, sudoPassword, "cp", sourcePath, targetPath); err != nil {
-		return fmt.Errorf("failed to copy xwayland-satellite to /usr/local/bin: %w", err)
-	}
-
-	if err := privesc.Run(ctx, sudoPassword, "chmod", "+x", targetPath); err != nil {
-		return fmt.Errorf("failed to make xwayland-satellite executable: %w", err)
-	}
-
-	m.log("xwayland-satellite installed successfully from source")
 	return nil
 }

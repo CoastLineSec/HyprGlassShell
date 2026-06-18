@@ -43,7 +43,7 @@ type Buffer struct {
 func CreateBuffer(width, height, stride int) (*Buffer, error) {
 	size := stride * height
 
-	fd, err := unix.MemfdCreate("dms-shm", 0)
+	fd, err := unix.MemfdCreate("hgs-shm", 0)
 	if err != nil {
 		return nil, fmt.Errorf("memfd_create: %w", err)
 	}

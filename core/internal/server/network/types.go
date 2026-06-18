@@ -3,7 +3,7 @@ package network
 import (
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/syncmap"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/syncmap"
 	"github.com/godbus/dbus/v5"
 )
 

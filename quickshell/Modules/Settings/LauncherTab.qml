@@ -9,8 +9,8 @@ Item {
     id: root
 
     property var parentModal: null
-    readonly property string defaultLauncherAction: "spawn dms ipc call spotlight toggle"
-    readonly property string spotlightBarAction: "spawn dms ipc call spotlight-bar toggle"
+    readonly property string defaultLauncherAction: "spawn hgs ipc call spotlight toggle"
+    readonly property string spotlightBarAction: "spawn hgs ipc call spotlight-bar toggle"
     readonly property int keybindDataVersion: KeybindsService._dataVersion
     readonly property bool keybindsAvailable: KeybindsService.available
     readonly property string defaultLauncherKeybindSearch: "spotlight toggle"
@@ -50,7 +50,7 @@ Item {
         onFileSelected: path => SettingsData.set("launcherLogoCustomPath", path.replace("file://", ""))
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -117,7 +117,7 @@ Item {
                         anchors.rightMargin: Theme.spacingM
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -211,7 +211,7 @@ Item {
                         anchors.rightMargin: Theme.spacingM
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -281,7 +281,7 @@ Item {
 
                 StyledText {
                     width: parent.width
-                    text: I18n.tr("Choose the logo displayed on the launcher button in DankBar")
+                    text: I18n.tr("Choose the logo displayed on the launcher button in HGSBar")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
@@ -292,29 +292,15 @@ Item {
                     height: logoModeGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: logoModeGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
                         minButtonWidth: parent.width < 480 ? 44 : 64
                         textSize: parent.width < 480 ? Theme.fontSizeSmall : Theme.fontSizeMedium
                         model: {
-                            const modes = [I18n.tr("Apps Icon"), I18n.tr("OS Logo"), I18n.tr("Dank")];
-                            if (CompositorService.isNiri) {
-                                modes.push("niri");
-                            } else if (CompositorService.isHyprland) {
-                                modes.push("Hyprland");
-                            } else if (CompositorService.isMango) {
-                                modes.push("mango");
-                            } else if (CompositorService.isSway) {
-                                modes.push("Sway");
-                            } else if (CompositorService.isScroll) {
-                                modes.push("Scroll");
-                            } else if (CompositorService.isMiracle) {
-                                modes.push("Miracle");
-                            } else {
-                                modes.push(I18n.tr("Compositor"));
-                            }
+                            const modes = [I18n.tr("Apps Icon"), I18n.tr("OS Logo"), I18n.tr("HGS")];
+                            modes.push("Hyprland");
                             modes.push(I18n.tr("Custom"));
                             return modes;
                         }
@@ -323,7 +309,7 @@ Item {
                                 return 0;
                             if (SettingsData.launcherLogoMode === "os")
                                 return 1;
-                            if (SettingsData.launcherLogoMode === "dank")
+                            if (SettingsData.launcherLogoMode === "hgs")
                                 return 2;
                             if (SettingsData.launcherLogoMode === "compositor")
                                 return 3;
@@ -342,7 +328,7 @@ Item {
                                 SettingsData.set("launcherLogoMode", "os");
                                 break;
                             case 2:
-                                SettingsData.set("launcherLogoMode", "dank");
+                                SettingsData.set("launcherLogoMode", "hgs");
                                 break;
                             case 3:
                                 SettingsData.set("launcherLogoMode", "compositor");
@@ -380,7 +366,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: selectButton
                         iconName: "folder_open"
                         width: 36
@@ -416,7 +402,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 spacing: Theme.spacingM
 
-                                DankButtonGroup {
+                                HGSButtonGroup {
                                     id: colorModeGroup
                                     buttonPadding: parent.parent.width < 480 ? Theme.spacingS : Theme.spacingL
                                     minButtonWidth: parent.parent.width < 480 ? 44 : 64
@@ -562,7 +548,7 @@ Item {
                     wrapMode: Text.WordWrap
                 }
 
-                DankTextField {
+                HGSTextField {
                     width: parent.width
                     text: SettingsData.launchPrefix
                     placeholderText: I18n.tr("Enter launch prefix (e.g., 'uwsm-app')")
@@ -604,7 +590,7 @@ Item {
                 width: parent.width
                 iconName: "tune"
                 title: I18n.tr("Appearance", "launcher appearance settings")
-                settingKey: "dankLauncherV2Appearance"
+                settingKey: "hgsLauncherV2Appearance"
 
                 Column {
                     width: parent.width
@@ -623,7 +609,7 @@ Item {
                         height: sizeGroup.implicitHeight
                         clip: true
 
-                        DankButtonGroup {
+                        HGSButtonGroup {
                             id: sizeGroup
                             anchors.horizontalCenter: parent.horizontalCenter
                             buttonPadding: parent.width < 400 ? Theme.spacingS : Theme.spacingL
@@ -631,7 +617,7 @@ Item {
                             textSize: parent.width < 400 ? Theme.fontSizeSmall : Theme.fontSizeMedium
                             model: ["1", "2", "3", "4"]
                             currentIndex: {
-                                switch (SettingsData.dankLauncherV2Size) {
+                                switch (SettingsData.hgsLauncherV2Size) {
                                 case "micro":
                                     return 0;
                                 case "compact":
@@ -646,54 +632,54 @@ Item {
                                 if (!selected)
                                     return;
                                 var sizes = ["micro", "compact", "medium", "large"];
-                                SettingsData.set("dankLauncherV2Size", sizes[index]);
+                                SettingsData.set("hgsLauncherV2Size", sizes[index]);
                             }
                         }
                     }
                 }
 
                 SettingsToggleRow {
-                    settingKey: "dankLauncherV2ShowFooter"
+                    settingKey: "hgsLauncherV2ShowFooter"
                     tags: ["launcher", "footer", "hints", "shortcuts"]
                     text: I18n.tr("Show Footer", "launcher footer visibility")
                     description: I18n.tr("Show mode tabs and keyboard hints at the bottom.", "launcher footer description")
-                    checked: SettingsData.dankLauncherV2ShowFooter
-                    enabled: SettingsData.dankLauncherV2Size !== "micro"
-                    onToggled: checked => SettingsData.set("dankLauncherV2ShowFooter", checked)
+                    checked: SettingsData.hgsLauncherV2ShowFooter
+                    enabled: SettingsData.hgsLauncherV2Size !== "micro"
+                    onToggled: checked => SettingsData.set("hgsLauncherV2ShowFooter", checked)
                 }
 
                 SettingsToggleRow {
-                    settingKey: "dankLauncherV2UnloadOnClose"
+                    settingKey: "hgsLauncherV2UnloadOnClose"
                     tags: ["launcher", "unload", "close", "memory", "vram"]
                     text: I18n.tr("Unload on Close")
                     description: I18n.tr("Free VRAM/memory when the launcher is closed. May cause a slight delay when reopening.")
-                    checked: SettingsData.dankLauncherV2UnloadOnClose
-                    onToggled: checked => SettingsData.set("dankLauncherV2UnloadOnClose", checked)
+                    checked: SettingsData.hgsLauncherV2UnloadOnClose
+                    onToggled: checked => SettingsData.set("hgsLauncherV2UnloadOnClose", checked)
                 }
 
                 SettingsToggleRow {
-                    settingKey: "dankLauncherV2BorderEnabled"
+                    settingKey: "hgsLauncherV2BorderEnabled"
                     tags: ["launcher", "border", "outline"]
                     text: I18n.tr("Border", "launcher border option")
-                    checked: SettingsData.dankLauncherV2BorderEnabled
-                    onToggled: checked => SettingsData.set("dankLauncherV2BorderEnabled", checked)
+                    checked: SettingsData.hgsLauncherV2BorderEnabled
+                    onToggled: checked => SettingsData.set("hgsLauncherV2BorderEnabled", checked)
                 }
 
                 Column {
                     width: parent.width
                     spacing: Theme.spacingM
-                    visible: SettingsData.dankLauncherV2BorderEnabled
+                    visible: SettingsData.hgsLauncherV2BorderEnabled
 
                     SettingsSliderRow {
-                        settingKey: "dankLauncherV2BorderThickness"
+                        settingKey: "hgsLauncherV2BorderThickness"
                         tags: ["launcher", "border", "thickness"]
                         text: I18n.tr("Thickness", "border thickness")
                         minimum: 1
                         maximum: 6
-                        value: SettingsData.dankLauncherV2BorderThickness
+                        value: SettingsData.hgsLauncherV2BorderThickness
                         defaultValue: 2
                         unit: "px"
-                        onSliderValueChanged: newValue => SettingsData.set("dankLauncherV2BorderThickness", newValue)
+                        onSliderValueChanged: newValue => SettingsData.set("hgsLauncherV2BorderThickness", newValue)
                     }
 
                     Column {
@@ -713,18 +699,18 @@ Item {
                             height: borderColorGroup.implicitHeight
                             clip: true
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 id: borderColorGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 buttonPadding: parent.width < 400 ? Theme.spacingS : Theme.spacingL
                                 minButtonWidth: parent.width < 400 ? 50 : 70
                                 textSize: parent.width < 400 ? Theme.fontSizeSmall : Theme.fontSizeMedium
                                 model: [I18n.tr("Primary", "primary color"), I18n.tr("Secondary", "secondary color"), I18n.tr("Outline", "outline color"), I18n.tr("Text", "text color")]
-                                currentIndex: SettingsData.dankLauncherV2BorderColor === "secondary" ? 1 : SettingsData.dankLauncherV2BorderColor === "outline" ? 2 : SettingsData.dankLauncherV2BorderColor === "surfaceText" ? 3 : 0
+                                currentIndex: SettingsData.hgsLauncherV2BorderColor === "secondary" ? 1 : SettingsData.hgsLauncherV2BorderColor === "outline" ? 2 : SettingsData.hgsLauncherV2BorderColor === "surfaceText" ? 3 : 0
                                 onSelectionChanged: (index, selected) => {
                                     if (!selected)
                                         return;
-                                    SettingsData.set("dankLauncherV2BorderColor", index === 1 ? "secondary" : index === 2 ? "outline" : index === 3 ? "surfaceText" : "primary");
+                                    SettingsData.set("hgsLauncherV2BorderColor", index === 1 ? "secondary" : index === 2 ? "outline" : index === 3 ? "surfaceText" : "primary");
                                 }
                             }
                         }
@@ -733,35 +719,10 @@ Item {
             }
 
             SettingsCard {
-                width: parent.width
-                iconName: "open_in_new"
-                title: I18n.tr("Niri Integration").replace("Niri", "niri")
-                visible: CompositorService.isNiri
-
-                SettingsToggleRow {
-                    settingKey: "spotlightCloseNiriOverview"
-                    tags: ["launcher", "niri", "overview", "close", "launch"]
-                    text: I18n.tr("Close Overview on Launch")
-                    description: I18n.tr("Auto-close Niri overview when launching apps.")
-                    checked: SettingsData.spotlightCloseNiriOverview
-                    onToggled: checked => SettingsData.set("spotlightCloseNiriOverview", checked)
-                }
-
-                SettingsToggleRow {
-                    settingKey: "niriOverviewOverlayEnabled"
-                    tags: ["launcher", "niri", "overview", "overlay", "enable"]
-                    text: I18n.tr("Enable Overview Overlay")
-                    description: I18n.tr("Show launcher overlay when typing in Niri overview. Disable to use another launcher.")
-                    checked: SettingsData.niriOverviewOverlayEnabled
-                    onToggled: checked => SettingsData.set("niriOverviewOverlayEnabled", checked)
-                }
-            }
-
-            SettingsCard {
                 id: builtInPluginsCard
                 width: parent.width
                 iconName: "extension"
-                title: "DMS"
+                title: "HGS"
                 settingKey: "builtInPlugins"
 
                 Column {
@@ -769,7 +730,7 @@ Item {
                     spacing: Theme.spacingS
 
                     Repeater {
-                        model: ["dms_settings", "dms_notepad", "dms_sysmon", "dms_settings_search", "dms_clipboard_search"]
+                        model: ["hgs_settings", "hgs_notepad", "hgs_sysmon", "hgs_settings_search", "hgs_clipboard_search"]
 
                         delegate: Rectangle {
                             id: pluginDelegate
@@ -788,7 +749,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                HGSIcon {
                                     name: pluginDelegate.plugin?.cornerIcon ?? "extension"
                                     size: Theme.iconSize
                                     color: Theme.primary
@@ -819,7 +780,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingM
 
-                                DankTextField {
+                                HGSTextField {
                                     id: triggerField
                                     width: 60
                                     visible: pluginDelegate.plugin?.isLauncher === true
@@ -829,7 +790,7 @@ Item {
                                     Component.onCompleted: text = SettingsData.getBuiltInPluginSetting(pluginDelegate.modelData, "trigger", pluginDelegate.plugin?.defaultTrigger ?? "")
                                 }
 
-                                DankToggle {
+                                HGSToggle {
                                     id: enableToggle
                                     anchors.verticalCenter: parent.verticalCenter
                                     checked: SettingsData.getBuiltInPluginSetting(pluginDelegate.modelData, "enabled", true)
@@ -851,8 +812,8 @@ Item {
                 property var allLauncherPlugins: {
                     SettingsData.launcherPluginVisibility;
                     SettingsData.launcherPluginOrder;
-                    SettingsData.dankLauncherV2IncludeFilesInAll;
-                    SettingsData.dankLauncherV2IncludeFoldersInAll;
+                    SettingsData.hgsLauncherV2IncludeFilesInAll;
+                    SettingsData.hgsLauncherV2IncludeFoldersInAll;
                     var plugins = [];
                     var builtIn = AppSearchService.getBuiltInLauncherPlugins() || {};
                     for (var pluginId in builtIn) {
@@ -881,7 +842,7 @@ Item {
                             trigger: PluginService.getPluginTrigger(pluginId) || ""
                         });
                     }
-                    if (SettingsData.dankLauncherV2IncludeFilesInAll) {
+                    if (SettingsData.hgsLauncherV2IncludeFilesInAll) {
                         plugins.push({
                             id: "__files",
                             name: I18n.tr("Files"),
@@ -892,7 +853,7 @@ Item {
                             trigger: "/"
                         });
                     }
-                    if (SettingsData.dankLauncherV2IncludeFoldersInAll) {
+                    if (SettingsData.hgsLauncherV2IncludeFoldersInAll) {
                         plugins.push({
                             id: "__folders",
                             name: I18n.tr("Folders"),
@@ -961,7 +922,7 @@ Item {
                                         height: Theme.iconSize
                                         anchors.verticalCenter: parent.verticalCenter
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             visible: visibilityDelegateItem.modelData.iconType !== "unicode"
                                             name: visibilityDelegateItem.modelData.icon
@@ -993,16 +954,16 @@ Item {
 
                                             Rectangle {
                                                 visible: visibilityDelegateItem.modelData.isBuiltIn
-                                                width: dmsBadgeLabel.implicitWidth + Theme.spacingS
+                                                width: hgsBadgeLabel.implicitWidth + Theme.spacingS
                                                 height: 16
                                                 radius: 8
                                                 color: Theme.primaryContainer
                                                 anchors.verticalCenter: parent.verticalCenter
 
                                                 StyledText {
-                                                    id: dmsBadgeLabel
+                                                    id: hgsBadgeLabel
                                                     anchors.centerIn: parent
-                                                    text: "DMS"
+                                                    text: "HGS"
                                                     font.pixelSize: Theme.fontSizeSmall - 2
                                                     color: Theme.primary
                                                 }
@@ -1017,16 +978,16 @@ Item {
                                     }
                                 }
 
-                                DankToggle {
+                                HGSToggle {
                                     anchors.right: parent.right
                                     anchors.rightMargin: Theme.spacingM
                                     anchors.verticalCenter: parent.verticalCenter
                                     checked: {
                                         switch (visibilityDelegateItem.modelData.id) {
                                         case "__files":
-                                            return SettingsData.dankLauncherV2IncludeFilesInAll;
+                                            return SettingsData.hgsLauncherV2IncludeFilesInAll;
                                         case "__folders":
-                                            return SettingsData.dankLauncherV2IncludeFoldersInAll;
+                                            return SettingsData.hgsLauncherV2IncludeFoldersInAll;
                                         default:
                                             return SettingsData.getPluginAllowWithoutTrigger(visibilityDelegateItem.modelData.id);
                                         }
@@ -1034,10 +995,10 @@ Item {
                                     onToggled: function (isChecked) {
                                         switch (visibilityDelegateItem.modelData.id) {
                                         case "__files":
-                                            SettingsData.set("dankLauncherV2IncludeFilesInAll", isChecked);
+                                            SettingsData.set("hgsLauncherV2IncludeFilesInAll", isChecked);
                                             break;
                                         case "__folders":
-                                            SettingsData.set("dankLauncherV2IncludeFoldersInAll", isChecked);
+                                            SettingsData.set("hgsLauncherV2IncludeFoldersInAll", isChecked);
                                             break;
                                         default:
                                             SettingsData.setPluginAllowWithoutTrigger(visibilityDelegateItem.modelData.id, isChecked);
@@ -1076,7 +1037,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 x: Theme.spacingXS
                                 anchors.verticalCenter: parent.verticalCenter
                                 name: "drag_indicator"
@@ -1140,21 +1101,21 @@ Item {
                 }
 
                 SettingsToggleRow {
-                    settingKey: "dankLauncherV2IncludeFilesInAll"
+                    settingKey: "hgsLauncherV2IncludeFilesInAll"
                     tags: ["launcher", "files", "dsearch", "all", "results", "indexed"]
                     text: I18n.tr("Include Files in All Tab")
                     description: I18n.tr("Merge indexed file results into the All tab (requires dsearch).")
-                    checked: SettingsData.dankLauncherV2IncludeFilesInAll
-                    onToggled: checked => SettingsData.set("dankLauncherV2IncludeFilesInAll", checked)
+                    checked: SettingsData.hgsLauncherV2IncludeFilesInAll
+                    onToggled: checked => SettingsData.set("hgsLauncherV2IncludeFilesInAll", checked)
                 }
 
                 SettingsToggleRow {
-                    settingKey: "dankLauncherV2IncludeFoldersInAll"
+                    settingKey: "hgsLauncherV2IncludeFoldersInAll"
                     tags: ["launcher", "folders", "dirs", "dsearch", "all", "results", "indexed"]
                     text: I18n.tr("Include Folders in All Tab")
                     description: I18n.tr("Merge indexed folder results into the All tab (requires dsearch).")
-                    checked: SettingsData.dankLauncherV2IncludeFoldersInAll
-                    onToggled: checked => SettingsData.set("dankLauncherV2IncludeFoldersInAll", checked)
+                    checked: SettingsData.hgsLauncherV2IncludeFoldersInAll
+                    onToggled: checked => SettingsData.set("hgsLauncherV2IncludeFoldersInAll", checked)
                 }
             }
 
@@ -1253,7 +1214,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1363,7 +1324,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1433,7 +1394,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: clearAllButton
                         iconName: "delete_sweep"
                         iconSize: Theme.iconSize - 2
@@ -1527,7 +1488,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter

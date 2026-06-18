@@ -12,7 +12,7 @@ Item {
     LayoutMirroring.childrenInherit: true
 
     property string selectedProfileId: {
-        const id = SettingsData.activeDisplayProfile[CompositorService.compositor] || "";
+        const id = SettingsData.activeDisplayProfile.hyprland || "";
         if (!SettingsData.displayProfileAutoSelect) {
             const profile = DisplayConfigState.validatedProfiles[id];
             if (profile && profile.name === "")
@@ -81,7 +81,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -118,7 +118,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "tune"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -163,13 +163,13 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            DankToggle {
+                            HGSToggle {
                                 id: autoSelectToggle
                                 checked: SettingsData.displayProfileAutoSelect
                                 onToggled: checked => {
                                     SettingsData.displayProfileAutoSelect = checked;
                                     if (!checked)
-                                        SettingsData.setActiveDisplayProfile(CompositorService.compositor, "");
+                                        SettingsData.setActiveDisplayProfile("hyprland", "");
                                     SettingsData.saveSettings();
                                     if (checked)
                                         DisplayConfigState.applyAutoConfig();
@@ -184,7 +184,7 @@ Item {
                         visible: !root.showNewProfileDialog && !root.showDeleteConfirmDialog && !root.showRenameDialog && !root.showEditMonitorsDialog
                         opacity: SettingsData.displayProfileAutoSelect ? 0.4 : 1.0
 
-                        DankDropdown {
+                        HGSDropdown {
                             id: profileDropdown
                             width: parent.width - newButton.width - editMonitorsButton.width - deleteButton.width - Theme.spacingS * 3
                             compactMode: true
@@ -205,7 +205,7 @@ Item {
                             value: SettingsData.displayProfileAutoSelect ? I18n.tr("Auto") : root.getProfileNameById(root.selectedProfileId)
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: newButton
                             iconName: "add"
                             text: ""
@@ -220,7 +220,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: editMonitorsButton
                             iconName: "edit"
                             text: ""
@@ -232,7 +232,7 @@ Item {
                             onClicked: root.openEditMonitorsDialog()
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: deleteButton
                             iconName: "delete"
                             text: ""
@@ -258,7 +258,7 @@ Item {
                             width: parent.width - Theme.spacingM * 2
                             spacing: Theme.spacingS
 
-                            DankTextField {
+                            HGSTextField {
                                 id: newProfileField
                                 width: parent.width - createButton.width - cancelNewButton.width - Theme.spacingS * 2
                                 placeholderText: I18n.tr("Profile name")
@@ -272,7 +272,7 @@ Item {
                                 Component.onCompleted: forceActiveFocus()
                             }
 
-                            DankButton {
+                            HGSButton {
                                 id: createButton
                                 text: I18n.tr("Create")
                                 enabled: root.newProfileName.trim() !== ""
@@ -282,7 +282,7 @@ Item {
                                 }
                             }
 
-                            DankButton {
+                            HGSButton {
                                 id: cancelNewButton
                                 text: I18n.tr("Cancel")
                                 backgroundColor: "transparent"
@@ -318,7 +318,7 @@ Item {
                                 spacing: Theme.spacingS
                                 anchors.right: parent.right
 
-                                DankButton {
+                                HGSButton {
                                     text: I18n.tr("Delete")
                                     backgroundColor: Theme.error
                                     textColor: Theme.primaryText
@@ -328,7 +328,7 @@ Item {
                                     }
                                 }
 
-                                DankButton {
+                                HGSButton {
                                     text: I18n.tr("Cancel")
                                     backgroundColor: "transparent"
                                     textColor: Theme.surfaceText
@@ -365,7 +365,7 @@ Item {
                                     width: parent.width
                                     spacing: Theme.spacingM
 
-                                    DankToggle {
+                                    HGSToggle {
                                         id: monitorToggle
                                         checked: root.editMonitorSelection[modelData] ?? false
                                         anchors.verticalCenter: parent.verticalCenter
@@ -402,7 +402,7 @@ Item {
                                 spacing: Theme.spacingS
                                 anchors.right: parent.right
 
-                                DankButton {
+                                HGSButton {
                                     text: I18n.tr("Save")
                                     enabled: Object.values(root.editMonitorSelection).some(v => v)
                                     onClicked: {
@@ -412,7 +412,7 @@ Item {
                                     }
                                 }
 
-                                DankButton {
+                                HGSButton {
                                     text: I18n.tr("Cancel")
                                     backgroundColor: "transparent"
                                     textColor: Theme.surfaceText
@@ -443,7 +443,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "monitor"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -488,7 +488,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            DankToggle {
+                            HGSToggle {
                                 id: snapToggle
                                 checked: SettingsData.displaySnapToEdge
                                 onToggled: checked => {
@@ -500,7 +500,7 @@ Item {
 
                         Column {
                             id: displayFormatColumn
-                            visible: !CompositorService.isMango
+                            visible: true
                             spacing: Theme.spacingXS
                             anchors.verticalCenter: parent.verticalCenter
 
@@ -512,7 +512,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 id: displayFormatGroup
                                 model: [I18n.tr("Name"), I18n.tr("Model")]
                                 currentIndex: SettingsData.displayNameMode === "model" ? 1 : 0
@@ -604,13 +604,13 @@ Item {
                         visible: DisplayConfigState.hasPendingChanges
                         layoutDirection: Qt.RightToLeft
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Apply Changes")
                             iconName: "check"
                             onClicked: DisplayConfigState.applyChanges()
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Discard")
                             backgroundColor: "transparent"
                             textColor: Theme.surfaceText

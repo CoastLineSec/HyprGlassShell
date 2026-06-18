@@ -59,10 +59,6 @@ Singleton {
     }
 
     readonly property bool screensharingActive: {
-        if (CompositorService.isNiri && NiriService.hasActiveCast) {
-            return true
-        }
-
         if (!Pipewire.ready || !Pipewire.nodes?.values) {
             return false
         }
@@ -123,7 +119,7 @@ Singleton {
         const nodeName = (node.name || "").toLowerCase()
         const mediaName = (node.properties && node.properties["media.name"] || "").toLowerCase()
         const combined = appName + " " + nodeName + " " + mediaName
-        return /xdg-desktop-portal|xdpw|screencast|screen-cast|screen|gnome shell|kwin|obs|niri/.test(combined)
+        return /xdg-desktop-portal|xdpw|screencast|screen-cast|screen|gnome shell|kwin|obs/.test(combined)
     }
 
     function getMicrophoneStatus() {

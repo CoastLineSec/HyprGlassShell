@@ -208,7 +208,7 @@ StyledRect {
                 }
             }
 
-            DankNFIcon {
+            HGSNFIcon {
                 anchors.centerIn: parent
                 name: listDelegateRoot.fileIsDir ? "folder" : getIconForFile(listDelegateRoot.fileName)
                 size: Theme.iconSize - 2

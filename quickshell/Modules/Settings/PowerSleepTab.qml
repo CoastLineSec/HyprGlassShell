@@ -15,7 +15,7 @@ Item {
         return idx >= 0 ? idx : 0;
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -52,7 +52,7 @@ Item {
                         visible: BatteryService.batteryAvailable
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: powerCategory
                         anchors.verticalCenter: parent.verticalCenter
                         visible: BatteryService.batteryAvailable
@@ -338,7 +338,7 @@ Item {
                         leftPadding: Theme.spacingM
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: suspendBehaviorSelector
                         anchors.horizontalCenter: parent.horizontalCenter
                         model: [I18n.tr("Suspend"), I18n.tr("Hibernate"), I18n.tr("Suspend then Hibernate")]
@@ -400,7 +400,7 @@ Item {
                     settingKey: "powerMenuDefaultAction"
                     tags: ["power", "menu", "default", "action", "reboot", "logout", "shutdown"]
                     text: I18n.tr("Default selected action")
-                    options: [I18n.tr("Reboot"), I18n.tr("Log Out"), I18n.tr("Power Off"), I18n.tr("Lock"), I18n.tr("Suspend"), I18n.tr("Restart DMS"), I18n.tr("Hibernate")]
+                    options: [I18n.tr("Reboot"), I18n.tr("Log Out"), I18n.tr("Power Off"), I18n.tr("Lock"), I18n.tr("Suspend"), I18n.tr("Restart HGS"), I18n.tr("Hibernate")]
                     property var actionValues: ["reboot", "logout", "poweroff", "lock", "suspend", "restart", "hibernate"]
 
                     Component.onCompleted: {
@@ -452,8 +452,8 @@ Item {
                             },
                             {
                                 key: "restart",
-                                label: I18n.tr("Show Restart DMS"),
-                                desc: I18n.tr("Restart the DankMaterialShell")
+                                label: I18n.tr("Show Restart HGS"),
+                                desc: I18n.tr("Restart the HyprGlassShell")
                             },
                             {
                                 key: "switchuser",
@@ -582,7 +582,7 @@ Item {
                             color: Theme.surfaceVariantText
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             width: parent.width
                             placeholderText: modelData.placeholder
                             backgroundColor: Theme.surfaceContainerHighest

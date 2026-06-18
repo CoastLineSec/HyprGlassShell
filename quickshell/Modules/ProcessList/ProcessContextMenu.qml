@@ -119,14 +119,14 @@ Popup {
 
     function copyPid() {
         if (processData)
-            Quickshell.execDetached(["dms", "cl", "copy", processData.pid.toString()]);
+            Quickshell.execDetached(["hgs", "cl", "copy", processData.pid.toString()]);
         close();
     }
 
     function copyName() {
         if (processData) {
             const name = processData.command || "";
-            Quickshell.execDetached(["dms", "cl", "copy", name]);
+            Quickshell.execDetached(["hgs", "cl", "copy", name]);
         }
         close();
     }
@@ -134,7 +134,7 @@ Popup {
     function copyFullCommand() {
         if (processData) {
             const fullCmd = processData.fullCommand || processData.command || "";
-            Quickshell.execDetached(["dms", "cl", "copy", fullCmd]);
+            Quickshell.execDetached(["hgs", "cl", "copy", fullCmd]);
         }
         close();
     }
@@ -284,7 +284,7 @@ Popup {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: modelData.icon || ""
                                 size: 16
                                 color: {
@@ -314,7 +314,7 @@ Popup {
                             }
                         }
 
-                        DankRipple {
+                        HGSRipple {
                             id: menuItemRipple
                             rippleColor: modelData.dangerous ? Theme.error : Theme.surfaceText
                             cornerRadius: menuItem.radius

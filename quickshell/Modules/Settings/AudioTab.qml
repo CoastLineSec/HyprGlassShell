@@ -109,7 +109,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -193,7 +193,7 @@ Item {
                                     horizontalAlignment: Text.AlignLeft
                                 }
 
-                                DankSlider {
+                                HGSSlider {
                                     id: maxVolSlider
                                     anchors.left: maxVolLabel.right
                                     anchors.leftMargin: Theme.spacingS
@@ -254,7 +254,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "visibility_off"
                                     size: Theme.iconSize - 4
                                     color: Theme.surfaceVariantText
@@ -269,7 +269,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: root.showHiddenOutputDevices ? "expand_less" : "expand_more"
                                 size: Theme.iconSize - 4
                                 color: Theme.surfaceVariantText
@@ -398,7 +398,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "visibility_off"
                                     size: Theme.iconSize - 4
                                     color: Theme.surfaceVariantText
@@ -413,7 +413,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: root.showHiddenInputDevices ? "expand_less" : "expand_more"
                                 size: Theme.iconSize - 4
                                 color: Theme.surfaceVariantText
@@ -477,7 +477,7 @@ Item {
                 color: Theme.primaryContainer
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                DankIcon {
+                HGSIcon {
                     id: spinningIcon
                     name: "refresh"
                     size: 40
@@ -566,7 +566,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: root.editingDeviceType === "input" ? "mic" : "speaker"
                         size: Theme.iconSize + 8
                         color: Theme.primary
@@ -622,7 +622,7 @@ Item {
                         horizontalAlignment: Text.AlignLeft
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: nameInput
                         width: parent.width
                         placeholderText: I18n.tr("Enter device name...", "Audio device rename dialog placeholder")
@@ -683,7 +683,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "check"
                                 size: Theme.iconSize - 4
                                 color: Theme.onPrimary

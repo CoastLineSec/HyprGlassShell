@@ -38,7 +38,7 @@ PluginComponent {
             border.color: Theme.outlineMedium
             border.width: Theme.layerOutlineWidth
 
-            DankActionButton {
+            HGSActionButton {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.topMargin: Theme.spacingS
@@ -58,7 +58,7 @@ PluginComponent {
                 anchors.centerIn: parent
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: "print_disabled"
                     size: 36
                     color: Theme.surfaceVariantText
@@ -85,7 +85,7 @@ PluginComponent {
                     spacing: Theme.spacingS
                     width: parent.width
 
-                    DankDropdown {
+                    HGSDropdown {
                         id: printerDropdown
                         text: ""
                         Layout.fillWidth: true
@@ -126,7 +126,7 @@ PluginComponent {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.verticalCenter: parent.verticalCenter
                                         name: CupsService.getCurrentPrinterState() === "stopped" ? "play_arrow" : "pause"
                                         size: Theme.fontSizeSmall + 4
@@ -171,7 +171,7 @@ PluginComponent {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.verticalCenter: parent.verticalCenter
                                         name: "delete_forever"
                                         size: Theme.fontSizeSmall + 4
@@ -209,7 +209,7 @@ PluginComponent {
                     color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.12)
                 }
 
-                DankFlickable {
+                HGSFlickable {
                     width: parent.width
                     height: 160
                     contentHeight: listCol.height
@@ -229,7 +229,7 @@ PluginComponent {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "work"
                                     size: 36
                                     color: Theme.surfaceVariantText
@@ -266,7 +266,7 @@ PluginComponent {
                                     anchors.margins: Theme.spacingM
                                     spacing: Theme.spacingM
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "docs"
                                         size: Theme.iconSize + 2
                                         color: Theme.surfaceText
@@ -302,7 +302,7 @@ PluginComponent {
                                     }
                                 }
 
-                                DankActionButton {
+                                HGSActionButton {
                                     id: cancelJobButton
                                     anchors.right: parent.right
                                     anchors.rightMargin: Theme.spacingM

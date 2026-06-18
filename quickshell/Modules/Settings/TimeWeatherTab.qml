@@ -25,7 +25,7 @@ Item {
         return Array(7).fill(0).map((_, i) => new Date(Date.UTC(2026, 2, 1 + i, 0, 0, 0)).toLocaleDateString(I18n.locale(), "dddd")).map(d => d[0].toUpperCase() + d.slice(1));
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -117,22 +117,22 @@ Item {
 
                 SettingsDropdownRow {
                     tab: "time"
-                    tags: ["calendar", "backend", "daemon", "khal", "dankcalendar", "events"]
+                    tags: ["calendar", "backend", "daemon", "khal", "hgscalendar", "events"]
                     settingKey: "calendarBackend"
                     text: I18n.tr("Calendar Backend")
                     description: {
                         const resolved = CalendarService.activeBackend;
                         switch (resolved) {
-                        case "dankcal":
-                            return I18n.tr("Using DankCalendar%1", "calendar backend status").arg(CalendarService.isDankActive && CalendarService.calendars.length > 0 ? "" : " (connecting…)");
+                        case "hgscal":
+                            return I18n.tr("Using HGSCalendar%1", "calendar backend status").arg(CalendarService.isHGSActive && CalendarService.calendars.length > 0 ? "" : " (connecting…)");
                         case "khal":
                             return I18n.tr("Using khal", "calendar backend status");
                         default:
                             return I18n.tr("No calendar source available", "calendar backend status");
                         }
                     }
-                    readonly property var _backendValues: ["auto", "khal", "dankcal"]
-                    readonly property var _backendLabels: [I18n.tr("Auto", "calendar backend option"), I18n.tr("khal", "calendar backend option"), I18n.tr("DankCalendar", "calendar backend option")]
+                    readonly property var _backendValues: ["auto", "khal", "hgscal"]
+                    readonly property var _backendLabels: [I18n.tr("Auto", "calendar backend option"), I18n.tr("khal", "calendar backend option"), I18n.tr("HGSCalendar", "calendar backend option")]
                     options: _backendLabels
                     currentValue: _backendLabels[Math.max(0, _backendValues.indexOf(SettingsData.calendarBackend))]
                     onValueChanged: value => {
@@ -217,7 +217,7 @@ Item {
                     }
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: customFormatInput
                     width: parent.width - Theme.spacingM * 2
                     x: Theme.spacingM
@@ -304,7 +304,7 @@ Item {
                     }
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: customLockFormatInput
                     width: parent.width - Theme.spacingM * 2
                     x: Theme.spacingM
@@ -532,7 +532,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankTextField {
+                                        HGSTextField {
                                             id: latitudeInput
                                             width: parent.width
                                             height: 48
@@ -581,7 +581,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankTextField {
+                                        HGSTextField {
                                             id: longitudeInput
                                             width: parent.width
                                             height: 48
@@ -633,7 +633,7 @@ Item {
                                         font.weight: Font.Medium
                                     }
 
-                                    DankLocationSearch {
+                                    HGSLocationSearch {
                                         id: locationSearchInput
                                         width: parent.width
                                         currentLocation: ""
@@ -668,7 +668,7 @@ Item {
                     spacing: Theme.spacingL
                     visible: !WeatherService.weather.available
 
-                    DankIcon {
+                    HGSIcon {
                         name: "cloud_off"
                         size: Theme.iconSize * 2
                         color: Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.5)
@@ -692,7 +692,7 @@ Item {
                         width: parent.width
                         height: 70
 
-                        DankIcon {
+                        HGSIcon {
                             id: refreshButton
                             name: "refresh"
                             size: Theme.iconSize - 4
@@ -737,7 +737,7 @@ Item {
                             width: weatherIcon.width + tempColumn.width + sunriseColumn.width + Theme.spacingM * 2
                             height: 70
 
-                            DankIcon {
+                            HGSIcon {
                                 id: weatherIcon
                                 name: WeatherService.getWeatherIcon(WeatherService.weather.wCode)
                                 size: Theme.iconSize * 1.5
@@ -827,7 +827,7 @@ Item {
                                     width: sunriseIcon.width + sunriseText.width + Theme.spacingXS
                                     height: sunriseIcon.height
 
-                                    DankIcon {
+                                    HGSIcon {
                                         id: sunriseIcon
                                         name: "wb_twilight"
                                         size: Theme.iconSize - 6
@@ -851,7 +851,7 @@ Item {
                                     width: sunsetIcon.width + sunsetText.width + Theme.spacingXS
                                     height: sunsetIcon.height
 
-                                    DankIcon {
+                                    HGSIcon {
                                         id: sunsetIcon
                                         name: "bedtime"
                                         size: Theme.iconSize - 6
@@ -903,7 +903,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "device_thermostat"
                                         size: Theme.iconSize - 4
@@ -947,7 +947,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "humidity_low"
                                         size: Theme.iconSize - 4
@@ -991,7 +991,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "air"
                                         size: Theme.iconSize - 4
@@ -1048,7 +1048,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "speed"
                                         size: Theme.iconSize - 4
@@ -1098,7 +1098,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "rainy"
                                         size: Theme.iconSize - 4
@@ -1142,7 +1142,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "wb_sunny"
                                         size: Theme.iconSize - 4

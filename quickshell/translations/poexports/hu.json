@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90 fok"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT licenc</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT licenc</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "Már létezik ilyen nevű fájl. Felül szeretnéd írni?"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "Üdvözlőképernyő aktiválása"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "Aktiválod a DMS-üdvözlőképernyőt? (greeter) Egy terminál fog megnyílni a sudo-hitelesítéshez. Az aktiválás után futtasd a szinkronizálást a beállítások alkalmazásához."
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "Aktiválod a HGS-üdvözlőképernyőt? (greeter) Egy terminál fog megnyílni a sudo-hitelesítéshez. Az aktiválás után futtasd a szinkronizálást a beállítások alkalmazásához."
   },
   "Activation": {
     "Activation": "Aktiválás"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "Hozzáadod a(z) „%1” felhasználót a(z) %2 csoporthoz?"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "Hozzáadod a(z) „%1” felhasználót a(z) %2 csoporthoz? Ki és be kell jelentkezniük, majd futtatniuk kell a dms greeter sync --profile parancsot a bejelentkezési képernyő témájának közzétételéhez."
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "Hozzáadod a(z) „%1” felhasználót a(z) %2 csoporthoz? Ki és be kell jelentkezniük, majd futtatniuk kell a hgs greeter sync --profile parancsot a bejelentkezési képernyő témájának közzétételéhez."
   },
   "Add Bar": {
     "Add Bar": "Sáv hozzáadása"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "Az új felhasználó hozzáadása a(z) %1 csoporthoz, hogy futtathassa a dms greeter sync --profile parancsot."
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "Az új felhasználó hozzáadása a(z) %1 csoporthoz, hogy futtathassa a hgs greeter sync --profile parancsot."
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "Az új felhasználó hozzáadása a(z) %1 csoporthoz, hogy használhassa a sudot."
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "Automatikus zárolás"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "Képernyő automatikus zárolása a DMS indulásakor"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "Képernyő automatikus zárolása a HGS indulásakor"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "A képernyő automatikus zárolása, amikor a rendszer felfüggesztésre készül"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "Sáv megjelenésének megváltoztatása"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "A DMS-felület által használt területi beállítások módosítása."
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "A HGS-felület által használt területi beállítások módosítása."
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "A dátum- és időformátumhoz használt területi beállítás módosítása, a felület nyelvétől függetlenül."
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "Ellenőrzés indításkor"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Szinkronizálási állapot ellenőrzése igény szerint. A szinkronizálás (teljes) a fő adminisztrátornak szól: átmásolja a témát a bejelentkezési képernyőre, és beállítja a rendszer üdvözlőképernyő-konfigurációját. Többfelhasználós rendszereken adj hozzá más fiókokat a Beállítások → Felhasználók menüpontban, majd kérd meg mindegyiküket, hogy a ki- és bejelentkezés után futtassák a dms greeter sync --profile parancsot – ne a teljes szinkronizálást. A hitelesítési változtatások automatikusan érvényesülnek."
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Szinkronizálási állapot ellenőrzése igény szerint. A szinkronizálás (teljes) a fő adminisztrátornak szól: átmásolja a témát a bejelentkezési képernyőre, és beállítja a rendszer üdvözlőképernyő-konfigurációját. Többfelhasználós rendszereken adj hozzá más fiókokat a Beállítások → Felhasználók menüpontban, majd kérd meg mindegyiküket, hogy a ki- és bejelentkezés után futtassák a hgs greeter sync --profile parancsot – ne a teljes szinkronizálást. A hitelesítési változtatások automatikusan érvényesülnek."
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "Ellenőrizd az egyéni parancsodat a Beállítások → Dokk → Kuka útvonalon."
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "A szegély kiemelőszínének kiválasztása"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "A DankBar indítógombján megjelenő logó kiválasztása"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "A HGSBar indítógombján megjelenő logó kiválasztása"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "A felugró értesítések megjelenési helye"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "Színtéma a szintaxiskiemeléshez. %1 téma érhető el."
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "Színtéma a DMS-regiszterből"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "Színtéma a HGS-regiszterből"
   },
   "Colorful": {
     "Colorful": "Színes"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "Kényelmi beállítások a bejelentkezési képernyőhöz. Szinkronizálj az alkalmazáshoz."
   },
-  "Convert to DMS": {
-    "Convert to DMS": "Konvertálás DMS-formátumba"
+  "Convert to HGS": {
+    "Convert to HGS": "Konvertálás HGS-formátumba"
   },
   "Cooldown": {
     "Cooldown": "Várakozási idő"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "DEMO MÓD - Kattints bárhova a kilépéshez"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "DMS-választó"
+  "HGS Chooser": {
+    "HGS Chooser": "HGS-választó"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "A DMS-bővítménykezelő nem érhető el"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "A HGS-bővítménykezelő nem érhető el"
   },
-  "DMS Settings": {
-    "DMS Settings": "DMS-beállítások"
+  "HGS Settings": {
+    "HGS Settings": "HGS-beállítások"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": "A DMS-beállítások Lua-gyorsbillentyűket írnak. Add hozzá a DMS include-ot a módosítások érvényesítéséhez."
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": "A HGS-beállítások Lua-gyorsbillentyűket írnak. Add hozzá a HGS include-ot a módosítások érvényesítéséhez."
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "DMS-gyorsbillentyűk"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "HGS-gyorsbillentyűk"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "A DMS-üdvözlőképernyőnek (greeter) szüksége van a következőkre: greetd, dms-greeter. Ujjlenyomat: fprintd, pam_fprintd. Biztonsági kulcsok: pam_u2f. Add hozzá a felhasználódat a greeter csoporthoz. A hitelesítési módosítások automatikusan alkalmazásra kerülnek, és terminált nyithatnak meg, ha sudo hitelesítés szükséges."
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "A HGS-üdvözlőképernyőnek (greeter) szüksége van a következőkre: greetd, hgs-greeter. Ujjlenyomat: fprintd, pam_fprintd. Biztonsági kulcsok: pam_u2f. Add hozzá a felhasználódat a greeter csoporthoz. A hitelesítési módosítások automatikusan alkalmazásra kerülnek, és terminált nyithatnak meg, ha sudo hitelesítés szükséges."
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": "A DMS-nek rendszergazdai hozzáférésre van szüksége. A terminál a befejezés után automatikusan bezáródik."
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": "A HGS-nek rendszergazdai hozzáférésre van szüksége. A terminál a befejezés után automatikusan bezáródik."
   },
-  "DMS out of date": {
-    "DMS out of date": "A DMS elavult"
+  "HGS out of date": {
+    "HGS out of date": "A HGS elavult"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "A DMS-szerver elavult (API v%1, várt v%2)"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "A HGS-szerver elavult (API v%1, várt v%2)"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "A DMS-szolgáltatás nincs csatlakoztatva. A vágólap-beállítások nem érhetők el."
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "A HGS-szolgáltatás nincs csatlakoztatva. A vágólap-beállítások nem érhetők el."
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "DMS-héjműveletek (indító, vágólap, stb.)"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "HGS-héjműveletek (indító, vágólap, stb.)"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "A DMS_SOCKET nem érhető el"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "A HGS_SOCKET nem érhető el"
   },
   "Daily": {
     "Daily": "Napi"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "Naponta ekkor:"
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank Bar"
+  "HGS Bar": {
+    "HGS Bar": "HGS Bar"
   },
-  "DankBar": {
-    "DankBar": "DankBar"
+  "HGSBar": {
+    "HGSBar": "HGSBar"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "A DankMaterialShell használatra kész"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "A HyprGlassShell használatra kész"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "DankShell és Rendszerikonok (újraindítást igényel)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "HGSShell és Rendszerikonok (újraindítást igényel)"
   },
   "Dark Mode": {
     "Dark Mode": "Sötét mód"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "Szitálás"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "Elveted a(z) %1 felülbírálását, hogy a DMS alapértelmezett művelete újra érvénybe lépjen?"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "Elveted a(z) %1 felülbírálását, hogy a HGS alapértelmezett művelete újra érvénybe lépjen?"
   },
   "Duplicate": {
     "Duplicate": "Kettőzés"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "Engedélyezd az egyéni felülbírálást alább a sávonkénti árnyékintenzitás, áttetszőség és szín beállításához."
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "Kompozitor által célozható elmosási réteg engedélyezése (névtér: dms:blurwallpaper). Kézi niri konfigurációt igényel."
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "Kompozitor által célozható elmosási réteg engedélyezése (névtér: hgs:blurwallpaper). Kézi niri konfigurációt igényel."
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "Ujjlenyomat engedélyezése bejelentkezéskor"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "Ujjlenyomatos azonosítás engedélyezése"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "Ujjlenyomat vagy biztonsági kulcs engedélyezése a DMS-üdvözlőképernyőhöz (greeter). A hitelesítési módosítások automatikusan alkalmazásra kerülnek."
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "Ujjlenyomat vagy biztonsági kulcs engedélyezése a HGS-üdvözlőképernyőhöz (greeter). A hitelesítési módosítások automatikusan alkalmazásra kerülnek."
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "loginctl-alapú zárolás integráció engedélyezése"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "Nem sikerült az eszköz megcsöngetése"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "Nem sikerült futtatni a 'dms greeter status' parancsot. Győződj meg róla, hogy a DMS telepítve van, és a dms benne van a PATH környezeti változóban."
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "Nem sikerült futtatni a 'hgs greeter status' parancsot. Győződj meg róla, hogy a HGS telepítve van, és a hgs benne van a PATH környezeti változóban."
   },
   "Failed to save audio config": {
     "Failed to save audio config": "Nem sikerült menteni a hangkonfigurációt"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "Fájl érkezett innen:"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "A fájlkereséshez dsearch szükséges\nTelepítsd innen: github.com/AvengeMedia/danksearch"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "A fájlkereséshez dsearch szükséges\nTelepítsd innen: github.com/CoastLineSec/hgssearch"
   },
   "File search unavailable": {
     "File search unavailable": "A fájlkeresés nem érhető el"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "Mappa"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "A DMS háttérszínének követése"
+  "Follow HGS background color": {
+    "Follow HGS background color": "A HGS háttérszínének követése"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "Monitor fókuszának követése"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "Gammavezérlés"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "A gammavezérlés nem érhető el. DMS API v6+ szükséges."
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "A gammavezérlés nem érhető el. HGS API v6+ szükséges."
   },
   "Generate Override": {
     "Generate Override": "Felülbírálás létrehozása"
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Alapszintű GTK3/4 vagy Qt5/Qt6 (qt6ct-kde szükséges) konfigurációk előállíta a DMS-színek követéséhez. Csak egyszer szükséges.<br /><br />Javasolt az <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> beállítása a GTK-témák alkalmazása előtt."
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Alapszintű GTK3/4 vagy Qt5/Qt6 (qt6ct-kde szükséges) konfigurációk előállíta a HGS-színek követéséhez. Csak egyszer szükséges.<br /><br />Javasolt az <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> beállítása a GTK-témák alkalmazása előtt."
   },
   "Generic": {
     "Generic": "Általános"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "Üdvözlőképernyő betűtípusa"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "Az üdvözlőképernyő-csoport tagjai a ki- és bejelentkezés után a dms greeter sync --profile paranccsal szinkronizálhatják a bejelentkezési képernyő témáját."
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "Az üdvözlőképernyő-csoport tagjai a ki- és bejelentkezés után a hgs greeter sync --profile paranccsal szinkronizálhatják a bejelentkezési képernyő témáját."
   },
   "Greeter group:": {
     "Greeter group:": "Üdvözlőképernyő-csoport:"
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "Inaktivitási beállítások"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": "Ha az automatikusan induló alkalmazások ikonjai nem jelennek meg a tálcán, hozz létre egy systemd felülbírálást, hogy a DMS az automatikusan induló alkalmazások előtt induljon el"
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": "Ha az automatikusan induló alkalmazások ikonjai nem jelennek meg a tálcán, hozz létre egy systemd felülbírálást, hogy a HGS az automatikusan induló alkalmazások előtt induljon el"
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "Ha a mező rejtett, megjelenik, amint lenyomsz egy billentyűt."
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "Téma telepítése"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "Színtémák telepítése a DMS-témaregiszterből"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "Színtémák telepítése a HGS-témaregiszterből"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "Telepítés befejezve. Az üdvözlőképernyő telepítve lett."
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "Telepítsd a matugen csomagot a dinamikus témázáshoz"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "Telepíted a(z) „%1” bővítményt a DMS-regiszterből?"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "Telepíted a(z) „%1” bővítményt a HGS-regiszterből?"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "Bővítmények telepítése a DMS-bővítményregiszterből"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "Bővítmények telepítése a HGS-bővítményregiszterből"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "Telepíted a DMS-üdvözlőképernyőt? (greeter) Egy terminál fog megnyílni a sudo hitelesítéshez."
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "Telepíted a HGS-üdvözlőképernyőt? (greeter) Egy terminál fog megnyílni a sudo hitelesítéshez."
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "Telepíted a(z) „%1” témát a DMS-regiszterből?"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "Telepíted a(z) „%1” témát a HGS-regiszterből?"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "Telepítés és PAM beállítása: lásd a "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "A sáv hátterének teljesen átlátszóvá tétele"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "Bővítmények kezelése és beállítása a DMS funkcionalitásának kiterjesztésére"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "Bővítmények kezelése és beállítása a HGS funkcionalitásának kiterjesztésére"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "Legfeljebb 4 független sávkonfiguráció kezelése. Minden sávnak megvan a saját pozíciója, widgetjei, stílusa és kijelző-hozzárendelése."
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "Material stílusú árnyékok és emelések a modális ablakokon, felugrókon és párbeszédpaneleken"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "Material: Material Design 3 kifejező Bézier-görbék. A DMS alapértelmezett érzete."
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "Material: Material Design 3 kifejező Bézier-görbék. A HGS alapértelmezett érzete."
   },
   "Matugen Contrast": {
     "Matugen Contrast": "Matugen kontraszt"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "Éjszakai mód és gamma"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "Az éjszakai mód nem sikerült: a DMS gammavezérlése nem érhető el"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "Az éjszakai mód nem sikerült: a HGS gammavezérlése nem érhető el"
   },
   "Niri Integration": {
     "Niri Integration": "Niri integráció"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "Nincs szegély"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "Nincsenek DMS-gyorsbillentyűk beállítva"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "Nincsenek HGS-gyorsbillentyűk beállítva"
   },
   "No Dim": {
     "No Dim": "Nincs sötétítés"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "Csak az idő- vagy helyalapú szabályok szerint állítsa a gammát."
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Csak a DMS által kezelt PAM-ra van hatással. Ha a greetd már tartalmazza a pam_fprintd-t, az ujjlenyomat-olvasó engedélyezve marad."
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Csak a HGS által kezelt PAM-ra van hatással. Ha a greetd már tartalmazza a pam_fprintd-t, az ujjlenyomat-olvasó engedélyezve marad."
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "Csak az aktuális monitor ablakainak megjelenítése minden dokkon"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "Eltávolítod a(z) %1 gyorsbillentyűt?"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "Eltávolítod a(z) %1 gyorsbillentyűt? Egy feloldási bejegyzés mentésre kerül a dms/binds-user.lua fájlba, így a DMS frissítései után is törölve marad."
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "Eltávolítod a(z) %1 gyorsbillentyűt? Egy feloldási bejegyzés mentésre kerül a hgs/binds-user.lua fájlba, így a HGS frissítései után is törölve marad."
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "Rendszergazdai jogosultságok eltávolítva"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "Szükséges a „dgop” eszköz"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "DMS %1 szükséges"
+  "Requires HGS %1": {
+    "Requires HGS %1": "HGS %1 szükséges"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "DMS-szerver szükséges sysupdate-képességgel"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "HGS-szerver szükséges sysupdate-képességgel"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": "MangoWC kompozitor szükséges"
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "Felbontás, pozíció, méretezés"
   },
-  "Restart DMS": {
-    "Restart DMS": "DMS újraindítása"
+  "Restart HGS": {
+    "Restart HGS": "HGS újraindítása"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "A DankMaterialShell újraindítása"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "A HyprGlassShell újraindítása"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "Hangrendszer újraindítása…"
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "Szabályok (%1)"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": "A kompozitor konfigurációjában talált szabályok. Ezek itt írásvédettek, a szerkeszthető másolathoz használd a „Konvertálás DMS-formátumba” lehetőséget."
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": "A kompozitor konfigurációjában talált szabályok. Ezek itt írásvédettek, a szerkeszthető másolathoz használd a „Konvertálás HGS-formátumba” lehetőséget."
   },
   "Run Again": {
     "Run Again": "Futtatás újra"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "DMS-sablonok futtatása"
+  "Run HGS Templates": {
+    "Run HGS Templates": "HGS-sablonok futtatása"
   },
   "Run User Templates": {
     "Run User Templates": "Felhasználói sablonok futtatása"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "Skála"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "A DankBar betűméretének független méretezése"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "A HGSBar betűméretének független méretezése"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "DankBar ikonméretek független skálázása"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "HGSBar ikonméretek független skálázása"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "Betűméret skálázása a felületen"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "Újraindítás megjelenítése"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "„DMS újraindítása” megjelenítése"
+  "Show Restart HGS": {
+    "Show Restart HGS": "„HGS újraindítása” megjelenítése"
   },
   "Show Saved Items": {
     "Show Saved Items": "Mentett elemek megjelenítése"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "Hó"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "Néhány bővítmény a DMS újabb verzióját igényli:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "Néhány bővítmény a HGS újabb verzióját igényli:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "Rendezés betűrend szerint"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "Szabványos"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "Standard: Klasszikus Material Design 3 — a panelek alulról emelkednek fel finom skálázással. A DMS alapértelmezett beállítása."
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "Standard: Klasszikus Material Design 3 — a panelek alulról emelkednek fel finom skálázással. A HGS alapértelmezett beállítása."
   },
   "Start": {
     "Start": "Indítás"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "Terminál további paraméterei"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "A tartalék terminál megnyitása sikertelen. Telepíts egy támogatott terminálemulátort, vagy futtasd a 'dms auth sync' parancsot."
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "A tartalék terminál megnyitása sikertelen. Telepíts egy támogatott terminálemulátort, vagy futtasd a 'hgs auth sync' parancsot."
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "A tartalék terminál megnyitása sikertelen. Telepíts egyet a támogatott terminálemulátorok közül, vagy futtasd a 'dms greeter sync' parancsot."
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "A tartalék terminál megnyitása sikertelen. Telepíts egyet a támogatott terminálemulátorok közül, vagy futtasd a 'hgs greeter sync' parancsot."
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "Tartalék terminál megnyitva. Fejezd be ott a hitelesítési beállítást; a befejezés után automatikusan be fog záródni."
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "A rendszerfigyeléshez a „dgop” eszköz szükséges.\nTelepítsd a dgop-ot a funkció használatához."
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "A DMS_SOCKET környezeti változó nincs beállítva, vagy a socket nem érhető el. Az automatizált bővítménykezeléshez DMS_SOCKET szükséges."
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "A HGS_SOCKET környezeti változó nincs beállítva, vagy a socket nem érhető el. Az automatizált bővítménykezeléshez HGS_SOCKET szükséges."
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "Az alábbi beállítások módosítják a GTK és Qt beállításokat. Ha meg szeretnéd őrizni a jelenlegi konfigurációt, készíts róluk biztonsági másolatot (qt5ct.conf|qt6ct.conf és ~/.config/gtk-3.0|gtk-4.0)."
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "Külső bővítmény figyelmeztetés"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "A külső bővítményeket a közösség készíti, és a DankMaterialShell hivatalosan nem támogatja őket.\n\nEzek a bővítmények biztonsági és adatvédelmi kockázatokat jelenthetnek – telepítés csak saját felelősségre."
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "A külső bővítményeket a közösség készíti, és a HyprGlassShell hivatalosan nem támogatja őket.\n\nEzek a bővítmények biztonsági és adatvédelmi kockázatokat jelenthetnek – telepítés csak saját felelősségre."
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "Ezt a billentyűt felülírja a config.kdl"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "Ez az eszköz"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A mutatóbeállítások szerkesztése előtt futtasd a „dms setup” parancsot a migráláshoz."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A mutatóbeállítások szerkesztése előtt futtasd a „hgs setup” parancsot a migráláshoz."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A kijelzőbeállítások szerkesztése előtt futtasd a „dms setup” parancsot a migráláshoz."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A kijelzőbeállítások szerkesztése előtt futtasd a „hgs setup” parancsot a migráláshoz."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A billentyűparancsok Beállításokban történő szerkesztése előtt futtasd a „dms setup” parancsot a migráláshoz."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. A billentyűparancsok Beállításokban történő szerkesztése előtt futtasd a „hgs setup” parancsot a migráláshoz."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. Az ablakszabályok Beállításokban történő szerkesztése előtt futtasd a „dms setup” parancsot a migráláshoz."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": "Ez a telepítés továbbra is a hyprland.conf fájlt használja. Az ablakszabályok Beállításokban történő szerkesztése előtt futtasd a „hgs setup” parancsot a migráláshoz."
   },
   "This may take a few seconds": {
     "This may take a few seconds": "Ez eltarthat néhány másodpercig"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "A frissítéshez futtasd a következő parancsot:"
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "A DMS-billentyű használatához távolítsd el vagy módosítsd a billentyűkombinációt a config.kdl fájlban"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "A HGS-billentyű használatához távolítsd el vagy módosítsd a billentyűkombinációt a config.kdl fájlban"
   },
   "Toast Messages": {
     "Toast Messages": "Felugró üzenetek"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "Az eltávolítás sikertelen: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "Eltávolítod a DMS-üdvözlőképernyőt? (greeter) Ez törli a beállításokat és visszaállítja az előző megjelenítéskezelőt. Egy terminál fog megnyílni a sudo hitelesítéshez."
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "Eltávolítod a HGS-üdvözlőképernyőt? (greeter) Ez törli a beállításokat és visszaállítja az előző megjelenítéskezelőt. Egy terminál fog megnyílni a sudo hitelesítéshez."
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "Eltávolítva: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "A „spotlight-bar” IPC-műveletet használja, és mindig a minimális sávot nyitja meg."
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "A Beállítások → Személyre szabás menüpontban megadott globális rögzített szélességű betűtípus használata"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "Üdvözlünk"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "Üdvözlünk a DankMaterialShell-ben"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "Üdvözlünk a HyprGlassShell-ben"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "Ha a Hyprland speciális munkaterületén lévő dokkablakra kattintasz, visszahozza azt a speciális munkaterületet, mielőtt az ablakra fókuszálna"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "közvetlen"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "A dms egy nagymértékben testreszabható, modern asztali héj, <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 ihlette</a> dizájnnal.<br /><br/>A <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>-lel, egy QT6 keretrendszerrel asztali héjak építéséhez, és a <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> statikusan típusos, fordított programozási nyelvvel készült."
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "A hgs egy nagymértékben testreszabható, modern asztali héj, <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 ihlette</a> dizájnnal.<br /><br/>A <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>-lel, egy QT6 keretrendszerrel asztali héjak építéséhez, és a <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> statikusan típusos, fordított programozási nyelvvel készült."
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "A dms/cursor konfiguráció létezik, de nincs befoglalva. A kurzorbeállítások nem lesznek érvényesek."
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "A hgs/cursor konfiguráció létezik, de nincs befoglalva. A kurzorbeállítások nem lesznek érvényesek."
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "A dms/outputs konfiguráció létezik, de nincs benne a kompozitor konfigurációjában. A kijelző változások nem maradnak meg."
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "A hgs/outputs konfiguráció létezik, de nincs benne a kompozitor konfigurációjában. A kijelző változások nem maradnak meg."
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": "Például /usr/bin/my-script --flag"
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "„loginctl activate” sikertelen (kilépési kód: %1)"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "A loginctl nem érhető el – a zárolás integrációhoz DMS-socketkapcsolat szükséges"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "A loginctl nem érhető el – a zárolás integrációhoz HGS-socketkapcsolat szükséges"
   },
   "mango: config reloaded": {
     "mango: config reloaded": "mango: konfiguráció újratöltve"
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "niri gyorsbillentyűk beállítása"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "niri/dms Discord"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "niri/hgs Discord"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "niri: konfiguráció újratöltve"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "fel"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "frissítsd a dms-t az NM integrációhoz."
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "frissítsd a hgs-t az NM integrációhoz."
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "„useradd” sikertelen (kilépési kód: %1)"

@@ -114,7 +114,7 @@ Item {
             }
         }
 
-        DankButtonGroup {
+        HGSButtonGroup {
             id: buttonGroup
             anchors.verticalCenter: parent.verticalCenter
             selectionMode: "single"

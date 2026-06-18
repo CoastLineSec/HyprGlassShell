@@ -177,7 +177,7 @@ Item {
                         let appId = Paths.moddedAppId(rawAppId);
                         let coreAppData = null;
 
-                        if (rawAppId === "org.quickshell" || rawAppId === "com.danklinux.dms") {
+                        if (rawAppId === "org.quickshell" || rawAppId === "io.github.coastlinesec.hgs") {
                             coreAppData = getCoreAppDataByTitle(toplevel.title);
                             if (coreAppData)
                                 appId = coreAppData.builtInPluginId;
@@ -242,7 +242,7 @@ Item {
 
                     sortedToplevels.forEach((toplevel, index) => {
                         let uniqueKey = "window_" + index;
-                        if (CompositorService.isHyprland && Hyprland.toplevels) {
+                        if (Hyprland.toplevels) {
                             const hyprlandToplevels = Array.from(Hyprland.toplevels.values);
                             for (let i = 0; i < hyprlandToplevels.length; i++) {
                                 if (hyprlandToplevels[i].wayland === toplevel) {
@@ -257,7 +257,7 @@ Item {
                         let coreAppData = null;
                         let isCoreApp = false;
 
-                        if (rawAppId === "org.quickshell" || rawAppId === "com.danklinux.dms") {
+                        if (rawAppId === "org.quickshell" || rawAppId === "io.github.coastlinesec.hgs") {
                             coreAppData = getCoreAppDataByTitle(toplevel.title);
                             if (coreAppData)
                                 isCoreApp = true;

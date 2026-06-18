@@ -1,6 +1,6 @@
-# DMS Quickshell Interface
+# HGS Quickshell Interface
 
-QML-based desktop shell interface for DankMaterialShell providing panels, widgets, and overlays.
+QML-based desktop shell interface for HyprGlassShell providing panels, widgets, and overlays.
 
 **See [root README](../README.md) for project overview and installation.**
 
@@ -36,7 +36,7 @@ make lint-qml  # Run from repo root; requires quickshell/.qmlls.ini (generated b
 
 **Panels & Bars**
 - `Modules/TopBar/` - Multi-monitor status bars with workspace switching
-- `Modules/DankBar/` - Customizable widget bar with plugin support
+- `Modules/HGSBar/` - Customizable widget bar with plugin support
 - `Modules/Dock/` - Application dock with window management
 
 **System Controls**
@@ -77,7 +77,6 @@ Singletons providing system integration:
 - `DgopService` - System metrics (CPU, RAM, GPU)
 
 **Integration**
-- `NiriService` - Niri workspace integration
 - `HyprlandService` - Hyprland workspace integration
 - `PluginService` - Plugin discovery and lifecycle
 
@@ -85,15 +84,15 @@ Singletons providing system integration:
 
 Reusable Material Design 3 components in `Widgets/`:
 
-- `DankIcon` - Icon component with Material font
-- `DankSlider` - Enhanced slider with animations
-- `DankToggle` - Toggle switch component
-- `DankTabBar` - Tab bar implementation
-- `DankGridView` - Grid layout with adaptive columns
-- `DankListView` - Scrollable list view
-- `DankTextField` - Text input with validation
-- `DankDropdown` - Dropdown selection
-- `DankPopout` - Base for overlay components
+- `HGSIcon` - Icon component with Material font
+- `HGSSlider` - Enhanced slider with animations
+- `HGSToggle` - Toggle switch component
+- `HGSTabBar` - Tab bar implementation
+- `HGSGridView` - Grid layout with adaptive columns
+- `HGSListView` - Scrollable list view
+- `HGSTextField` - Text input with validation
+- `HGSDropdown` - Dropdown selection
+- `HGSPopout` - Base for overlay components
 - `StateLayer` - Material interaction states
 
 ## Theming
@@ -137,13 +136,13 @@ Variants {
 }
 ```
 
-Workspace switchers adapt to compositor (Niri/Hyprland).
+Workspace switchers target Hyprland.
 
 ## Plugin System
 
-External plugins in `~/.config/DankMaterialShell/plugins/`:
+External plugins in `~/.config/HyprGlassShell/plugins/`:
 
-**Widget plugins** - UI components in DankBar
+**Widget plugins** - UI components in HGSBar
 **Daemon plugins** - Background processes without UI
 
 Plugin manifest (`plugin.json`):
@@ -173,7 +172,7 @@ Backend IPC socket communication:
 import Quickshell.Io
 
 Process {
-    command: ["dms", "ipc", "call", "spotlight", "toggle"]
+    command: ["hgs", "ipc", "call", "spotlight", "toggle"]
     running: true
 }
 ```
@@ -220,7 +219,7 @@ Singleton {
 **Guidelines:**
 - Use `Theme.propertyName` for consistent styling
 - Bind directly to service properties for reactivity
-- Use `DankIcon` for all icons
+- Use `HGSIcon` for all icons
 - Implement feature detection and graceful degradation
 - 4-space indentation, no unnecessary comments
 

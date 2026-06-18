@@ -20,7 +20,7 @@ Item {
         NetworkService.removeRef();
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -159,7 +159,7 @@ Item {
                             height: 1
                         }
 
-                        DankButtonGroup {
+                        HGSButtonGroup {
                             id: preferenceButtons
                             model: [I18n.tr("Auto"), I18n.tr("Ethernet"), I18n.tr("WiFi")]
                             currentIndex: {

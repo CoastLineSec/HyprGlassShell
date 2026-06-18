@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	mocks_version "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/version"
+	mocks_version "github.com/CoastLineSec/HyprGlassShell/core/internal/mocks/version"
 )
 
 func TestCompareVersions(t *testing.T) {
@@ -33,14 +33,14 @@ func TestCompareVersions(t *testing.T) {
 	}
 }
 
-func TestGetDMSVersionInfo_Structure(t *testing.T) {
-	// Create a temp directory with a fake DMS installation
+func TestGetHGSVersionInfo_Structure(t *testing.T) {
+	// Create a temp directory with a fake HGS installation
 	tempDir := t.TempDir()
-	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
-	os.MkdirAll(dmsPath, 0o755)
+	hgsPath := filepath.Join(tempDir, ".config", "quickshell", "hgs")
+	os.MkdirAll(hgsPath, 0o755)
 
 	// Create a .git directory to simulate git installation
-	os.MkdirAll(filepath.Join(dmsPath, ".git"), 0o755)
+	os.MkdirAll(filepath.Join(hgsPath, ".git"), 0o755)
 
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
@@ -48,16 +48,16 @@ func TestGetDMSVersionInfo_Structure(t *testing.T) {
 
 	// Create mock fetcher
 	mockFetcher := mocks_version.NewMockVersionFetcher(t)
-	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("v0.1.0", nil)
-	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("v0.1.1", nil)
+	mockFetcher.EXPECT().GetCurrentVersion(hgsPath).Return("v0.1.0", nil)
+	mockFetcher.EXPECT().GetLatestVersion(hgsPath).Return("v0.1.1", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetHGSVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetHGSVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if info == nil {
-		t.Fatal("GetDMSVersionInfoWithFetcher() returned nil")
+		t.Fatal("GetHGSVersionInfoWithFetcher() returned nil")
 	}
 
 	if info.Current != "v0.1.0" {
@@ -79,23 +79,23 @@ func TestGetDMSVersionInfo_Structure(t *testing.T) {
 	t.Logf("Current: %s, Latest: %s, HasUpdate: %v", info.Current, info.Latest, info.HasUpdate)
 }
 
-func TestGetDMSVersionInfo_BranchVersion(t *testing.T) {
+func TestGetHGSVersionInfo_BranchVersion(t *testing.T) {
 	tempDir := t.TempDir()
-	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
-	os.MkdirAll(dmsPath, 0o755)
-	os.MkdirAll(filepath.Join(dmsPath, ".git"), 0o755)
+	hgsPath := filepath.Join(tempDir, ".config", "quickshell", "hgs")
+	os.MkdirAll(hgsPath, 0o755)
+	os.MkdirAll(filepath.Join(hgsPath, ".git"), 0o755)
 
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
 	os.Setenv("HOME", tempDir)
 
 	mockFetcher := mocks_version.NewMockVersionFetcher(t)
-	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("master@abc1234", nil)
-	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("master@def5678", nil)
+	mockFetcher.EXPECT().GetCurrentVersion(hgsPath).Return("master@abc1234", nil)
+	mockFetcher.EXPECT().GetLatestVersion(hgsPath).Return("master@def5678", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetHGSVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetHGSVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if !info.IsBranch {
@@ -111,23 +111,23 @@ func TestGetDMSVersionInfo_BranchVersion(t *testing.T) {
 	}
 }
 
-func TestGetDMSVersionInfo_NoUpdate(t *testing.T) {
+func TestGetHGSVersionInfo_NoUpdate(t *testing.T) {
 	tempDir := t.TempDir()
-	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
-	os.MkdirAll(dmsPath, 0o755)
-	os.MkdirAll(filepath.Join(dmsPath, ".git"), 0o755)
+	hgsPath := filepath.Join(tempDir, ".config", "quickshell", "hgs")
+	os.MkdirAll(hgsPath, 0o755)
+	os.MkdirAll(filepath.Join(hgsPath, ".git"), 0o755)
 
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
 	os.Setenv("HOME", tempDir)
 
 	mockFetcher := mocks_version.NewMockVersionFetcher(t)
-	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("v0.1.0", nil)
-	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("v0.1.0", nil)
+	mockFetcher.EXPECT().GetCurrentVersion(hgsPath).Return("v0.1.0", nil)
+	mockFetcher.EXPECT().GetLatestVersion(hgsPath).Return("v0.1.0", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetHGSVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetHGSVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if info.HasUpdate {
@@ -135,16 +135,16 @@ func TestGetDMSVersionInfo_NoUpdate(t *testing.T) {
 	}
 }
 
-func TestGetCurrentDMSVersion_NotInstalled(t *testing.T) {
+func TestGetCurrentHGSVersion_NotInstalled(t *testing.T) {
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
 
 	tempDir := t.TempDir()
 	os.Setenv("HOME", tempDir)
 
-	_, err := GetCurrentDMSVersion()
+	_, err := GetCurrentHGSVersion()
 	if err == nil {
-		t.Error("Expected error when DMS not installed, got nil")
+		t.Error("Expected error when HGS not installed, got nil")
 	}
 }
 
@@ -243,7 +243,7 @@ func TestVersionInfo_HasUpdate_Tag(t *testing.T) {
 	}
 }
 
-func TestGetLatestDMSVersion_FallbackParsing(t *testing.T) {
+func TestGetLatestHGSVersion_FallbackParsing(t *testing.T) {
 	jsonResponse := `{
 		"tag_name": "v0.1.17",
 		"name": "Release v0.1.17"

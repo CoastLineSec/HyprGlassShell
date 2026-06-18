@@ -61,20 +61,20 @@ Rectangle {
         }
     }
 
-    DankIcon {
+    HGSIcon {
         id: tileIcon
         anchors.centerIn: parent
         name: iconName
         size: Theme.iconSize
         color: isActive ? _tileIconActive : _tileIconInactive
 
-        DankBlink {
+        HGSBlink {
             target: tileIcon
             running: root.iconBlinking
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

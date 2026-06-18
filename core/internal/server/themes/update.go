@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/themes"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/themes"
 )
 
 func HandleUpdate(conn net.Conn, req models.Request) {

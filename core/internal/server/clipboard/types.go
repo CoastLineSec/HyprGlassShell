@@ -10,8 +10,8 @@ import (
 	"github.com/godbus/dbus/v5"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
-	wlclient "github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlcontext"
+	wlclient "github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 )
 
 type Config struct {
@@ -38,7 +38,7 @@ func getConfigPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, "DankMaterialShell", "clsettings.json"), nil
+	return filepath.Join(configDir, "HyprGlassShell", "clsettings.json"), nil
 }
 
 func LoadConfig() Config {

@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/keybinds"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/keybinds"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 type HyprlandProvider struct {
 	configPath       string
-	dmsBindsIncluded bool
+	hgsBindsIncluded bool
 	parsed           bool
 }
 
@@ -40,55 +40,55 @@ func (h *HyprlandProvider) Name() string {
 }
 
 func (h *HyprlandProvider) GetCheatSheet() (*keybinds.CheatSheet, error) {
-	result, err := ParseHyprlandKeysWithDMS(h.configPath)
+	result, err := ParseHyprlandKeysWithHGS(h.configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse hyprland config: %w", err)
 	}
 
-	h.dmsBindsIncluded = result.DMSBindsIncluded
+	h.hgsBindsIncluded = result.HGSBindsIncluded
 	h.parsed = true
 
 	categorizedBinds := make(map[string][]keybinds.Keybind)
-	h.convertSection(result.Section, "", categorizedBinds, result.ConflictingConfigs, result.DefaultDMSKeys)
+	h.convertSection(result.Section, "", categorizedBinds, result.ConflictingConfigs, result.DefaultHGSKeys)
 
 	sheet := &keybinds.CheatSheet{
 		Title:            "Hyprland Keybinds",
 		Provider:         h.Name(),
 		Binds:            categorizedBinds,
-		DMSBindsIncluded: result.DMSBindsIncluded,
+		HGSBindsIncluded: result.HGSBindsIncluded,
 	}
 
-	if result.DMSStatus != nil {
-		sheet.DMSStatus = &keybinds.DMSBindsStatus{
-			Exists:          result.DMSStatus.Exists,
-			Included:        result.DMSStatus.Included,
-			IncludePosition: result.DMSStatus.IncludePosition,
-			TotalIncludes:   result.DMSStatus.TotalIncludes,
-			BindsAfterDMS:   result.DMSStatus.BindsAfterDMS,
-			Effective:       result.DMSStatus.Effective,
-			OverriddenBy:    result.DMSStatus.OverriddenBy,
-			StatusMessage:   result.DMSStatus.StatusMessage,
-			ConfigFormat:    result.DMSStatus.ConfigFormat,
-			ReadOnly:        result.DMSStatus.ReadOnly,
+	if result.HGSStatus != nil {
+		sheet.HGSStatus = &keybinds.HGSBindsStatus{
+			Exists:          result.HGSStatus.Exists,
+			Included:        result.HGSStatus.Included,
+			IncludePosition: result.HGSStatus.IncludePosition,
+			TotalIncludes:   result.HGSStatus.TotalIncludes,
+			BindsAfterHGS:   result.HGSStatus.BindsAfterHGS,
+			Effective:       result.HGSStatus.Effective,
+			OverriddenBy:    result.HGSStatus.OverriddenBy,
+			StatusMessage:   result.HGSStatus.StatusMessage,
+			ConfigFormat:    result.HGSStatus.ConfigFormat,
+			ReadOnly:        result.HGSStatus.ReadOnly,
 		}
 	}
 
 	return sheet, nil
 }
 
-func (h *HyprlandProvider) HasDMSBindsIncluded() bool {
+func (h *HyprlandProvider) HasHGSBindsIncluded() bool {
 	if h.parsed {
-		return h.dmsBindsIncluded
+		return h.hgsBindsIncluded
 	}
 
-	result, err := ParseHyprlandKeysWithDMS(h.configPath)
+	result, err := ParseHyprlandKeysWithHGS(h.configPath)
 	if err != nil {
 		return false
 	}
 
-	h.dmsBindsIncluded = result.DMSBindsIncluded
+	h.hgsBindsIncluded = result.HGSBindsIncluded
 	h.parsed = true
-	return h.dmsBindsIncluded
+	return h.hgsBindsIncluded
 }
 
 func (h *HyprlandProvider) convertSection(section *HyprlandSection, subcategory string, categorizedBinds map[string][]keybinds.Keybind, conflicts map[string]*HyprlandKeyBinding, defaultKeys map[string]bool) {
@@ -146,14 +146,14 @@ func (h *HyprlandProvider) convertKeybind(kb *HyprlandKeyBinding, subcategory st
 	}
 
 	source := "config"
-	if isDMSBindsUserOverridePath(kb.Source) {
-		source = "dms"
-	} else if isDMSBindsPrimarySourcePath(kb.Source) {
-		source = "dms-default"
+	if isHGSBindsUserOverridePath(kb.Source) {
+		source = "hgs"
+	} else if isHGSBindsPrimarySourcePath(kb.Source) {
+		source = "hgs-default"
 	}
 
 	hasDefault := false
-	if source == "dms" && defaultKeys != nil {
+	if source == "hgs" && defaultKeys != nil {
 		hasDefault = defaultKeys[strings.ToLower(keyStr)]
 	}
 
@@ -167,7 +167,7 @@ func (h *HyprlandProvider) convertKeybind(kb *HyprlandKeyBinding, subcategory st
 		HasDefault:  hasDefault,
 	}
 
-	if (source == "dms" || source == "dms-default") && conflicts != nil {
+	if (source == "hgs" || source == "hgs-default") && conflicts != nil {
 		normalizedKey := strings.ToLower(keyStr)
 		if conflictKb, ok := conflicts[normalizedKey]; ok {
 			bind.Conflict = &keybinds.Keybind{
@@ -199,9 +199,9 @@ func (h *HyprlandProvider) formatKey(kb *HyprlandKeyBinding) string {
 func (h *HyprlandProvider) GetOverridePath() string {
 	expanded, err := utils.ExpandPath(h.configPath)
 	if err != nil {
-		return filepath.Join(h.configPath, "dms", "binds-user.lua")
+		return filepath.Join(h.configPath, "hgs", "user-keybinds.lua")
 	}
-	return filepath.Join(expanded, "dms", "binds-user.lua")
+	return filepath.Join(expanded, "hgs", "user-keybinds.lua")
 }
 
 func (h *HyprlandProvider) validateAction(action string) error {
@@ -231,7 +231,7 @@ func (h *HyprlandProvider) SetBind(key, action, description string, options map[
 	overridePath := h.GetOverridePath()
 
 	if err := os.MkdirAll(filepath.Dir(overridePath), 0o755); err != nil {
-		return fmt.Errorf("failed to create dms directory: %w", err)
+		return fmt.Errorf("failed to create hgs directory: %w", err)
 	}
 
 	existingBinds, err := h.loadOverrideBinds()
@@ -299,7 +299,7 @@ type hyprlandOverrideBind struct {
 
 func (h *HyprlandProvider) ensureWritableConfig() error {
 	if h.isLegacyConfigReadOnly() {
-		return fmt.Errorf("hyprland legacy conf configs are read-only; run dms setup to migrate to Lua before editing keybinds")
+		return fmt.Errorf("hyprland legacy conf configs are read-only; run hgs setup to migrate to Lua before editing keybinds")
 	}
 	return nil
 }
@@ -339,7 +339,7 @@ func hyprlandOverrideMapKey(key string) string {
 
 func (h *HyprlandProvider) getBindSortPriority(action string) int {
 	switch {
-	case strings.HasPrefix(action, "exec") && strings.Contains(action, "dms"):
+	case strings.HasPrefix(action, "exec") && strings.Contains(action, "hgs"):
 		return 0
 	case strings.Contains(action, "workspace"):
 		return 1
@@ -383,7 +383,7 @@ func (h *HyprlandProvider) generateBindsContent(binds map[string]*hyprlandOverri
 	})
 
 	var sb strings.Builder
-	sb.WriteString("-- DMS user keybind overrides (edit via Control Center or dms; do not remove this header)\n\n")
+	sb.WriteString("-- HGS user keybind overrides (edit via Control Center or hgs; do not remove this header)\n\n")
 	for _, bind := range bindList {
 		writeLuaBindLine(&sb, bind)
 	}

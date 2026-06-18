@@ -21,7 +21,7 @@ PluginComponent {
         return result;
     }
     readonly property bool autoMode: SettingsData.displayProfileAutoSelect
-    readonly property string activeProfileId: SettingsData.getActiveDisplayProfile(CompositorService.compositor)
+    readonly property string activeProfileId: SettingsData.getActiveDisplayProfile("hyprland")
     readonly property var activeProfile: allProfiles[activeProfileId] || null
     readonly property string activeProfileName: activeProfile?.name ?? ""
     readonly property string displayProfileLabel: {
@@ -44,7 +44,7 @@ PluginComponent {
     function setAutoMode(enabled) {
         SettingsData.displayProfileAutoSelect = enabled;
         if (!enabled)
-            SettingsData.setActiveDisplayProfile(CompositorService.compositor, "");
+            SettingsData.setActiveDisplayProfile("hyprland", "");
         SettingsData.saveSettings();
         if (enabled)
             DisplayConfigState.applyAutoConfig();
@@ -118,7 +118,7 @@ PluginComponent {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: settingsButton
                             anchors.verticalCenter: parent.verticalCenter
                             iconName: "settings"
@@ -217,7 +217,7 @@ PluginComponent {
     horizontalBarPill: Component {
         Row {
             spacing: Theme.spacingXS
-            DankIcon {
+            HGSIcon {
                 name: "monitor"
                 color: Theme.primary
                 size: root.iconSize
@@ -235,7 +235,7 @@ PluginComponent {
     verticalBarPill: Component {
         Column {
             spacing: 2
-            DankIcon {
+            HGSIcon {
                 name: "monitor"
                 color: Theme.primary
                 size: root.iconSize

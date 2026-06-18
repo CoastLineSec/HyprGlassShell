@@ -1,12 +1,12 @@
 #!/bin/bash
-# Unified PPA status checker for DMS packages
+# Unified PPA status checker for HGS packages
 # Checks build status for packages across multiple PPAs via Launchpad API
 # Usage: ./distro/scripts/ppa-status.sh [package-name] [ppa-name]
 #
 # Examples:
 #   ./distro/scripts/ppa-status.sh              # Check all packages in all PPAs
-#   ./distro/scripts/ppa-status.sh dms          # Check dms package
-#   ./distro/scripts/ppa-status.sh all dms-git  # Check all packages in dms-git PPA
+#   ./distro/scripts/ppa-status.sh hgs          # Check hgs package
+#   ./distro/scripts/ppa-status.sh all hgs-git  # Check all packages in hgs-git PPA
 
 PPA_OWNER="avengemedia"
 LAUNCHPAD_API="https://api.launchpad.net/1.0"
@@ -14,15 +14,15 @@ LAUNCHPAD_API="https://api.launchpad.net/1.0"
 DISTRO_SERIES_LIST=(questing resolute)
 
 # Define packages (sync with ppa-upload.sh)
-ALL_PACKAGES=(dms dms-git dms-greeter)
+ALL_PACKAGES=(hgs hgs-git hgs-greeter)
 
 # Function to get PPA name for a package
 get_ppa_name() {
     local pkg="$1"
     case "$pkg" in
-        dms) echo "dms" ;;
-        dms-git) echo "dms-git" ;;
-        dms-greeter) echo "danklinux" ;;
+        hgs) echo "hgs" ;;
+        hgs-git) echo "hgs-git" ;;
+        hgs-greeter) echo "coastlinesec" ;;
         *) echo "" ;;
     esac
 }
@@ -72,7 +72,7 @@ elif [[ -n "$PPA_INPUT" ]]; then
 else
     # Check all packages in all PPAs
     PACKAGES=("${ALL_PACKAGES[@]}")
-    PPAS=("dms" "dms-git" "danklinux")
+    PPAS=("hgs" "hgs-git" "coastlinesec")
 fi
 
 # Function to get build status color and symbol

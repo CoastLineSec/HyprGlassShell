@@ -5,7 +5,7 @@ package mocks_cups
 import (
 	io "io"
 
-	ipp "github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
+	ipp "github.com/CoastLineSec/HyprGlassShell/core/pkg/ipp"
 	mock "github.com/stretchr/testify/mock"
 )
 

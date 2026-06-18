@@ -37,7 +37,7 @@ func TestResolveGreeterThemeSyncState(t *testing.T) {
   "iconTheme": "Papirus"
 }`,
 			sessionJSON:             `{"isLightMode":true}`,
-			wantSourcePath:          filepath.Join(".cache", "DankMaterialShell", "greeter-colors", "dms-colors.json"),
+			wantSourcePath:          filepath.Join(".cache", "HyprGlassShell", "greeter-colors", "hgs-colors.json"),
 			wantResolvedWallpaper:   filepath.Join("Pictures", "blue.jpg"),
 			wantDynamicOverrideUsed: true,
 		},
@@ -48,7 +48,7 @@ func TestResolveGreeterThemeSyncState(t *testing.T) {
   "greeterWallpaperPath": ""
 }`,
 			sessionJSON:             `{"isLightMode":false}`,
-			wantSourcePath:          filepath.Join(".cache", "DankMaterialShell", "dms-colors.json"),
+			wantSourcePath:          filepath.Join(".cache", "HyprGlassShell", "hgs-colors.json"),
 			wantResolvedWallpaper:   "",
 			wantDynamicOverrideUsed: false,
 		},
@@ -59,7 +59,7 @@ func TestResolveGreeterThemeSyncState(t *testing.T) {
   "greeterWallpaperPath": "/tmp/blue.jpg"
 }`,
 			sessionJSON:             `{"isLightMode":false}`,
-			wantSourcePath:          filepath.Join(".cache", "DankMaterialShell", "dms-colors.json"),
+			wantSourcePath:          filepath.Join(".cache", "HyprGlassShell", "hgs-colors.json"),
 			wantResolvedWallpaper:   "/tmp/blue.jpg",
 			wantDynamicOverrideUsed: false,
 		},
@@ -71,8 +71,8 @@ func TestResolveGreeterThemeSyncState(t *testing.T) {
 			t.Parallel()
 
 			homeDir := t.TempDir()
-			writeTestFile(t, filepath.Join(homeDir, ".config", "DankMaterialShell", "settings.json"), tt.settingsJSON)
-			writeTestFile(t, filepath.Join(homeDir, ".local", "state", "DankMaterialShell", "session.json"), tt.sessionJSON)
+			writeTestFile(t, filepath.Join(homeDir, ".config", "HyprGlassShell", "settings.json"), tt.settingsJSON)
+			writeTestFile(t, filepath.Join(homeDir, ".local", "state", "HyprGlassShell", "session.json"), tt.sessionJSON)
 
 			state, err := resolveGreeterThemeSyncState(homeDir)
 			if err != nil {
@@ -106,19 +106,19 @@ vt = 1
 
 [default_session]
 user = "greeter"
-command = "/usr/bin/dms-greeter --command niri"
+command = "/usr/bin/hgs-greeter --command Hyprland"
 `
 
 	t.Run("inserts initial session", func(t *testing.T) {
 		t.Parallel()
-		got := upsertInitialSession(baseConfig, "alice", "niri", true)
+		got := upsertInitialSession(baseConfig, "alice", "Hyprland", true)
 		if !strings.Contains(got, "[initial_session]") {
 			t.Fatalf("expected [initial_session] section, got:\n%s", got)
 		}
 		if !strings.Contains(got, `user = "alice"`) {
 			t.Fatalf("expected alice user in initial session, got:\n%s", got)
 		}
-		if !strings.Contains(got, `env XDG_SESSION_TYPE=wayland sh -c 'exec niri'`) {
+		if !strings.Contains(got, `env XDG_SESSION_TYPE=wayland sh -c 'exec Hyprland'`) {
 			t.Fatalf("expected wrapped session command, got:\n%s", got)
 		}
 	})
@@ -144,7 +144,7 @@ command = "old-command"
 		existing := baseConfig + `
 [initial_session]
 user = "alice"
-command = "niri"
+command = "Hyprland"
 `
 		got := upsertInitialSession(existing, "", "", false)
 		if strings.Contains(got, "[initial_session]") {
@@ -159,8 +159,8 @@ command = "niri"
 func TestStripDesktopExecCodes(t *testing.T) {
 	t.Parallel()
 
-	got := stripDesktopExecCodes("niri --session %f")
-	want := "niri --session"
+	got := stripDesktopExecCodes("Hyprland --session %f")
+	want := "Hyprland --session"
 	if got != want {
 		t.Fatalf("stripDesktopExecCodes = %q, want %q", got, want)
 	}
@@ -179,14 +179,14 @@ func TestResolveGreeterAutoLoginState(t *testing.T) {
 }`)
 	writeTestFile(t, filepath.Join(cacheDir, ".local/state/memory.json"), `{
   "lastSuccessfulUser": "alice",
-  "lastSessionExec": "niri"
+  "lastSessionExec": "Hyprland"
 }`)
 
 	enabled, loginUser, sessionExec, err := resolveGreeterAutoLoginState(cacheDir, homeDir)
 	if err != nil {
 		t.Fatalf("resolveGreeterAutoLoginState returned error: %v", err)
 	}
-	if !enabled || loginUser != "alice" || sessionExec != "niri" {
+	if !enabled || loginUser != "alice" || sessionExec != "Hyprland" {
 		t.Fatalf("got enabled=%v user=%q exec=%q", enabled, loginUser, sessionExec)
 	}
 }
@@ -205,7 +205,7 @@ func TestResolveGreeterAutoLoginStateIgnoresMemoryFlag(t *testing.T) {
 	writeTestFile(t, filepath.Join(cacheDir, ".local/state/memory.json"), `{
   "autoLoginEnabled": true,
   "lastSuccessfulUser": "alice",
-  "lastSessionExec": "niri"
+  "lastSessionExec": "Hyprland"
 }`)
 
 	enabled, loginUser, sessionExec, err := resolveGreeterAutoLoginState(cacheDir, homeDir)

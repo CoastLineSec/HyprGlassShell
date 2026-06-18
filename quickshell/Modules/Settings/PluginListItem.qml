@@ -34,8 +34,8 @@ StyledRect {
     property bool isDesktopPlugin: pluginData ? (pluginData.type === "desktop") : false
     property bool showSettings: hasSettings && !isDesktopPlugin
     property bool isSystemPlugin: pluginData ? (pluginData.source === "system") : false
-    property string requiresDms: pluginData ? (pluginData.requires_dms || "") : ""
-    property bool meetsRequirements: requiresDms ? PluginService.checkPluginCompatibility(requiresDms) : true
+    property string requiresHgs: pluginData ? (pluginData.requires_hgs || "") : ""
+    property bool meetsRequirements: requiresHgs ? PluginService.checkPluginCompatibility(requiresHgs) : true
 
     Connections {
         target: ShellVersionService
@@ -80,7 +80,7 @@ StyledRect {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 name: root.pluginIcon
                 size: Theme.iconSize
                 color: root.isLoaded ? Theme.primary : Theme.surfaceVariantText
@@ -116,7 +116,7 @@ StyledRect {
                             anchors.centerIn: parent
                             spacing: 2
 
-                            DankIcon {
+                            HGSIcon {
                                 id: incompatIcon
                                 name: "warning"
                                 size: 12
@@ -130,7 +130,7 @@ StyledRect {
                             hoverEnabled: true
                             onEntered: {
                                 if (root.sharedTooltip)
-                                    root.sharedTooltip.show(I18n.tr("Requires DMS %1").arg(root.requiresDms), parent, 0, 0, "top");
+                                    root.sharedTooltip.show(I18n.tr("Requires HGS %1").arg(root.requiresHgs), parent, 0, 0, "top");
                             }
                             onExited: {
                                 if (root.sharedTooltip)
@@ -139,7 +139,7 @@ StyledRect {
                         }
                     }
 
-                    DankIcon {
+                    HGSIcon {
                         name: root.showSettings ? (root.isExpanded ? "expand_less" : "expand_more") : ""
                         size: 16
                         color: root.showSettings ? Theme.primary : "transparent"
@@ -184,9 +184,9 @@ StyledRect {
                     height: 28
                     radius: 14
                     color: updateArea.containsMouse ? Theme.surfaceContainerHighest : "transparent"
-                    visible: DMSService.dmsAvailable && root.isLoaded && root.hasUpdate && !root.isSystemPlugin
+                    visible: HGSService.hgsAvailable && root.isLoaded && root.hasUpdate && !root.isSystemPlugin
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "download"
                         size: 16
@@ -201,15 +201,15 @@ StyledRect {
                         onClicked: {
                             const currentPluginName = root.pluginName;
                             const currentPluginId = root.pluginId;
-                            DMSService.update(currentPluginName, response => {
+                            HGSService.update(currentPluginName, response => {
                                 if (response.error) {
                                     ToastService.showError(I18n.tr("Update failed: %1").arg(response.error));
                                     return;
                                 }
                                 ToastService.showInfo(I18n.tr("Plugin updated: %1").arg(currentPluginName));
                                 PluginService.forceRescanPlugin(currentPluginId);
-                                if (DMSService.apiVersion >= 8)
-                                    DMSService.listInstalled();
+                                if (HGSService.apiVersion >= 8)
+                                    HGSService.listInstalled();
                             });
                         }
                         onEntered: {
@@ -228,9 +228,9 @@ StyledRect {
                     height: 28
                     radius: 14
                     color: uninstallArea.containsMouse ? Theme.surfaceContainerHighest : "transparent"
-                    visible: DMSService.dmsAvailable && !root.isSystemPlugin
+                    visible: HGSService.hgsAvailable && !root.isSystemPlugin
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "delete"
                         size: 16
@@ -244,7 +244,7 @@ StyledRect {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             const currentPluginName = root.pluginName;
-                            DMSService.uninstall(currentPluginName, response => {
+                            HGSService.uninstall(currentPluginName, response => {
                                 if (response.error) {
                                     ToastService.showError(I18n.tr("Uninstall failed: %1").arg(response.error));
                                     return;
@@ -273,7 +273,7 @@ StyledRect {
                     color: reloadArea.containsMouse ? Theme.surfaceContainerHighest : "transparent"
                     visible: root.isLoaded
 
-                    DankIcon {
+                    HGSIcon {
                         anchors.centerIn: parent
                         name: "refresh"
                         size: 16
@@ -307,7 +307,7 @@ StyledRect {
                     }
                 }
 
-                DankToggle {
+                HGSToggle {
                     id: pluginToggle
                     anchors.verticalCenter: parent.verticalCenter
                     checked: root.isLoaded

@@ -35,11 +35,11 @@ namespace (`exampleComposite`), so `pluginData` is the same for every surface.
 
 ## Usage
 
-1. Copy this directory into `$CONFIGPATH/DankMaterialShell/plugins/`.
+1. Copy this directory into `$CONFIGPATH/HyprGlassShell/plugins/`.
 2. Settings → Plugins → **Scan for Plugins**, then enable **Composite Example**.
    (Composite plugins respect the enable toggle — unlike a pure `desktop` plugin they
    do not auto-load, because they also carry a daemon.)
-3. Add the bar widget via Settings → Appearance → DankBar Layout.
+3. Add the bar widget via Settings → Appearance → HGSBar Layout.
 4. Place the desktop clock via Settings → Desktop Widgets.
 
 ## Notes
@@ -49,5 +49,5 @@ namespace (`exampleComposite`), so `pluginData` is the same for every surface.
 - Cross-surface runtime state (not needed here) is best shared via
   `PluginService.getGlobalVar` / `setGlobalVar` or the daemon instance, since each
   surface is a separate object.
-- `requires_dms` is `>=1.5.0` because the `components` multi-surface manifest is only
-  understood by DMS 1.5.0 and later.
+- `requires_hgs` is `>=1.5.0` because the `components` multi-surface manifest is only
+  understood by HGS 1.5.0 and later.

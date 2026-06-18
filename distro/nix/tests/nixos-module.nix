@@ -4,19 +4,19 @@
   ...
 }:
 pkgs.testers.runNixOSTest {
-  name = "dms-nixos-module";
+  name = "hgs-nixos-module";
 
   nodes.machine = {
     imports = [
-      self.nixosModules.dank-material-shell
+      self.nixosModules.hypr-glass-shell
     ];
 
-    users.users.danklinux = {
+    users.users.coastlinesec = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
     };
 
-    programs.dank-material-shell = {
+    programs.hypr-glass-shell = {
       enable = true;
       systemd.enable = true;
       plugins = {
@@ -34,13 +34,13 @@ pkgs.testers.runNixOSTest {
 
     machine.wait_for_unit("multi-user.target")
 
-    machine.succeed("command -v dms")
+    machine.succeed("command -v hgs")
     machine.succeed("command -v quickshell")
-    machine.succeed("su -- danklinux -c 'dms --help >/dev/null'")
-    machine.succeed("test -d /etc/xdg/quickshell/dms-plugins")
-    machine.succeed("test -f /run/current-system/sw/lib/systemd/user/dms.service")
+    machine.succeed("su -- coastlinesec -c 'hgs --help >/dev/null'")
+    machine.succeed("test -d /etc/xdg/quickshell/hgs-plugins")
+    machine.succeed("test -f /run/current-system/sw/lib/systemd/user/hgs.service")
 
-    payload = json.loads(machine.succeed("su -- danklinux -c 'dms doctor --json'"))
+    payload = json.loads(machine.succeed("su -- coastlinesec -c 'hgs doctor --json'"))
     t.assertIn("summary", payload)
     t.assertIsInstance(payload.get("results"), list)
   '';

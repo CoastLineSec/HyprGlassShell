@@ -80,7 +80,7 @@ Item {
         }
 
         const requestedId = newEntry.id;
-        DMSService.sendRequest("clipboard.getEntry", {
+        HGSService.sendRequest("clipboard.getEntry", {
             "id": requestedId
         }, function (response) {
             if (response.error) {
@@ -123,7 +123,7 @@ Item {
 
     function saveEntry(action) {
         const saveAction = action ?? "history";
-        DMSService.sendRequest("clipboard.copy", {
+        HGSService.sendRequest("clipboard.copy", {
             "text": root.editorText
         }, function (response) {
             if (response.error) {
@@ -198,7 +198,7 @@ Item {
             width: parent.width
             height: ClipboardConstants.headerHeight
 
-            DankActionButton {
+            HGSActionButton {
                 iconName: "arrow_back"
                 iconSize: Theme.iconSize - 4
                 iconColor: Theme.surfaceText
@@ -215,7 +215,7 @@ Item {
                 anchors.centerIn: parent
             }
 
-            DankActionButton {
+            HGSActionButton {
                 iconName: "close"
                 iconSize: Theme.iconSize - 4
                 iconColor: Theme.surfaceText
@@ -235,7 +235,7 @@ Item {
             border.width: editField.activeFocus ? 2 : 1
             clip: true
 
-            DankIcon {
+            HGSIcon {
                 id: editIcon
                 name: "edit"
                 size: Theme.iconSize
@@ -246,7 +246,7 @@ Item {
                 anchors.topMargin: Theme.spacingM
             }
 
-            DankFlickable {
+            HGSFlickable {
                 id: editScroll
                 anchors.left: editIcon.right
                 anchors.leftMargin: Theme.spacingS
@@ -311,7 +311,7 @@ Item {
                 height: 1
             }
 
-            DankButton {
+            HGSButton {
                 id: cancelButton
                 text: I18n.tr("Cancel")
                 backgroundColor: Theme.surfaceContainerHigh
@@ -366,7 +366,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: saveMenu.visible ? "expand_less" : "expand_more"
                     size: Theme.iconSizeSmall
                     color: Theme.onPrimary
@@ -422,7 +422,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "save"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText
@@ -460,7 +460,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "close"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText
@@ -499,7 +499,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "content_paste"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText

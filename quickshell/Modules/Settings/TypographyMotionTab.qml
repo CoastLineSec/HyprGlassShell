@@ -42,7 +42,7 @@ Item {
         fontEnumerationTimer.start();
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -67,7 +67,7 @@ Item {
                     height: animVariantGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: animVariantGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -117,7 +117,7 @@ Item {
                             case 2:
                                 return I18n.tr("Dynamic: Spring bezier with overshoot — entry briefly exceeds its target then settles. Expressive and alive.");
                             default:
-                                return I18n.tr("Material: Material Design 3 Expressive bezier curves. The DMS default feel.");
+                                return I18n.tr("Material: Material Design 3 Expressive bezier curves. The HGS default feel.");
                             }
                         }
                     }
@@ -136,7 +136,7 @@ Item {
                     height: motionEffectGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: motionEffectGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -186,7 +186,7 @@ Item {
                             case 2:
                                 return I18n.tr("Depth: Panels scale up from small as they slide in — a dramatic pop-forward depth effect.");
                             default:
-                                return I18n.tr("Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.");
+                                return I18n.tr("Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.");
                             }
                         }
                     }
@@ -341,7 +341,7 @@ Item {
                     height: renderTypeGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: renderTypeGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -447,7 +447,7 @@ Item {
                         color: Theme.surfaceText
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: qualityGroup
                         anchors.top: qualityLabel.bottom
                         anchors.topMargin: Theme.spacingS
@@ -486,7 +486,7 @@ Item {
                     height: animationSpeedGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: animationSpeedGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -583,7 +583,7 @@ Item {
                     height: popoutSpeedGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: popoutSpeedGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -667,7 +667,7 @@ Item {
                     height: modalSpeedGroup.implicitHeight
                     clip: true
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: modalSpeedGroup
                         anchors.horizontalCenter: parent.horizontalCenter
                         buttonPadding: parent.width < 480 ? Theme.spacingS : Theme.spacingL

@@ -5,10 +5,10 @@ import qs.Modules.ProcessList
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+HGSPopout {
     id: processListPopout
 
-    layerNamespace: "dms:process-list-popout"
+    layerNamespace: "hgs:process-list-popout"
 
     property var parentWidget: null
     property var triggerScreen: null
@@ -129,7 +129,7 @@ DankPopout {
                     Row {
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "analytics"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -149,7 +149,7 @@ DankPopout {
                         Layout.fillWidth: true
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: processFilterGroup
                         Layout.minimumWidth: implicitWidth
                         model: [I18n.tr("All"), I18n.tr("User"), I18n.tr("System")]
@@ -177,7 +177,7 @@ DankPopout {
                         }
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: searchField
                         Layout.fillWidth: true
                         Layout.minimumWidth: Theme.fontSizeMedium * 8
@@ -263,7 +263,7 @@ DankPopout {
                                 Row {
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: "schedule"
                                         size: Theme.fontSizeSmall
                                         color: Theme.surfaceVariantText

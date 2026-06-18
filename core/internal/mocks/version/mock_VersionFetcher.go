@@ -17,9 +17,9 @@ func (_m *MockVersionFetcher) EXPECT() *MockVersionFetcher_Expecter {
 	return &MockVersionFetcher_Expecter{mock: &_m.Mock}
 }
 
-// GetCurrentVersion provides a mock function with given fields: dmsPath
-func (_m *MockVersionFetcher) GetCurrentVersion(dmsPath string) (string, error) {
-	ret := _m.Called(dmsPath)
+// GetCurrentVersion provides a mock function with given fields: hgsPath
+func (_m *MockVersionFetcher) GetCurrentVersion(hgsPath string) (string, error) {
+	ret := _m.Called(hgsPath)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCurrentVersion")
@@ -28,16 +28,16 @@ func (_m *MockVersionFetcher) GetCurrentVersion(dmsPath string) (string, error) 
 	var r0 string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
-		return rf(dmsPath)
+		return rf(hgsPath)
 	}
 	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(dmsPath)
+		r0 = rf(hgsPath)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(dmsPath)
+		r1 = rf(hgsPath)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -51,12 +51,12 @@ type MockVersionFetcher_GetCurrentVersion_Call struct {
 }
 
 // GetCurrentVersion is a helper method to define mock.On call
-//   - dmsPath string
-func (_e *MockVersionFetcher_Expecter) GetCurrentVersion(dmsPath interface{}) *MockVersionFetcher_GetCurrentVersion_Call {
-	return &MockVersionFetcher_GetCurrentVersion_Call{Call: _e.mock.On("GetCurrentVersion", dmsPath)}
+//   - hgsPath string
+func (_e *MockVersionFetcher_Expecter) GetCurrentVersion(hgsPath interface{}) *MockVersionFetcher_GetCurrentVersion_Call {
+	return &MockVersionFetcher_GetCurrentVersion_Call{Call: _e.mock.On("GetCurrentVersion", hgsPath)}
 }
 
-func (_c *MockVersionFetcher_GetCurrentVersion_Call) Run(run func(dmsPath string)) *MockVersionFetcher_GetCurrentVersion_Call {
+func (_c *MockVersionFetcher_GetCurrentVersion_Call) Run(run func(hgsPath string)) *MockVersionFetcher_GetCurrentVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
@@ -73,9 +73,9 @@ func (_c *MockVersionFetcher_GetCurrentVersion_Call) RunAndReturn(run func(strin
 	return _c
 }
 
-// GetLatestVersion provides a mock function with given fields: dmsPath
-func (_m *MockVersionFetcher) GetLatestVersion(dmsPath string) (string, error) {
-	ret := _m.Called(dmsPath)
+// GetLatestVersion provides a mock function with given fields: hgsPath
+func (_m *MockVersionFetcher) GetLatestVersion(hgsPath string) (string, error) {
+	ret := _m.Called(hgsPath)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLatestVersion")
@@ -84,16 +84,16 @@ func (_m *MockVersionFetcher) GetLatestVersion(dmsPath string) (string, error) {
 	var r0 string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
-		return rf(dmsPath)
+		return rf(hgsPath)
 	}
 	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(dmsPath)
+		r0 = rf(hgsPath)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(dmsPath)
+		r1 = rf(hgsPath)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -107,12 +107,12 @@ type MockVersionFetcher_GetLatestVersion_Call struct {
 }
 
 // GetLatestVersion is a helper method to define mock.On call
-//   - dmsPath string
-func (_e *MockVersionFetcher_Expecter) GetLatestVersion(dmsPath interface{}) *MockVersionFetcher_GetLatestVersion_Call {
-	return &MockVersionFetcher_GetLatestVersion_Call{Call: _e.mock.On("GetLatestVersion", dmsPath)}
+//   - hgsPath string
+func (_e *MockVersionFetcher_Expecter) GetLatestVersion(hgsPath interface{}) *MockVersionFetcher_GetLatestVersion_Call {
+	return &MockVersionFetcher_GetLatestVersion_Call{Call: _e.mock.On("GetLatestVersion", hgsPath)}
 }
 
-func (_c *MockVersionFetcher_GetLatestVersion_Call) Run(run func(dmsPath string)) *MockVersionFetcher_GetLatestVersion_Call {
+func (_c *MockVersionFetcher_GetLatestVersion_Call) Run(run func(hgsPath string)) *MockVersionFetcher_GetLatestVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})

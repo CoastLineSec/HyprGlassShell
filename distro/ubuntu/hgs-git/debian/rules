@@ -1,0 +1,93 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+# Get git commit date for version
+GIT_DATE := $(shell date +%Y%m%d)
+GIT_COMMIT := HEAD
+
+# Go needs writable directories for its caches
+export HOME := $(CURDIR)/debian/tmp-home
+export GOCACHE := $(CURDIR)/debian/tmp-home/go-cache
+export GOMODCACHE := $(CURDIR)/debian/tmp-home/go-mod
+
+# Launchpad has no network access, so use local toolchain only
+export GOTOOLCHAIN := local
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd --name=hgs
+
+override_dh_auto_build:
+	# Create Go cache directories (sbuild sets HOME to non-existent path)
+	mkdir -p $(HOME) $(GOCACHE) $(GOMODCACHE)
+
+	# Git source is already included in source package (cloned by ppa-build.sh)
+	# Launchpad build environment has no internet access
+	test -d hgs-git-repo || (echo "ERROR: hgs-git-repo directory not found!" && exit 1)
+
+	# Patch go.mod for Launchpad: align go directive w/latest Go toolchain
+	GO_VERSION=$$(go env GOVERSION | sed -E 's/^go([0-9]+\.[0-9]+).*/\1/'); \
+	if [ -n "$$GO_VERSION" ]; then \
+		sed -E -i "s/^go 1\.[0-9]+(\.[0-9]+)?/go $$GO_VERSION/" hgs-git-repo/core/go.mod; \
+		if [ -f hgs-git-repo/core/vendor/modules.txt ]; then \
+			sed -E -i "s/^(## explicit; go )1\.[0-9]+(\.[0-9]+)?$$/\1$$GO_VERSION/" hgs-git-repo/core/vendor/modules.txt; \
+		fi; \
+	else \
+		echo "Warning: Could not detect Go version, leaving go.mod go directive unchanged"; \
+	fi
+	sed -E -i '/^toolchain go[0-9.]+$$/d' hgs-git-repo/core/go.mod
+
+	# Build hgs-cli from source
+	# Detect architecture
+	$(eval DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH))
+	@if [ -f hgs-git-repo/.hgs-version ]; then \
+		. hgs-git-repo/.hgs-version; \
+		echo "Building with VERSION=$$VERSION COMMIT=$$COMMIT ARCH=$(DEB_HOST_ARCH)"; \
+		cd hgs-git-repo/core && $(MAKE) GOFLAGS="-mod=vendor" dist ARCH=$(DEB_HOST_ARCH) VERSION="$$VERSION" COMMIT="$$COMMIT"; \
+	else \
+		echo "Warning: .hgs-version not found, building without version info"; \
+		cd hgs-git-repo/core && $(MAKE) GOFLAGS="-mod=vendor" dist ARCH=$(DEB_HOST_ARCH); \
+	fi
+	cp hgs-git-repo/core/bin/hgs-linux-$(DEB_HOST_ARCH) hgs
+	chmod +x hgs
+
+override_dh_auto_install:
+	# Install binary
+	install -Dm755 hgs debian/hgs-git/usr/bin/hgs
+
+	# Install QML files from git clone
+	mkdir -p debian/hgs-git/usr/share/quickshell/hgs
+	cp -r hgs-git-repo/* debian/hgs-git/usr/share/quickshell/hgs/
+
+	# Remove unnecessary directories
+	rm -rf debian/hgs-git/usr/share/quickshell/hgs/core
+	rm -rf debian/hgs-git/usr/share/quickshell/hgs/distro
+
+	# Install systemd user service
+	install -Dm644 hgs-git-repo/assets/systemd/hgs.service \
+		debian/hgs-git/usr/lib/systemd/user/hgs.service
+
+	# Install desktop file and icon
+	install -Dm644 hgs-git-repo/assets/hgs-open.desktop \
+		debian/hgs-git/usr/share/applications/hgs-open.desktop
+	install -Dm644 hgs-git-repo/assets/hgslogo.svg \
+		debian/hgs-git/usr/share/icons/hicolor/scalable/apps/hgslogo.svg
+
+	# Create HGS Version file
+	@if [ -f hgs-git-repo/.hgs-version ]; then \
+		. hgs-git-repo/.hgs-version; \
+		echo "$$VERSION" > debian/hgs-git/usr/share/quickshell/hgs/VERSION; \
+	else \
+		echo "dev" > debian/hgs-git/usr/share/quickshell/hgs/VERSION; \
+	fi
+
+override_dh_auto_clean:
+	# Don't delete hgs-git-repo directory - it's part of the source package (native format)
+	# Clean up build artifacts
+	rm -f hgs
+	rm -rf hgs-git-repo/core/bin
+	rm -rf debian/tmp-home
+	dh_auto_clean

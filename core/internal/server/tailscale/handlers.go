@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 )
 
 // HandleRequest routes an IPC request to the appropriate handler.

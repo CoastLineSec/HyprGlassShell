@@ -8,10 +8,10 @@ import qs.Modules.ControlCenter.Components
 import qs.Modules.ControlCenter.Models
 import "./utils/state.js" as StateUtils
 
-DankPopout {
+HGSPopout {
     id: root
 
-    layerNamespace: "dms:control-center"
+    layerNamespace: "hgs:control-center"
     fullHeightSurface: true
 
     property string expandedSection: ""
@@ -195,7 +195,7 @@ DankPopout {
                 }
             }
 
-            DankFlickable {
+            HGSFlickable {
                 id: contentFlickable
                 anchors.fill: parent
                 clip: true

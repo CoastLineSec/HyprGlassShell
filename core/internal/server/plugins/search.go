@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/plugins"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/plugins"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 )
 
 func HandleSearch(conn net.Conn, req models.Request) {
@@ -65,8 +65,8 @@ func HandleSearch(conn net.Conn, req models.Request) {
 			Compositors:  p.Compositors,
 			Dependencies: p.Dependencies,
 			Installed:    installed,
-			FirstParty:   strings.HasPrefix(p.Repo, "https://github.com/AvengeMedia"),
-			RequiresDMS:  p.RequiresDMS,
+			FirstParty:   strings.HasPrefix(p.Repo, "https://github.com/CoastLineSec"),
+			RequiresHGS:  p.RequiresHGS,
 		}
 	}
 

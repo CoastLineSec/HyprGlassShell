@@ -46,7 +46,7 @@ func TestNewRegistry(t *testing.T) {
 
 func TestGetCacheDir(t *testing.T) {
 	cacheDir := getCacheDir()
-	assert.Contains(t, cacheDir, "/tmp/dankdots-plugin-registry")
+	assert.Contains(t, cacheDir, "/tmp/hgsdots-plugin-registry")
 }
 
 func setupTestRegistry(t *testing.T) (*Registry, afero.Fs, string) {
@@ -79,12 +79,12 @@ func TestLoadPlugins(t *testing.T) {
 
 		plugin1 := Plugin{
 			Name:         "TestPlugin1",
-			Capabilities: []string{"dankbar-widget"},
+			Capabilities: []string{"hgsbar-widget"},
 			Category:     "monitoring",
 			Repo:         "https://github.com/test/plugin1",
 			Author:       "Test Author",
 			Description:  "Test plugin 1",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 
@@ -96,7 +96,7 @@ func TestLoadPlugins(t *testing.T) {
 			Author:       "Another Author",
 			Description:  "Test plugin 2",
 			Dependencies: []string{"dep1", "dep2"},
-			Compositors:  []string{"hyprland", "niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"arch"},
 			Screenshot:   "https://example.com/screenshot.png",
 		}
@@ -110,7 +110,7 @@ func TestLoadPlugins(t *testing.T) {
 
 		assert.Equal(t, "TestPlugin1", registry.plugins[0].Name)
 		assert.Equal(t, "TestPlugin2", registry.plugins[1].Name)
-		assert.Equal(t, []string{"dankbar-widget"}, registry.plugins[0].Capabilities)
+		assert.Equal(t, []string{"hgsbar-widget"}, registry.plugins[0].Capabilities)
 		assert.Equal(t, []string{"dep1", "dep2"}, registry.plugins[1].Dependencies)
 	})
 
@@ -131,7 +131,7 @@ func TestLoadPlugins(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 		createTestPlugin(t, fs, tmpDir, "valid.json", plugin)
@@ -156,7 +156,7 @@ func TestLoadPlugins(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 		createTestPlugin(t, fs, tmpDir, "valid.json", plugin)
@@ -183,7 +183,7 @@ func TestLoadPlugins(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 		createTestPlugin(t, fs, tmpDir, "valid.json", plugin)
@@ -214,7 +214,7 @@ func TestList(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 
@@ -236,7 +236,7 @@ func TestList(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 
@@ -266,7 +266,7 @@ func TestUpdate(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 
@@ -299,7 +299,7 @@ func TestUpdate(t *testing.T) {
 			Repo:         "https://github.com/test/test",
 			Author:       "Test",
 			Description:  "Test",
-			Compositors:  []string{"niri"},
+			Compositors:  []string{"hyprland"},
 			Distro:       []string{"any"},
 		}
 

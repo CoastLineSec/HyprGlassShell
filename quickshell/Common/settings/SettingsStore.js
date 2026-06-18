@@ -54,11 +54,11 @@ function migrateToVersion(obj, targetVersion) {
 
         if (settings.barConfigs === undefined) {
             var position = 0;
-            if (settings.dankBarAtBottom !== undefined || settings.topBarAtBottom !== undefined) {
-                var atBottom = settings.dankBarAtBottom !== undefined ? settings.dankBarAtBottom : settings.topBarAtBottom;
+            if (settings.hgsBarAtBottom !== undefined || settings.topBarAtBottom !== undefined) {
+                var atBottom = settings.hgsBarAtBottom !== undefined ? settings.hgsBarAtBottom : settings.topBarAtBottom;
                 position = atBottom ? 1 : 0;
-            } else if (settings.dankBarPosition !== undefined) {
-                position = settings.dankBarPosition;
+            } else if (settings.hgsBarPosition !== undefined) {
+                position = settings.hgsBarPosition;
             }
 
             var defaultConfig = {
@@ -68,28 +68,27 @@ function migrateToVersion(obj, targetVersion) {
                 position: position,
                 screenPreferences: ["all"],
                 showOnLastDisplay: true,
-                leftWidgets: settings.dankBarLeftWidgets || ["launcherButton", "workspaceSwitcher", "focusedWindow"],
-                centerWidgets: settings.dankBarCenterWidgets || ["music", "clock", "weather"],
-                rightWidgets: settings.dankBarRightWidgets || ["systemTray", "clipboard", "cpuUsage", "memUsage", "notificationButton", "battery", "controlCenterButton"],
-                spacing: settings.dankBarSpacing !== undefined ? settings.dankBarSpacing : 4,
-                innerPadding: settings.dankBarInnerPadding !== undefined ? settings.dankBarInnerPadding : 4,
-                bottomGap: settings.dankBarBottomGap !== undefined ? settings.dankBarBottomGap : 0,
-                transparency: settings.dankBarTransparency !== undefined ? settings.dankBarTransparency : 1.0,
-                widgetTransparency: settings.dankBarWidgetTransparency !== undefined ? settings.dankBarWidgetTransparency : 1.0,
-                squareCorners: settings.dankBarSquareCorners !== undefined ? settings.dankBarSquareCorners : false,
-                noBackground: settings.dankBarNoBackground !== undefined ? settings.dankBarNoBackground : false,
-                gothCornersEnabled: settings.dankBarGothCornersEnabled !== undefined ? settings.dankBarGothCornersEnabled : false,
-                gothCornerRadiusOverride: settings.dankBarGothCornerRadiusOverride !== undefined ? settings.dankBarGothCornerRadiusOverride : false,
-                gothCornerRadiusValue: settings.dankBarGothCornerRadiusValue !== undefined ? settings.dankBarGothCornerRadiusValue : 12,
-                borderEnabled: settings.dankBarBorderEnabled !== undefined ? settings.dankBarBorderEnabled : false,
-                borderColor: settings.dankBarBorderColor || "surfaceText",
-                borderOpacity: settings.dankBarBorderOpacity !== undefined ? settings.dankBarBorderOpacity : 1.0,
-                borderThickness: settings.dankBarBorderThickness !== undefined ? settings.dankBarBorderThickness : 1,
-                fontScale: settings.dankBarFontScale !== undefined ? settings.dankBarFontScale : 1.0,
-                autoHide: settings.dankBarAutoHide !== undefined ? settings.dankBarAutoHide : false,
-                autoHideDelay: settings.dankBarAutoHideDelay !== undefined ? settings.dankBarAutoHideDelay : 250,
-                openOnOverview: settings.dankBarOpenOnOverview !== undefined ? settings.dankBarOpenOnOverview : false,
-                visible: settings.dankBarVisible !== undefined ? settings.dankBarVisible : true,
+                leftWidgets: settings.hgsBarLeftWidgets || ["launcherButton", "workspaceSwitcher", "focusedWindow"],
+                centerWidgets: settings.hgsBarCenterWidgets || ["music", "clock", "weather"],
+                rightWidgets: settings.hgsBarRightWidgets || ["systemTray", "clipboard", "cpuUsage", "memUsage", "notificationButton", "battery", "controlCenterButton"],
+                spacing: settings.hgsBarSpacing !== undefined ? settings.hgsBarSpacing : 4,
+                innerPadding: settings.hgsBarInnerPadding !== undefined ? settings.hgsBarInnerPadding : 4,
+                bottomGap: settings.hgsBarBottomGap !== undefined ? settings.hgsBarBottomGap : 0,
+                transparency: settings.hgsBarTransparency !== undefined ? settings.hgsBarTransparency : 1.0,
+                widgetTransparency: settings.hgsBarWidgetTransparency !== undefined ? settings.hgsBarWidgetTransparency : 1.0,
+                squareCorners: settings.hgsBarSquareCorners !== undefined ? settings.hgsBarSquareCorners : false,
+                noBackground: settings.hgsBarNoBackground !== undefined ? settings.hgsBarNoBackground : false,
+                gothCornersEnabled: settings.hgsBarGothCornersEnabled !== undefined ? settings.hgsBarGothCornersEnabled : false,
+                gothCornerRadiusOverride: settings.hgsBarGothCornerRadiusOverride !== undefined ? settings.hgsBarGothCornerRadiusOverride : false,
+                gothCornerRadiusValue: settings.hgsBarGothCornerRadiusValue !== undefined ? settings.hgsBarGothCornerRadiusValue : 12,
+                borderEnabled: settings.hgsBarBorderEnabled !== undefined ? settings.hgsBarBorderEnabled : false,
+                borderColor: settings.hgsBarBorderColor || "surfaceText",
+                borderOpacity: settings.hgsBarBorderOpacity !== undefined ? settings.hgsBarBorderOpacity : 1.0,
+                borderThickness: settings.hgsBarBorderThickness !== undefined ? settings.hgsBarBorderThickness : 1,
+                fontScale: settings.hgsBarFontScale !== undefined ? settings.hgsBarFontScale : 1.0,
+                autoHide: settings.hgsBarAutoHide !== undefined ? settings.hgsBarAutoHide : false,
+                autoHideDelay: settings.hgsBarAutoHideDelay !== undefined ? settings.hgsBarAutoHideDelay : 250,
+                visible: settings.hgsBarVisible !== undefined ? settings.hgsBarVisible : true,
                 popupGapsAuto: settings.popupGapsAuto !== undefined ? settings.popupGapsAuto : true,
                 popupGapsManual: settings.popupGapsManual !== undefined ? settings.popupGapsManual : 4
             };
@@ -97,15 +96,15 @@ function migrateToVersion(obj, targetVersion) {
             settings.barConfigs = [defaultConfig];
 
             var legacyKeys = [
-                "dankBarLeftWidgets", "dankBarCenterWidgets", "dankBarRightWidgets",
-                "dankBarWidgetOrder", "dankBarAutoHide", "dankBarAutoHideDelay",
-                "dankBarOpenOnOverview", "dankBarVisible", "dankBarSpacing",
-                "dankBarBottomGap", "dankBarInnerPadding", "dankBarPosition",
-                "dankBarSquareCorners", "dankBarNoBackground", "dankBarGothCornersEnabled",
-                "dankBarGothCornerRadiusOverride", "dankBarGothCornerRadiusValue",
-                "dankBarBorderEnabled", "dankBarBorderColor", "dankBarBorderOpacity",
-                "dankBarBorderThickness", "popupGapsAuto", "popupGapsManual",
-                "dankBarAtBottom", "topBarAtBottom", "dankBarTransparency", "dankBarWidgetTransparency"
+                "hgsBarLeftWidgets", "hgsBarCenterWidgets", "hgsBarRightWidgets",
+                "hgsBarWidgetOrder", "hgsBarAutoHide", "hgsBarAutoHideDelay",
+                "hgsBarVisible", "hgsBarSpacing",
+                "hgsBarBottomGap", "hgsBarInnerPadding", "hgsBarPosition",
+                "hgsBarSquareCorners", "hgsBarNoBackground", "hgsBarGothCornersEnabled",
+                "hgsBarGothCornerRadiusOverride", "hgsBarGothCornerRadiusValue",
+                "hgsBarBorderEnabled", "hgsBarBorderColor", "hgsBarBorderOpacity",
+                "hgsBarBorderThickness", "popupGapsAuto", "popupGapsManual",
+                "hgsBarAtBottom", "topBarAtBottom", "hgsBarTransparency", "hgsBarWidgetTransparency"
             ];
 
             for (var i = 0; i < legacyKeys.length; i++) {

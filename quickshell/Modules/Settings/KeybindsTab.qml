@@ -105,7 +105,7 @@ Item {
     function confirmRemoveBind(key, remainingKey) {
         removeBindConfirm.showWithOptions({
             title: I18n.tr("Remove Shortcut?"),
-            message: KeybindsService.currentProvider === "hyprland" ? I18n.tr("Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.").arg(key) : I18n.tr("Remove the shortcut %1?").arg(key),
+            message: I18n.tr("Remove the shortcut %1? An unbind entry will be saved to hgs/user-keybinds.lua so it stays removed across HGS updates.").arg(key),
             confirmText: I18n.tr("Remove"),
             confirmColor: Theme.primary,
             onConfirm: () => {
@@ -118,7 +118,7 @@ Item {
     function confirmResetBind(key, remainingKey) {
         removeBindConfirm.showWithOptions({
             title: I18n.tr("Reset to Default?"),
-            message: I18n.tr("Drop your override for %1 so the DMS default action re-applies?").arg(key),
+            message: I18n.tr("Drop your override for %1 so the HGS default action re-applies?").arg(key),
             confirmText: I18n.tr("Reset"),
             confirmColor: Theme.primary,
             onConfirm: () => {
@@ -241,7 +241,7 @@ Item {
         });
     }
 
-    DankFlickable {
+    HGSFlickable {
         id: flickable
         anchors.fill: parent
         clip: true
@@ -273,7 +273,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -295,7 +295,7 @@ Item {
                             }
 
                             StyledText {
-                                readonly property string bindsFile: KeybindsService.currentProvider === "niri" ? "dms/binds.kdl" : KeybindsService.currentProvider === "hyprland" ? "dms/binds-user.lua" : "dms/binds.conf"
+                                readonly property string bindsFile: "hgs/user-keybinds.lua"
                                 text: KeybindsService.readOnly ? I18n.tr("Hyprland conf mode is read-only in Settings") : I18n.tr("Click any shortcut to edit. Changes save to %1").arg(bindsFile)
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
@@ -310,7 +310,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankTextField {
+                        HGSTextField {
                             id: searchField
                             width: parent.width - addButton.width - Theme.spacingM
                             placeholderText: I18n.tr("Search keybinds...")
@@ -321,7 +321,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: addButton
                             width: searchField.height
                             height: searchField.height
@@ -345,7 +345,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 radius: Theme.cornerRadius
 
-                readonly property var status: KeybindsService.dmsStatus
+                readonly property var status: KeybindsService.hgsStatus
                 readonly property bool showLegacy: KeybindsService.readOnly
                 readonly property bool showError: !showLegacy && !status.included && status.exists
                 readonly property bool showWarning: !showLegacy && status.included && status.overriddenBy > 0
@@ -366,7 +366,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: warningBox.showWarning ? "info" : "warning"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -396,17 +396,17 @@ Item {
                             }
 
                             StyledText {
-                                readonly property string bindsFile: KeybindsService.currentProvider === "niri" ? "dms/binds.kdl" : KeybindsService.currentProvider === "hyprland" ? "dms/binds-user.lua" : "dms/binds.conf"
+                                readonly property string bindsFile: "hgs/user-keybinds.lua"
                                 text: {
                                     if (warningBox.showLegacy)
-                                        return I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.");
+                                        return I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.");
                                     if (warningBox.showSetup)
                                         return I18n.tr("Click 'Setup' to create %1 and add include to config.").arg(bindsFile);
                                     if (warningBox.showError)
                                         return I18n.tr("%1 exists but is not included in config. Custom keybinds will not work until this is fixed.").arg(bindsFile);
                                     if (warningBox.showWarning) {
                                         const count = warningBox.status.overriddenBy;
-                                        return I18n.ntr("%1 DMS bind may be overridden by config binds that come after the include.", "%1 DMS binds may be overridden by config binds that come after the include.", count).arg(count);
+                                        return I18n.ntr("%1 HGS bind may be overridden by config binds that come after the include.", "%1 HGS binds may be overridden by config binds that come after the include.", count).arg(count);
                                     }
                                     return "";
                                 }
@@ -418,7 +418,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        HGSButton {
                             id: fixButton
                             visible: !warningBox.showLegacy && (warningBox.showError || warningBox.showSetup)
                             text: {
@@ -432,7 +432,7 @@ Item {
                             textColor: Theme.primaryText
                             enabled: !KeybindsService.fixing
                             anchors.verticalCenter: parent.verticalCenter
-                            onClicked: KeybindsService.fixDmsBindsInclude()
+                            onClicked: KeybindsService.fixHgsBindsInclude()
                         }
                     }
                 }
@@ -536,7 +536,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "add"
                             size: Theme.iconSize
                             color: Theme.surfaceText
@@ -560,7 +560,7 @@ Item {
                                 keys: [
                                     {
                                         key: "",
-                                        source: "dms",
+                                        source: "hgs",
                                         isOverride: true
                                     }
                                 ],
@@ -593,7 +593,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "list"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -619,7 +619,7 @@ Item {
                         spacing: Theme.spacingM
                         visible: KeybindsService.loading
 
-                        DankIcon {
+                        HGSIcon {
                             id: loadingIcon
                             name: "sync"
                             size: 20

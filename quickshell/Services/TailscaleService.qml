@@ -14,21 +14,21 @@ Singleton {
     onRefCountChanged: {
         if (refCount > 0) {
             ensureSubscription();
-        } else if (refCount === 0 && DMSService.activeSubscriptions.includes("tailscale")) {
-            DMSService.removeSubscription("tailscale");
+        } else if (refCount === 0 && HGSService.activeSubscriptions.includes("tailscale")) {
+            HGSService.removeSubscription("tailscale");
         }
     }
 
     function ensureSubscription() {
         if (refCount <= 0)
             return;
-        if (!DMSService.isConnected)
+        if (!HGSService.isConnected)
             return;
-        if (DMSService.activeSubscriptions.includes("tailscale"))
+        if (HGSService.activeSubscriptions.includes("tailscale"))
             return;
-        if (DMSService.activeSubscriptions.includes("all"))
+        if (HGSService.activeSubscriptions.includes("all"))
             return;
-        DMSService.addSubscription("tailscale");
+        HGSService.addSubscription("tailscale");
         if (available) {
             getStatus();
         }
@@ -84,28 +84,28 @@ Singleton {
 
     readonly property int onlinePeerCount: onlinePeers.length
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("HGS_SOCKET")
 
     Component.onCompleted: {
         if (socketPath && socketPath.length > 0) {
-            checkDMSCapabilities();
+            checkHGSCapabilities();
         }
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
-                checkDMSCapabilities();
+            if (HGSService.isConnected) {
+                checkHGSCapabilities();
                 ensureSubscription();
             }
         }
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: HGSService
+        enabled: HGSService.isConnected
 
         function onTailscaleStateUpdate(data) {
             root.log.debug("Subscription update received");
@@ -113,17 +113,17 @@ Singleton {
         }
 
         function onCapabilitiesReceived() {
-            checkDMSCapabilities();
+            checkHGSCapabilities();
         }
     }
 
-    function checkDMSCapabilities() {
-        if (!DMSService.isConnected)
+    function checkHGSCapabilities() {
+        if (!HGSService.isConnected)
             return;
-        if (DMSService.capabilities.length === 0)
+        if (HGSService.capabilities.length === 0)
             return;
         const wasAvailable = available;
-        available = DMSService.capabilities.includes("tailscale");
+        available = HGSService.capabilities.includes("tailscale");
 
         if (!available)
             return;
@@ -138,7 +138,7 @@ Singleton {
     function getStatus() {
         if (!available)
             return;
-        DMSService.sendRequest("tailscale.getStatus", null, response => {
+        HGSService.sendRequest("tailscale.getStatus", null, response => {
             if (response.result) {
                 updateState(response.result);
             }
@@ -161,7 +161,7 @@ Singleton {
     function refresh(callback) {
         if (!available)
             return;
-        DMSService.sendRequest("tailscale.refresh", null, response => {
+        HGSService.sendRequest("tailscale.refresh", null, response => {
             if (callback)
                 callback(response);
         });
@@ -172,7 +172,7 @@ Singleton {
     function sendAction(method, params, callback) {
         if (!available)
             return;
-        DMSService.sendRequest(method, params, response => {
+        HGSService.sendRequest(method, params, response => {
             if (response.error) {
                 root.log.warn(method + " failed: " + response.error);
                 ToastService.showError(I18n.tr("Tailscale action failed", "Toast shown when a Tailscale write action is rejected"), response.error);

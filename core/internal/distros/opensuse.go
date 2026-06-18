@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 func init() {
@@ -30,8 +30,6 @@ type OpenSUSEDistribution struct {
 	*ManualPackageInstaller
 	config DistroConfig
 }
-
-const openSUSENiriWaylandServerPackage = "libwayland-server0"
 
 func NewOpenSUSEDistribution(config DistroConfig, logChan chan<- string) *OpenSUSEDistribution {
 	base := NewBaseDistribution(logChan)
@@ -65,8 +63,8 @@ func (o *OpenSUSEDistribution) DetectDependencies(ctx context.Context, wm deps.W
 func (o *OpenSUSEDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	// DMS at the top (shell is prominent)
-	dependencies = append(dependencies, o.detectDMS())
+	// HGS at the top (shell is prominent)
+	dependencies = append(dependencies, o.detectHGS())
 
 	// Terminal with choice support
 	dependencies = append(dependencies, o.detectSpecificTerminal(terminal))
@@ -75,18 +73,13 @@ func (o *OpenSUSEDistribution) DetectDependenciesWithTerminal(ctx context.Contex
 	dependencies = append(dependencies, o.detectGit())
 	dependencies = append(dependencies, o.detectWindowManager(wm))
 	dependencies = append(dependencies, o.detectQuickshell())
-	dependencies = append(dependencies, o.detectDMSGreeter())
+	dependencies = append(dependencies, o.detectHGSGreeter())
 	dependencies = append(dependencies, o.detectXDGPortal())
 	dependencies = append(dependencies, o.detectAccountsService())
 
 	// Hyprland-specific tools
 	if wm == deps.WindowManagerHyprland {
 		dependencies = append(dependencies, o.detectHyprlandTools()...)
-	}
-
-	// Niri-specific tools
-	if wm == deps.WindowManagerNiri {
-		dependencies = append(dependencies, o.detectXwaylandSatellite())
 	}
 
 	dependencies = append(dependencies, o.detectMatugen())
@@ -105,8 +98,8 @@ func (o *OpenSUSEDistribution) packageInstalled(pkg string) bool {
 	return err == nil
 }
 
-func (o *OpenSUSEDistribution) detectDMSGreeter() deps.Dependency {
-	return o.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", o.packageInstalled("dms-greeter"))
+func (o *OpenSUSEDistribution) detectHGSGreeter() deps.Dependency {
+	return o.detectOptionalPackage("hgs-greeter", "HyprGlassShell greetd greeter", o.packageInstalled("hgs-greeter"))
 }
 
 func (o *OpenSUSEDistribution) GetPackageMapping(wm deps.WindowManager) map[string]PackageMapping {
@@ -122,13 +115,13 @@ func (o *OpenSUSEDistribution) GetPackageMappingWithVariants(wm deps.WindowManag
 		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
 		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
 
-		// DMS packages from OBS
-		"dms (DankMaterialShell)": o.getDmsMapping(variants["dms (DankMaterialShell)"]),
-		"quickshell":              o.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             {Name: "dms-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"matugen":                 {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"dgop":                    {Name: "dgop", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		// HGS packages from OBS
+		"hgs (HyprGlassShell)": o.getHgsMapping(variants["hgs (HyprGlassShell)"]),
+		"quickshell":           o.getQuickshellMapping(variants["quickshell"]),
+		"hgs-greeter":          {Name: "hgs-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"},
+		"ghostty":              {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"},
+		"matugen":              {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"},
+		"dgop":                 {Name: "dgop", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"},
 	}
 
 	switch wm {
@@ -136,56 +129,23 @@ func (o *OpenSUSEDistribution) GetPackageMappingWithVariants(wm deps.WindowManag
 		packages["hyprland"] = PackageMapping{Name: "hyprland", Repository: RepoTypeSystem}
 		packages["hyprctl"] = PackageMapping{Name: "hyprland", Repository: RepoTypeSystem}
 		packages["jq"] = PackageMapping{Name: "jq", Repository: RepoTypeSystem}
-	case deps.WindowManagerNiri:
-		// Niri stable has native package support on openSUSE
-		niriVariant := variants["niri"]
-		packages["niri"] = o.getNiriMapping(niriVariant)
-		packages["xwayland-satellite"] = o.getXwaylandSatelliteMapping(niriVariant)
 	}
 
 	return packages
 }
 
-func (o *OpenSUSEDistribution) getDmsMapping(variant deps.PackageVariant) PackageMapping {
+func (o *OpenSUSEDistribution) getHgsMapping(variant deps.PackageVariant) PackageMapping {
 	if variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms-git"}
+		return PackageMapping{Name: "hgs-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:hgs-git"}
 	}
-	return PackageMapping{Name: "dms", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms"}
+	return PackageMapping{Name: "hgs", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:hgs"}
 }
 
 func (o *OpenSUSEDistribution) getQuickshellMapping(variant deps.PackageVariant) PackageMapping {
 	if forceQuickshellGit || variant == deps.VariantGit {
-		return PackageMapping{Name: "quickshell-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"}
+		return PackageMapping{Name: "quickshell-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"}
 	}
-	return PackageMapping{Name: "quickshell", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"}
-}
-
-func (o *OpenSUSEDistribution) getNiriMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "niri-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"}
-	}
-	return PackageMapping{Name: "niri", Repository: RepoTypeSystem}
-}
-
-func (o *OpenSUSEDistribution) getXwaylandSatelliteMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "xwayland-satellite-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"}
-	}
-	return PackageMapping{Name: "xwayland-satellite", Repository: RepoTypeSystem}
-}
-
-func (o *OpenSUSEDistribution) detectXwaylandSatellite() deps.Dependency {
-	status := deps.StatusMissing
-	if o.commandExists("xwayland-satellite") {
-		status = deps.StatusInstalled
-	}
-
-	return deps.Dependency{
-		Name:        "xwayland-satellite",
-		Status:      status,
-		Description: "Xwayland support",
-		Required:    true,
-	}
+	return PackageMapping{Name: "quickshell", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:coastlinesec"}
 }
 
 func (o *OpenSUSEDistribution) detectAccountsService() deps.Dependency {
@@ -359,8 +319,8 @@ func (o *OpenSUSEDistribution) InstallPackages(ctx context.Context, dependencies
 		o.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := o.EnableDMSService(ctx, wm); err != nil {
-		o.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := o.EnableHGSService(ctx, wm); err != nil {
+		o.log(fmt.Sprintf("Warning: failed to enable hgs service: %v", err))
 	}
 
 	// Complete
@@ -412,17 +372,7 @@ func (o *OpenSUSEDistribution) categorizePackages(dependencies []deps.Dependency
 		}
 	}
 
-	systemPkgs = o.appendMissingSystemPackages(systemPkgs, openSUSENiriRuntimePackages(wm, disabledFlags))
-
 	return systemPkgs, obsPkgs, manualPkgs, variantMap
-}
-
-func openSUSENiriRuntimePackages(wm deps.WindowManager, disabledFlags map[string]bool) []string {
-	if wm != deps.WindowManagerNiri || disabledFlags["niri"] {
-		return nil
-	}
-
-	return []string{openSUSENiriWaylandServerPackage}
 }
 
 func (o *OpenSUSEDistribution) appendMissingSystemPackages(systemPkgs []string, extraPkgs []string) []string {
@@ -466,7 +416,7 @@ func (o *OpenSUSEDistribution) enableOBSRepos(ctx context.Context, obsPkgs []Pac
 		if pkg.RepoURL != "" && !enabledRepos[pkg.RepoURL] {
 			o.log(fmt.Sprintf("Enabling OBS repository: %s", pkg.RepoURL))
 
-			// RepoURL format: "home:AvengeMedia:danklinux"
+			// RepoURL format: "home:AvengeMedia:coastlinesec"
 			repoPath := strings.ReplaceAll(pkg.RepoURL, ":", ":/")
 			repoName := strings.ReplaceAll(pkg.RepoURL, ":", "-")
 			repoURL := fmt.Sprintf("https://download.opensuse.org/repositories/%s/%s/%s.repo",
@@ -667,7 +617,7 @@ func (o *OpenSUSEDistribution) installQuickshell(ctx context.Context, variant de
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "hgsinstall")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}

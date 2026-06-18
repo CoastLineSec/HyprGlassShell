@@ -27,21 +27,13 @@ Item {
     property bool hasMultipleBars: SettingsData.barConfigs.length > 1
     property int pluginCatalogRevision: 0
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: sharedTooltip
     }
 
     property var baseWidgetDefinitions: {
         pluginCatalogRevision;
         var coreWidgets = [
-            {
-                "id": "layout",
-                "text": I18n.tr("Layout"),
-                "description": I18n.tr("Display and switch MangoWC layouts"),
-                "icon": "view_quilt",
-                "enabled": CompositorService.isMango && MangoService.available,
-                "warning": !CompositorService.isMango ? I18n.tr("Requires MangoWC compositor") : (!MangoService.available ? I18n.tr("Mango service not available") : undefined)
-            },
             {
                 "id": "launcherButton",
                 "text": I18n.tr("App Launcher"),
@@ -249,7 +241,7 @@ Item {
                 "description": I18n.tr("Check for system updates"),
                 "icon": "update",
                 "enabled": SystemUpdateService.sysupdateAvailable,
-                "warning": SystemUpdateService.sysupdateAvailable ? undefined : I18n.tr("Requires DMS server with sysupdate capability")
+                "warning": SystemUpdateService.sysupdateAvailable ? undefined : I18n.tr("Requires HGS server with sysupdate capability")
             },
             {
                 "id": "powerMenuButton",
@@ -869,7 +861,7 @@ Item {
         widgetSelectionPopupLoader.item.show();
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -900,7 +892,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "toolbar"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -916,7 +908,7 @@ Item {
                         }
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: barSelectorGroup
                         width: parent.width
                         model: SettingsData.barConfigs.map(cfg => cfg.name || ("Bar " + (SettingsData.barConfigs.indexOf(cfg) + 1)))
@@ -952,7 +944,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "widgets"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -985,7 +977,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "refresh"
                                     size: 14
                                     color: Theme.surfaceText

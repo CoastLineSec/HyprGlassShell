@@ -248,8 +248,8 @@ QtObject {
             "description": I18n.tr("VPN Connections"),
             "icon": "vpn_key",
             "type": "builtin_plugin",
-            "enabled": DMSNetworkService.available,
-            "warning": !DMSNetworkService.available ? I18n.tr("VPN not available") : undefined,
+            "enabled": HGSNetworkService.available,
+            "warning": !HGSNetworkService.available ? I18n.tr("VPN not available") : undefined,
             "isBuiltinPlugin": true
         },
         {

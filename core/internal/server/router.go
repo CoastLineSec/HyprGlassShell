@@ -5,26 +5,25 @@ import (
 	"net"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/bluez"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/clipboard"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups"
-	serverDbus "github.com/AvengeMedia/DankMaterialShell/core/internal/server/dbus"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/freedesktop"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/location"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/mime"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
-	serverPlugins "github.com/AvengeMedia/DankMaterialShell/core/internal/server/plugins"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/sysupdate"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/tailscale"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/thememode"
-	serverThemes "github.com/AvengeMedia/DankMaterialShell/core/internal/server/themes"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wayland"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlroutput"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/apppicker"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/bluez"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/brightness"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/clipboard"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/cups"
+	serverDbus "github.com/CoastLineSec/HyprGlassShell/core/internal/server/dbus"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/evdev"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/freedesktop"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/location"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/loginctl"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/mime"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/network"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/sysupdate"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/tailscale"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/thememode"
+	serverThemes "github.com/CoastLineSec/HyprGlassShell/core/internal/server/themes"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wayland"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/wlroutput"
 )
 
 func RouteRequest(conn net.Conn, req models.Request) {
@@ -38,7 +37,7 @@ func RouteRequest(conn net.Conn, req models.Request) {
 	}
 
 	if strings.HasPrefix(req.Method, "plugins.") {
-		serverPlugins.HandleRequest(conn, req)
+		models.RespondError(conn, req.ID, "plugin registry is disabled in HyprGlassShell")
 		return
 	}
 

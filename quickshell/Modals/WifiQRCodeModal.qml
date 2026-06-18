@@ -9,10 +9,10 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
     visible: false
-    layerNamespace: "dms:wifi-qrcode"
+    layerNamespace: "hgs:wifi-qrcode"
 
     property bool disablePopupTransparency: true
     property string wifiSSID: ""
@@ -48,7 +48,7 @@ DankModal {
     function fetchNetworkQRCode(ssid) {
         // TODO: Add loading UI?
 
-        DMSService.sendRequest("network.qrcode", {
+        HGSService.sendRequest("network.qrcode", {
             ssid: ssid
         }, response => {
             if (response.error) {
@@ -62,7 +62,7 @@ DankModal {
     }
 
     function deleteQRCodeFile(path) {
-        DMSService.sendRequest("network.delete-qrcode", {
+        HGSService.sendRequest("network.delete-qrcode", {
             path: path
         }, response => {
             if (response.error) {
@@ -129,7 +129,7 @@ DankModal {
                         Layout.alignment: Qt.AlignLeft
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "save"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -142,7 +142,7 @@ DankModal {
                         Layout.alignment: Qt.AlignRight
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText

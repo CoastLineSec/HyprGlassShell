@@ -5,10 +5,10 @@ import (
 	"math"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_screencopy"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/proto/wlr_screencopy"
+	wlhelpers "github.com/CoastLineSec/HyprGlassShell/core/internal/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 )
 
 type WaylandOutput struct {
@@ -156,106 +156,9 @@ func (s *Screenshoter) captureWindow() (*CaptureResult, error) {
 	switch DetectCompositor() {
 	case CompositorHyprland:
 		return s.captureAndCrop(output, region)
-	case CompositorMango:
-		return s.captureMangoWindow(output, region, geom)
 	default:
 		return s.captureRegionOnOutput(output, region)
 	}
-}
-
-func (s *Screenshoter) captureMangoWindow(output *WaylandOutput, region Region, geom *WindowGeometry) (*CaptureResult, error) {
-	result, err := s.captureWholeOutput(output)
-	if err != nil {
-		return nil, err
-	}
-
-	scale := geom.Scale
-	if scale <= 0 || scale == 1.0 {
-		if output.fractionalScale > 1.0 {
-			scale = output.fractionalScale
-		}
-	}
-	if scale <= 0 {
-		scale = 1.0
-	}
-
-	localX := int(float64(region.X-geom.OutputX) * scale)
-	localY := int(float64(region.Y-geom.OutputY) * scale)
-	w := int(float64(region.Width) * scale)
-	h := int(float64(region.Height) * scale)
-
-	if localX < 0 {
-		w += localX
-		localX = 0
-	}
-	if localY < 0 {
-		h += localY
-		localY = 0
-	}
-	if localX+w > result.Buffer.Width {
-		w = result.Buffer.Width - localX
-	}
-	if localY+h > result.Buffer.Height {
-		h = result.Buffer.Height - localY
-	}
-
-	if w <= 0 || h <= 0 {
-		result.Buffer.Close()
-		return nil, fmt.Errorf("window not visible on output")
-	}
-
-	cropped, err := CreateShmBuffer(w, h, w*4)
-	if err != nil {
-		result.Buffer.Close()
-		return nil, fmt.Errorf("create crop buffer: %w", err)
-	}
-
-	srcData := result.Buffer.Data()
-	dstData := cropped.Data()
-
-	for y := 0; y < h; y++ {
-		srcY := localY + y
-		if result.YInverted {
-			srcY = result.Buffer.Height - 1 - (localY + y)
-		}
-		if srcY < 0 || srcY >= result.Buffer.Height {
-			continue
-		}
-
-		dstY := y
-		if result.YInverted {
-			dstY = h - 1 - y
-		}
-
-		for x := 0; x < w; x++ {
-			srcX := localX + x
-			if srcX < 0 || srcX >= result.Buffer.Width {
-				continue
-			}
-
-			si := srcY*result.Buffer.Stride + srcX*4
-			di := dstY*cropped.Stride + x*4
-
-			if si+3 >= len(srcData) || di+3 >= len(dstData) {
-				continue
-			}
-
-			dstData[di+0] = srcData[si+0]
-			dstData[di+1] = srcData[si+1]
-			dstData[di+2] = srcData[si+2]
-			dstData[di+3] = srcData[si+3]
-		}
-	}
-
-	result.Buffer.Close()
-	cropped.Format = PixelFormat(result.Format)
-
-	return &CaptureResult{
-		Buffer:    cropped,
-		Region:    region,
-		YInverted: false,
-		Format:    result.Format,
-	}, nil
 }
 
 func (s *Screenshoter) captureFullScreen() (*CaptureResult, error) {
@@ -627,31 +530,6 @@ func (s *Screenshoter) captureRegionOnOutput(output *WaylandOutput, region Regio
 	localY := int32(float64(region.Y-output.y) * scale)
 	w := int32(float64(region.Width) * scale)
 	h := int32(float64(region.Height) * scale)
-
-	if DetectCompositor() == CompositorMango {
-		scaledOutW := int32(float64(output.width) * scale)
-		scaledOutH := int32(float64(output.height) * scale)
-		if localX >= scaledOutW {
-			localX = localX % scaledOutW
-		}
-		if localY >= scaledOutH {
-			localY = localY % scaledOutH
-		}
-		if localX+w > scaledOutW {
-			w = scaledOutW - localX
-		}
-		if localY+h > scaledOutH {
-			h = scaledOutH - localY
-		}
-		if localX < 0 {
-			w += localX
-			localX = 0
-		}
-		if localY < 0 {
-			h += localY
-			localY = 0
-		}
-	}
 
 	cursor := int32(s.config.Cursor)
 

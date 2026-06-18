@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +42,7 @@ func TestGetSocketDir(t *testing.T) {
 
 func TestGetSocketPath(t *testing.T) {
 	path := GetSocketPath()
-	assert.Contains(t, path, "danklinux-")
+	assert.Contains(t, path, "coastlinesec-")
 	assert.Contains(t, path, ".sock")
 	assert.Contains(t, path, fmt.Sprintf("%d", os.Getpid()))
 }
@@ -54,14 +54,14 @@ func TestGetCapabilities(t *testing.T) {
 	t.Run("capabilities without network manager", func(t *testing.T) {
 		networkManager = nil
 		caps := getCapabilities()
-		assert.Contains(t, caps.Capabilities, "plugins")
+		assert.NotContains(t, caps.Capabilities, "plugins")
 		assert.NotContains(t, caps.Capabilities, "network")
 	})
 
 	t.Run("capabilities with network manager", func(t *testing.T) {
 		networkManager = &network.Manager{}
 		caps := getCapabilities()
-		assert.Contains(t, caps.Capabilities, "plugins")
+		assert.NotContains(t, caps.Capabilities, "plugins")
 		assert.Contains(t, caps.Capabilities, "network")
 	})
 }
@@ -162,11 +162,11 @@ func TestCleanupStaleSockets(t *testing.T) {
 	tempDir := t.TempDir()
 	t.Setenv("XDG_RUNTIME_DIR", tempDir)
 
-	staleSocket := filepath.Join(tempDir, "danklinux-4194305.sock")
+	staleSocket := filepath.Join(tempDir, "coastlinesec-4194305.sock")
 	err := os.WriteFile(staleSocket, []byte{}, 0o600)
 	require.NoError(t, err)
 
-	activeSocket := filepath.Join(tempDir, fmt.Sprintf("danklinux-%d.sock", os.Getpid()))
+	activeSocket := filepath.Join(tempDir, fmt.Sprintf("coastlinesec-%d.sock", os.Getpid()))
 	err = os.WriteFile(activeSocket, []byte{}, 0o600)
 	require.NoError(t, err)
 

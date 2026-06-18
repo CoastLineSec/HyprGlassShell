@@ -114,7 +114,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: triggerField
                     width: 100
                     height: 40

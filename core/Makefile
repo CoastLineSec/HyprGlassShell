@@ -1,7 +1,7 @@
-BINARY_NAME=dms
-BINARY_NAME_INSTALL=dankinstall
-SOURCE_DIR=cmd/dms
-SOURCE_DIR_INSTALL=cmd/dankinstall
+BINARY_NAME=hgs
+BINARY_NAME_INSTALL=hgsinstall
+SOURCE_DIR=cmd/hgs
+SOURCE_DIR_INSTALL=cmd/hgsinstall
 BUILD_DIR=bin
 PREFIX ?= /usr/local
 INSTALL_DIR=$(PREFIX)/bin
@@ -22,19 +22,19 @@ BUILD_LDFLAGS=-ldflags='-s -w -X main.Version=$(VERSION) -X main.buildTime=$(BUI
 # Architecture to build for dist target (amd64, arm64, or all)
 ARCH ?= all
 
-.PHONY: all build dankinstall dist clean install install-all install-dankinstall uninstall uninstall-all uninstall-dankinstall install-config uninstall-config test fmt vet deps print-version help
+.PHONY: all build hgsinstall dist clean install install-all install-hgsinstall uninstall uninstall-all uninstall-hgsinstall install-config uninstall-config test fmt vet deps print-version help
 
 # Default target
 all: build
 
-# Build the main binary (dms)
+# Build the main binary (hgs)
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 $(GO) build $(BUILD_LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./$(SOURCE_DIR)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
-dankinstall:
+hgsinstall:
 	@echo "Building $(BINARY_NAME_INSTALL)..."
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 $(GO) build $(BUILD_LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME_INSTALL) ./$(SOURCE_DIR_INSTALL)
@@ -61,7 +61,7 @@ else
 	@echo "  $(BUILD_DIR)/$(BINARY_NAME)-linux-$(ARCH)"
 endif
 
-build-all: build dankinstall
+build-all: build hgsinstall
 
 install:
 	@echo "Installing $(BINARY_NAME) to $(INSTALL_DIR)..."
@@ -75,7 +75,7 @@ install-all:
 	@install -D -m 755 $(BUILD_DIR)/$(BINARY_NAME_INSTALL) $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Installation complete"
 
-install-dankinstall:
+install-hgsinstall:
 	@echo "Installing $(BINARY_NAME_INSTALL) to $(INSTALL_DIR)..."
 	@install -D -m 755 $(BUILD_DIR)/$(BINARY_NAME_INSTALL) $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Installation complete"
@@ -92,7 +92,7 @@ uninstall-all:
 	@rm -f $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Uninstall complete"
 
-uninstall-dankinstall:
+uninstall-hgsinstall:
 	@echo "Uninstalling $(BINARY_NAME_INSTALL) from $(INSTALL_DIR)..."
 	@rm -f $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Uninstall complete"
@@ -140,18 +140,18 @@ print-version:
 
 help:
 	@echo "Available targets:"
-	@echo "  all                 - Build the main binary (dms) (default)"
-	@echo "  build               - Build the main binary (dms)"
-	@echo "  dankinstall         - Build dankinstall binary"
-	@echo "  dist                - Build dms for linux amd64/arm64 (no update/greeter)"
+	@echo "  all                 - Build the main binary (hgs) (default)"
+	@echo "  build               - Build the main binary (hgs)"
+	@echo "  hgsinstall         - Build hgsinstall binary"
+	@echo "  dist                - Build hgs for linux amd64/arm64 (no update/greeter)"
 	@echo "                        Use ARCH=amd64 or ARCH=arm64 to build only one"
 	@echo "  build-all           - Build both binaries"
-	@echo "  install             - Install dms to $(INSTALL_DIR)"
-	@echo "  install-all         - Install both dms and dankinstall to $(INSTALL_DIR)"
-	@echo "  install-dankinstall - Install only dankinstall to $(INSTALL_DIR)"
-	@echo "  uninstall           - Remove dms from $(INSTALL_DIR)"
+	@echo "  install             - Install hgs to $(INSTALL_DIR)"
+	@echo "  install-all         - Install both hgs and hgsinstall to $(INSTALL_DIR)"
+	@echo "  install-hgsinstall - Install only hgsinstall to $(INSTALL_DIR)"
+	@echo "  uninstall           - Remove hgs from $(INSTALL_DIR)"
 	@echo "  uninstall-all       - Remove both binaries from $(INSTALL_DIR)"
-	@echo "  uninstall-dankinstall - Remove only dankinstall from $(INSTALL_DIR)"
+	@echo "  uninstall-hgsinstall - Remove only hgsinstall from $(INSTALL_DIR)"
 	@echo "  clean               - Clean build artifacts"
 	@echo "  test                - Run tests"
 	@echo "  fmt                 - Format Go code"

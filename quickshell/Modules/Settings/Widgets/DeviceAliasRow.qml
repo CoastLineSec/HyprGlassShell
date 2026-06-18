@@ -38,7 +38,7 @@ Rectangle {
         anchors.rightMargin: Theme.spacingM
         spacing: Theme.spacingM
 
-        DankIcon {
+        HGSIcon {
             name: root.deviceType === "input" ? "mic" : "speaker"
             size: Theme.iconSize
             color: Theme.surfaceText
@@ -116,7 +116,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingS
 
-            DankActionButton {
+            HGSActionButton {
                 id: resetButton
                 visible: root.hasCustomAlias
                 buttonSize: 36
@@ -131,7 +131,7 @@ Rectangle {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: hideButton
                 visible: root.showHideButton
                 buttonSize: 36
@@ -146,7 +146,7 @@ Rectangle {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: editButton
                 buttonSize: 36
                 iconName: "edit"

@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">Giấy phép MIT</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">Giấy phép MIT</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "Đã có tệp trùng tên rồi. Bạn có muốn ghi đè không?"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "Kích hoạt Màn hình chào"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "Kích hoạt DMS màn hình chào? Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo. Hãy chạy Đồng bộ sau khi kích hoạt để áp dụng các cài đặt của bạn."
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "Kích hoạt HGS màn hình chào? Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo. Hãy chạy Đồng bộ sau khi kích hoạt để áp dụng các cài đặt của bạn."
   },
   "Activation": {
     "Activation": "Kích hoạt"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "Thêm \"%1\" vào nhóm %2?"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "Thêm \"%1\" vào nhóm %2? Họ phải đăng xuất và đăng nhập lại, sau đó chạy dms greeter sync --profile để công bố chủ đề màn hình đăng nhập của mình."
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "Thêm \"%1\" vào nhóm %2? Họ phải đăng xuất và đăng nhập lại, sau đó chạy hgs greeter sync --profile để công bố chủ đề màn hình đăng nhập của mình."
   },
   "Add Bar": {
     "Add Bar": "Thêm thanh"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "Thêm người dùng mới vào nhóm %1 để họ có thể chạy dms greeter sync --profile."
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "Thêm người dùng mới vào nhóm %1 để họ có thể chạy hgs greeter sync --profile."
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "Thêm người dùng mới vào nhóm %1 để họ có thể sử dụng sudo."
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "Tự động khóa sau"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "Tự động khóa màn hình khi DMS khởi động"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "Tự động khóa màn hình khi HGS khởi động"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "Tự động khóa màn hình khi hệ thống chuẩn bị chuyển sang chế độ ngủ"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "Thay đổi giao diện thanh"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "Thay đổi ngôn ngữ hiển thị của giao diện DMS."
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "Thay đổi ngôn ngữ hiển thị của giao diện HGS."
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "Thay đổi ngôn ngữ dùng cho định dạng ngày và giờ, độc lập với ngôn ngữ giao diện."
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "Kiểm tra khi khởi động"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Kiểm tra trạng thái đồng bộ theo yêu cầu. Đồng bộ (đầy đủ) dành cho quản trị viên chính: nó sao chép chủ đề của bạn vào màn hình đăng nhập và thiết lập cấu hình màn hình chào của hệ thống. Trên các hệ thống nhiều người dùng, hãy thêm các tài khoản khác trong Cài đặt → Người dùng, sau đó yêu cầu từng người dùng chạy dms greeter sync --profile sau khi đăng xuất và đăng nhập lại — không phải đồng bộ đầy đủ. Các thay đổi xác thực được áp dụng tự động."
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Kiểm tra trạng thái đồng bộ theo yêu cầu. Đồng bộ (đầy đủ) dành cho quản trị viên chính: nó sao chép chủ đề của bạn vào màn hình đăng nhập và thiết lập cấu hình màn hình chào của hệ thống. Trên các hệ thống nhiều người dùng, hãy thêm các tài khoản khác trong Cài đặt → Người dùng, sau đó yêu cầu từng người dùng chạy hgs greeter sync --profile sau khi đăng xuất và đăng nhập lại — không phải đồng bộ đầy đủ. Các thay đổi xác thực được áp dụng tự động."
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "Kiểm tra lệnh tùy chỉnh của bạn trong Cài đặt → Dock → Thùng rác."
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "Chọn màu nổi bật cho viền"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "Chọn logo hiển thị trên nút launcher trong DankBar"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "Chọn logo hiển thị trên nút launcher trong HGSBar"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "Chọn nơi hộp thông báo nổi được hiển thị"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "Chủ đề màu cho làm nổi bật cú pháp. Có %1 chủ đề."
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "Chủ đề màu từ kho lưu trữ DMS"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "Chủ đề màu từ kho lưu trữ HGS"
   },
   "Colorful": {
     "Colorful": "Đa sắc"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "Các tùy chọn tiện ích cho màn hình đăng nhập. Đồng bộ để áp dụng."
   },
-  "Convert to DMS": {
-    "Convert to DMS": "Chuyển đổi sang DMS"
+  "Convert to HGS": {
+    "Convert to HGS": "Chuyển đổi sang HGS"
   },
   "Cooldown": {
     "Cooldown": "Thời gian hồi"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "CHẾ ĐỘ DEMO - Bấm vào bất kỳ đâu để thoát"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "Trình chọn DMS"
+  "HGS Chooser": {
+    "HGS Chooser": "Trình chọn HGS"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "Trình quản lý plugin DMS không khả dụng"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "Trình quản lý plugin HGS không khả dụng"
   },
-  "DMS Settings": {
-    "DMS Settings": "Cài đặt DMS"
+  "HGS Settings": {
+    "HGS Settings": "Cài đặt HGS"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": "Cài đặt DMS ghi các tổ hợp phím Lua. Thêm DMS bao gồm để áp dụng chỉnh sửa."
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": "Cài đặt HGS ghi các tổ hợp phím Lua. Thêm HGS bao gồm để áp dụng chỉnh sửa."
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "Phím tắt DMS"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "Phím tắt HGS"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "DMS màn hình chào cần: greetd, dms-màn hình chào. Vân tay: fprintd, pam_fprintd. Khóa bảo mật: pam_u2f. Thêm người dùng của bạn vào nhóm màn hình chào. Các thay đổi xác thực được áp dụng tự động và có thể mở cửa sổ dòng lệnh khi cần xác thực sudo."
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "HGS màn hình chào cần: greetd, hgs-màn hình chào. Vân tay: fprintd, pam_fprintd. Khóa bảo mật: pam_u2f. Thêm người dùng của bạn vào nhóm màn hình chào. Các thay đổi xác thực được áp dụng tự động và có thể mở cửa sổ dòng lệnh khi cần xác thực sudo."
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": "DMS cần quyền truy cập của quản trị viên. Thiết bị đầu cuối sẽ tự động đóng lại khi hoàn tất."
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": "HGS cần quyền truy cập của quản trị viên. Thiết bị đầu cuối sẽ tự động đóng lại khi hoàn tất."
   },
-  "DMS out of date": {
-    "DMS out of date": "DMS đã lỗi thời"
+  "HGS out of date": {
+    "HGS out of date": "HGS đã lỗi thời"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "Máy chủ DMS đã cũ (API v%1, mong đợi v%2)"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "Máy chủ HGS đã cũ (API v%1, mong đợi v%2)"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "Dịch vụ DMS chưa được kết nối. Cài đặt bảng nhớ tạm không khả dụng."
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "Dịch vụ HGS chưa được kết nối. Cài đặt bảng nhớ tạm không khả dụng."
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "Các hành động shell DMS (trình khởi chạy, bảng nhớ tạm, v.v.)"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "Các hành động shell HGS (trình khởi chạy, bảng nhớ tạm, v.v.)"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKET không khả dụng"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKET không khả dụng"
   },
   "Daily": {
     "Daily": "Hàng ngày"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "Hàng ngày lúc:"
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank Bar"
+  "HGS Bar": {
+    "HGS Bar": "HGS Bar"
   },
-  "DankBar": {
-    "DankBar": "DankBar"
+  "HGSBar": {
+    "HGSBar": "HGSBar"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "DankMaterialShell đã sẵn sàng sử dụng"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "HyprGlassShell đã sẵn sàng sử dụng"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "Biểu tượng hệ thống & DankShell (yêu cầu khởi động lại)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "Biểu tượng hệ thống & HGSShell (yêu cầu khởi động lại)"
   },
   "Dark Mode": {
     "Dark Mode": "Chế độ tối"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "Mưa phùn"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "Bỏ ghi đè cho %1 để hành động mặc định của DMS được áp dụng lại?"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "Bỏ ghi đè cho %1 để hành động mặc định của HGS được áp dụng lại?"
   },
   "Duplicate": {
     "Duplicate": "Nhân bản"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "Bật ghi đè tùy chỉnh bên dưới để đặt cường độ bóng, độ mờ và màu sắc cho từng thanh."
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "Bật lớp mờ có thể nhắm mục tiêu của bộ tổng hợp (namespace: dms:blurwallpaper). Yêu cầu cấu hình niri thủ công."
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "Bật lớp mờ có thể nhắm mục tiêu của bộ tổng hợp (namespace: hgs:blurwallpaper). Yêu cầu cấu hình niri thủ công."
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "Bật vân tay khi đăng nhập"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "Bật xác minh vân tay"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "Bật vân tay hoặc khóa bảo mật cho DMS Màn hình chào. Các thay đổi xác thực được áp dụng tự động."
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "Bật vân tay hoặc khóa bảo mật cho HGS Màn hình chào. Các thay đổi xác thực được áp dụng tự động."
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "Bật tích hợp khóa bằng loginctl"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "Đổ chuông thiết bị thất bại"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "Chạy 'dms greeter status' thất bại. Đảm bảo DMS đã được cài đặt và dms có trong PATH."
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "Chạy 'hgs greeter status' thất bại. Đảm bảo HGS đã được cài đặt và hgs có trong PATH."
   },
   "Failed to save audio config": {
     "Failed to save audio config": "Lưu cấu hình âm thanh thất bại"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "Tệp nhận được từ"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "Tìm kiếm tệp yêu cầu dsearch\nHãy cài đặt từ github.com/AvengeMedia/danksearch"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "Tìm kiếm tệp yêu cầu dsearch\nHãy cài đặt từ github.com/CoastLineSec/hgssearch"
   },
   "File search unavailable": {
     "File search unavailable": "Tìm kiếm tệp không khả dụng"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "Thư mục"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "Theo màu nền của DMS"
+  "Follow HGS background color": {
+    "Follow HGS background color": "Theo màu nền của HGS"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "Theo tiêu điểm màn hình"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "Điều chỉnh gamma"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "Điều khiển gamma không có sẵn. Yêu cầu API DMS v6+."
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "Điều khiển gamma không có sẵn. Yêu cầu API HGS v6+."
   },
   "Generate Override": {
     "Generate Override": "Tạo ghi đè"
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Tạo cấu hình cơ sở cho GTK3/4 hoặc QT5/QT6 (yêu cầu qt6ct-kde) để theo màu sắc của DMS. Chỉ cần thực hiện một lần.<br /><br />Khuyến nghị cấu hình <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> trước khi áp dụng các chủ đề GTK."
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Tạo cấu hình cơ sở cho GTK3/4 hoặc QT5/QT6 (yêu cầu qt6ct-kde) để theo màu sắc của HGS. Chỉ cần thực hiện một lần.<br /><br />Khuyến nghị cấu hình <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> trước khi áp dụng các chủ đề GTK."
   },
   "Generic": {
     "Generic": "Chung"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "Phông chữ Màn hình chào"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "Các thành viên của nhóm màn hình chào có thể đồng bộ chủ đề màn hình đăng nhập của họ bằng dms greeter sync --profile sau khi đăng xuất và đăng nhập lại."
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "Các thành viên của nhóm màn hình chào có thể đồng bộ chủ đề màn hình đăng nhập của họ bằng hgs greeter sync --profile sau khi đăng xuất và đăng nhập lại."
   },
   "Greeter group:": {
     "Greeter group:": "Nhóm Màn hình chào:"
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "Cài đặt trạng thái rảnh"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": "Nếu biểu tượng ứng dụng autostart không xuất hiện trong system tray, hãy tạo systemd override để đảm bảo DMS khởi động trước các ứng dụng autostart"
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": "Nếu biểu tượng ứng dụng autostart không xuất hiện trong system tray, hãy tạo systemd override để đảm bảo HGS khởi động trước các ứng dụng autostart"
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "Nếu trường bị ẩn, nó sẽ xuất hiện ngay khi một phím được nhấn."
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "Cài đặt Chủ đề"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "Cài đặt các chủ đề màu từ kho chủ đề DMS"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "Cài đặt các chủ đề màu từ kho chủ đề HGS"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "Cài đặt hoàn tất. Màn hình chào đã được cài đặt."
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "Cài đặt gói matugen cho tạo chủ đề động"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "Cài đặt plugin '%1' từ kho lưu trữ DMS?"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "Cài đặt plugin '%1' từ kho lưu trữ HGS?"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "Cài plugin từ kho plugin DMS"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "Cài plugin từ kho plugin HGS"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "Cài đặt DMS màn hình chào? Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo."
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "Cài đặt HGS màn hình chào? Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo."
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "Cài đặt chủ đề '%1' từ kho lưu trữ DMS?"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "Cài đặt chủ đề '%1' từ kho lưu trữ HGS?"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "Cài đặt và thiết lập PAM: xem "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "Làm cho nền của thanh hoàn toàn trong suốt"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "Quản lý & cấu hình plugin để mở rộng tính năng DMS"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "Quản lý & cấu hình plugin để mở rộng tính năng HGS"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "Quản lý tối đa 4 cấu hình thanh độc lập. Mỗi thanh có vị trí, tiện ích, kiểu dáng và chỉ định hiển thị riêng."
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "Đổ bóng và độ cao lấy cảm hứng từ Material trên các bảng thông báo, cửa sổ nổi và hộp thoại"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "Material: Các đường cong bezier đầy biểu cảm của Material Design 3. Cảm giác mặc định của DMS."
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "Material: Các đường cong bezier đầy biểu cảm của Material Design 3. Cảm giác mặc định của HGS."
   },
   "Matugen Contrast": {
     "Matugen Contrast": "Độ tương phản Matugen"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "Chế độ ban đêm & gamma"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "Chế độ ban đêm thất bại: Điều khiển gamma DMS không khả dụng"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "Chế độ ban đêm thất bại: Điều khiển gamma HGS không khả dụng"
   },
   "Niri Integration": {
     "Niri Integration": "Tích hợp Niri"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "Không viền"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "Chưa có phím tắt DMS nào được cấu hình"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "Chưa có phím tắt HGS nào được cấu hình"
   },
   "No Dim": {
     "No Dim": "Không làm mờ tối"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "Chỉ điều chỉnh gamma dựa trên quy tắc thời gian hoặc địa điểm."
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Chỉ ảnh hưởng đến PAM do DMS quản lý. Nếu greetd đã bao gồm pam_fprintd, vân tay vẫn sẽ được bật."
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Chỉ ảnh hưởng đến PAM do HGS quản lý. Nếu greetd đã bao gồm pam_fprintd, vân tay vẫn sẽ được bật."
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "Chỉ hiển thị các cửa sổ từ màn hình hiện tại trên mỗi thanh dock"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "Gỡ phím tắt %1?"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "Gỡ phím tắt %1? Một mục hủy gán sẽ được lưu vào dms/binds-user.lua để nó vẫn được gỡ bỏ qua các bản cập nhật DMS."
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "Gỡ phím tắt %1? Một mục hủy gán sẽ được lưu vào hgs/binds-user.lua để nó vẫn được gỡ bỏ qua các bản cập nhật HGS."
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "Đã gỡ quyền quản trị viên"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "Yêu cầu công cụ 'dgop'"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "Yêu cầu DMS %1"
+  "Requires HGS %1": {
+    "Requires HGS %1": "Yêu cầu HGS %1"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "Yêu cầu máy chủ DMS với khả năng sysupdate"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "Yêu cầu máy chủ HGS với khả năng sysupdate"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": "Yêu cầu trình tổng hợp MangoWC"
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "Độ phân giải, vị trí, tỷ lệ"
   },
-  "Restart DMS": {
-    "Restart DMS": "Khởi động lại DMS"
+  "Restart HGS": {
+    "Restart HGS": "Khởi động lại HGS"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "Khởi động lại DankMaterialShell"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "Khởi động lại HyprGlassShell"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "Đang khởi động lại hệ thống âm thanh..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "Quy tắc (%1)"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": "Các quy tắc được tìm thấy trong cấu hình compositor. Chúng chỉ đọc tại đây, dùng Chuyển sang DMS để tạo bản có thể chỉnh sửa."
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": "Các quy tắc được tìm thấy trong cấu hình compositor. Chúng chỉ đọc tại đây, dùng Chuyển sang HGS để tạo bản có thể chỉnh sửa."
   },
   "Run Again": {
     "Run Again": "Chạy lại"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "Chạy các mẫu DMS"
+  "Run HGS Templates": {
+    "Run HGS Templates": "Chạy các mẫu HGS"
   },
   "Run User Templates": {
     "Run User Templates": "Chạy mẫu người dùng"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "Tỷ lệ"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "Điều chỉnh riêng kích thước phông chữ trên thanh Dank"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "Điều chỉnh riêng kích thước phông chữ trên thanh HGS"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "Tỷ lệ kích thước biểu tượng DankBar độc lập"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "Tỷ lệ kích thước biểu tượng HGSBar độc lập"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "Tỷ lệ tất cả kích thước phông chữ trong toàn bộ shell"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "Hiển thị khởi động lại"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "Hiển thị Khởi động lại DMS"
+  "Show Restart HGS": {
+    "Show Restart HGS": "Hiển thị Khởi động lại HGS"
   },
   "Show Saved Items": {
     "Show Saved Items": "Hiển thị các mục đã lưu"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "Tuyết"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "Một số plugin yêu cầu phiên bản DMS mới hơn:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "Một số plugin yêu cầu phiên bản HGS mới hơn:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "Sắp xếp từ A > Z"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "Tiêu chuẩn"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "Tiêu chuẩn: Material Design 3 cổ điển — các bảng nâng lên từ bên dưới với tỷ lệ tinh tế. Mặc định của DMS."
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "Tiêu chuẩn: Material Design 3 cổ điển — các bảng nâng lên từ bên dưới với tỷ lệ tinh tế. Mặc định của HGS."
   },
   "Start": {
     "Start": "Bắt đầu"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "Các tham số bổ sung cho cửa sổ dòng lệnh"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "Chế độ dự phòng dòng lệnh thất bại. Hãy cài đặt một trình giả lập dòng lệnh được hỗ trợ hoặc chạy 'dms auth sync' thủ công."
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "Chế độ dự phòng dòng lệnh thất bại. Hãy cài đặt một trình giả lập dòng lệnh được hỗ trợ hoặc chạy 'hgs auth sync' thủ công."
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "Chế độ dự phòng dòng lệnh thất bại. Hãy cài đặt một trong những trình giả lập dòng lệnh được hỗ trợ hoặc chạy 'dms greeter sync' thủ công."
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "Chế độ dự phòng dòng lệnh thất bại. Hãy cài đặt một trong những trình giả lập dòng lệnh được hỗ trợ hoặc chạy 'hgs greeter sync' thủ công."
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "Đã mở chế độ dự phòng dòng lệnh. Hãy hoàn tất thiết lập xác thực tại đó; nó sẽ tự động đóng khi xong."
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "Công cụ 'dgop' là bắt buộc để giám sát hệ thống.\nVui lòng cài đặt dgop để sử dụng tính năng này."
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "DMS_SOCKET chưa được thiết lập hoặc socket không khả dụng. Quản lý plugin tự động cần DMS_SOCKET."
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "HGS_SOCKET chưa được thiết lập hoặc socket không khả dụng. Quản lý plugin tự động cần HGS_SOCKET."
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "Các thiết lập dưới đây sẽ thay đổi GTK và Qt. Hãy sao lưu cấu hình hiện tại nếu cần (qt5ct.conf|qt6ct.conf và ~/.config/gtk-3.0|gtk-4.0)."
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "Cảnh báo plugin Bên thứ ba"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "Các plugin Bên thứ ba được tạo ra bởi cộng đồng và không được hỗ trợ chính thức bởi DankMaterialShell.\n\nCác plugin này có thể tiềm ẩn rủi ro bảo mật và riêng tư - hãy tự chịu rủi ro khi cài đặt."
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "Các plugin Bên thứ ba được tạo ra bởi cộng đồng và không được hỗ trợ chính thức bởi HyprGlassShell.\n\nCác plugin này có thể tiềm ẩn rủi ro bảo mật và riêng tư - hãy tự chịu rủi ro khi cài đặt."
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "Phím tắt này bị ghi đè bởi config.kdl"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "Thiết bị này"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy dms setup để migrate trước khi chỉnh sửa cài đặt con trỏ."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy hgs setup để migrate trước khi chỉnh sửa cài đặt con trỏ."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy dms setup để migrate trước khi chỉnh sửa cài đặt màn hình."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy hgs setup để migrate trước khi chỉnh sửa cài đặt màn hình."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy dms setup để migrate trước khi chỉnh sửa phím tắt trong Cài đặt."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy hgs setup để migrate trước khi chỉnh sửa phím tắt trong Cài đặt."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy dms setup để migrate trước khi chỉnh sửa quy tắc cửa sổ trong Cài đặt."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": "Bản cài đặt này vẫn đang dùng hyprland.conf. Chạy hgs setup để migrate trước khi chỉnh sửa quy tắc cửa sổ trong Cài đặt."
   },
   "This may take a few seconds": {
     "This may take a few seconds": "Việc này có thể mất vài giây"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "Để cập nhật, hãy chạy lệnh sau:"
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "Để sử dụng phím tắt DMS này, hãy xóa hoặc thay đổi phím tắt trong tệp config.kdl của bạn"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "Để sử dụng phím tắt HGS này, hãy xóa hoặc thay đổi phím tắt trong tệp config.kdl của bạn"
   },
   "Toast Messages": {
     "Toast Messages": "Tin nhắn nổi"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "Gỡ cài đặt thất bại: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "Gỡ cài đặt DMS màn hình chào? Việc này sẽ xóa cấu hình và khôi phục trình quản lý hiển thị trước đó của bạn. Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo."
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "Gỡ cài đặt HGS màn hình chào? Việc này sẽ xóa cấu hình và khôi phục trình quản lý hiển thị trước đó của bạn. Một cửa sổ dòng lệnh sẽ mở ra để xác thực sudo."
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "Đã gỡ cài đặt: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "Sử dụng hành động IPC spotlight-bar và luôn mở thanh tối giản."
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "Sử dụng phông chữ đơn cách toàn cầu từ Cài đặt → Cá nhân hóa"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "Chào mừng"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "Chào mừng bạn đến với DankMaterialShell"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "Chào mừng bạn đến với HyprGlassShell"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "Khi nhấp vào một cửa sổ dock trong một không gian làm việc đặc biệt Hyprland, hãy đưa không gian làm việc đặc biệt đó quay lại trước khi tập trung vào cửa sổ"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "trực tiếp"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "dms là một shell desktop hiện đại, có khả năng tùy chỉnh cao với thiết kế <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">lấy cảm hứng từ material 3</a>.<br /><br/>Nó được xây dựng bằng <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, một framework QT6 để xây dựng shell desktop, và <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, một ngôn ngữ lập trình biên dịch, định kiểu tĩnh."
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "hgs là một shell desktop hiện đại, có khả năng tùy chỉnh cao với thiết kế <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">lấy cảm hứng từ material 3</a>.<br /><br/>Nó được xây dựng bằng <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, một framework QT6 để xây dựng shell desktop, và <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, một ngôn ngữ lập trình biên dịch, định kiểu tĩnh."
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "cấu hình dms/cursor tồn tại nhưng không được bao gồm. Các cài đặt con trỏ sẽ không có hiệu lực."
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "cấu hình hgs/cursor tồn tại nhưng không được bao gồm. Các cài đặt con trỏ sẽ không có hiệu lực."
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "cấu hình dms/outputs tồn tại nhưng không được bao gồm trong cấu hình compositor của bạn. Các thay đổi hiển thị sẽ không được lưu lại."
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "cấu hình hgs/outputs tồn tại nhưng không được bao gồm trong cấu hình compositor của bạn. Các thay đổi hiển thị sẽ không được lưu lại."
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": "vd. /usr/bin/my-script --flag"
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "loginctl activate thất bại (thoát %1)"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctl không khả dụng - tích hợp khóa yêu cầu kết nối socket DMS"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctl không khả dụng - tích hợp khóa yêu cầu kết nối socket HGS"
   },
   "mango: config reloaded": {
     "mango: config reloaded": "mango: đã tải lại cấu hình"
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "cấu hình phím tắt niri"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "Discord niri/dms"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "Discord niri/hgs"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "niri: đã tải lại cấu hình"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "lên"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "cập nhật DMS để tích hợp với NM."
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "cập nhật HGS để tích hợp với NM."
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "useradd thất bại (thoát %1)"

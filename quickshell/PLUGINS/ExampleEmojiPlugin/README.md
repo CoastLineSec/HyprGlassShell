@@ -1,6 +1,6 @@
 # Emoji Cycler Plugin
 
-An example dms plugin that displays cycling emojis in your bar with an emoji picker popout.
+An example hgs plugin that displays cycling emojis in your bar with an emoji picker popout.
 
 ## Features
 
@@ -11,11 +11,11 @@ An example dms plugin that displays cycling emojis in your bar with an emoji pic
 
 ## Installation
 
-1. Copy this directory to `~/.config/DankMaterialShell/plugins/ExampleEmojiPlugin`
-2. Open DMS Settings → Plugins
+1. Copy this directory to `~/.config/HyprGlassShell/plugins/ExampleEmojiPlugin`
+2. Open HGS Settings → Plugins
 3. Click "Scan for Plugins"
 4. Enable "Emoji Cycler"
-5. Add `exampleEmojiPlugin` to your DankBar widget list
+5. Add `exampleEmojiPlugin` to your HGSBar widget list
 
 ## Settings
 
@@ -49,4 +49,4 @@ This plugin demonstrates:
 - Toast notifications (`ToastService.show`)
 - Dynamic settings loading/saving
 
-Perfect template for creating your own DMS plugins!
+Perfect template for creating your own HGS plugins!

@@ -4,7 +4,7 @@ import qs.Modals.Common
 import qs.Widgets
 import qs.Services
 
-DankModal {
+HGSModal {
     id: root
     readonly property var log: Log.scoped("AppPickerModal")
 
@@ -64,7 +64,7 @@ DankModal {
         const queriedMime = mimeType;
         if (queriedMime.length === 0)
             return;
-        DMSService.sendRequest("mime.appsForMime", {
+        HGSService.sendRequest("mime.appsForMime", {
             "mimeType": queriedMime
         }, response => {
             if (queriedMime !== root.mimeType)
@@ -258,7 +258,7 @@ DankModal {
                         anchors.rightMargin: Theme.spacingS
                         anchors.verticalCenter: parent.verticalCenter
 
-                        DankActionButton {
+                        HGSActionButton {
                             buttonSize: 36
                             circular: false
                             iconName: "view_list"
@@ -270,7 +270,7 @@ DankModal {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             buttonSize: 36
                             circular: false
                             iconName: "grid_view"
@@ -284,7 +284,7 @@ DankModal {
                     }
                 }
 
-                DankTextField {
+                HGSTextField {
                     id: searchField
 
                     width: parent.width - Theme.spacingS * 2
@@ -365,7 +365,7 @@ DankModal {
                     radius: Theme.cornerRadius
                     color: "transparent"
 
-                    DankListView {
+                    HGSListView {
                         id: appList
 
                         property int itemHeight: 60
@@ -421,7 +421,7 @@ DankModal {
                         }
                     }
 
-                    DankGridView {
+                    HGSGridView {
                         id: appGrid
 
                         function ensureVisible(index) {
@@ -504,7 +504,7 @@ DankModal {
                     height: 36
                     visible: root.mimeType.length > 0
 
-                    DankToggle {
+                    HGSToggle {
                         anchors.left: parent.left
                         anchors.leftMargin: Theme.spacingM
                         anchors.right: parent.right

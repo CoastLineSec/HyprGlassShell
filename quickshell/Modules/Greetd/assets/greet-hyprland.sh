@@ -5,7 +5,7 @@ export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export EGL_PLATFORM=gbm
 if command -v start-hyprland >/dev/null 2>&1; then
-    exec start-hyprland -- -c /etc/greetd/dms-hypr.lua
+    exec start-hyprland -- -c /etc/greetd/hgs-hypr.lua
 else
-    exec Hyprland -c /etc/greetd/dms-hypr.lua
+    exec Hyprland -c /etc/greetd/hgs-hypr.lua
 fi

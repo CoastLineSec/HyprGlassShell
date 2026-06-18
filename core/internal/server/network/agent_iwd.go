@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/errdefs"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -14,7 +14,7 @@ const (
 	iwdAgentManagerPath  = "/net/connman/iwd"
 	iwdAgentManagerIface = "net.connman.iwd.AgentManager"
 	iwdAgentInterface    = "net.connman.iwd.Agent"
-	iwdAgentObjectPath   = "/com/danklinux/iwdagent"
+	iwdAgentObjectPath   = "/com/coastlinesec/iwdagent"
 )
 
 type ConnectionStateChecker interface {

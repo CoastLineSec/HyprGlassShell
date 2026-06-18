@@ -15,7 +15,7 @@ Singleton {
     readonly property bool enabled: (adapter && adapter.enabled) ?? false
     readonly property bool discovering: (adapter && adapter.discovering) ?? false
     readonly property var devices: adapter ? adapter.devices : null
-    readonly property bool enhancedPairingAvailable: DMSService.dmsAvailable && DMSService.apiVersion >= 9 && DMSService.capabilities.includes("bluetooth")
+    readonly property bool enhancedPairingAvailable: HGSService.hgsAvailable && HGSService.apiVersion >= 9 && HGSService.capabilities.includes("bluetooth")
     readonly property bool connected: {
         if (!adapter || !adapter.devices) {
             return false;
@@ -202,10 +202,10 @@ Singleton {
             return;
         }
 
-        // The DMS backend actually implements a bluez agent, so we can pair anything
+        // The HGS backend actually implements a bluez agent, so we can pair anything
         if (enhancedPairingAvailable) {
             const devicePath = getDevicePath(device);
-            DMSService.bluetoothPair(devicePath, callback);
+            HGSService.bluetoothPair(devicePath, callback);
             return;
         }
 

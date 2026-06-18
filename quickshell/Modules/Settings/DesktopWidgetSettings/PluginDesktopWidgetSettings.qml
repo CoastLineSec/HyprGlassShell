@@ -104,7 +104,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingM
 
-                DankButton {
+                HGSButton {
                     text: I18n.tr("Reset Position")
                     backgroundColor: Theme.surfaceHover
                     textColor: Theme.surfaceText
@@ -118,7 +118,7 @@ Column {
                     }
                 }
 
-                DankButton {
+                HGSButton {
                     text: I18n.tr("Reset Size")
                     backgroundColor: Theme.surfaceHover
                     textColor: Theme.surfaceText

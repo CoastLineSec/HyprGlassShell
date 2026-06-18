@@ -15,7 +15,7 @@ Singleton {
     readonly property string currentVersion: "1.4"
     readonly property bool changelogEnabled: false
 
-    readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/DankMaterialShell"
+    readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/HyprGlassShell"
     readonly property string changelogMarkerPath: configDir + "/.changelog-" + currentVersion
 
     property bool checkComplete: false

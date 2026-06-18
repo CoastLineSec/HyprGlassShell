@@ -11,11 +11,11 @@ apply_gtk3_colors() {
     local config_dir="$1"
 
     local gtk3_dir="$config_dir/gtk-3.0"
-    local dank_colors="$gtk3_dir/dank-colors.css"
+    local hgs_colors="$gtk3_dir/hgs-colors.css"
     local gtk_css="$gtk3_dir/gtk.css"
 
-    if [ ! -f "$dank_colors" ]; then
-        echo "Error: dank-colors.css not found at $dank_colors" >&2
+    if [ ! -f "$hgs_colors" ]; then
+        echo "Error: hgs-colors.css not found at $hgs_colors" >&2
         echo "Run matugen first to generate theme files" >&2
         exit 1
     fi
@@ -27,25 +27,25 @@ apply_gtk3_colors() {
         echo "Backed up existing gtk.css"
     fi
 
-    ln -s "dank-colors.css" "$gtk_css"
-    echo "Created symlink: $gtk_css -> dank-colors.css"
+    ln -s "hgs-colors.css" "$gtk_css"
+    echo "Created symlink: $gtk_css -> hgs-colors.css"
 }
 
 apply_gtk4_colors() {
     local config_dir="$1"
 
     local gtk4_dir="$config_dir/gtk-4.0"
-    local dank_colors="$gtk4_dir/dank-colors.css"
+    local hgs_colors="$gtk4_dir/hgs-colors.css"
     local gtk_css="$gtk4_dir/gtk.css"
-    local gtk4_import="@import url(\"dank-colors.css\");"
+    local gtk4_import="@import url(\"hgs-colors.css\");"
 
-    if [ ! -f "$dank_colors" ]; then
-        echo "Error: GTK4 dank-colors.css not found at $dank_colors" >&2
+    if [ ! -f "$hgs_colors" ]; then
+        echo "Error: GTK4 hgs-colors.css not found at $hgs_colors" >&2
         echo "Run matugen first to generate theme files" >&2
         exit 1
     fi
 
-    if [ -f "$gtk_css" ] && grep -q '^@import url.*dank-colors\.css.*);$' "$gtk_css"; then
+    if [ -f "$gtk_css" ] && grep -q '^@import url.*hgs-colors\.css.*);$' "$gtk_css"; then
         echo "GTK4 import already exists"
         return
     fi

@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/themes"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/themes"
 )
 
 func HandleList(conn net.Conn, req models.Request) {
@@ -50,5 +50,5 @@ func HandleList(conn net.Conn, req models.Request) {
 }
 
 func isFirstParty(author string) bool {
-	return strings.EqualFold(author, "Avenge Media") || strings.EqualFold(author, "AvengeMedia")
+	return strings.EqualFold(author, "CoastLineSec")
 }

@@ -27,56 +27,23 @@ Item {
             "configFormat": "",
             "readOnly": false
         })
-    readonly property bool cursorReadOnly: CompositorService.isHyprland && cursorIncludeStatus.readOnly === true
+    readonly property bool cursorReadOnly: cursorIncludeStatus.readOnly === true
     property bool checkingCursorInclude: false
     property bool fixingCursorInclude: false
 
     function getCursorConfigPaths() {
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        switch (CompositorService.compositor) {
-        case "niri":
-            return {
-                "configFile": configDir + "/niri/config.kdl",
-                "cursorFile": configDir + "/niri/dms/cursor.kdl",
-                "grepPattern": 'include.*"dms/cursor.kdl"',
-                "includeLine": 'include "dms/cursor.kdl"'
-            };
-        case "hyprland":
-            return {
-                "configFile": configDir + "/hypr/hyprland.lua",
-                "cursorFile": configDir + "/hypr/dms/cursor.lua",
-                "grepPattern": "dms.cursor",
-                "includeLine": "require(\"dms.cursor\")"
-            };
-        case "mango":
-            return {
-                "configFile": configDir + "/mango/config.conf",
-                "cursorFile": configDir + "/mango/dms/cursor.conf",
-                "grepPattern": 'source.*dms/cursor.conf',
-                "includeLine": "source=./dms/cursor.conf"
-            };
-        default:
-            return null;
-        }
+        return {
+            "configFile": configDir + "/hypr/hyprland.lua",
+            "cursorFile": configDir + "/hypr/hgs/cursor.lua",
+            "grepPattern": "hgs.cursor",
+            "includeLine": "require(\"hgs.cursor\")"
+        };
     }
 
     function checkCursorIncludeStatus() {
-        const compositor = CompositorService.compositor;
-        if (compositor !== "niri" && compositor !== "hyprland" && compositor !== "mango") {
-            cursorIncludeStatus = {
-                "exists": false,
-                "included": false,
-                "configFormat": "",
-                "readOnly": false
-            };
-            return;
-        }
-
-        const filename = (compositor === "niri") ? "cursor.kdl" : ((compositor === "hyprland") ? "cursor.lua" : "cursor.conf");
-        const compositorArg = (compositor === "mango") ? "mangowc" : compositor;
-
         checkingCursorInclude = true;
-        Proc.runCommand("check-cursor-include", ["dms", "config", "resolve-include", compositorArg, filename], (output, exitCode) => {
+        Proc.runCommand("check-cursor-include", ["hgs", "config", "resolve-include", "hyprland", "cursor.lua"], (output, exitCode) => {
             checkingCursorInclude = false;
             if (exitCode !== 0) {
                 cursorIncludeStatus = {
@@ -102,7 +69,7 @@ Item {
 
     function fixCursorInclude() {
         if (cursorReadOnly) {
-            ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings."), "dms setup", "hyprland-migration");
+            ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings."), "hgs setup", "hyprland-migration");
             return;
         }
         const paths = getCursorConfigPaths();
@@ -157,6 +124,16 @@ Item {
         PopoutService.colorPickerModal.open();
     }
 
+    function openHyprGlassColorPicker() {
+        PopoutService.colorPickerModal.selectedColor = SettingsData.hyprGlassCustomColor ?? "#88AADD";
+        PopoutService.colorPickerModal.pickerTitle = I18n.tr("HyprGlass Tint");
+        PopoutService.colorPickerModal.onColorSelectedCallback = function (color) {
+            SettingsData.set("hyprGlassCustomColor", color.toString());
+            SettingsData.set("hyprGlassColorSource", "custom");
+        };
+        PopoutService.colorPickerModal.show();
+    }
+
     function openM3ShadowColorPicker() {
         PopoutService.colorPickerModal.selectedColor = SettingsData.m3ElevationCustomColor ?? "#000000";
         PopoutService.colorPickerModal.pickerTitle = I18n.tr("Shadow Color");
@@ -182,23 +159,22 @@ Item {
     Component.onCompleted: {
         SettingsData.detectAvailableIconThemes();
         SettingsData.detectAvailableCursorThemes();
-        if (DMSService.dmsAvailable)
-            DMSService.listInstalledThemes();
+        if (HGSService.hgsAvailable)
+            HGSService.listInstalledThemes();
         if (PopoutService.pendingThemeInstall)
             Qt.callLater(() => showThemeBrowser());
-        Proc.runCommand("template-check", ["dms", "matugen", "check"], (output, exitCode) => {
+        Proc.runCommand("template-check", ["hgs", "matugen", "check"], (output, exitCode) => {
             if (exitCode !== 0)
                 return;
             try {
                 themeColorsTab.templateDetection = JSON.parse(output.trim());
             } catch (e) {}
         });
-        if (CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango)
-            checkCursorIncludeStatus();
+        checkCursorIncludeStatus();
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
         function onInstalledThemesReceived(themes) {
             themeColorsTab.installedRegistryThemes = themes;
         }
@@ -212,7 +188,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -266,7 +242,7 @@ Item {
                             if (Theme.currentTheme === Theme.dynamic)
                                 return I18n.tr("Material colors generated from wallpaper", "dynamic theme description");
                             if (Theme.currentThemeCategory === "registry")
-                                return I18n.tr("Color theme from DMS registry", "registry theme description");
+                                return I18n.tr("Color theme from HGS registry", "registry theme description");
                             if (Theme.currentTheme === Theme.custom)
                                 return I18n.tr("Custom theme loaded from JSON file", "custom theme description");
                             return I18n.tr("Material Design inspired color themes", "generic theme description");
@@ -291,7 +267,7 @@ Item {
                         height: themeCategoryGroup.implicitHeight
                         clip: true
 
-                        DankButtonGroup {
+                        HGSButtonGroup {
                             id: themeCategoryGroup
                             anchors.horizontalCenter: parent.horizontalCenter
                             buttonPadding: parent.width < 420 ? Theme.spacingS : Theme.spacingL
@@ -309,7 +285,7 @@ Item {
                                 return 0;
                             }
 
-                            model: DMSService.dmsAvailable ? [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option"), I18n.tr("Browse", "theme category option")] : [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option")]
+                            model: HGSService.hgsAvailable ? [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option"), I18n.tr("Browse", "theme category option")] : [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option")]
                             currentIndex: pendingIndex >= 0 ? pendingIndex : computedIndex
                             selectionMode: "single"
                             onSelectionChanged: (index, selected) => {
@@ -469,7 +445,7 @@ Item {
                                     layer.enabled: true
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     anchors.centerIn: parent
                                     name: (ToastService.wallpaperErrorStatus === "error" || ToastService.wallpaperErrorStatus === "matugen_missing") ? "error" : "palette"
                                     size: Theme.iconSizeLarge
@@ -579,7 +555,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingM
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 48
                                 iconName: "folder_open"
                                 iconSize: Theme.iconSize
@@ -639,7 +615,7 @@ Item {
                                     property var variants: modelData.variants || null
                                     property string selectedVariant: hasVariants ? SettingsData.getRegistryThemeVariant(modelData.id, variants?.default || "") : ""
                                     property string previewPath: {
-                                        const baseDir = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes/" + (modelData.sourceDir || modelData.id);
+                                        const baseDir = Quickshell.env("HOME") + "/.config/HyprGlassShell/themes/" + (modelData.sourceDir || modelData.id);
                                         const mode = Theme.isLightMode ? "light" : "dark";
                                         if (hasVariants && selectedVariant)
                                             return baseDir + "/preview-" + selectedVariant + "-" + mode + ".svg";
@@ -670,7 +646,7 @@ Item {
                                         mipmap: true
                                     }
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "palette"
                                         size: themeGrid.cardWidth < 120 ? 24 : 32
@@ -708,7 +684,7 @@ Item {
                                         color: Theme.primary
                                         visible: themeCard.isActive
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "check"
                                             size: themeGrid.cardWidth < 120 ? 10 : 14
@@ -745,7 +721,7 @@ Item {
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            const themesDir = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes";
+                                            const themesDir = Quickshell.env("HOME") + "/.config/HyprGlassShell/themes";
                                             const themePath = themesDir + "/" + (modelData.sourceDir || modelData.id) + "/theme.json";
                                             SettingsData.set("customThemeFile", themePath);
                                             Theme.switchTheme("custom", true, true);
@@ -770,7 +746,7 @@ Item {
                                             }
                                         }
 
-                                        DankIcon {
+                                        HGSIcon {
                                             anchors.centerIn: parent
                                             name: "close"
                                             size: themeGrid.cardWidth < 120 ? 10 : 14
@@ -784,13 +760,13 @@ Item {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 ToastService.showInfo(I18n.tr("Uninstalling: %1", "uninstallation progress").arg(modelData.name));
-                                                DMSService.uninstallTheme(modelData.id, response => {
+                                                HGSService.uninstallTheme(modelData.id, response => {
                                                     if (response.error) {
                                                         ToastService.showError(I18n.tr("Uninstall failed: %1", "uninstallation error").arg(response.error));
                                                         return;
                                                     }
                                                     ToastService.showInfo(I18n.tr("Uninstalled: %1", "uninstallation success").arg(modelData.name));
-                                                    DMSService.listInstalledThemes();
+                                                    HGSService.listInstalledThemes();
                                                 });
                                             }
                                         }
@@ -809,7 +785,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                         }
 
-                        DankButton {
+                        HGSButton {
                             text: I18n.tr("Browse Themes", "browse themes button")
                             iconName: "store"
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -915,7 +891,7 @@ Item {
                             clip: true
                             visible: variantSelector.isMultiVariant && variantSelector.flavorOptions.length > 1
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 id: flavorButtonGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 property int _count: variantSelector.flavorNames.length
@@ -1026,7 +1002,7 @@ Item {
                             clip: true
                             visible: !variantSelector.isMultiVariant && variantSelector.variantNames.length > 0
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 id: variantButtonGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 property int _count: variantSelector.variantNames.length
@@ -1072,7 +1048,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankToggle {
+                    HGSToggle {
                         id: themeModeAutoToggle
                         width: parent.width
                         text: I18n.tr("Automatic Control")
@@ -1094,7 +1070,7 @@ Item {
                         spacing: Theme.spacingM
                         visible: SessionData.themeModeAutoEnabled
 
-                        DankToggle {
+                        HGSToggle {
                             width: parent.width
                             text: I18n.tr("Share Gamma Control Settings")
                             checked: SessionData.themeModeShareGammaSettings
@@ -1107,7 +1083,7 @@ Item {
                             width: parent.width
                             height: 45 + Theme.spacingM
 
-                            DankTabBar {
+                            HGSTabBar {
                                 id: themeModeTabBar
                                 width: 200
                                 height: 45
@@ -1190,7 +1166,7 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                     }
 
-                                    DankDropdown {
+                                    HGSDropdown {
                                         dropdownWidth: 70
                                         currentValue: SessionData.themeModeStartHour.toString()
                                         options: {
@@ -1204,7 +1180,7 @@ Item {
                                         }
                                     }
 
-                                    DankDropdown {
+                                    HGSDropdown {
                                         dropdownWidth: 70
                                         currentValue: SessionData.themeModeStartMinute.toString().padStart(2, '0')
                                         options: {
@@ -1232,7 +1208,7 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                     }
 
-                                    DankDropdown {
+                                    HGSDropdown {
                                         dropdownWidth: 70
                                         currentValue: SessionData.themeModeEndHour.toString()
                                         options: {
@@ -1246,7 +1222,7 @@ Item {
                                         }
                                     }
 
-                                    DankDropdown {
+                                    HGSDropdown {
                                         dropdownWidth: 70
                                         currentValue: SessionData.themeModeEndMinute.toString().padStart(2, '0')
                                         options: {
@@ -1269,7 +1245,7 @@ Item {
                             spacing: Theme.spacingM
                             visible: SessionData.themeModeAutoMode === "location" && !SessionData.themeModeShareGammaSettings
 
-                            DankToggle {
+                            HGSToggle {
                                 id: themeModeIpLocationToggle
                                 width: parent.width
                                 text: I18n.tr("Use IP Location")
@@ -1312,7 +1288,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankTextField {
+                                        HGSTextField {
                                             width: 120
                                             height: 40
                                             text: SessionData.latitude.toString()
@@ -1335,7 +1311,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankTextField {
+                                        HGSTextField {
                                             width: 120
                                             height: 40
                                             text: SessionData.longitude.toString()
@@ -1427,7 +1403,7 @@ Item {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         spacing: Theme.spacingS
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: SessionData.isLightMode ? "light_mode" : "dark_mode"
                                             size: Theme.iconSize
                                             color: SessionData.isLightMode ? "#FFA726" : "#7E57C2"
@@ -1463,7 +1439,7 @@ Item {
                                         spacing: Theme.spacingS
                                         anchors.horizontalCenter: parent.horizontalCenter
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: "schedule"
                                             size: Theme.iconSize
                                             color: Theme.primary
@@ -1670,6 +1646,76 @@ Item {
                     unit: "px"
                     defaultValue: 12
                     onSliderValueChanged: newValue => SettingsData.setCornerRadius(newValue)
+                }
+            }
+
+            SettingsCard {
+                tab: "theme"
+                tags: ["hyprglass", "glass", "frost", "tint", "color"]
+                title: I18n.tr("HyprGlass")
+                settingKey: "hyprGlassAppearance"
+                iconName: "blur_on"
+
+                SettingsSliderRow {
+                    tab: "theme"
+                    tags: ["hyprglass", "glass", "frost", "blur"]
+                    settingKey: "hyprGlassFrostAmount"
+                    text: I18n.tr("Frost Amount")
+                    description: I18n.tr("Requested glass frosting. Native Hyprland blur strength is still controlled by Hyprland.")
+                    value: Math.round((SettingsData.hyprGlassFrostAmount ?? 0.08) * 100)
+                    minimum: 0
+                    maximum: 100
+                    unit: "%"
+                    defaultValue: 8
+                    onSliderValueChanged: newValue => SettingsData.set("hyprGlassFrostAmount", newValue / 100)
+                }
+
+                SettingsToggleRow {
+                    tab: "theme"
+                    tags: ["hyprglass", "glass", "color", "tint"]
+                    settingKey: "hyprGlassColorGlassEnabled"
+                    text: I18n.tr("Color Glass")
+                    description: I18n.tr("Use a chosen tint instead of automatic light and dark neutral glass")
+                    checked: SettingsData.hyprGlassColorGlassEnabled ?? false
+                    onToggled: checked => SettingsData.set("hyprGlassColorGlassEnabled", checked)
+                }
+
+                Item {
+                    visible: SettingsData.hyprGlassColorGlassEnabled ?? false
+                    width: parent.width
+                    height: colorRow.height + Theme.spacingM * 2
+
+                    Row {
+                        id: colorRow
+                        width: parent.width - Theme.spacingM * 2
+                        x: Theme.spacingM
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.spacingM
+
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: I18n.tr("Tint Color")
+                            font.pixelSize: Theme.fontSizeMedium
+                            font.weight: Font.Medium
+                            color: Theme.surfaceText
+                        }
+
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 32
+                            height: 32
+                            radius: 16
+                            color: SettingsData.hyprGlassCustomColor ?? "#88AADD"
+                            border.color: Theme.outline
+                            border.width: 1
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: themeColorsTab.openHyprGlassColorPicker()
+                            }
+                        }
+                    }
                 }
             }
 
@@ -2023,8 +2069,6 @@ Item {
                 title: I18n.tr("Cursor Theme")
                 settingKey: "cursorTheme"
                 iconName: "mouse"
-                visible: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
-
                 Column {
                     width: parent.width
                     spacing: Theme.spacingM
@@ -2049,7 +2093,7 @@ Item {
                             anchors.margins: Theme.spacingM
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "warning"
                                 size: Theme.iconSize
                                 color: Theme.warning
@@ -2069,7 +2113,7 @@ Item {
                                 }
 
                                 StyledText {
-                                    text: cursorWarningBox.showSetup ? I18n.tr("Click 'Setup' to create cursor config and add include to your compositor config.") : I18n.tr("dms/cursor config exists but is not included. Cursor settings won't apply.")
+                                    text: cursorWarningBox.showSetup ? I18n.tr("Click 'Setup' to create cursor config and add include to your compositor config.") : I18n.tr("hgs/cursor config exists but is not included. Cursor settings won't apply.")
                                     font.pixelSize: Theme.fontSizeSmall
                                     color: Theme.surfaceVariantText
                                     wrapMode: Text.WordWrap
@@ -2077,7 +2121,7 @@ Item {
                                 }
                             }
 
-                            DankButton {
+                            HGSButton {
                                 id: cursorFixButton
                                 visible: cursorWarningBox.showError || cursorWarningBox.showSetup
                                 text: themeColorsTab.fixingCursorInclude ? I18n.tr("Fixing...") : (cursorWarningBox.showSetup ? I18n.tr("Setup") : I18n.tr("Fix Now"))
@@ -2122,40 +2166,18 @@ Item {
 
                     SettingsToggleRow {
                         tab: "theme"
-                        tags: ["mango", "touchpad", "trackpad", "natural", "scrolling"]
-                        settingKey: "mangoTrackpadNaturalScrolling"
-                        text: I18n.tr("Natural Touchpad Scrolling")
-                        description: I18n.tr("Invert touchpad scroll direction")
-                        visible: CompositorService.isMango
-                        checked: SettingsData.mangoTrackpadNaturalScrolling
-                        onToggled: checked => SettingsData.set("mangoTrackpadNaturalScrolling", checked)
-                    }
-
-                    SettingsToggleRow {
-                        tab: "theme"
                         tags: ["cursor", "hide", "typing"]
                         settingKey: "cursorHideWhenTyping"
                         text: I18n.tr("Hide When Typing")
                         description: I18n.tr("Hide cursor when pressing keyboard keys")
-                        visible: CompositorService.isNiri || CompositorService.isHyprland
                         checked: {
-                            if (CompositorService.isNiri)
-                                return SettingsData.cursorSettings.niri?.hideWhenTyping || false;
-                            if (CompositorService.isHyprland)
-                                return SettingsData.cursorSettings.hyprland?.hideOnKeyPress || false;
-                            return false;
+                            return SettingsData.cursorSettings.hyprland?.hideOnKeyPress || false;
                         }
                         onToggled: checked => {
                             const updated = JSON.parse(JSON.stringify(SettingsData.cursorSettings));
-                            if (CompositorService.isNiri) {
-                                if (!updated.niri)
-                                    updated.niri = {};
-                                updated.niri.hideWhenTyping = checked;
-                            } else if (CompositorService.isHyprland) {
-                                if (!updated.hyprland)
-                                    updated.hyprland = {};
-                                updated.hyprland.hideOnKeyPress = checked;
-                            }
+                            if (!updated.hyprland)
+                                updated.hyprland = {};
+                            updated.hyprland.hideOnKeyPress = checked;
                             SettingsData.set("cursorSettings", updated);
                         }
                     }
@@ -2166,7 +2188,6 @@ Item {
                         settingKey: "cursorHideOnTouch"
                         text: I18n.tr("Hide on Touch")
                         description: I18n.tr("Hide cursor when using touch input")
-                        visible: CompositorService.isHyprland
                         checked: SettingsData.cursorSettings.hyprland?.hideOnTouch || false
                         onToggled: checked => {
                             const updated = JSON.parse(JSON.stringify(SettingsData.cursorSettings));
@@ -2184,33 +2205,17 @@ Item {
                         text: I18n.tr("Auto-Hide Timeout")
                         description: I18n.tr("Hide cursor after inactivity (0 = disabled)")
                         value: {
-                            if (CompositorService.isNiri)
-                                return SettingsData.cursorSettings.niri?.hideAfterInactiveMs || 0;
-                            if (CompositorService.isHyprland)
-                                return SettingsData.cursorSettings.hyprland?.inactiveTimeout || 0;
-                            if (CompositorService.isMango)
-                                return SettingsData.cursorSettings.mango?.cursorHideTimeout || 0;
-                            return 0;
+                            return SettingsData.cursorSettings.hyprland?.inactiveTimeout || 0;
                         }
                         minimum: 0
-                        maximum: CompositorService.isNiri ? 5000 : 10
-                        unit: CompositorService.isNiri ? "ms" : "s"
+                        maximum: 10
+                        unit: "s"
                         defaultValue: 0
                         onSliderValueChanged: newValue => {
                             const updated = JSON.parse(JSON.stringify(SettingsData.cursorSettings));
-                            if (CompositorService.isNiri) {
-                                if (!updated.niri)
-                                    updated.niri = {};
-                                updated.niri.hideAfterInactiveMs = newValue;
-                            } else if (CompositorService.isHyprland) {
-                                if (!updated.hyprland)
-                                    updated.hyprland = {};
-                                updated.hyprland.inactiveTimeout = newValue;
-                            } else if (CompositorService.isMango) {
-                                if (!updated.mango)
-                                    updated.mango = {};
-                                updated.mango.cursorHideTimeout = newValue;
-                            }
+                            if (!updated.hyprland)
+                                updated.hyprland = {};
+                            updated.hyprland.inactiveTimeout = newValue;
                             SettingsData.set("cursorSettings", updated);
                         }
                     }
@@ -2229,7 +2234,7 @@ Item {
                     tags: ["icon", "theme", "system"]
                     settingKey: "iconTheme"
                     text: I18n.tr("Icon Theme")
-                    description: I18n.tr("DankShell & System Icons (requires restart)")
+                    description: I18n.tr("HGSShell & System Icons (requires restart)")
                     currentValue: SettingsData.iconTheme
                     enableFuzzySearch: true
                     popupWidthOffset: 100
@@ -2266,12 +2271,12 @@ Item {
 
                 SettingsToggleRow {
                     tab: "theme"
-                    tags: ["matugen", "dms", "templates"]
-                    settingKey: "runDmsMatugenTemplates"
-                    text: I18n.tr("Run DMS Templates")
+                    tags: ["matugen", "hgs", "templates"]
+                    settingKey: "runHgsMatugenTemplates"
+                    text: I18n.tr("Run HGS Templates")
                     description: ""
-                    checked: SettingsData.runDmsMatugenTemplates
-                    onToggled: checked => SettingsData.set("runDmsMatugenTemplates", checked)
+                    checked: SettingsData.runHgsMatugenTemplates
+                    onToggled: checked => SettingsData.set("runHgsMatugenTemplates", checked)
                 }
 
                 SettingsToggleRow {
@@ -2281,21 +2286,9 @@ Item {
                     text: "GTK"
                     description: getTemplateDescription("gtk", "")
                     descriptionColor: getTemplateDescriptionColor("gtk")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateGtk
                     onToggled: checked => SettingsData.set("matugenTemplateGtk", checked)
-                }
-
-                SettingsToggleRow {
-                    tab: "theme"
-                    tags: ["matugen", "niri", "template"]
-                    settingKey: "matugenTemplateNiri"
-                    text: "niri"
-                    description: getTemplateDescription("niri", "")
-                    descriptionColor: getTemplateDescriptionColor("niri")
-                    visible: SettingsData.runDmsMatugenTemplates
-                    checked: SettingsData.matugenTemplateNiri
-                    onToggled: checked => SettingsData.set("matugenTemplateNiri", checked)
                 }
 
                 SettingsToggleRow {
@@ -2305,21 +2298,9 @@ Item {
                     text: "Hyprland"
                     description: getTemplateDescription("hyprland", "")
                     descriptionColor: getTemplateDescriptionColor("hyprland")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateHyprland
                     onToggled: checked => SettingsData.set("matugenTemplateHyprland", checked)
-                }
-
-                SettingsToggleRow {
-                    tab: "theme"
-                    tags: ["matugen", "mangowc", "template"]
-                    settingKey: "matugenTemplateMangowc"
-                    text: "mangowc"
-                    description: getTemplateDescription("mangowc", "")
-                    descriptionColor: getTemplateDescriptionColor("mangowc")
-                    visible: SettingsData.runDmsMatugenTemplates
-                    checked: SettingsData.matugenTemplateMangowc
-                    onToggled: checked => SettingsData.set("matugenTemplateMangowc", checked)
                 }
 
                 SettingsToggleRow {
@@ -2329,7 +2310,7 @@ Item {
                     text: "qt5ct"
                     description: getTemplateDescription("qt5ct", "")
                     descriptionColor: getTemplateDescriptionColor("qt5ct")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateQt5ct
                     onToggled: checked => SettingsData.set("matugenTemplateQt5ct", checked)
                 }
@@ -2341,7 +2322,7 @@ Item {
                     text: "qt6ct"
                     description: getTemplateDescription("qt6ct", "")
                     descriptionColor: getTemplateDescriptionColor("qt6ct")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateQt6ct
                     onToggled: checked => SettingsData.set("matugenTemplateQt6ct", checked)
                 }
@@ -2353,7 +2334,7 @@ Item {
                     text: "Firefox"
                     description: getTemplateDescription("firefox", "")
                     descriptionColor: getTemplateDescriptionColor("firefox")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateFirefox
                     onToggled: checked => SettingsData.set("matugenTemplateFirefox", checked)
                 }
@@ -2365,7 +2346,7 @@ Item {
                     text: "pywalfox"
                     description: getTemplateDescription("pywalfox", "")
                     descriptionColor: getTemplateDescriptionColor("pywalfox")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplatePywalfox
                     onToggled: checked => SettingsData.set("matugenTemplatePywalfox", checked)
                 }
@@ -2377,7 +2358,7 @@ Item {
                     text: "zenbrowser"
                     description: getTemplateDescription("zenbrowser", "")
                     descriptionColor: getTemplateDescriptionColor("zenbrowser")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateZenBrowser
                     onToggled: checked => SettingsData.set("matugenTemplateZenBrowser", checked)
                 }
@@ -2389,7 +2370,7 @@ Item {
                     text: "vesktop"
                     description: getTemplateDescription("vesktop", "")
                     descriptionColor: getTemplateDescriptionColor("vesktop")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateVesktop
                     onToggled: checked => SettingsData.set("matugenTemplateVesktop", checked)
                 }
@@ -2401,7 +2382,7 @@ Item {
                     text: "vencord"
                     description: getTemplateDescription("vencord", "")
                     descriptionColor: getTemplateDescriptionColor("vencord")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateVencord
                     onToggled: checked => SettingsData.set("matugenTemplateVencord", checked)
                 }
@@ -2413,7 +2394,7 @@ Item {
                     text: "equibop"
                     description: getTemplateDescription("equibop", "")
                     descriptionColor: getTemplateDescriptionColor("equibop")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateEquibop
                     onToggled: checked => SettingsData.set("matugenTemplateEquibop", checked)
                 }
@@ -2425,7 +2406,7 @@ Item {
                     text: "Ghostty"
                     description: getTemplateDescription("ghostty", "")
                     descriptionColor: getTemplateDescriptionColor("ghostty")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateGhostty
                     onToggled: checked => SettingsData.set("matugenTemplateGhostty", checked)
                 }
@@ -2437,7 +2418,7 @@ Item {
                     text: "kitty"
                     description: getTemplateDescription("kitty", "")
                     descriptionColor: getTemplateDescriptionColor("kitty")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateKitty
                     onToggled: checked => SettingsData.set("matugenTemplateKitty", checked)
                 }
@@ -2449,7 +2430,7 @@ Item {
                     text: "foot"
                     description: getTemplateDescription("foot", "")
                     descriptionColor: getTemplateDescriptionColor("foot")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateFoot
                     onToggled: checked => SettingsData.set("matugenTemplateFoot", checked)
                 }
@@ -2466,7 +2447,7 @@ Item {
                     text: "neovim"
                     description: getTemplateDescription("nvim", I18n.tr("Required plugin: ") + "https://github.com/AvengeMedia/base46")
                     descriptionColor: getTemplateDescriptionColor("nvim")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateNeovim
                     onToggled: checked => SettingsData.set("matugenTemplateNeovim", checked)
                 }
@@ -2540,7 +2521,7 @@ Item {
                 }
 
                 SettingsToggleRow {
-                    text: I18n.tr("Follow DMS background color")
+                    text: I18n.tr("Follow HGS background color")
                     tags: ["matugen", "neovim", "terminal", "template"]
                     settingKey: "matugenTemplateNeovimSetBackground"
                     visible: neovimThemeToggle.visible && neovimThemeToggle.checked
@@ -2559,7 +2540,7 @@ Item {
                     text: "Alacritty"
                     description: getTemplateDescription("alacritty", "")
                     descriptionColor: getTemplateDescriptionColor("alacritty")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateAlacritty
                     onToggled: checked => SettingsData.set("matugenTemplateAlacritty", checked)
                 }
@@ -2571,7 +2552,7 @@ Item {
                     text: "WezTerm"
                     description: getTemplateDescription("wezterm", "")
                     descriptionColor: getTemplateDescriptionColor("wezterm")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateWezterm
                     onToggled: checked => SettingsData.set("matugenTemplateWezterm", checked)
                 }
@@ -2583,7 +2564,7 @@ Item {
                     text: "dgop"
                     description: getTemplateDescription("dgop", "")
                     descriptionColor: getTemplateDescriptionColor("dgop")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateDgop
                     onToggled: checked => SettingsData.set("matugenTemplateDgop", checked)
                 }
@@ -2595,7 +2576,7 @@ Item {
                     text: "KColorScheme"
                     description: getTemplateDescription("kcolorscheme", "")
                     descriptionColor: getTemplateDescriptionColor("kcolorscheme")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateKcolorscheme
                     onToggled: checked => SettingsData.set("matugenTemplateKcolorscheme", checked)
                 }
@@ -2607,7 +2588,7 @@ Item {
                     text: "VS Code"
                     description: getTemplateDescription("vscode", "")
                     descriptionColor: getTemplateDescriptionColor("vscode")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateVscode
                     onToggled: checked => SettingsData.set("matugenTemplateVscode", checked)
                 }
@@ -2619,7 +2600,7 @@ Item {
                     text: "Emacs"
                     description: getTemplateDescription("emacs", "")
                     descriptionColor: getTemplateDescriptionColor("emacs")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateEmacs
                     onToggled: checked => SettingsData.set("matugenTemplateEmacs", checked)
                 }
@@ -2631,7 +2612,7 @@ Item {
                     text: "Zed"
                     description: getTemplateDescription("zed", "")
                     descriptionColor: getTemplateDescriptionColor("zed")
-                    visible: SettingsData.runDmsMatugenTemplates
+                    visible: SettingsData.runHgsMatugenTemplates
                     checked: SettingsData.matugenTemplateZed
                     onToggled: checked => SettingsData.set("matugenTemplateZed", checked)
                 }
@@ -2648,7 +2629,7 @@ Item {
                     anchors.margins: Theme.spacingM
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "info"
                         size: Theme.iconSizeSmall
                         color: Theme.warning
@@ -2688,7 +2669,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "settings"
                                 size: 16
                                 color: Theme.primary
@@ -2722,7 +2703,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "settings"
                                 size: 16
                                 color: Theme.primary
@@ -2748,7 +2729,7 @@ Item {
                 }
 
                 StyledText {
-                    text: I18n.tr('Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href="https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming" style="text-decoration:none; color:%1;">adw-gtk3</a> prior to applying GTK themes.').arg(Theme.primary)
+                    text: I18n.tr('Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href="https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming" style="text-decoration:none; color:%1;">adw-gtk3</a> prior to applying GTK themes.').arg(Theme.primary)
                     textFormat: Text.RichText
                     linkColor: Theme.primary
                     onLinkActivated: url => Qt.openUrlExternally(url)

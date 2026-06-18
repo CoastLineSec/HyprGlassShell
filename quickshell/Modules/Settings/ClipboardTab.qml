@@ -216,7 +216,7 @@ Item {
     function loadConfig() {
         configLoaded = false;
         configError = false;
-        DMSService.sendRequest("clipboard.getConfig", null, response => {
+        HGSService.sendRequest("clipboard.getConfig", null, response => {
             if (response.error) {
                 configError = true;
                 return;
@@ -230,7 +230,7 @@ Item {
         const params = {};
         params[key] = value;
         saving = true;
-        DMSService.sendRequest("clipboard.setConfig", params, response => {
+        HGSService.sendRequest("clipboard.setConfig", params, response => {
             saving = false;
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to save clipboard setting"), response.error);
@@ -243,19 +243,19 @@ Item {
     }
 
     Component.onCompleted: {
-        if (DMSService.isConnected)
+        if (HGSService.isConnected)
             loadConfig();
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
         function onIsConnectedChanged() {
-            if (DMSService.isConnected)
+            if (HGSService.isConnected)
                 loadConfig();
         }
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -273,7 +273,7 @@ Item {
                 height: warningContent.implicitHeight + Theme.spacingM * 2
                 radius: Theme.cornerRadius
                 color: Qt.rgba(Theme.warning.r, Theme.warning.g, Theme.warning.b, 0.12)
-                visible: !DMSService.isConnected || configError
+                visible: !HGSService.isConnected || configError
 
                 Row {
                     id: warningContent
@@ -281,7 +281,7 @@ Item {
                     anchors.margins: Theme.spacingM
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "info"
                         size: Theme.iconSizeSmall
                         color: Theme.warning
@@ -290,7 +290,7 @@ Item {
 
                     StyledText {
                         font.pixelSize: Theme.fontSizeSmall
-                        text: !DMSService.isConnected ? I18n.tr("DMS service is not connected. Clipboard settings are unavailable.") : I18n.tr("Failed to load clipboard configuration.")
+                        text: !HGSService.isConnected ? I18n.tr("HGS service is not connected. Clipboard settings are unavailable.") : I18n.tr("Failed to load clipboard configuration.")
                         wrapMode: Text.WordWrap
                         width: parent.width - Theme.iconSizeSmall - Theme.spacingM
                         anchors.verticalCenter: parent.verticalCenter

@@ -11,9 +11,9 @@ DockContextMenuBase {
     property bool hidePin: false
     property var desktopEntry: null
     property var dockApps: null
-    readonly property bool isDmsWindow: appData?.appId === "org.quickshell" || appData?.appId === "com.danklinux.dms"
+    readonly property bool isHgsWindow: appData?.appId === "org.quickshell" || appData?.appId === "io.github.coastlinesec.hgs"
 
-    layerNamespace: "dms:dock-context-menu"
+    layerNamespace: "hgs:dock-context-menu"
 
     function showForButton(button, data, dockHeight, hidePinOption, entry, dockScreen, parentDockApps) {
         appData = data;
@@ -60,7 +60,7 @@ DockContextMenuBase {
                 radius: 10
                 color: closeMouseArea.containsMouse ? Qt.rgba(Theme.error.r, Theme.error.g, Theme.error.b, 0.2) : "transparent"
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: "close"
                     size: 12
@@ -81,7 +81,7 @@ DockContextMenuBase {
                 }
             }
 
-            DankRipple {
+            HGSRipple {
                 id: windowRipple
                 rippleColor: Theme.surfaceText
                 cornerRadius: Theme.cornerRadius
@@ -160,7 +160,7 @@ DockContextMenuBase {
                 }
             }
 
-            DankRipple {
+            HGSRipple {
                 id: actionRipple
                 rippleColor: Theme.surfaceText
                 cornerRadius: Theme.cornerRadius
@@ -187,7 +187,7 @@ DockContextMenuBase {
             if (!root.desktopEntry?.actions || root.desktopEntry.actions.length === 0) {
                 return false;
             }
-            return !root.hidePin || (!root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand);
+            return !root.hidePin || (!root.isHgsWindow && root.desktopEntry && SessionService.nvidiaCommand);
         }
         width: parent.width
         height: 1
@@ -209,7 +209,7 @@ DockContextMenuBase {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXS
 
-            DankIcon {
+            HGSIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: root.appData && root.appData.isPinned ? "keep_off" : "push_pin"
                 size: 14
@@ -228,7 +228,7 @@ DockContextMenuBase {
             }
         }
 
-        DankRipple {
+        HGSRipple {
             id: pinRipple
             rippleColor: Theme.surfaceText
             cornerRadius: Theme.cornerRadius
@@ -256,7 +256,7 @@ DockContextMenuBase {
 
     Rectangle {
         visible: {
-            const hasNvidia = !root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand;
+            const hasNvidia = !root.isHgsWindow && root.desktopEntry && SessionService.nvidiaCommand;
             const hasWindow = root.appData && (root.appData.type === "window" || (root.appData.type === "grouped" && root.appData.windowCount > 0));
             const hasPinOption = !root.hidePin;
             const hasContentAbove = hasPinOption || hasNvidia;
@@ -268,7 +268,7 @@ DockContextMenuBase {
     }
 
     Rectangle {
-        visible: !root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand
+        visible: !root.isHgsWindow && root.desktopEntry && SessionService.nvidiaCommand
         width: parent.width
         height: 28
         radius: Theme.cornerRadius
@@ -282,7 +282,7 @@ DockContextMenuBase {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXS
 
-            DankIcon {
+            HGSIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "memory"
                 size: 14
@@ -301,7 +301,7 @@ DockContextMenuBase {
             }
         }
 
-        DankRipple {
+        HGSRipple {
             id: nvidiaRipple
             rippleColor: Theme.surfaceText
             cornerRadius: Theme.cornerRadius
@@ -337,7 +337,7 @@ DockContextMenuBase {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXS
 
-            DankIcon {
+            HGSIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "close"
                 size: 14
@@ -356,7 +356,7 @@ DockContextMenuBase {
             }
         }
 
-        DankRipple {
+        HGSRipple {
             id: closeRipple
             rippleColor: Theme.error
             cornerRadius: Theme.cornerRadius

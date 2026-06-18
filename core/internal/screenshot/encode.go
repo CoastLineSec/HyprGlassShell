@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 func BufferToImage(buf *ShmBuffer) *image.RGBA {
@@ -99,7 +99,7 @@ func GenerateFilename(format Format) string {
 }
 
 func GetOutputDir() string {
-	if dir := os.Getenv("DMS_SCREENSHOT_DIR"); dir != "" {
+	if dir := os.Getenv("HGS_SCREENSHOT_DIR"); dir != "" {
 		return dir
 	}
 

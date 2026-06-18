@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT-Lizenz</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT-Lizenz</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "Eine Datei mit diesem Namen existiert bereits. Überschreiben?"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "Greeter aktivieren"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "DMS Greeter aktivieren? Ein Terminal für die Sudo-Authentifizierung wird geöffnet. Führen Sie nach der Aktivierung 'Sync' aus, um Ihre Einstellungen zu übernehmen."
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "HGS Greeter aktivieren? Ein Terminal für die Sudo-Authentifizierung wird geöffnet. Führen Sie nach der Aktivierung 'Sync' aus, um Ihre Einstellungen zu übernehmen."
   },
   "Activation": {
     "Activation": "Aktivierung"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": "„%1“ zur Gruppe „%2“ hinzufügen?"
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": "„%1“ zur Gruppe „%2“ hinzufügen? Der Benutzer muss sich aus- und wieder anmelden und dann „dms greeter sync --profile“ ausführen, um sein Design für den Anmeldebildschirm zu veröffentlichen."
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": "„%1“ zur Gruppe „%2“ hinzufügen? Der Benutzer muss sich aus- und wieder anmelden und dann „hgs greeter sync --profile“ ausführen, um sein Design für den Anmeldebildschirm zu veröffentlichen."
   },
   "Add Bar": {
     "Add Bar": "Leiste hinzufügen"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": "Den neuen Benutzer zur Gruppe „%1“ hinzufügen, damit er „dms greeter sync --profile“ ausführen kann."
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": "Den neuen Benutzer zur Gruppe „%1“ hinzufügen, damit er „hgs greeter sync --profile“ ausführen kann."
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": "Den neuen Benutzer zur Gruppe „%1“ hinzufügen, damit er „sudo“ verwenden kann."
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "Automatisch sperren nach"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "Bildschirm beim Start von DMS automatisch sperren"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "Bildschirm beim Start von HGS automatisch sperren"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "Bilschirmsperrung aktivieren wenn das System in den Ruhemodus wechselt"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "Ändere Leistenerscheinungsbild"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "Ändern Sie das Gebietsschema für die DMS-Benutzeroberfläche."
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "Ändern Sie das Gebietsschema für die HGS-Benutzeroberfläche."
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "Ändern Sie das Gebietsschema für die Datums- und Zeitformatierung, unabhängig von der Sprache der Benutzeroberfläche."
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "Beim Start prüfen"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Synchronisationsstatus bei Bedarf prüfen. Die (vollständige) Synchronisierung ist für den Hauptadministrator gedacht: Sie kopiert Ihr Design auf den Anmeldebildschirm und richtet die System-Greeter-Konfiguration ein. Fügen Sie auf Mehrbenutzersystemen weitere Konten unter Einstellungen → Benutzer hinzu und lassen Sie jeden von ihnen nach dem Ab- und Anmelden „dms greeter sync --profile“ ausführen – keine vollständige Synchronisierung. Änderungen an der Authentifizierung werden automatisch übernommen."
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": "Synchronisationsstatus bei Bedarf prüfen. Die (vollständige) Synchronisierung ist für den Hauptadministrator gedacht: Sie kopiert Ihr Design auf den Anmeldebildschirm und richtet die System-Greeter-Konfiguration ein. Fügen Sie auf Mehrbenutzersystemen weitere Konten unter Einstellungen → Benutzer hinzu und lassen Sie jeden von ihnen nach dem Ab- und Anmelden „hgs greeter sync --profile“ ausführen – keine vollständige Synchronisierung. Änderungen an der Authentifizierung werden automatisch übernommen."
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "Überprüfen Sie Ihren benutzerdefinierten Befehl in den Einstellungen → Dock → Papierkorb."
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "Rahmenakzentfarbe auswählen"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "Wähle das Logo des Launcher Knopfs in der DankBar"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "Wähle das Logo des Launcher Knopfs in der HGSBar"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "Wähle wo auf dem Bildschirm Benachrichtigungen erscheinen"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "Farbschema für Syntax-Hervorhebung. %1 Schemata verfügbar."
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "Farbschema aus der DMS-Registry"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "Farbschema aus der HGS-Registry"
   },
   "Colorful": {
     "Colorful": "Farbenfroh"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "Komfortoptionen für den Anmeldebildschirm. Synchronisieren zum Anwenden."
   },
-  "Convert to DMS": {
-    "Convert to DMS": "In DMS konvertieren"
+  "Convert to HGS": {
+    "Convert to HGS": "In HGS konvertieren"
   },
   "Cooldown": {
     "Cooldown": "Abkühlzeit"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "DEMO MODUS - Irgendwo klicken um abzubrechen"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "DMS-Auswahl"
+  "HGS Chooser": {
+    "HGS Chooser": "HGS-Auswahl"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "DMS Plugin Manager nicht verfügbar"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "HGS Plugin Manager nicht verfügbar"
   },
-  "DMS Settings": {
-    "DMS Settings": "DMS-Einstellungen"
+  "HGS Settings": {
+    "HGS Settings": "HGS-Einstellungen"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": "DMS-Einstellungen schreiben Lua-Tastenkombinationen. Fügen Sie den DMS-Include hinzu, damit Änderungen wirksam werden."
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": "HGS-Einstellungen schreiben Lua-Tastenkombinationen. Fügen Sie den HGS-Include hinzu, damit Änderungen wirksam werden."
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "DMS-Kurzbefehle"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "HGS-Kurzbefehle"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "DMS-Greeter benötigt: greetd, dms-greeter. Fingerabdruck: fprintd, pam_fprintd. Sicherheitsschlüssel: pam_u2f. Fügen Sie Ihren Benutzer der Gruppe „greeter“ hinzu. Authentifizierungsänderungen werden automatisch angewendet und können ein Terminal öffnen, wenn eine Sudo-Authentifizierung erforderlich ist."
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "HGS-Greeter benötigt: greetd, hgs-greeter. Fingerabdruck: fprintd, pam_fprintd. Sicherheitsschlüssel: pam_u2f. Fügen Sie Ihren Benutzer der Gruppe „greeter“ hinzu. Authentifizierungsänderungen werden automatisch angewendet und können ein Terminal öffnen, wenn eine Sudo-Authentifizierung erforderlich ist."
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": "DMS benötigt Administratorzugriff. Das Terminal schließt sich nach Abschluss automatisch."
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": "HGS benötigt Administratorzugriff. Das Terminal schließt sich nach Abschluss automatisch."
   },
-  "DMS out of date": {
-    "DMS out of date": "DMS ist veraltet"
+  "HGS out of date": {
+    "HGS out of date": "HGS ist veraltet"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "DMS-Server ist veraltet (API v%1, erwartet v%2)"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "HGS-Server ist veraltet (API v%1, erwartet v%2)"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "DMS-Dienst ist nicht verbunden. Zwischenablage-Einstellungen sind nicht verfügbar."
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "HGS-Dienst ist nicht verbunden. Zwischenablage-Einstellungen sind nicht verfügbar."
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "DMS Shell Aktionen (Launcher, Zwischenablage, etc.)"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "HGS Shell Aktionen (Launcher, Zwischenablage, etc.)"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKET nicht verfügbar"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKET nicht verfügbar"
   },
   "Daily": {
     "Daily": "Täglich"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "Täglich um:"
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank Bar"
+  "HGS Bar": {
+    "HGS Bar": "HGS Bar"
   },
-  "DankBar": {
-    "DankBar": "DankBar"
+  "HGSBar": {
+    "HGSBar": "HGSBar"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "DankMaterialShell ist einsatzbereit"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "HyprGlassShell ist einsatzbereit"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "DankShell & System Icons (Neutstart erforderlich)"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "HGSShell & System Icons (Neutstart erforderlich)"
   },
   "Dark Mode": {
     "Dark Mode": "Dunkler Modus"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "Nieselregen"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": "Ihre Überschreibung für %1 verwerfen, damit die DMS-Standardaktion wieder angewendet wird?"
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": "Ihre Überschreibung für %1 verwerfen, damit die HGS-Standardaktion wieder angewendet wird?"
   },
   "Duplicate": {
     "Duplicate": "Duplizieren"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "Aktivieren Sie unten eine benutzerdefinierte Überschreibung, um Schattenintensität, Deckkraft und Farbe pro Leiste festzulegen."
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "Compositor-zielbaren Weichzeichner-Layer aktivieren (Namespace: dms:blurwallpaper). Erfordert manuelle Niri-Konfiguration."
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "Compositor-zielbaren Weichzeichner-Layer aktivieren (Namespace: hgs:blurwallpaper). Erfordert manuelle Niri-Konfiguration."
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "Fingerabdruck bei Anmeldung aktivieren"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "Aktiviere Fingerabdruck Authentifizierung"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "Fingerabdruck oder Sicherheitsschlüssel für DMS-Greeter aktivieren. Authentifizierungsänderungen werden automatisch angewendet."
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "Fingerabdruck oder Sicherheitsschlüssel für HGS-Greeter aktivieren. Authentifizierungsänderungen werden automatisch angewendet."
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "Loginctl‑Sperrintegration aktivieren"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "Gerät konnte nicht klingeln gelassen werden"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "Fehler beim Ausführen von 'dms greeter status'. Stellen Sie sicher, dass DMS installiert ist und dms im PATH liegt."
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "Fehler beim Ausführen von 'hgs greeter status'. Stellen Sie sicher, dass HGS installiert ist und hgs im PATH liegt."
   },
   "Failed to save audio config": {
     "Failed to save audio config": "Speichern der Audiokonfiguration fehlgeschlagen"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "Datei empfangen von"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "Dateisuche erfordert dsearch\nVon github.com/AvengeMedia/danksearch installieren"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "Dateisuche erfordert dsearch\nVon github.com/CoastLineSec/hgssearch installieren"
   },
   "File search unavailable": {
     "File search unavailable": "Dateisuche nicht verfügbar"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "Ordner"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "DMS-Hintergrundfarbe folgen"
+  "Follow HGS background color": {
+    "Follow HGS background color": "HGS-Hintergrundfarbe folgen"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "Monitorfokus folgen"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "Gamma-Steuerung"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "Gamma-Steuerung nicht verfügbar. Erfordert DMS API v6+."
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "Gamma-Steuerung nicht verfügbar. Erfordert HGS API v6+."
   },
   "Generate Override": {
     "Generate Override": "Override generieren"
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Basis-GTK3/4- oder QT5/QT6-Konfigurationen (erfordert qt6ct-kde) erstellen, um DMS-Farben zu folgen. Nur einmal erforderlich.<br /><br />Es wird empfohlen, <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> vor der Anwendung von GTK-Themes zu konfigurieren."
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "Basis-GTK3/4- oder QT5/QT6-Konfigurationen (erfordert qt6ct-kde) erstellen, um HGS-Farben zu folgen. Nur einmal erforderlich.<br /><br />Es wird empfohlen, <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> vor der Anwendung von GTK-Themes zu konfigurieren."
   },
   "Generic": {
     "Generic": "Generisch"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "Greeter-Schriftart"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": "Mitglieder der Greeter-Gruppe können ihr Design für den Anmeldebildschirm nach dem Ab- und Anmelden mit „dms greeter sync --profile“ synchronisieren."
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": "Mitglieder der Greeter-Gruppe können ihr Design für den Anmeldebildschirm nach dem Ab- und Anmelden mit „hgs greeter sync --profile“ synchronisieren."
   },
   "Greeter group:": {
     "Greeter group:": "Greeter-Gruppe:"
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "Inaktivitätseinstellungen"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": "Wenn Autostart-App-Symbole nicht im System-Tray erscheinen, generieren Sie einen Systemd-Override, um sicherzustellen, dass DMS vor den Autostart-Apps startet"
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": "Wenn Autostart-App-Symbole nicht im System-Tray erscheinen, generieren Sie einen Systemd-Override, um sicherzustellen, dass HGS vor den Autostart-Apps startet"
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "Wenn das Feld ausgeblendet ist, erscheint es, sobald eine Taste gedrückt wird."
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "Theme installieren"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "Farbschemata aus der DMS-Theme-Registry installieren"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "Farbschemata aus der HGS-Theme-Registry installieren"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "Installation abgeschlossen. Greeter wurde installiert."
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "Installieren Sie das matugen-Paket für dynamisches Theming"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "Plugin '%1' aus der DMS-Registry installieren?"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "Plugin '%1' aus der HGS-Registry installieren?"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "Installiere Plugins aus der DMS Plugin-Registry"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "Installiere Plugins aus der HGS Plugin-Registry"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "DMS Greeter installieren? Ein Terminal für die Sudo-Authentifizierung wird geöffnet."
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "HGS Greeter installieren? Ein Terminal für die Sudo-Authentifizierung wird geöffnet."
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "Theme '%1' aus der DMS-Registry installieren?"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "Theme '%1' aus der HGS-Registry installieren?"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "Installation und PAM-Einrichtung: siehe die "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": "Den Hintergrund der Leiste vollständig transparent machen"
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "Plugins zur Erweiterung der DMS-Funktionalität verwalten und konfigurieren"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "Plugins zur Erweiterung der HGS-Funktionalität verwalten und konfigurieren"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "Verwalten Sie bis zu 4 unabhängige Leistenkonfigurationen. Jede Leiste hat ihre eigene Position, Widgets, Styling und Display-Zuweisung."
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "Von Material Design inspirierte Schatten und Erhöhungen auf Modalen, Popouts und Dialogen"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "Material: Material Design 3 Ausdrucksstarke Bezier-Kurven. Das DMS-Standardgefühl."
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "Material: Material Design 3 Ausdrucksstarke Bezier-Kurven. Das HGS-Standardgefühl."
   },
   "Matugen Contrast": {
     "Matugen Contrast": "Matugen-Kontrast"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "Nachtmodus & Gamma"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "Nachtmodus fehlgeschlagen: DMS-Gammakontrolle nicht verfügbar"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "Nachtmodus fehlgeschlagen: HGS-Gammakontrolle nicht verfügbar"
   },
   "Niri Integration": {
     "Niri Integration": "Niri-Integration"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "Kein Rand"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "Keine DMS-Tastenkombinationen konfiguriert"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "Keine HGS-Tastenkombinationen konfiguriert"
   },
   "No Dim": {
     "No Dim": "Kein Abdunkeln"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "Nur die Gamma-Einstellung basierend auf Zeit- oder Ortsregeln anpassen."
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Betrifft nur von DMS verwaltetes PAM. Wenn greetd bereits pam_fprintd enthält, bleibt der Fingerabdruck aktiviert."
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "Betrifft nur von HGS verwaltetes PAM. Wenn greetd bereits pam_fprintd enthält, bleibt der Fingerabdruck aktiviert."
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "Nur Fenster des aktuellen Monitors in jedem Dock anzeigen"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": "Den Kurzbefehl %1 entfernen?"
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": "Den Kurzbefehl %1 entfernen? Ein Unbind-Eintrag wird in dms/binds-user.lua gespeichert, damit er auch nach DMS-Updates entfernt bleibt."
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": "Den Kurzbefehl %1 entfernen? Ein Unbind-Eintrag wird in hgs/binds-user.lua gespeichert, damit er auch nach HGS-Updates entfernt bleibt."
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": "Administratorrechte entfernt"
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "Erfordert 'dgop' Tool"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "Erfordert DMS %1"
+  "Requires HGS %1": {
+    "Requires HGS %1": "Erfordert HGS %1"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "Erfordert DMS-Server mit sysupdate-Funktion"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "Erfordert HGS-Server mit sysupdate-Funktion"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": "Erfordert MangoWC-Compositor"
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "Auflösung, Position, Skalierung"
   },
-  "Restart DMS": {
-    "Restart DMS": "Neustart DMS"
+  "Restart HGS": {
+    "Restart HGS": "Neustart HGS"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "DankMaterialShell neustarten"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "HyprGlassShell neustarten"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "Audiosystem wird neu gestartet..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "Regeln (%1)"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": "In Ihrer Compositor-Konfiguration gefundene Regeln. Diese sind hier schreibgeschützt. Verwenden Sie „In DMS konvertieren“, um eine bearbeitbare Kopie zu erstellen."
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": "In Ihrer Compositor-Konfiguration gefundene Regeln. Diese sind hier schreibgeschützt. Verwenden Sie „In HGS konvertieren“, um eine bearbeitbare Kopie zu erstellen."
   },
   "Run Again": {
     "Run Again": "Erneut ausführen"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "DMS Vorlagen ausführen"
+  "Run HGS Templates": {
+    "Run HGS Templates": "HGS Vorlagen ausführen"
   },
   "Run User Templates": {
     "Run User Templates": "Benutzer-Vorlagen ausführen"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "Skalierung"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "Skaliere DankBar Schriftgröße seperat"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "Skaliere HGSBar Schriftgröße seperat"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "DankBar-Icon-Größen unabhängig skalieren"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "HGSBar-Icon-Größen unabhängig skalieren"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "Alle Schriftgrößen in der Shell skalieren"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "Neustart anzeigen"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "DMS-Neustart anzeigen"
+  "Show Restart HGS": {
+    "Show Restart HGS": "HGS-Neustart anzeigen"
   },
   "Show Saved Items": {
     "Show Saved Items": "Gespeicherte Elemente anzeigen"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "Schnee"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "Einige Plugins benötigen eine neuere DMS Version:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "Einige Plugins benötigen eine neuere HGS Version:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "Alphabetisch sortieren"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "Standard"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "Standard: Klassisches Material Design 3 – Panels steigen von unten mit einer subtilen Skalierung auf. Der DMS-Standard."
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "Standard: Klassisches Material Design 3 – Panels steigen von unten mit einer subtilen Skalierung auf. Der HGS-Standard."
   },
   "Start": {
     "Start": "Start"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "Zusätzliche Terminal-Parameter"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "Terminal-Fallback fehlgeschlagen. Installieren Sie einen unterstützten Terminal-Emulator oder führen Sie „dms auth sync“ manuell aus."
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "Terminal-Fallback fehlgeschlagen. Installieren Sie einen unterstützten Terminal-Emulator oder führen Sie „hgs auth sync“ manuell aus."
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "Terminal-Fallback fehlgeschlagen. Installieren Sie einen der unterstützten Terminal-Emulatoren oder führen Sie 'dms greeter sync' manuell aus."
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "Terminal-Fallback fehlgeschlagen. Installieren Sie einen der unterstützten Terminal-Emulatoren oder führen Sie 'hgs greeter sync' manuell aus."
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "Terminal-Fallback geöffnet. Schließen Sie dort die Authentifizierungseinrichtung ab; es wird nach Abschluss automatisch geschlossen."
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "Das Tool 'dgop' ist für die Systemüberwachung erforderlich.\nBitte installieren Sie dgop, um diese Funktion zu nutzen."
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "Die Umgebungsvariable DMS_SOCKET ist nicht gesetzt oder der Socket ist nicht verfügbar. Die automatische Plugin-Verwaltung erfordert DMS_SOCKET."
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "Die Umgebungsvariable HGS_SOCKET ist nicht gesetzt oder der Socket ist nicht verfügbar. Die automatische Plugin-Verwaltung erfordert HGS_SOCKET."
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "Die folgenden Einstellungen werden Ihre GTK- und Qt-Einstellungen ändern. Wenn Sie Ihre aktuellen Konfigurationen beibehalten möchten, sichern Sie diese bitte (qt5ct.conf|qt6ct.conf und ~/.config/gtk-3.0|gtk-4.0)."
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "Drittanbieter-Plugin Warnung"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "Plugins von Drittanbietern werden von der Community erstellt und nicht offiziell von DankMaterialShell unterstützt.\n\nDiese Plugins können Sicherheits- und Datenschutzrisiken bergen – Installation auf eigene Gefahr."
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "Plugins von Drittanbietern werden von der Community erstellt und nicht offiziell von HyprGlassShell unterstützt.\n\nDiese Plugins können Sicherheits- und Datenschutzrisiken bergen – Installation auf eigene Gefahr."
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "Diese Bindung wird durch config.kdl überschrieben"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "Dieses Gerät"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „dms setup“ aus, um zu migrieren, bevor Sie die Cursoreinstellungen bearbeiten."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „hgs setup“ aus, um zu migrieren, bevor Sie die Cursoreinstellungen bearbeiten."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „dms setup“ aus, um zu migrieren, bevor Sie die Anzeigeeinstellungen bearbeiten."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „hgs setup“ aus, um zu migrieren, bevor Sie die Anzeigeeinstellungen bearbeiten."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „dms setup“ aus, um zu migrieren, bevor Sie die Kurzbefehle in den Einstellungen bearbeiten."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „hgs setup“ aus, um zu migrieren, bevor Sie die Kurzbefehle in den Einstellungen bearbeiten."
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „dms setup“ aus, um zu migrieren, bevor Sie die Fensterregeln in den Einstellungen bearbeiten."
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": "Diese Installation verwendet noch hyprland.conf. Führen Sie „hgs setup“ aus, um zu migrieren, bevor Sie die Fensterregeln in den Einstellungen bearbeiten."
   },
   "This may take a few seconds": {
     "This may take a few seconds": "Dies kann einige Sekunden dauern"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "Zum Aktualisieren führen Sie folgenden Befehl aus:"
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "Um diese DMS-Bindung zu verwenden, entfernen oder ändern Sie das Tastenkürzel in Ihrer config.kdl"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "Um diese HGS-Bindung zu verwenden, entfernen oder ändern Sie das Tastenkürzel in Ihrer config.kdl"
   },
   "Toast Messages": {
     "Toast Messages": "Toast-Nachrichten"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "Deinstallation fehlgeschlagen: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "DMS-Greeter deinstallieren? Dies entfernt die Konfiguration und stellt Ihren vorherigen Display-Manager wieder her. Ein Terminal zur Sudo-Authentifizierung wird geöffnet."
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "HGS-Greeter deinstallieren? Dies entfernt die Konfiguration und stellt Ihren vorherigen Display-Manager wieder her. Ein Terminal zur Sudo-Authentifizierung wird geöffnet."
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "Deinstalliert: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": "Verwendet die spotlight-bar IPC-Aktion und öffnet immer die minimale Leiste."
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "Verwendet globale Monospace-Schriftart aus Einstellungen → Personalisierung"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "Willkommen"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "Willkommen bei DankMaterialShell"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "Willkommen bei HyprGlassShell"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "Beim Klicken auf ein Dock-Fenster in einem speziellen Hyprland-Arbeitsbereich diesen wiederherstellen, bevor das Fenster fokussiert wird"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "direkt"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "dms ist eine hochgradig anpassbare, moderne Desktop-Shell mit einem <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3 inspirierten</a> Design.<br /><br/>Sie wurde mit <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a> entwickelt, einem QT6-Framework zum Erstellen von Desktop-Shells, und <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, einer statisch typisierten, kompilierten Programmiersprache."
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "hgs ist eine hochgradig anpassbare, moderne Desktop-Shell mit einem <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3 inspirierten</a> Design.<br /><br/>Sie wurde mit <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a> entwickelt, einem QT6-Framework zum Erstellen von Desktop-Shells, und <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, einer statisch typisierten, kompilierten Programmiersprache."
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "dms/cursor-Konfiguration existiert, ist aber nicht eingebunden. Cursor-Einstellungen werden nicht angewendet."
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "hgs/cursor-Konfiguration existiert, ist aber nicht eingebunden. Cursor-Einstellungen werden nicht angewendet."
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "Die Konfiguration 'dms/outputs' existiert, ist aber nicht in Ihrer Compositor-Konfiguration enthalten. Anzeigeänderungen werden nicht dauerhaft gespeichert."
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "Die Konfiguration 'hgs/outputs' existiert, ist aber nicht in Ihrer Compositor-Konfiguration enthalten. Anzeigeänderungen werden nicht dauerhaft gespeichert."
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": "z. B. /usr/bin/my-script --flag"
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": "loginctl activate fehlgeschlagen (Beendet mit %1)"
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctl nicht verfügbar – Sperrintegration erfordert DMS-Socket-Verbindung"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctl nicht verfügbar – Sperrintegration erfordert HGS-Socket-Verbindung"
   },
   "mango: config reloaded": {
     "mango: config reloaded": "mango: Konfiguration neu geladen"
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "niri-Tastenkombinationskonfiguration"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "niri/dms Discord"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "niri/hgs Discord"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "niri: Konfiguration neu geladen"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "hoch"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "dms für NM-Integration aktualisieren."
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "hgs für NM-Integration aktualisieren."
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": "useradd fehlgeschlagen (Beendet mit %1)"

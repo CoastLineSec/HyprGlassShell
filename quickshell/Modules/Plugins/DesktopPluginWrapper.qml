@@ -25,7 +25,7 @@ Item {
     readonly property bool showOnOverlay: instanceData?.config?.showOnOverlay ?? false
     readonly property bool showOnOverview: instanceData?.config?.showOnOverview ?? false
     readonly property bool showOnOverviewOnly: instanceData?.config?.showOnOverviewOnly ?? false
-    readonly property bool overviewActive: CompositorService.isNiri && NiriService.inOverview
+    readonly property bool overviewActive: false
     readonly property bool clickThrough: instanceData?.config?.clickThrough ?? false
     readonly property bool syncPositionAcrossScreens: instanceData?.config?.syncPositionAcrossScreens ?? false
 
@@ -90,7 +90,7 @@ Item {
     readonly property int screenWidth: screen?.width ?? 1920
     readonly property int screenHeight: screen?.height ?? 1080
 
-    readonly property bool useGhostPreview: !CompositorService.isNiri
+    readonly property bool useGhostPreview: true
 
     property real previewX: widgetX
     property real previewY: widgetY
@@ -288,7 +288,7 @@ Item {
 
         mask: root.clickThrough ? emptyMask : null
 
-        WlrLayershell.namespace: "dms:desktop-widget:" + root.pluginId + (root.instanceId ? ":" + root.instanceId : "")
+        WlrLayershell.namespace: "hgs:desktop-widget:" + root.pluginId + (root.instanceId ? ":" + root.instanceId : "")
         WlrLayershell.layer: {
             if (root.isInteracting && !CompositorService.useHyprlandFocusGrab)
                 return WlrLayer.Overlay;
@@ -313,7 +313,7 @@ Item {
         }
 
         HyprlandFocusGrab {
-            active: CompositorService.isHyprland && root.isInteracting
+            active: root.isInteracting
             windows: [widgetWindow]
         }
 
@@ -558,7 +558,7 @@ Item {
 
             mask: Region {}
 
-            WlrLayershell.namespace: "dms:desktop-widget-preview"
+            WlrLayershell.namespace: "hgs:desktop-widget-preview"
             WlrLayershell.layer: WlrLayer.Bottom
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -638,7 +638,7 @@ Item {
 
             mask: Region {}
 
-            WlrLayershell.namespace: "dms:desktop-widget-grid"
+            WlrLayershell.namespace: "hgs:desktop-widget-grid"
             WlrLayershell.layer: root.overviewActive && (root.showOnOverview || root.showOnOverviewOnly) ? WlrLayer.Overlay : WlrLayer.Background
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -684,7 +684,7 @@ Item {
             screen: root.screen
             color: "transparent"
 
-            WlrLayershell.namespace: "dms:desktop-widget-helper"
+            WlrLayershell.namespace: "hgs:desktop-widget-helper"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -713,7 +713,7 @@ Item {
                     spacing: Theme.spacingM
                     height: parent.height
 
-                    DankIcon {
+                    HGSIcon {
                         name: "grid_on"
                         size: 16
                         color: root.gridEnabled ? Theme.primary : Theme.surfaceText

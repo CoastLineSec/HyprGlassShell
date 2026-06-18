@@ -8,8 +8,8 @@ import (
 func TestUserGreeterCacheDir(t *testing.T) {
 	t.Parallel()
 
-	got := userGreeterCacheDir("/var/cache/dms-greeter", "alice")
-	want := filepath.Join("/var/cache/dms-greeter", "users", "alice")
+	got := userGreeterCacheDir("/var/cache/hgs-greeter", "alice")
+	want := filepath.Join("/var/cache/hgs-greeter", "users", "alice")
 	if got != want {
 		t.Fatalf("userGreeterCacheDir() = %q, want %q", got, want)
 	}

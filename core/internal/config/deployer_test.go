@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,17 +20,17 @@ func TestCleanupStrayHyprlandConfFile(t *testing.T) {
 		td := t.TempDir()
 		t.Setenv("HOME", td)
 		configDir := filepath.Join(td, ".config", "hypr")
-		dmsDir := filepath.Join(configDir, "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
+		hgsDir := filepath.Join(configDir, "hgs")
+		require.NoError(t, os.MkdirAll(hgsDir, 0o755))
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		dmsConfPath := filepath.Join(dmsDir, "colors.conf")
+		hgsConfPath := filepath.Join(hgsDir, "colors.conf")
 		require.NoError(t, os.WriteFile(confPath, []byte("# legacy user config\n"), 0o644))
-		require.NoError(t, os.WriteFile(dmsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(hgsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
 
 		CleanupStrayHyprlandConfFile(nil)
 
 		assert.FileExists(t, confPath, "must not touch hyprland.conf when user has not migrated")
-		assert.FileExists(t, dmsConfPath, "must not touch dms/*.conf when user has not migrated")
+		assert.FileExists(t, hgsConfPath, "must not touch hgs/*.conf when user has not migrated")
 		assert.NoDirExists(t, filepath.Join(configDir, hyprlandBackupDirName))
 	})
 
@@ -38,200 +38,30 @@ func TestCleanupStrayHyprlandConfFile(t *testing.T) {
 		td := t.TempDir()
 		t.Setenv("HOME", td)
 		configDir := filepath.Join(td, ".config", "hypr")
-		dmsDir := filepath.Join(configDir, "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
+		hgsDir := filepath.Join(configDir, "hgs")
+		require.NoError(t, os.MkdirAll(hgsDir, 0o755))
 		luaPath := filepath.Join(configDir, "hyprland.lua")
-		require.NoError(t, os.WriteFile(luaPath, []byte("-- dms managed\n"), 0o644))
+		require.NoError(t, os.WriteFile(luaPath, []byte("-- hgs managed\n"), 0o644))
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		dmsConfPath := filepath.Join(dmsDir, "colors.conf")
+		hgsConfPath := filepath.Join(hgsDir, "colors.conf")
 		require.NoError(t, os.WriteFile(confPath, []byte("# autogen\n"), 0o644))
-		require.NoError(t, os.WriteFile(dmsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(hgsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
 
 		CleanupStrayHyprlandConfFile(nil)
 
 		assert.NoFileExists(t, confPath)
-		assert.NoFileExists(t, dmsConfPath)
+		assert.NoFileExists(t, hgsConfPath)
 		assert.FileExists(t, luaPath)
 		entries, err := os.ReadDir(filepath.Join(configDir, hyprlandBackupDirName))
 		require.NoError(t, err)
 		require.Len(t, entries, 1)
 		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "hyprland.conf"))
-		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "dms", "colors.conf"))
+		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "hgs", "colors.conf"))
 	})
 }
 
-func TestMergeNiriOutputSections(t *testing.T) {
-	cd := &ConfigDeployer{}
-
-	tests := []struct {
-		name           string
-		newConfig      string
-		existingConfig string
-		wantError      bool
-		wantContains   []string
-	}{
-		{
-			name: "no existing outputs",
-			newConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-layout {
-    gaps 5
-}`,
-			existingConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-layout {
-    gaps 10
-}`,
-			wantError:    false,
-			wantContains: []string{"gaps 5"}, // Should keep new config
-		},
-		{
-			name: "merge single output",
-			newConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-/-output "eDP-2" {
-    mode "2560x1600@239.998993"
-    position x=2560 y=0
-}
-layout {
-    gaps 5
-}`,
-			existingConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-output "eDP-1" {
-    mode "1920x1080@60.000000"
-    position x=0 y=0
-    scale 1.0
-}
-layout {
-    gaps 10
-}`,
-			wantError: false,
-			wantContains: []string{
-				"gaps 5",                              // New config preserved
-				`output "eDP-1"`,                      // Existing output merged
-				"1920x1080@60.000000",                 // Existing output details
-				"Outputs from existing configuration", // Comment added
-			},
-		},
-		{
-			name: "merge multiple outputs",
-			newConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-/-output "eDP-2" {
-    mode "2560x1600@239.998993"
-    position x=2560 y=0
-}
-layout {
-    gaps 5
-}`,
-			existingConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-output "eDP-1" {
-    mode "1920x1080@60.000000"
-    position x=0 y=0
-    scale 1.0
-}
-/-output "HDMI-1" {
-    mode "1920x1080@60.000000"
-    position x=1920 y=0
-}
-layout {
-    gaps 10
-}`,
-			wantError: false,
-			wantContains: []string{
-				"gaps 5",              // New config preserved
-				`output "eDP-1"`,      // First existing output
-				`/-output "HDMI-1"`,   // Second existing output (commented)
-				"1920x1080@60.000000", // Output details
-			},
-		},
-		{
-			name: "merge commented outputs",
-			newConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-/-output "eDP-2" {
-    mode "2560x1600@239.998993"
-    position x=2560 y=0
-}
-layout {
-    gaps 5
-}`,
-			existingConfig: `input {
-    keyboard {
-        xkb {
-        }
-    }
-}
-/-output "eDP-1" {
-    mode "1920x1080@60.000000"
-    position x=0 y=0
-    scale 1.0
-}
-layout {
-    gaps 10
-}`,
-			wantError: false,
-			wantContains: []string{
-				"gaps 5",              // New config preserved
-				`/-output "eDP-1"`,    // Commented output preserved
-				"1920x1080@60.000000", // Output details
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			result, err := cd.mergeNiriOutputSections(tt.newConfig, tt.existingConfig, tmpDir)
-
-			if tt.wantError {
-				assert.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-
-			for _, want := range tt.wantContains {
-				assert.Contains(t, result, want, "merged config should contain: %s", want)
-			}
-
-			assert.NotContains(t, result, `/-output "eDP-2"`, "example output should be removed")
-		})
-	}
-}
-
 func TestConfigDeploymentFlow(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "dankinstall-test")
+	tempDir, err := os.MkdirTemp("", "hgsinstall-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -313,11 +143,11 @@ func TestMergeHyprlandMonitorSections(t *testing.T) {
 		out, err := cd.mergeHyprlandMonitorSections(`hl.config({})`, `input { kb_layout = us }`, tmp)
 		require.NoError(t, err)
 		assert.Equal(t, `hl.config({})`, out)
-		_, e := os.Stat(filepath.Join(tmp, "outputs.lua"))
+		_, e := os.Stat(filepath.Join(tmp, "monitors.lua"))
 		assert.True(t, os.IsNotExist(e))
 	})
 
-	t.Run("writes outputs lua from hyprlang monitors", func(t *testing.T) {
+	t.Run("writes monitors lua from hyprlang monitors", func(t *testing.T) {
 		tmp := t.TempDir()
 		existing := `monitor = DP-1, 1920x1080@144, 0x0, 1
 # monitor = HDMI-A-1, 1920x1080@60, 1920x0, 1
@@ -325,7 +155,7 @@ monitor = eDP-1, 2560x1440@165, auto, 1.25`
 		out, err := cd.mergeHyprlandMonitorSections(`return`, existing, tmp)
 		require.NoError(t, err)
 		assert.Equal(t, `return`, out)
-		b, err := os.ReadFile(filepath.Join(tmp, "outputs.lua"))
+		b, err := os.ReadFile(filepath.Join(tmp, "monitors.lua"))
 		require.NoError(t, err)
 		s := string(b)
 		assert.Contains(t, s, "hl.monitor")
@@ -335,9 +165,9 @@ monitor = eDP-1, 2560x1440@165, auto, 1.25`
 		assert.Contains(t, s, "preferred") // fallback rule at end
 	})
 
-	t.Run("skips when outputs lua already exists", func(t *testing.T) {
+	t.Run("skips when monitors lua already exists", func(t *testing.T) {
 		tmp := t.TempDir()
-		path := filepath.Join(tmp, "outputs.lua")
+		path := filepath.Join(tmp, "monitors.lua")
 		require.NoError(t, os.WriteFile(path, []byte("-- keep\n"), 0o644))
 		_, err := cd.mergeHyprlandMonitorSections(`x`, `monitor = DP-1, 1920x1080@144, 0x0, 1`, tmp)
 		require.NoError(t, err)
@@ -361,7 +191,7 @@ func TestHyprlangMonitorLineToLuaPreservesOptions(t *testing.T) {
 }
 
 func TestHyprlandConfigDeployment(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "dankinstall-hyprland-test")
+	tempDir, err := os.MkdirTemp("", "hgsinstall-hyprland-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -373,7 +203,7 @@ func TestHyprlandConfigDeployment(t *testing.T) {
 	cd := NewConfigDeployer(logChan)
 
 	t.Run("deploy hyprland config to empty directory", func(t *testing.T) {
-		td, err := os.MkdirTemp("", "dankinstall-hyprland-empty")
+		td, err := os.MkdirTemp("", "hgsinstall-hyprland-empty")
 		require.NoError(t, err)
 		defer os.RemoveAll(td)
 		os.Setenv("HOME", td)
@@ -387,13 +217,13 @@ func TestHyprlandConfigDeployment(t *testing.T) {
 
 		content, err := os.ReadFile(result.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(content), `require("dms.binds")`)
-		assert.Contains(t, string(content), "DMS_STARTUP_BEGIN")
+		assert.Contains(t, string(content), `require("hgs.keybinds")`)
+		assert.Contains(t, string(content), "HGS_STARTUP_BEGIN")
 		assert.Contains(t, string(content), "hl.config(")
 	})
 
 	t.Run("deploy hyprland config with existing monitors", func(t *testing.T) {
-		td, err := os.MkdirTemp("", "dankinstall-hyprland-merge")
+		td, err := os.MkdirTemp("", "hgsinstall-hyprland-merge")
 		require.NoError(t, err)
 		defer os.RemoveAll(td)
 		os.Setenv("HOME", td)
@@ -410,13 +240,13 @@ general {
 		require.NoError(t, err)
 		err = os.WriteFile(hyprPath, []byte(existingContent), 0o644)
 		require.NoError(t, err)
-		dmsDir := filepath.Join(td, ".config", "hypr", "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.conf"), []byte("bind = SUPER, T, exec, foot\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "colors.conf"), []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "cursor.conf"), []byte("env = XCURSOR_SIZE,24\n"), 0o644))
+		hgsDir := filepath.Join(td, ".config", "hypr", "hgs")
+		require.NoError(t, os.MkdirAll(hgsDir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "binds.conf"), []byte("bind = SUPER, T, exec, foot\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "colors.conf"), []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "cursor.conf"), []byte("env = XCURSOR_SIZE,24\n"), 0o644))
 		require.NoError(t, os.WriteFile(filepath.Join(filepath.Dir(hyprPath), "hyprland.conf.backup.old"), []byte("old backup\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.conf.backup.old"), []byte("old dms backup\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "binds.conf.backup.old"), []byte("old hgs backup\n"), 0o644))
 
 		result, err := cd.deployHyprlandConfig(deps.TerminalKitty, true)
 		require.NoError(t, err)
@@ -432,22 +262,22 @@ general {
 		assert.Equal(t, existingContent, string(backupContent))
 		assert.Contains(t, result.BackupPath, hyprlandBackupDirName)
 		assert.NoFileExists(t, hyprPath)
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "binds.conf"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "colors.conf"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "cursor.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hgs", "binds.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hgs", "colors.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hgs", "cursor.conf"))
 		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hyprland.conf.backup.old"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "binds.conf.backup.old"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "binds.conf"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "colors.conf"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "cursor.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hgs", "binds.conf.backup.old"))
+		assert.NoFileExists(t, filepath.Join(hgsDir, "binds.conf"))
+		assert.NoFileExists(t, filepath.Join(hgsDir, "colors.conf"))
+		assert.NoFileExists(t, filepath.Join(hgsDir, "cursor.conf"))
 		assert.NoFileExists(t, filepath.Join(filepath.Dir(hyprPath), "hyprland.conf.backup.old"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "binds.conf.backup.old"))
+		assert.NoFileExists(t, filepath.Join(hgsDir, "binds.conf.backup.old"))
 
 		newContent, err := os.ReadFile(result.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(newContent), `require("dms.binds")`)
+		assert.Contains(t, string(newContent), `require("hgs.keybinds")`)
 
-		outputsPath := filepath.Join(td, ".config", "hypr", "dms", "outputs.lua")
+		outputsPath := filepath.Join(td, ".config", "hypr", "hgs", "monitors.lua")
 		outBytes, err := os.ReadFile(outputsPath)
 		require.NoError(t, err)
 		outs := string(outBytes)
@@ -457,7 +287,7 @@ general {
 	})
 
 	t.Run("deploy hyprland config removes root legacy symlink when lua exists", func(t *testing.T) {
-		td, err := os.MkdirTemp("", "dankinstall-hyprland-lua-conf-symlink")
+		td, err := os.MkdirTemp("", "hgsinstall-hyprland-lua-conf-symlink")
 		require.NoError(t, err)
 		defer os.RemoveAll(td)
 		os.Setenv("HOME", td)
@@ -466,7 +296,7 @@ general {
 		require.NoError(t, os.MkdirAll(configDir, 0o755))
 		luaPath := filepath.Join(configDir, "hyprland.lua")
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		require.NoError(t, os.WriteFile(luaPath, []byte(`require("dms.binds")`+"\n"), 0o644))
+		require.NoError(t, os.WriteFile(luaPath, []byte(`require("hgs.keybinds")`+"\n"), 0o644))
 		require.NoError(t, os.Symlink(filepath.Join(configDir, "missing-legacy.conf"), confPath))
 
 		result, err := cd.deployHyprlandConfig(deps.TerminalKitty, true)
@@ -480,62 +310,42 @@ general {
 	})
 
 	t.Run("deploy hyprland config refreshes managed binds but preserves user binds", func(t *testing.T) {
-		td, err := os.MkdirTemp("", "dankinstall-hyprland-refresh-binds")
+		td, err := os.MkdirTemp("", "hgsinstall-hyprland-refresh-binds")
 		require.NoError(t, err)
 		defer os.RemoveAll(td)
 		os.Setenv("HOME", td)
 
-		dmsDir := filepath.Join(td, ".config", "hypr", "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.lua"), []byte("-- stale managed binds\n"), 0o644))
+		hgsDir := filepath.Join(td, ".config", "hypr", "hgs")
+		require.NoError(t, os.MkdirAll(hgsDir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "binds.lua"), []byte("-- stale legacy managed binds\n"), 0o644))
 		userBinds := "-- custom user binds\n"
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(userBinds), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(hgsDir, "binds-user.lua"), []byte(userBinds), 0o644))
 
 		_, err = cd.deployHyprlandConfig(deps.TerminalKitty, true)
 		require.NoError(t, err)
 
-		managed, err := os.ReadFile(filepath.Join(dmsDir, "binds.lua"))
+		managed, err := os.ReadFile(filepath.Join(hgsDir, "keybinds.lua"))
 		require.NoError(t, err)
 		assert.Contains(t, string(managed), `hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))`)
 		assert.Contains(t, string(managed), `hl.bind("SUPER + minus", hl.dsp.window.resize({ x = -100, y = 0, relative = true }), { repeating = true })`)
 
-		user, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+		user, err := os.ReadFile(filepath.Join(hgsDir, "user-keybinds.lua"))
 		require.NoError(t, err)
 		assert.Equal(t, userBinds, string(user))
 	})
 }
 
-func TestNiriConfigStructure(t *testing.T) {
-	assert.Contains(t, NiriConfig, "input {")
-	assert.Contains(t, NiriConfig, "layout {")
-
-	assert.Contains(t, NiriBindsConfig, "binds {")
-	assert.Contains(t, NiriBindsConfig, `spawn "{{TERMINAL_COMMAND}}"`)
-}
-
 func TestHyprlandConfigStructure(t *testing.T) {
-	assert.Contains(t, HyprlandLuaConfig, `require("dms.binds")`)
-	assert.Contains(t, HyprlandLuaConfig, "DMS_STARTUP_BEGIN")
+	assert.Contains(t, HyprlandLuaConfig, `require("hgs.keybinds")`)
+	assert.Contains(t, HyprlandLuaConfig, "HGS_STARTUP_BEGIN")
 	assert.Contains(t, HyprlandLuaConfig, "hl.config(")
-	assert.Contains(t, HyprlandLuaConfig, "input =")
-}
-
-func TestMangoConfigStructure(t *testing.T) {
-	assert.Contains(t, MangoConfig, "exec-once=dms run")
-	assert.NotContains(t, MangoConfig, "exec_once=dms run")
-	assert.Contains(t, MangoConfig, "source=./dms/binds.conf")
-	assert.Contains(t, MangoBindsConfig, "bind=SUPER,H,focusdir,left")
-	assert.Contains(t, MangoBindsConfig, "bind=SUPER,J,focusdir,down")
-	assert.Contains(t, MangoBindsConfig, "bind=SUPER,K,focusdir,up")
-	assert.Contains(t, MangoBindsConfig, "bind=SUPER,L,focusdir,right")
-	assert.Contains(t, MangoBindsConfig, "gesturebind=none,right,3,viewtoleft_have_client")
-	assert.Contains(t, MangoBindsConfig, "gesturebind=none,left,3,viewtoright_have_client")
+	assert.Contains(t, HyprlandLuaConfig, `require("hgs.input")`)
 }
 
 func TestGhosttyConfigStructure(t *testing.T) {
 	assert.Contains(t, GhosttyConfig, "window-decoration = false")
 	assert.Contains(t, GhosttyConfig, "background-opacity = 1.0")
-	assert.Contains(t, GhosttyConfig, "theme = dankcolors")
+	assert.Contains(t, GhosttyConfig, "theme = hgscolors")
 }
 
 func TestGhosttyColorConfigStructure(t *testing.T) {
@@ -550,8 +360,8 @@ func TestKittyConfigStructure(t *testing.T) {
 	assert.Contains(t, KittyConfig, "font_size 12.0")
 	assert.Contains(t, KittyConfig, "window_padding_width 12")
 	assert.Contains(t, KittyConfig, "background_opacity 1.0")
-	assert.Contains(t, KittyConfig, "include dank-tabs.conf")
-	assert.Contains(t, KittyConfig, "include dank-theme.conf")
+	assert.Contains(t, KittyConfig, "include hgs-tabs.conf")
+	assert.Contains(t, KittyConfig, "include hgs-theme.conf")
 }
 
 func TestKittyThemeConfigStructure(t *testing.T) {
@@ -571,7 +381,7 @@ func TestKittyTabsConfigStructure(t *testing.T) {
 
 func TestAlacrittyConfigStructure(t *testing.T) {
 	assert.Contains(t, AlacrittyConfig, "[general]")
-	assert.Contains(t, AlacrittyConfig, "~/.config/alacritty/dank-theme.toml")
+	assert.Contains(t, AlacrittyConfig, "~/.config/alacritty/hgs-theme.toml")
 	assert.Contains(t, AlacrittyConfig, "[window]")
 	assert.Contains(t, AlacrittyConfig, "decorations = \"None\"")
 	assert.Contains(t, AlacrittyConfig, "padding = { x = 12, y = 12 }")
@@ -590,7 +400,7 @@ func TestAlacrittyThemeConfigStructure(t *testing.T) {
 }
 
 func TestKittyConfigDeployment(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "dankinstall-kitty-test")
+	tempDir, err := os.MkdirTemp("", "hgsinstall-kitty-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -613,7 +423,7 @@ func TestKittyConfigDeployment(t *testing.T) {
 
 		content, err := os.ReadFile(mainResult.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(content), "include dank-theme.conf")
+		assert.Contains(t, string(content), "include hgs-theme.conf")
 
 		themeResult := results[1]
 		assert.Equal(t, "Kitty Theme", themeResult.ConfigType)
@@ -628,7 +438,7 @@ func TestKittyConfigDeployment(t *testing.T) {
 }
 
 func TestAlacrittyConfigDeployment(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "dankinstall-alacritty-test")
+	tempDir, err := os.MkdirTemp("", "hgsinstall-alacritty-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -651,7 +461,7 @@ func TestAlacrittyConfigDeployment(t *testing.T) {
 
 		content, err := os.ReadFile(mainResult.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(content), "~/.config/alacritty/dank-theme.toml")
+		assert.Contains(t, string(content), "~/.config/alacritty/hgs-theme.toml")
 		assert.Contains(t, string(content), "[window]")
 
 		themeResult := results[1]
@@ -695,7 +505,6 @@ func TestAlacrittyConfigDeployment(t *testing.T) {
 
 func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 	allFalse := map[string]bool{
-		"Niri":      false,
 		"Hyprland":  false,
 		"Ghostty":   false,
 		"Kitty":     false,
@@ -703,7 +512,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 	}
 
 	t.Run("replaceConfigs nil deploys config", func(t *testing.T) {
-		tempDir, err := os.MkdirTemp("", "dankinstall-replace-nil-test")
+		tempDir, err := os.MkdirTemp("", "hgsinstall-replace-nil-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tempDir)
 
@@ -716,7 +525,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 
 		results, err := cd.DeployConfigurationsSelectiveWithReinstalls(
 			context.Background(),
-			deps.WindowManagerNiri,
+			deps.WindowManagerHyprland,
 			deps.TerminalGhostty,
 			nil, // installedDeps
 			nil, // replaceConfigs
@@ -736,7 +545,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 	})
 
 	t.Run("replaceConfigs all false and config missing deploys config", func(t *testing.T) {
-		tempDir, err := os.MkdirTemp("", "dankinstall-replace-missing-test")
+		tempDir, err := os.MkdirTemp("", "hgsinstall-replace-missing-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tempDir)
 
@@ -749,7 +558,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 
 		results, err := cd.DeployConfigurationsSelectiveWithReinstalls(
 			context.Background(),
-			deps.WindowManagerNiri,
+			deps.WindowManagerHyprland,
 			deps.TerminalGhostty,
 			nil,      // installedDeps
 			allFalse, // replaceConfigs — all false
@@ -769,7 +578,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 	})
 
 	t.Run("replaceConfigs false and config exists skips config", func(t *testing.T) {
-		tempDir, err := os.MkdirTemp("", "dankinstall-replace-exists-test")
+		tempDir, err := os.MkdirTemp("", "hgsinstall-replace-exists-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tempDir)
 
@@ -784,11 +593,11 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 		err = os.WriteFile(ghosttyPath, []byte("# existing ghostty config\n"), 0o644)
 		require.NoError(t, err)
 
-		// Also create the Niri primary config file
-		niriPath := filepath.Join(tempDir, ".config", "niri", "config.kdl")
-		err = os.MkdirAll(filepath.Dir(niriPath), 0o755)
+		// Also create the Hyprland primary config file
+		hyprlandPath := filepath.Join(tempDir, ".config", "hypr", "hyprland.lua")
+		err = os.MkdirAll(filepath.Dir(hyprlandPath), 0o755)
 		require.NoError(t, err)
-		err = os.WriteFile(niriPath, []byte("// existing niri config\n"), 0o644)
+		err = os.WriteFile(hyprlandPath, []byte("-- existing hyprland config\n"), 0o644)
 		require.NoError(t, err)
 
 		logChan := make(chan string, 100)
@@ -796,7 +605,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 
 		results, err := cd.DeployConfigurationsSelectiveWithReinstalls(
 			context.Background(),
-			deps.WindowManagerNiri,
+			deps.WindowManagerHyprland,
 			deps.TerminalGhostty,
 			nil,      // installedDeps
 			allFalse, // replaceConfigs — all false
@@ -804,14 +613,14 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		// Both Niri and Ghostty config files exist, so with all false they should be skipped
+		// Both Hyprland and Ghostty config files exist, so with all false they should be skipped
 		for _, r := range results {
 			assert.Fail(t, "expected no configs to be deployed", "got deployed config: %s", r.ConfigType)
 		}
 	})
 
 	t.Run("replaceConfigs true and config exists deploys config", func(t *testing.T) {
-		tempDir, err := os.MkdirTemp("", "dankinstall-replace-true-test")
+		tempDir, err := os.MkdirTemp("", "hgsinstall-replace-true-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tempDir)
 
@@ -830,7 +639,6 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 		cd := NewConfigDeployer(logChan)
 
 		replaceConfigs := map[string]bool{
-			"Niri":      false,
 			"Hyprland":  false,
 			"Ghostty":   true, // explicitly true
 			"Kitty":     false,
@@ -839,7 +647,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 
 		results, err := cd.DeployConfigurationsSelectiveWithReinstalls(
 			context.Background(),
-			deps.WindowManagerNiri,
+			deps.WindowManagerHyprland,
 			deps.TerminalGhostty,
 			nil,            // installedDeps
 			replaceConfigs, // Ghostty=true, rest=false
@@ -858,7 +666,7 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 	})
 
 	t.Run("hyprland legacy config exists skips when replace false", func(t *testing.T) {
-		tempDir, err := os.MkdirTemp("", "dankinstall-hyprland-legacy-skip-test")
+		tempDir, err := os.MkdirTemp("", "hgsinstall-hyprland-legacy-skip-test")
 		require.NoError(t, err)
 		defer os.RemoveAll(tempDir)
 

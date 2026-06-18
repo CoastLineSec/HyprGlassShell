@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/plugins"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/plugins"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/models"
 )
 
 func HandleInstall(conn net.Conn, req models.Request) {

@@ -22,7 +22,7 @@ Row {
     height: 40
     spacing: 0
 
-    DankTooltipV2 {
+    HGSTooltipV2 {
         id: sharedTooltip
     }
 
@@ -96,7 +96,7 @@ Row {
         radius: (Theme.iconSize + Theme.spacingS * 2) / 2
         color: iconArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12) : Theme.withAlpha(Theme.primary, 0)
 
-        DankRipple {
+        HGSRipple {
             id: iconRipple
             cornerRadius: parent.radius
         }
@@ -123,7 +123,7 @@ Row {
                 sharedTooltip.hide();
             }
 
-            DankIcon {
+            HGSIcon {
                 anchors.centerIn: parent
                 name: {
                     if (!DisplayService.brightnessAvailable || !targetDevice) {
@@ -149,7 +149,7 @@ Row {
         }
     }
 
-    DankSlider {
+    HGSSlider {
         id: brightnessSlider
 
         anchors.verticalCenter: parent.verticalCenter

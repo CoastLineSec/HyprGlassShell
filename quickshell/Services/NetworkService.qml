@@ -98,30 +98,30 @@ Singleton {
     property bool usingLegacy: false
     property var activeService: null
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("HGS_SOCKET")
 
     Component.onCompleted: {
         log.info("Initializing...");
         if (!socketPath || socketPath.length === 0) {
-            log.info("DMS_SOCKET not set, using LegacyNetworkService");
+            log.info("HGS_SOCKET not set, using LegacyNetworkService");
             useLegacyService();
         } else {
-            log.debug("DMS_SOCKET found, waiting for capabilities...");
+            log.debug("HGS_SOCKET found, waiting for capabilities...");
         }
     }
 
     Connections {
-        target: DMSNetworkService
+        target: HGSNetworkService
 
         function onNetworkAvailableChanged() {
-            if (!activeService && DMSNetworkService.networkAvailable) {
-                log.info("Network capability detected, using DMSNetworkService");
-                activeService = DMSNetworkService;
+            if (!activeService && HGSNetworkService.networkAvailable) {
+                log.info("Network capability detected, using HGSNetworkService");
+                activeService = HGSNetworkService;
                 usingLegacy = false;
-                log.info("Switched to DMSNetworkService, networkAvailable:", networkAvailable);
+                log.info("Switched to HGSNetworkService, networkAvailable:", networkAvailable);
                 connectSignals();
-            } else if (!activeService && !DMSNetworkService.networkAvailable && socketPath && socketPath.length > 0) {
-                log.info("Network capability not available in DMS, using LegacyNetworkService");
+            } else if (!activeService && !HGSNetworkService.networkAvailable && socketPath && socketPath.length > 0) {
+                log.info("Network capability not available in HGS, using LegacyNetworkService");
                 useLegacyService();
             }
         }

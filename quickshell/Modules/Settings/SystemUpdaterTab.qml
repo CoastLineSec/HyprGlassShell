@@ -48,7 +48,7 @@ Item {
         return 1800;
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -178,7 +178,7 @@ Item {
                             color: Theme.surfaceVariantText
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             id: updaterCustomCommand
                             width: parent.width
                             placeholderText: "topgrade --no-retry"
@@ -223,7 +223,7 @@ Item {
                             color: Theme.surfaceVariantText
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             id: updaterTerminalCustomClass
                             width: parent.width
                             placeholderText: "-T updater"

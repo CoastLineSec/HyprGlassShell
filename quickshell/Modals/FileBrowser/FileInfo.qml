@@ -126,7 +126,7 @@ Rectangle {
             width: parent.width
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: "info"
                 size: Theme.iconSize
                 color: Theme.secondary

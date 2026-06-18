@@ -5,7 +5,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankActionButton {
+HGSActionButton {
     id: customButtonKeyboard
     circular: false
     property string text: ""
@@ -16,7 +16,7 @@ DankActionButton {
 
     property bool isIcon: text === "keyboard_hide" || text === "Backspace" || text === "Enter"
 
-    DankIcon {
+    HGSIcon {
         anchors.centerIn: parent
         name: {
             if (parent.text === "keyboard_hide")

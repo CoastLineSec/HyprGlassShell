@@ -522,7 +522,7 @@ Rectangle {
                         height: 1
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -605,7 +605,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: gridButtonRect.actionData.icon
                                     size: Theme.iconSize + 8
                                     color: {
@@ -742,7 +742,7 @@ Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                HGSIcon {
                                     name: listButtonRect.actionData.icon
                                     size: Theme.iconSize + 4
                                     color: {
@@ -817,7 +817,7 @@ Rectangle {
                         }
                     }
 
-                    DankIcon {
+                    HGSIcon {
                         name: root.showHoldHint ? "warning" : "touch_app"
                         size: Theme.fontSizeSmall
                         color: root.showHoldHint ? Theme.warning : Qt.rgba(Theme.surfaceText.r, Theme.surfaceText.g, Theme.surfaceText.b, 0.6)

@@ -502,7 +502,7 @@ Singleton {
 
     function getLocationFromCoords(lat, lon) {
         const url = "https://nominatim.openstreetmap.org/reverse?lat=" + lat + "&lon=" + lon + "&format=json&addressdetails=1&accept-language=en";
-        reverseGeocodeFetcher.command = lowPriorityCmd.concat(curlBaseCmd).concat(["-H", "User-Agent: DankMaterialShell Weather Widget", url]);
+        reverseGeocodeFetcher.command = lowPriorityCmd.concat(curlBaseCmd).concat(["-H", "User-Agent: HyprGlassShell Weather Widget", url]);
         reverseGeocodeFetcher.running = true;
     }
 

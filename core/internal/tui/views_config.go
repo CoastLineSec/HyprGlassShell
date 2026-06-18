@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/config"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -280,35 +280,7 @@ func (m Model) checkExistingConfigurations() tea.Cmd {
 	return func() tea.Msg {
 		var configs []ExistingConfigInfo
 
-		switch m.selectedWindowManager() {
-		case deps.WindowManagerNiri:
-			niriPath := filepath.Join(os.Getenv("HOME"), ".config", "niri", "config.kdl")
-			niriExists := false
-			if _, err := os.Stat(niriPath); err == nil {
-				niriExists = true
-			}
-			configs = append(configs, ExistingConfigInfo{
-				ConfigType: "Niri",
-				Path:       niriPath,
-				Exists:     niriExists,
-			})
-		case deps.WindowManagerMango:
-			mangoConfPath := filepath.Join(os.Getenv("HOME"), ".config", "mango", "config.conf")
-			mangoMainPath := filepath.Join(os.Getenv("HOME"), ".config", "mango", "mango.conf")
-			mangoPath := mangoConfPath
-			mangoExists := false
-			if _, err := os.Stat(mangoConfPath); err == nil {
-				mangoExists = true
-			} else if _, err := os.Stat(mangoMainPath); err == nil {
-				mangoPath = mangoMainPath
-				mangoExists = true
-			}
-			configs = append(configs, ExistingConfigInfo{
-				ConfigType: "Mango",
-				Path:       mangoPath,
-				Exists:     mangoExists,
-			})
-		default:
+		if m.selectedWindowManager() == deps.WindowManagerHyprland {
 			hyprlandLuaPath := filepath.Join(os.Getenv("HOME"), ".config", "hypr", "hyprland.lua")
 			hyprlandConfPath := filepath.Join(os.Getenv("HOME"), ".config", "hypr", "hyprland.conf")
 			hyprlandPath := hyprlandLuaPath

@@ -12,10 +12,10 @@ Singleton {
     readonly property url pictures: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
     readonly property url xdgCache: StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]
 
-    readonly property url data: `${StandardPaths.standardLocations(StandardPaths.GenericDataLocation)[0]}/DankMaterialShell`
-    readonly property url state: `${StandardPaths.standardLocations(StandardPaths.GenericStateLocation)[0]}/DankMaterialShell`
-    readonly property url cache: `${StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]}/DankMaterialShell`
-    readonly property url config: `${StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]}/DankMaterialShell`
+    readonly property url data: `${StandardPaths.standardLocations(StandardPaths.GenericDataLocation)[0]}/HyprGlassShell`
+    readonly property url state: `${StandardPaths.standardLocations(StandardPaths.GenericStateLocation)[0]}/HyprGlassShell`
+    readonly property url cache: `${StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]}/HyprGlassShell`
+    readonly property url config: `${StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]}/HyprGlassShell`
 
     readonly property url imagecache: `${cache}/imagecache`
 
@@ -104,8 +104,8 @@ Singleton {
 
     function getAppIcon(appId: string, desktopEntry: var): string {
         // ! TODO - after QS 0.3, we can install our icon properly
-        if (appId === "org.quickshell" || appId === "com.danklinux.dms") {
-            return Qt.resolvedUrl("../assets/danklogo.svg");
+        if (appId === "org.quickshell" || appId === "io.github.coastlinesec.hgs") {
+            return Qt.resolvedUrl("../assets/hgslogo.svg");
         }
 
         const moddedId = moddedAppId(appId);
@@ -124,8 +124,8 @@ Singleton {
     }
 
     function getAppName(appId: string, desktopEntry: var): string {
-        if (appId === "org.quickshell" || appId === "com.danklinux.dms") {
-            return "dms";
+        if (appId === "org.quickshell" || appId === "io.github.coastlinesec.hgs") {
+            return "hgs";
         }
 
         return desktopEntry && desktopEntry.name ? desktopEntry.name : appId;

@@ -43,7 +43,7 @@ Item {
         WallpaperCyclingService.cyclingActive;
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -118,7 +118,7 @@ Item {
                             layer.enabled: true
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             anchors.centerIn: parent
                             name: "image"
                             size: Theme.iconSizeLarge + 8
@@ -143,7 +143,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(255, 255, 255, 0.9)
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "folder_open"
                                         size: 18
@@ -163,7 +163,7 @@ Item {
                                     radius: 16
                                     color: Qt.rgba(255, 255, 255, 0.9)
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "palette"
                                         size: 18
@@ -197,7 +197,7 @@ Item {
                                     color: Qt.rgba(255, 255, 255, 0.9)
                                     visible: root.currentWallpaper !== ""
 
-                                    DankIcon {
+                                    HGSIcon {
                                         anchors.centerIn: parent
                                         name: "clear"
                                         size: 18
@@ -263,7 +263,7 @@ Item {
                             layoutDirection: I18n.isRtl ? Qt.RightToLeft : Qt.LeftToRight
                             visible: root.currentWallpaper !== ""
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 32
                                 iconName: "skip_previous"
                                 iconSize: Theme.iconSizeSmall
@@ -280,7 +280,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 32
                                 iconName: "skip_next"
                                 iconSize: Theme.iconSizeSmall
@@ -305,7 +305,7 @@ Item {
                     height: fillModeGroup.height
                     visible: root.currentWallpaper !== "" && !root.currentWallpaper.startsWith("#")
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: fillModeGroup
                         property var internalModes: ["Stretch", "Fit", "Fill", "Tile", "TileVertically", "TileHorizontally", "Pad"]
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -453,7 +453,7 @@ Item {
                                     layer.enabled: true
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     anchors.centerIn: parent
                                     name: "light_mode"
                                     size: Theme.iconSizeLarge
@@ -478,7 +478,7 @@ Item {
                                             radius: 14
                                             color: Qt.rgba(255, 255, 255, 0.9)
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "folder_open"
                                                 size: 16
@@ -498,7 +498,7 @@ Item {
                                             radius: 14
                                             color: Qt.rgba(255, 255, 255, 0.9)
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "palette"
                                                 size: 16
@@ -531,7 +531,7 @@ Item {
                                             color: Qt.rgba(255, 255, 255, 0.9)
                                             visible: SessionData.wallpaperPathLight !== ""
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "clear"
                                                 size: 16
@@ -643,7 +643,7 @@ Item {
                                     layer.enabled: true
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     anchors.centerIn: parent
                                     name: "dark_mode"
                                     size: Theme.iconSizeLarge
@@ -668,7 +668,7 @@ Item {
                                             radius: 14
                                             color: Qt.rgba(255, 255, 255, 0.9)
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "folder_open"
                                                 size: 16
@@ -688,7 +688,7 @@ Item {
                                             radius: 14
                                             color: Qt.rgba(255, 255, 255, 0.9)
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "palette"
                                                 size: 16
@@ -721,7 +721,7 @@ Item {
                                             color: Qt.rgba(255, 255, 255, 0.9)
                                             visible: SessionData.wallpaperPathDark !== ""
 
-                                            DankIcon {
+                                            HGSIcon {
                                                 anchors.centerIn: parent
                                                 name: "clear"
                                                 size: 16
@@ -764,25 +764,6 @@ Item {
                             }
                         }
                     }
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: 1
-                    color: Theme.outline
-                    opacity: 0.2
-                    visible: CompositorService.isNiri
-                }
-
-                SettingsToggleRow {
-                    tab: "wallpaper"
-                    tags: ["blur", "overview", "niri"]
-                    settingKey: "blurWallpaperOnOverview"
-                    visible: CompositorService.isNiri
-                    text: I18n.tr("Blur on Overview")
-                    description: I18n.tr("Blur wallpaper when niri overview is open")
-                    checked: SettingsData.blurWallpaperOnOverview
-                    onToggled: checked => SettingsData.set("blurWallpaperOnOverview", checked)
                 }
 
                 Rectangle {
@@ -947,7 +928,7 @@ Item {
                             width: 200
                             height: 45 + Theme.spacingM
 
-                            DankTabBar {
+                            HGSTabBar {
                                 id: modeTabBar
                                 width: 200
                                 height: 45
@@ -1064,7 +1045,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankTextField {
+                        HGSTextField {
                             id: timeTextField
                             width: 100
                             height: 40
@@ -1212,7 +1193,7 @@ Item {
                         width: parent.width - Theme.spacingM * 2
                     }
 
-                    DankButtonGroup {
+                    HGSButtonGroup {
                         id: transitionGroup
                         width: parent.width - Theme.spacingM * 2
                         selectionMode: "multi"
@@ -1238,7 +1219,7 @@ Item {
 
             SettingsCard {
                 tab: "wallpaper"
-                tags: ["external", "disable", "swww", "hyprpaper", "swaybg"]
+                tags: ["external", "disable", "swww", "hyprpaper"]
                 title: I18n.tr("External Wallpaper Management", "wallpaper settings external management")
                 settingKey: "disableWallpaper"
                 iconName: "wallpaper"
@@ -1248,7 +1229,7 @@ Item {
                     tags: ["disable", "external", "management"]
                     settingKey: "disableWallpapers"
                     text: I18n.tr("Disable Built-in Wallpapers", "wallpaper settings disable toggle")
-                    description: I18n.tr("Use an external wallpaper manager like swww, hyprpaper, or swaybg.", "wallpaper settings disable description")
+                    description: I18n.tr("Use an external wallpaper manager like swww or hyprpaper.", "wallpaper settings disable description")
                     checked: {
                         var prefs = SettingsData.screenPreferences?.wallpaper;
                         if (!prefs)
@@ -1266,24 +1247,6 @@ Item {
                 }
             }
 
-            SettingsCard {
-                tab: "wallpaper"
-                tags: ["blur", "layer", "niri", "compositor"]
-                title: I18n.tr("Blur Wallpaper Layer")
-                settingKey: "blurWallpaper"
-                iconName: "blur_on"
-                visible: CompositorService.isNiri
-
-                SettingsToggleRow {
-                    tab: "wallpaper"
-                    tags: ["blur", "duplicate", "layer", "compositor"]
-                    settingKey: "blurredWallpaperLayer"
-                    text: I18n.tr("Duplicate Wallpaper with Blur")
-                    description: I18n.tr("Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.")
-                    checked: SettingsData.blurredWallpaperLayer
-                    onToggled: checked => SettingsData.set("blurredWallpaperLayer", checked)
-                }
-            }
         }
     }
 

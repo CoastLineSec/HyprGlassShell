@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_output_management"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/go-wayland/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/proto/wlr_output_management"
+	wlhelpers "github.com/CoastLineSec/HyprGlassShell/core/internal/wayland/client"
+	"github.com/CoastLineSec/HyprGlassShell/core/pkg/go-wayland/wayland/client"
 )
 
 type Compositor int
@@ -16,11 +16,6 @@ type Compositor int
 const (
 	CompositorUnknown Compositor = iota
 	CompositorHyprland
-	CompositorSway
-	CompositorNiri
-	CompositorScroll
-	CompositorMiracle
-	CompositorMango
 )
 
 var detectedCompositor Compositor = -1
@@ -31,39 +26,8 @@ func DetectCompositor() Compositor {
 	}
 
 	hyprlandSig := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
-	niriSocket := os.Getenv("NIRI_SOCKET")
-	swaySocket := os.Getenv("SWAYSOCK")
-	scrollSocket := os.Getenv("SCROLLSOCK")
-	miracleSocket := os.Getenv("MIRACLESOCK")
-	mangoSocket := os.Getenv("MANGO_INSTANCE_SIGNATURE")
 
-	switch {
-	case mangoSocket != "":
-		if _, err := os.Stat(mangoSocket); err == nil {
-			detectedCompositor = CompositorMango
-			return detectedCompositor
-		}
-	case niriSocket != "":
-		if _, err := os.Stat(niriSocket); err == nil {
-			detectedCompositor = CompositorNiri
-			return detectedCompositor
-		}
-	case scrollSocket != "":
-		if _, err := os.Stat(scrollSocket); err == nil {
-			detectedCompositor = CompositorScroll
-			return detectedCompositor
-		}
-	case miracleSocket != "":
-		if _, err := os.Stat(miracleSocket); err == nil {
-			detectedCompositor = CompositorMiracle
-			return detectedCompositor
-		}
-	case swaySocket != "":
-		if _, err := os.Stat(swaySocket); err == nil {
-			detectedCompositor = CompositorSway
-			return detectedCompositor
-		}
-	case hyprlandSig != "":
+	if hyprlandSig != "" {
 		detectedCompositor = CompositorHyprland
 		return detectedCompositor
 	}
@@ -87,10 +51,8 @@ func GetActiveWindow() (*WindowGeometry, error) {
 	switch DetectCompositor() {
 	case CompositorHyprland:
 		return getHyprlandActiveWindow()
-	case CompositorMango:
-		return getMangoActiveWindow()
 	default:
-		return nil, fmt.Errorf("window capture requires Hyprland or Mango")
+		return nil, fmt.Errorf("window capture requires Hyprland")
 	}
 }
 
@@ -191,193 +153,10 @@ func GetHyprlandMonitorGeometry(name string) (x, y, w, h int32, ok bool) {
 	return 0, 0, 0, 0, false
 }
 
-type swayWorkspace struct {
-	Output  string `json:"output"`
-	Focused bool   `json:"focused"`
-}
-
-func getSwayFocusedMonitor() string {
-	output, err := exec.Command("swaymsg", "-t", "get_workspaces").Output()
-	if err != nil {
-		return ""
-	}
-
-	var workspaces []swayWorkspace
-	if err := json.Unmarshal(output, &workspaces); err != nil {
-		return ""
-	}
-
-	for _, ws := range workspaces {
-		if ws.Focused {
-			return ws.Output
-		}
-	}
-	return ""
-}
-
-func getScrollFocusedMonitor() string {
-	output, err := exec.Command("scrollmsg", "-t", "get_workspaces").Output()
-	if err != nil {
-		return ""
-	}
-
-	var workspaces []swayWorkspace
-	if err := json.Unmarshal(output, &workspaces); err != nil {
-		return ""
-	}
-
-	for _, ws := range workspaces {
-		if ws.Focused {
-			return ws.Output
-		}
-	}
-	return ""
-}
-
-func getMiracleFocusedMonitor() string {
-	output, err := exec.Command("miraclemsg", "-t", "get_workspaces").Output()
-	if err != nil {
-		return ""
-	}
-
-	var workspaces []swayWorkspace
-	if err := json.Unmarshal(output, &workspaces); err != nil {
-		return ""
-	}
-
-	for _, ws := range workspaces {
-		if ws.Focused {
-			return ws.Output
-		}
-	}
-	return ""
-}
-
-type mangoMonitor struct {
-	Name   string  `json:"name"`
-	Active bool    `json:"active"`
-	X      int32   `json:"x"`
-	Y      int32   `json:"y"`
-	Scale  float64 `json:"scale"`
-}
-
-func getMangoMonitors() []mangoMonitor {
-	output, err := exec.Command("mmsg", "get", "all-monitors").Output()
-	if err != nil {
-		return nil
-	}
-
-	var data struct {
-		Monitors []mangoMonitor `json:"monitors"`
-	}
-	if err := json.Unmarshal(output, &data); err != nil {
-		return nil
-	}
-	return data.Monitors
-}
-
-func getMangoFocusedMonitor() string {
-	for _, m := range getMangoMonitors() {
-		if m.Active {
-			return m.Name
-		}
-	}
-	return ""
-}
-
-type mangoClient struct {
-	Monitor   string `json:"monitor"`
-	IsFocused bool   `json:"is_focused"`
-	X         int32  `json:"x"`
-	Y         int32  `json:"y"`
-	Width     int32  `json:"width"`
-	Height    int32  `json:"height"`
-}
-
-func getMangoActiveWindow() (*WindowGeometry, error) {
-	output, err := exec.Command("mmsg", "get", "all-clients").Output()
-	if err != nil {
-		return nil, fmt.Errorf("mmsg get all-clients: %w", err)
-	}
-
-	var data struct {
-		Clients []mangoClient `json:"clients"`
-	}
-	if err := json.Unmarshal(output, &data); err != nil {
-		return nil, fmt.Errorf("parse all-clients: %w", err)
-	}
-
-	for _, c := range data.Clients {
-		if !c.IsFocused {
-			continue
-		}
-		if c.Width <= 0 || c.Height <= 0 {
-			return nil, fmt.Errorf("no active window")
-		}
-
-		geom := &WindowGeometry{
-			X:      c.X,
-			Y:      c.Y,
-			Width:  c.Width,
-			Height: c.Height,
-			Output: c.Monitor,
-			Scale:  1.0,
-		}
-		for _, m := range getMangoMonitors() {
-			if m.Name != c.Monitor {
-				continue
-			}
-			geom.OutputX = m.X
-			geom.OutputY = m.Y
-			if m.Scale > 0 {
-				geom.Scale = m.Scale
-			}
-			break
-		}
-		return geom, nil
-	}
-
-	return nil, fmt.Errorf("no focused window")
-}
-
-type niriWorkspace struct {
-	Output    string `json:"output"`
-	IsFocused bool   `json:"is_focused"`
-}
-
-func getNiriFocusedMonitor() string {
-	output, err := exec.Command("niri", "msg", "-j", "workspaces").Output()
-	if err != nil {
-		return ""
-	}
-
-	var workspaces []niriWorkspace
-	if err := json.Unmarshal(output, &workspaces); err != nil {
-		return ""
-	}
-
-	for _, ws := range workspaces {
-		if ws.IsFocused {
-			return ws.Output
-		}
-	}
-	return ""
-}
-
 func GetFocusedMonitor() string {
 	switch DetectCompositor() {
 	case CompositorHyprland:
 		return getHyprlandFocusedMonitor()
-	case CompositorSway:
-		return getSwayFocusedMonitor()
-	case CompositorScroll:
-		return getScrollFocusedMonitor()
-	case CompositorMiracle:
-		return getMiracleFocusedMonitor()
-	case CompositorNiri:
-		return getNiriFocusedMonitor()
-	case CompositorMango:
-		return getMangoFocusedMonitor()
 	}
 	return ""
 }

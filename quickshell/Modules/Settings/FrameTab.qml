@@ -12,7 +12,7 @@ Item {
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -183,7 +183,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "blur_on"
                             size: Theme.fontSizeMedium
                             color: Theme.primary
@@ -332,25 +332,6 @@ Item {
                     description: I18n.tr("Use the extended surface for launcher content")
                     checked: SettingsData.frameLauncherArcExtender
                     onToggled: checked => SettingsData.set("frameLauncherArcExtender", checked)
-                }
-            }
-
-            SettingsCard {
-                width: parent.width
-                iconName: "toolbar"
-                title: I18n.tr("Integrations")
-                settingKey: "frameBarIntegration"
-                collapsible: true
-                expanded: true
-                visible: SettingsData.frameEnabled && CompositorService.isNiri
-
-                SettingsToggleRow {
-                    settingKey: "frameShowOnOverview"
-                    tags: ["frame", "overview", "show", "hide", "niri"]
-                    text: I18n.tr("Show on Overview")
-                    description: I18n.tr("Show during Niri overview")
-                    checked: SettingsData.frameShowOnOverview
-                    onToggled: checked => SettingsData.set("frameShowOnOverview", checked)
                 }
             }
 

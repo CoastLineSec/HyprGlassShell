@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/params"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/server/params"
 )
 
 type Request struct {
@@ -30,7 +30,7 @@ type Response[T any] struct {
 }
 
 func RespondError(conn net.Conn, id int, errMsg string) {
-	log.Errorf("DMS API Error: id=%d error=%s", id, errMsg)
+	log.Errorf("HGS API Error: id=%d error=%s", id, errMsg)
 	resp := Response[any]{ID: id, Error: errMsg}
 	json.NewEncoder(conn).Encode(resp)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/afero"
 )
 
-const registryRepo = "https://github.com/AvengeMedia/dms-plugin-registry.git"
+const registryRepo = "https://github.com/CoastLineSec/hgs-plugin-registry.git"
 
 type Plugin struct {
 	ID           string   `json:"id"`
@@ -26,7 +26,7 @@ type Plugin struct {
 	Compositors  []string `json:"compositors"`
 	Distro       []string `json:"distro"`
 	Screenshot   string   `json:"screenshot,omitempty"`
-	RequiresDMS  string   `json:"requires_dms,omitempty"`
+	RequiresHGS  string   `json:"requires_hgs,omitempty"`
 	Featured     bool     `json:"featured,omitempty"`
 }
 
@@ -138,7 +138,7 @@ func NewRegistryWithFs(fs afero.Fs) (*Registry, error) {
 }
 
 func getCacheDir() string {
-	return filepath.Join(os.TempDir(), "dankdots-plugin-registry")
+	return filepath.Join(os.TempDir(), "hgsdots-plugin-registry")
 }
 
 func (r *Registry) Update() error {

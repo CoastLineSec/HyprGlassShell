@@ -127,9 +127,9 @@ const KEY_MAP = {
 };
 
 // Numpad (keypad) keys. Qt reuses the same Qt::Key_* values for the numpad and
-// the main rows/nav cluster; only Qt.KeypadModifier distinguishes them. niri and
-// the other compositors bind against the xkb KP_* keysym names, so we must emit
-// those instead of the collapsed twin. With NumLock off the numpad sends the
+// the main rows/nav cluster; only Qt.KeypadModifier distinguishes them. Hyprland
+// binds against the xkb KP_* keysym names, so we must emit those instead of the
+// collapsed twin. With NumLock off the numpad sends the
 // navigation keysyms (KP_Home, KP_End, ...); with NumLock on it sends KP_0..KP_9
 // (handled by the digit range in xkbKeyFromQtKey). Operators/Enter are the same
 // in both states.

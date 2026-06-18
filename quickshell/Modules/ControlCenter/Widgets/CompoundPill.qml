@@ -71,7 +71,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: bodyRipple
         cornerRadius: root.radius
     }
@@ -109,20 +109,20 @@ Rectangle {
                 }
             }
 
-            DankIcon {
+            HGSIcon {
                 id: pillIcon
                 anchors.centerIn: parent
                 name: iconName
                 size: Theme.iconSize
                 color: isActive ? _tileIconActive : _tileIconInactive
 
-                DankBlink {
+                HGSBlink {
                     target: pillIcon
                     running: root.iconBlinking
                 }
             }
 
-            DankRipple {
+            HGSRipple {
                 id: tileRipple
                 cornerRadius: _tileRadius
             }

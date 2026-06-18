@@ -1,5 +1,5 @@
 {
-  description = "Dank Material Shell";
+  description = "Hypr Glass Shell";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -46,12 +46,12 @@
           system: fn system nixpkgs.legacyPackages.${system}
         );
 
-      mkModuleWithDmsPkgs =
+      mkModuleWithHgsPkgs =
         modulePath:
         args@{ pkgs, ... }:
         {
           imports = [
-            (import modulePath (args // { dmsPkgs = buildDmsPkgs pkgs; }))
+            (import modulePath (args // { hgsPkgs = buildHgsPkgs pkgs; }))
           ];
         };
 
@@ -74,7 +74,7 @@
 
       # Allows downstream modules to provide their own 'pkgs' (with overlays)
       # instead of being forced to use the flake's locked nixpkgs.
-      mkDmsShell =
+      mkHgsShell =
         pkgs:
         let
           mkDate =
@@ -104,11 +104,11 @@
             in
             {
               inherit version;
-              pname = "dms-shell";
+              pname = "hgs-shell";
               src = ./core;
               vendorHash = "sha256-nvxFHQhOfBGl3h51fgYDb39K0NCj+H8mAEyKr1qOwJQ=";
 
-              subPackages = [ "cmd/dms" ];
+              subPackages = [ "cmd/hgs" ];
 
               ldflags = [
                 "-s"
@@ -122,89 +122,85 @@
               ];
 
               postInstall = ''
-                mkdir -p $out/share/quickshell/dms
-                cp -r ${rootSrc}/quickshell/. $out/share/quickshell/dms/
+                mkdir -p $out/share/quickshell/hgs
+                cp -r ${rootSrc}/quickshell/. $out/share/quickshell/hgs/
 
-                chmod u+w $out/share/quickshell/dms/VERSION
-                echo "${version}" > $out/share/quickshell/dms/VERSION
+                chmod u+w $out/share/quickshell/hgs/VERSION
+                echo "${version}" > $out/share/quickshell/hgs/VERSION
 
                 # Install desktop file and icon
-                install -D ${rootSrc}/assets/dms-open.desktop \
-                  $out/share/applications/dms-open.desktop
-                install -D ${rootSrc}/core/assets/danklogo.svg \
-                  $out/share/hicolor/scalable/apps/danklogo.svg
+                install -D ${rootSrc}/assets/hgs-open.desktop \
+                  $out/share/applications/hgs-open.desktop
+                install -D ${rootSrc}/core/assets/hgslogo.svg \
+                  $out/share/hicolor/scalable/apps/hgslogo.svg
 
-                wrapProgram $out/bin/dms \
-                  --add-flags "-c $out/share/quickshell/dms" \
+                wrapProgram $out/bin/hgs \
+                  --add-flags "-c $out/share/quickshell/hgs" \
                   --prefix "NIXPKGS_QT6_QML_IMPORT_PATH" ":" "${mkQmlImportPath pkgs qtPackages}" \
                   --prefix "QT_PLUGIN_PATH" ":" "${mkQtPluginPath pkgs qtPackages}"
 
-                install -Dm644 ${rootSrc}/assets/systemd/dms.service \
-                  $out/lib/systemd/user/dms.service
+                install -Dm644 ${rootSrc}/assets/systemd/hgs.service \
+                  $out/lib/systemd/user/hgs.service
 
-                substituteInPlace $out/lib/systemd/user/dms.service \
-                  --replace-fail /usr/bin/dms $out/bin/dms \
+                substituteInPlace $out/lib/systemd/user/hgs.service \
+                  --replace-fail /usr/bin/hgs $out/bin/hgs \
                   --replace-fail /usr/bin/pkill ${pkgs.procps}/bin/pkill
 
-                substituteInPlace $out/share/quickshell/dms/Modules/Greetd/assets/dms-greeter \
+                substituteInPlace $out/share/quickshell/hgs/Modules/Greetd/assets/hgs-greeter \
                   --replace-fail /bin/bash ${pkgs.bashInteractive}/bin/bash
 
-                substituteInPlace $out/share/quickshell/dms/assets/pam/fprint \
+                substituteInPlace $out/share/quickshell/hgs/assets/pam/fprint \
                   --replace-fail pam_fprintd.so ${pkgs.fprintd}/lib/security/pam_fprintd.so
 
-                substituteInPlace $out/share/quickshell/dms/assets/pam/u2f \
+                substituteInPlace $out/share/quickshell/hgs/assets/pam/u2f \
                   --replace-fail pam_u2f.so ${pkgs.pam_u2f}/lib/security/pam_u2f.so
 
-                installShellCompletion --cmd dms \
-                  --bash <($out/bin/dms completion bash) \
-                  --fish <($out/bin/dms completion fish) \
-                  --zsh <($out/bin/dms completion zsh)
+                installShellCompletion --cmd hgs \
+                  --bash <($out/bin/hgs completion bash) \
+                  --fish <($out/bin/hgs completion fish) \
+                  --zsh <($out/bin/hgs completion zsh)
               '';
 
               meta = {
-                description = "Desktop shell for wayland compositors built with Quickshell & GO";
-                homepage = "https://danklinux.com";
-                changelog = "https://github.com/AvengeMedia/DankMaterialShell/releases/tag/v${version}";
+                description = "Hyprland-first desktop shell built with Quickshell and Go";
+                homepage = "https://coastlinesec.com";
+                changelog = "https://github.com/CoastLineSec/HyprGlassShell/releases/tag/v${version}";
                 license = pkgs.lib.licenses.mit;
-                mainProgram = "dms";
+                mainProgram = "hgs";
                 platforms = pkgs.lib.platforms.linux;
               };
             }
           )
         ) { };
 
-      buildDmsPkgs = pkgs: {
-        dms-shell = mkDmsShell pkgs;
+      buildHgsPkgs = pkgs: {
+        hgs-shell = mkHgsShell pkgs;
       };
     in
     {
       packages = forEachSystem (
         system: pkgs: {
-          dms-shell = mkDmsShell pkgs;
-          default = self.packages.${system}.dms-shell;
-          quickshell = builtins.warn "dank-material-shell: the package Quickshell is not included in the DMS flake anymore. We recommend you to use the one from nixos-unstable branch of Nixpkgs or the upstream flake." pkgs.quickshell;
+          hgs-shell = mkHgsShell pkgs;
+          default = self.packages.${system}.hgs-shell;
+          quickshell = builtins.warn "hypr-glass-shell: the package Quickshell is not included in the HGS flake anymore. We recommend you to use the one from nixos-unstable branch of Nixpkgs or the upstream flake." pkgs.quickshell;
         }
       );
 
-      lib = { inherit mkDmsShell buildDmsPkgs; };
+      lib = { inherit mkHgsShell buildHgsPkgs; };
 
-      homeModules.dank-material-shell = mkModuleWithDmsPkgs ./distro/nix/home.nix;
+      homeModules.hypr-glass-shell = mkModuleWithHgsPkgs ./distro/nix/home.nix;
 
-      homeModules.default = self.homeModules.dank-material-shell;
+      homeModules.default = self.homeModules.hypr-glass-shell;
 
-      homeModules.niri = import ./distro/nix/niri.nix;
+      homeModules.hgsMaterialShell.default = builtins.warn "hypr-glass-shell: flake output `homeModules.hgsMaterialShell.default` has been renamed to `homeModules.hypr-glass-shell`" self.homeModules.hypr-glass-shell;
 
-      homeModules.dankMaterialShell.default = builtins.warn "dank-material-shell: flake output `homeModules.dankMaterialShell.default` has been renamed to `homeModules.dank-material-shell`" self.homeModules.dank-material-shell;
+      nixosModules.hypr-glass-shell = mkModuleWithHgsPkgs ./distro/nix/nixos.nix;
 
-      homeModules.dankMaterialShell.niri = builtins.warn "dank-material-shell: flake output `homeModules.dankMaterialShell.niri` has been renamed to `homeModules.niri`" self.homeModules.niri;
+      nixosModules.default = self.nixosModules.hypr-glass-shell;
 
-      nixosModules.dank-material-shell = mkModuleWithDmsPkgs ./distro/nix/nixos.nix;
+      nixosModules.greeter = mkModuleWithHgsPkgs ./distro/nix/greeter.nix;
 
-      nixosModules.default = self.nixosModules.dank-material-shell;
-
-      nixosModules.greeter = mkModuleWithDmsPkgs ./distro/nix/greeter.nix;
-
-      nixosModules.dankMaterialShell = builtins.warn "dank-material-shell: flake output `nixosModules.dankMaterialShell` has been renamed to `nixosModules.dank-material-shell`" self.nixosModules.dank-material-shell;
+      nixosModules.hgsMaterialShell = builtins.warn "hypr-glass-shell: flake output `nixosModules.hgsMaterialShell` has been renamed to `nixosModules.hypr-glass-shell`" self.nixosModules.hypr-glass-shell;
 
       devShells = forEachSystem (
         system: pkgs:

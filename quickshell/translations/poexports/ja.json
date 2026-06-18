@@ -308,8 +308,8 @@
   "90°": {
     "90°": "90°"
   },
-  "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
-    "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MITライセンス</a>"
+  "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
+    "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MITライセンス</a>"
   },
   "A file with this name already exists. Do you want to overwrite it?": {
     "A file with this name already exists. Do you want to overwrite it?": "この名前のファイルは既に存在します。上書きしてもよろしいですか?"
@@ -380,8 +380,8 @@
   "Activate Greeter": {
     "Activate Greeter": "Greeter を有効にする"
   },
-  "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
-    "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "DMS greeter を有効にしますか? sudo 認証用の端末が開きます。有効化後に設定を適用するには Sync を実行してください。"
+  "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": {
+    "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.": "HGS greeter を有効にしますか? sudo 認証用の端末が開きます。有効化後に設定を適用するには Sync を実行してください。"
   },
   "Activation": {
     "Activation": "有効化"
@@ -425,8 +425,8 @@
   "Add \"%1\" to the %2 group?": {
     "Add \"%1\" to the %2 group?": ""
   },
-  "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": {
-    "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.": ""
+  "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": {
+    "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.": ""
   },
   "Add Bar": {
     "Add Bar": "バーを追加"
@@ -476,8 +476,8 @@
   "Add notes": {
     "Add notes": ""
   },
-  "Add the new user to the %1 group so they can run dms greeter sync --profile.": {
-    "Add the new user to the %1 group so they can run dms greeter sync --profile.": ""
+  "Add the new user to the %1 group so they can run hgs greeter sync --profile.": {
+    "Add the new user to the %1 group so they can run hgs greeter sync --profile.": ""
   },
   "Add the new user to the %1 group so they can use sudo.": {
     "Add the new user to the %1 group so they can use sudo.": ""
@@ -902,8 +902,8 @@
   "Automatically lock after": {
     "Automatically lock after": "自動的にロック"
   },
-  "Automatically lock the screen when DMS starts": {
-    "Automatically lock the screen when DMS starts": "DMS 起動時に自動的に画面をロック"
+  "Automatically lock the screen when HGS starts": {
+    "Automatically lock the screen when HGS starts": "HGS 起動時に自動的に画面をロック"
   },
   "Automatically lock the screen when the system prepares to suspend": {
     "Automatically lock the screen when the system prepares to suspend": "システムが一時停止の準備中に自動的に画面をロック"
@@ -1307,8 +1307,8 @@
   "Change bar appearance": {
     "Change bar appearance": "バーの見た目を変更"
   },
-  "Change the locale used by the DMS interface.": {
-    "Change the locale used by the DMS interface.": "DMS インターフェースで使用するロケールを変更します。"
+  "Change the locale used by the HGS interface.": {
+    "Change the locale used by the HGS interface.": "HGS インターフェースで使用するロケールを変更します。"
   },
   "Change the locale used for date and time formatting, independent of the interface language.": {
     "Change the locale used for date and time formatting, independent of the interface language.": "日時の書式設定に使用するロケールを、インターフェース言語とは独立して変更します。"
@@ -1328,8 +1328,8 @@
   "Check on startup": {
     "Check on startup": "起動時にチェック"
   },
-  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
-    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": ""
+  "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": {
+    "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.": ""
   },
   "Check your custom command in Settings → Dock → Trash.": {
     "Check your custom command in Settings → Dock → Trash.": "設定 → ドック → ゴミ箱でカスタムコマンドを確認してください。"
@@ -1388,8 +1388,8 @@
   "Choose the border accent color": {
     "Choose the border accent color": "ボーダーの強調色を選ぶ"
   },
-  "Choose the logo displayed on the launcher button in DankBar": {
-    "Choose the logo displayed on the launcher button in DankBar": "Dank Barのランチャーボタンに表示されるロゴを選ぶ"
+  "Choose the logo displayed on the launcher button in HGSBar": {
+    "Choose the logo displayed on the launcher button in HGSBar": "HGS Barのランチャーボタンに表示されるロゴを選ぶ"
   },
   "Choose where notification popups appear on screen": {
     "Choose where notification popups appear on screen": "通知ポップアップが画面に表示される場所を選ぶ"
@@ -1559,8 +1559,8 @@
   "Color theme for syntax highlighting. %1 themes available.": {
     "Color theme for syntax highlighting. %1 themes available.": "シンタックスハイライト用のカラーテーマ。%1 個のテーマが利用可能です。"
   },
-  "Color theme from DMS registry": {
-    "Color theme from DMS registry": "DMS レジストリのカラーテーマ"
+  "Color theme from HGS registry": {
+    "Color theme from HGS registry": "HGS レジストリのカラーテーマ"
   },
   "Colorful": {
     "Colorful": "カラフル"
@@ -1802,8 +1802,8 @@
   "Convenience options for the login screen. Sync to apply.": {
     "Convenience options for the login screen. Sync to apply.": "ログイン画面用の便利なオプションです。適用するには Sync を実行してください。"
   },
-  "Convert to DMS": {
-    "Convert to DMS": ""
+  "Convert to HGS": {
+    "Convert to HGS": ""
   },
   "Cooldown": {
     "Cooldown": "クールダウン"
@@ -2048,41 +2048,41 @@
   "DEMO MODE - Click anywhere to exit": {
     "DEMO MODE - Click anywhere to exit": "デモモード -任意の場所をクリックして 終了"
   },
-  "DMS Chooser": {
-    "DMS Chooser": "DMS セレクター"
+  "HGS Chooser": {
+    "HGS Chooser": "HGS セレクター"
   },
-  "DMS Plugin Manager Unavailable": {
-    "DMS Plugin Manager Unavailable": "DMS プラグイン マネージャーが利用できません"
+  "HGS Plugin Manager Unavailable": {
+    "HGS Plugin Manager Unavailable": "HGS プラグイン マネージャーが利用できません"
   },
-  "DMS Settings": {
-    "DMS Settings": "DMS 設定"
+  "HGS Settings": {
+    "HGS Settings": "HGS 設定"
   },
-  "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": {
-    "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.": ""
+  "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": {
+    "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.": ""
   },
-  "DMS Shortcuts": {
-    "DMS Shortcuts": "DMS ショートカット"
+  "HGS Shortcuts": {
+    "HGS Shortcuts": "HGS ショートカット"
   },
-  "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
-    "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "DMS greeter には greetd と dms-greeter が必要です。指紋認証には fprintd と pam_fprintd、セキュリティキーには pam_u2f が必要です。ユーザーを greeter グループに追加してください。認証の変更は自動的に適用され、sudo 認証が必要な場合は端末が開くことがあります。"
+  "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": {
+    "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.": "HGS greeter には greetd と hgs-greeter が必要です。指紋認証には fprintd と pam_fprintd、セキュリティキーには pam_u2f が必要です。ユーザーを greeter グループに追加してください。認証の変更は自動的に適用され、sudo 認証が必要な場合は端末が開くことがあります。"
   },
-  "DMS needs administrator access. The terminal closes automatically when done.": {
-    "DMS needs administrator access. The terminal closes automatically when done.": ""
+  "HGS needs administrator access. The terminal closes automatically when done.": {
+    "HGS needs administrator access. The terminal closes automatically when done.": ""
   },
-  "DMS out of date": {
-    "DMS out of date": "DMSに更新があります"
+  "HGS out of date": {
+    "HGS out of date": "HGSに更新があります"
   },
-  "DMS server is outdated (API v%1, expected v%2)": {
-    "DMS server is outdated (API v%1, expected v%2)": "DMS サーバーのバージョンが古い（APIバージョン %1、本来はバージョン %2 が必要）"
+  "HGS server is outdated (API v%1, expected v%2)": {
+    "HGS server is outdated (API v%1, expected v%2)": "HGS サーバーのバージョンが古い（APIバージョン %1、本来はバージョン %2 が必要）"
   },
-  "DMS service is not connected. Clipboard settings are unavailable.": {
-    "DMS service is not connected. Clipboard settings are unavailable.": "DMS サービスに接続されていません。クリップボード設定は利用できません。"
+  "HGS service is not connected. Clipboard settings are unavailable.": {
+    "HGS service is not connected. Clipboard settings are unavailable.": "HGS サービスに接続されていません。クリップボード設定は利用できません。"
   },
-  "DMS shell actions (launcher, clipboard, etc.)": {
-    "DMS shell actions (launcher, clipboard, etc.)": "DMS シェルアクション（ランチャー、クリップボードなど）"
+  "HGS shell actions (launcher, clipboard, etc.)": {
+    "HGS shell actions (launcher, clipboard, etc.)": "HGS シェルアクション（ランチャー、クリップボードなど）"
   },
-  "DMS_SOCKET not available": {
-    "DMS_SOCKET not available": "DMS_SOCKETが利用できません"
+  "HGS_SOCKET not available": {
+    "HGS_SOCKET not available": "HGS_SOCKETが利用できません"
   },
   "Daily": {
     "Daily": "毎日"
@@ -2090,29 +2090,29 @@
   "Daily at:": {
     "Daily at:": "毎日："
   },
-  "Dank": {
-    "Dank": "Dank"
+  "HGS": {
+    "HGS": "HGS"
   },
-  "Dank Bar": {
-    "Dank Bar": "Dank Bar"
+  "HGS Bar": {
+    "HGS Bar": "HGS Bar"
   },
-  "DankBar": {
-    "DankBar": "DankBar"
+  "HGSBar": {
+    "HGSBar": "HGSBar"
   },
-  "DankCalendar": {
-    "DankCalendar": ""
+  "HGSCalendar": {
+    "HGSCalendar": ""
   },
-  "DankCalendar isn't installed": {
-    "DankCalendar isn't installed": ""
+  "HGSCalendar isn't installed": {
+    "HGSCalendar isn't installed": ""
   },
-  "DankCalendar isn't running": {
-    "DankCalendar isn't running": ""
+  "HGSCalendar isn't running": {
+    "HGSCalendar isn't running": ""
   },
-  "DankMaterialShell is ready to use": {
-    "DankMaterialShell is ready to use": "DankMaterialShell は使用可能です"
+  "HyprGlassShell is ready to use": {
+    "HyprGlassShell is ready to use": "HyprGlassShell は使用可能です"
   },
-  "DankShell & System Icons (requires restart)": {
-    "DankShell & System Icons (requires restart)": "DankShell とシステムアイコン（再起動が必要）"
+  "HGSShell & System Icons (requires restart)": {
+    "HGSShell & System Icons (requires restart)": "HGSShell とシステムアイコン（再起動が必要）"
   },
   "Dark Mode": {
     "Dark Mode": "ダークモード"
@@ -2525,8 +2525,8 @@
   "Drizzle": {
     "Drizzle": "霧雨"
   },
-  "Drop your override for %1 so the DMS default action re-applies?": {
-    "Drop your override for %1 so the DMS default action re-applies?": ""
+  "Drop your override for %1 so the HGS default action re-applies?": {
+    "Drop your override for %1 so the HGS default action re-applies?": ""
   },
   "Duplicate": {
     "Duplicate": "複製"
@@ -2651,8 +2651,8 @@
   "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": {
     "Enable a custom override below to set per-bar shadow intensity, opacity, and color.": "以下のカスタムオーバーライドを有効にして、バーごとの影の強さ、透明度、色を設定します。"
   },
-  "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": {
-    "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.": "コンポジターをターゲットに設定できるぼかしレイヤー(名前空間：dms:blurwallpaper)を有効にします。Niri を手動で設定する必要があります。"
+  "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": {
+    "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.": "コンポジターをターゲットに設定できるぼかしレイヤー(名前空間：hgs:blurwallpaper)を有効にします。Niri を手動で設定する必要があります。"
   },
   "Enable fingerprint at login": {
     "Enable fingerprint at login": "ログイン時に指紋認証を有効にする"
@@ -2660,8 +2660,8 @@
   "Enable fingerprint authentication": {
     "Enable fingerprint authentication": "指紋認証を有効に"
   },
-  "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": {
-    "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.": "DMS Greeter で指紋認証またはセキュリティキーを有効にします。認証の変更は自動的に適用されます。"
+  "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": {
+    "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.": "HGS Greeter で指紋認証またはセキュリティキーを有効にします。認証の変更は自動的に適用されます。"
   },
   "Enable loginctl lock integration": {
     "Enable loginctl lock integration": "ログインロックの統合を有効に"
@@ -3035,8 +3035,8 @@
   "Failed to ring device": {
     "Failed to ring device": "デバイスの呼び出しに失敗しました"
   },
-  "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": {
-    "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.": "'dms greeter status' の実行に失敗しました。DMS がインストールされ、dms が PATH にあることを確認してください。"
+  "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": {
+    "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.": "'hgs greeter status' の実行に失敗しました。HGS がインストールされ、hgs が PATH にあることを確認してください。"
   },
   "Failed to save audio config": {
     "Failed to save audio config": "オーディオ設定の保存に失敗しました"
@@ -3158,8 +3158,8 @@
   "File received from": {
     "File received from": "ファイルの受信元"
   },
-  "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": {
-    "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch": "ファイル検索には dsearch が必要です\ngithub.com/AvengeMedia/danksearch からインストールしてください"
+  "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": {
+    "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch": "ファイル検索には dsearch が必要です\ngithub.com/CoastLineSec/hgssearch からインストールしてください"
   },
   "File search unavailable": {
     "File search unavailable": "ファイル検索は利用できません"
@@ -3293,8 +3293,8 @@
   "Folders": {
     "Folders": "フォルダー"
   },
-  "Follow DMS background color": {
-    "Follow DMS background color": "DMS の背景色に従う"
+  "Follow HGS background color": {
+    "Follow HGS background color": "HGS の背景色に従う"
   },
   "Follow Monitor Focus": {
     "Follow Monitor Focus": "モニターフォーカスに従う"
@@ -3473,14 +3473,14 @@
   "Gamma Control": {
     "Gamma Control": "ガンマ設定"
   },
-  "Gamma control not available. Requires DMS API v6+.": {
-    "Gamma control not available. Requires DMS API v6+.": "ガンマ制御は使用できません。DMS API v6+ が必要です。"
+  "Gamma control not available. Requires HGS API v6+.": {
+    "Gamma control not available. Requires HGS API v6+.": "ガンマ制御は使用できません。HGS API v6+ が必要です。"
   },
   "Generate Override": {
     "Generate Override": ""
   },
-  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
-    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "DMS の色に合わせたベースライン GTK3/4 または QT5/QT6（qt6ct-kde が必要）設定を生成します。必要なのは一度だけです。<br /><br />GTK テーマを適用する前に <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> を設定することを推奨します。"
+  "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": {
+    "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.": "HGS の色に合わせたベースライン GTK3/4 または QT5/QT6（qt6ct-kde が必要）設定を生成します。必要なのは一度だけです。<br /><br />GTK テーマを適用する前に <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> を設定することを推奨します。"
   },
   "Generic": {
     "Generic": "汎用"
@@ -3554,8 +3554,8 @@
   "Greeter font": {
     "Greeter font": "Greeter フォント"
   },
-  "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": {
-    "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.": ""
+  "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": {
+    "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.": ""
   },
   "Greeter group:": {
     "Greeter group:": ""
@@ -3863,8 +3863,8 @@
   "Idle Settings": {
     "Idle Settings": "アイドル設定"
   },
-  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": {
-    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps": ""
+  "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": {
+    "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps": ""
   },
   "If the field is hidden, it will appear as soon as a key is pressed.": {
     "If the field is hidden, it will appear as soon as a key is pressed.": "フィールドが非表示の場合、キーが押されるとすぐに表示されます。"
@@ -3977,8 +3977,8 @@
   "Install Theme": {
     "Install Theme": "テーマをインストール"
   },
-  "Install color themes from the DMS theme registry": {
-    "Install color themes from the DMS theme registry": "DMS テーマレジストリからカラーテーマをインストール"
+  "Install color themes from the HGS theme registry": {
+    "Install color themes from the HGS theme registry": "HGS テーマレジストリからカラーテーマをインストール"
   },
   "Install complete. Greeter has been installed.": {
     "Install complete. Greeter has been installed.": "インストールが完了しました。Greeter がインストールされました。"
@@ -3992,17 +3992,17 @@
   "Install matugen package for dynamic theming": {
     "Install matugen package for dynamic theming": "動的テーマ用に matugen パッケージをインストール"
   },
-  "Install plugin '%1' from the DMS registry?": {
-    "Install plugin '%1' from the DMS registry?": "DMS レジストリからプラグイン '%1' をインストールしますか?"
+  "Install plugin '%1' from the HGS registry?": {
+    "Install plugin '%1' from the HGS registry?": "HGS レジストリからプラグイン '%1' をインストールしますか?"
   },
-  "Install plugins from the DMS plugin registry": {
-    "Install plugins from the DMS plugin registry": "DMSプラグインレジストリからプラグインをインストールする"
+  "Install plugins from the HGS plugin registry": {
+    "Install plugins from the HGS plugin registry": "HGSプラグインレジストリからプラグインをインストールする"
   },
-  "Install the DMS greeter? A terminal will open for sudo authentication.": {
-    "Install the DMS greeter? A terminal will open for sudo authentication.": "DMS Greeter をインストールしますか? sudo 認証用の端末が開きます。"
+  "Install the HGS greeter? A terminal will open for sudo authentication.": {
+    "Install the HGS greeter? A terminal will open for sudo authentication.": "HGS Greeter をインストールしますか? sudo 認証用の端末が開きます。"
   },
-  "Install theme '%1' from the DMS registry?": {
-    "Install theme '%1' from the DMS registry?": "DMS レジストリからテーマ '%1' をインストールしますか?"
+  "Install theme '%1' from the HGS registry?": {
+    "Install theme '%1' from the HGS registry?": "HGS レジストリからテーマ '%1' をインストールしますか?"
   },
   "Installation and PAM setup: see the ": {
     "Installation and PAM setup: see the ": "インストールと PAM 設定については次を参照してください: "
@@ -4364,8 +4364,8 @@
   "Make the bar background fully transparent": {
     "Make the bar background fully transparent": ""
   },
-  "Manage and configure plugins for extending DMS functionality": {
-    "Manage and configure plugins for extending DMS functionality": "DMS 機能を拡張するためのプラグインを管理および構成"
+  "Manage and configure plugins for extending HGS functionality": {
+    "Manage and configure plugins for extending HGS functionality": "HGS 機能を拡張するためのプラグインを管理および構成"
   },
   "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": {
     "Manage up to 4 independent bar configurations. Each bar has its own position, widgets, styling, and display assignment.": "最大4つの独立したバー構成を管理できます。各バーには独自の位置、ウィジェット、スタイリング、表示割り当てがあります。"
@@ -4457,8 +4457,8 @@
   "Material inspired shadows and elevation on modals, popouts, and dialogs": {
     "Material inspired shadows and elevation on modals, popouts, and dialogs": "モーダル、ポップアウト、ダイアログに Material 風の影とエレベーションを適用"
   },
-  "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": {
-    "Material: Material Design 3 Expressive bezier curves. The DMS default feel.": "素材：マテリアルデザイン3　表現力豊かなベジェ曲線。DMSのデフォルト感。"
+  "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": {
+    "Material: Material Design 3 Expressive bezier curves. The HGS default feel.": "素材：マテリアルデザイン3　表現力豊かなベジェ曲線。HGSのデフォルト感。"
   },
   "Matugen Contrast": {
     "Matugen Contrast": "Matugen コントラスト"
@@ -4868,8 +4868,8 @@
   "Night mode & gamma": {
     "Night mode & gamma": "ナイトモードとガンマ"
   },
-  "Night mode failed: DMS gamma control not available": {
-    "Night mode failed: DMS gamma control not available": "ナイトモードが失敗しました：DMSガンマ制御が利用できません"
+  "Night mode failed: HGS gamma control not available": {
+    "Night mode failed: HGS gamma control not available": "ナイトモードが失敗しました：HGSガンマ制御が利用できません"
   },
   "Niri Integration": {
     "Niri Integration": "Niri 統合"
@@ -4901,8 +4901,8 @@
   "No Border": {
     "No Border": "ボーダーなし"
   },
-  "No DMS shortcuts configured": {
-    "No DMS shortcuts configured": "DMS ショートカットが設定されていません"
+  "No HGS shortcuts configured": {
+    "No HGS shortcuts configured": "HGS ショートカットが設定されていません"
   },
   "No Dim": {
     "No Dim": "暗転なし"
@@ -5339,8 +5339,8 @@
   "Only adjust gamma based on time or location rules.": {
     "Only adjust gamma based on time or location rules.": "ガンマは、時間または場所のルールに基づいてのみ調整します。"
   },
-  "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
-    "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "DMS 管理の PAM にのみ影響します。greetd がすでに pam_fprintd を含んでいる場合、指紋認証は有効のままです。"
+  "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": {
+    "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.": "HGS 管理の PAM にのみ影響します。greetd がすでに pam_fprintd を含んでいる場合、指紋認証は有効のままです。"
   },
   "Only show windows from the current monitor on each dock": {
     "Only show windows from the current monitor on each dock": "各ドックに現在のモニターのウィンドウのみ表示"
@@ -6197,8 +6197,8 @@
   "Remove the shortcut %1?": {
     "Remove the shortcut %1?": ""
   },
-  "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": {
-    "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.": ""
+  "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": {
+    "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.": ""
   },
   "Removed administrator privileges": {
     "Removed administrator privileges": ""
@@ -6239,11 +6239,11 @@
   "Requires 'dgop' tool": {
     "Requires 'dgop' tool": "'dgop' ツールが必要"
   },
-  "Requires DMS %1": {
-    "Requires DMS %1": "DMS %1 が必要"
+  "Requires HGS %1": {
+    "Requires HGS %1": "HGS %1 が必要"
   },
-  "Requires DMS server with sysupdate capability": {
-    "Requires DMS server with sysupdate capability": "sysupdate 機能に対応した DMS サーバーが必要です"
+  "Requires HGS server with sysupdate capability": {
+    "Requires HGS server with sysupdate capability": "sysupdate 機能に対応した HGS サーバーが必要です"
   },
   "Requires MangoWC compositor": {
     "Requires MangoWC compositor": ""
@@ -6290,11 +6290,11 @@
   "Resolution, position, scale": {
     "Resolution, position, scale": "解像度、位置、スケール"
   },
-  "Restart DMS": {
-    "Restart DMS": "DMSを再起動"
+  "Restart HGS": {
+    "Restart HGS": "HGSを再起動"
   },
-  "Restart the DankMaterialShell": {
-    "Restart the DankMaterialShell": "DankMaterialShellを再起動"
+  "Restart the HyprGlassShell": {
+    "Restart the HyprGlassShell": "HyprGlassShellを再起動"
   },
   "Restarting audio system...": {
     "Restarting audio system...": "オーディオシステムを再起動しています..."
@@ -6365,14 +6365,14 @@
   "Rules (%1)": {
     "Rules (%1)": "ルール（%1）"
   },
-  "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": {
-    "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.": ""
+  "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": {
+    "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.": ""
   },
   "Run Again": {
     "Run Again": "再実行"
   },
-  "Run DMS Templates": {
-    "Run DMS Templates": "DMS テンプレートを実行"
+  "Run HGS Templates": {
+    "Run HGS Templates": "HGS テンプレートを実行"
   },
   "Run User Templates": {
     "Run User Templates": "ユーザーのテンプレを実行"
@@ -6464,11 +6464,11 @@
   "Scale": {
     "Scale": "スケール"
   },
-  "Scale DankBar font sizes independently": {
-    "Scale DankBar font sizes independently": "Dank Bar のフォントサイズを個別に調整"
+  "Scale HGSBar font sizes independently": {
+    "Scale HGSBar font sizes independently": "HGS Bar のフォントサイズを個別に調整"
   },
-  "Scale DankBar icon sizes independently": {
-    "Scale DankBar icon sizes independently": "DankBar のアイコンサイズを個別に調整"
+  "Scale HGSBar icon sizes independently": {
+    "Scale HGSBar icon sizes independently": "HGSBar のアイコンサイズを個別に調整"
   },
   "Scale all font sizes throughout the shell": {
     "Scale all font sizes throughout the shell": "シェル全体のフォントサイズを調整"
@@ -6962,8 +6962,8 @@
   "Show Reboot": {
     "Show Reboot": "再起動を表示"
   },
-  "Show Restart DMS": {
-    "Show Restart DMS": "DMS再起動を表示"
+  "Show Restart HGS": {
+    "Show Restart HGS": "HGS再起動を表示"
   },
   "Show Saved Items": {
     "Show Saved Items": "保存済み項目を表示"
@@ -7202,8 +7202,8 @@
   "Snow": {
     "Snow": "雪"
   },
-  "Some plugins require a newer version of DMS:": {
-    "Some plugins require a newer version of DMS:": "一部のプラグインにはより新しいバージョンの DMS が必要です:"
+  "Some plugins require a newer version of HGS:": {
+    "Some plugins require a newer version of HGS:": "一部のプラグインにはより新しいバージョンの HGS が必要です:"
   },
   "Sort Alphabetically": {
     "Sort Alphabetically": "アルファベット順に並べ替える"
@@ -7265,8 +7265,8 @@
   "Standard": {
     "Standard": "標準"
   },
-  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": {
-    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.": "標準：クラシックマテリアルデザイン3 ― パネルが下から微妙なスケールで立ち上がる。DMSのデフォルト設定。"
+  "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": {
+    "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.": "標準：クラシックマテリアルデザイン3 ― パネルが下から微妙なスケールで立ち上がる。HGSのデフォルト設定。"
   },
   "Start": {
     "Start": "始める"
@@ -7475,11 +7475,11 @@
   "Terminal additional parameters": {
     "Terminal additional parameters": "端末の追加パラメーター"
   },
-  "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": {
-    "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.": "端末フォールバックに失敗しました。対応する端末エミュレーターをインストールするか、'dms auth sync' を手動で実行してください。"
+  "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": {
+    "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.": "端末フォールバックに失敗しました。対応する端末エミュレーターをインストールするか、'hgs auth sync' を手動で実行してください。"
   },
-  "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": {
-    "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.": "端末フォールバックに失敗しました。対応する端末エミュレーターのいずれかをインストールするか、'dms greeter sync' を手動で実行してください。"
+  "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": {
+    "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.": "端末フォールバックに失敗しました。対応する端末エミュレーターのいずれかをインストールするか、'hgs greeter sync' を手動で実行してください。"
   },
   "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": {
     "Terminal fallback opened. Complete authentication setup there; it will close automatically when done.": "端末フォールバックを開きました。そこで認証設定を完了してください。完了すると自動的に閉じます。"
@@ -7526,8 +7526,8 @@
   "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": {
     "The 'dgop' tool is required for system monitoring.\nPlease install dgop to use this feature.": "システム監視には 'dgop' ツールが必要です。\nこの機能を使うには dgop をインストールしてください。"
   },
-  "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": {
-    "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.": "DMS_SOCKET環境変数が設定されていないか、ソケットが利用できません。自動プラグイン管理にはDMS_SOCKETが必要です。"
+  "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": {
+    "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.": "HGS_SOCKET環境変数が設定されていないか、ソケットが利用できません。自動プラグイン管理にはHGS_SOCKETが必要です。"
   },
   "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": {
     "The below settings will modify your GTK and Qt settings. If you wish to preserve your current configurations, please back them up (qt5ct.conf|qt6ct.conf and ~/.config/gtk-3.0|gtk-4.0).": "以下の設定は、GTK と Qt の設定を変更します。現在の設定を維持したい場合は、バックアップを作成してください（qt5ct.conf|qt6ct.conf および ~/.config/gtk-3.0|gtk-4.0）。"
@@ -7574,8 +7574,8 @@
   "Third-Party Plugin Warning": {
     "Third-Party Plugin Warning": "サードパーティ製プラグインの警告"
   },
-  "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
-    "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "サードパーティ製プラグインはコミュニティによって作成されており、DankMaterialShell では公式にサポートされていません。\n\nこれらのプラグインにはセキュリティおよびプライバシー上のリスクがある可能性があります。自己責任でインストールしてください。"
+  "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": {
+    "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.": "サードパーティ製プラグインはコミュニティによって作成されており、HyprGlassShell では公式にサポートされていません。\n\nこれらのプラグインにはセキュリティおよびプライバシー上のリスクがある可能性があります。自己責任でインストールしてください。"
   },
   "This bind is overridden by config.kdl": {
     "This bind is overridden by config.kdl": "このバインドは config.kdl によって上書きされています"
@@ -7583,17 +7583,17 @@
   "This device": {
     "This device": "このデバイス"
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.": ""
   },
-  "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": {
-    "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.": ""
+  "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": {
+    "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.": ""
   },
   "This may take a few seconds": {
     "This may take a few seconds": "これには数秒かかる場合があります"
@@ -7703,8 +7703,8 @@
   "To update, run the following command:": {
     "To update, run the following command:": "更新するには以下のコマンドを実行："
   },
-  "To use this DMS bind, remove or change the keybind in your config.kdl": {
-    "To use this DMS bind, remove or change the keybind in your config.kdl": "この DMS バインドを使うには、config.kdl 内のキーバインドを削除または変更してください"
+  "To use this HGS bind, remove or change the keybind in your config.kdl": {
+    "To use this HGS bind, remove or change the keybind in your config.kdl": "この HGS バインドを使うには、config.kdl 内のキーバインドを削除または変更してください"
   },
   "Toast Messages": {
     "Toast Messages": "トーストメッセージ"
@@ -7895,8 +7895,8 @@
   "Uninstall failed: %1": {
     "Uninstall failed: %1": "アンインストールに失敗しました: %1"
   },
-  "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
-    "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "DMS Greeter をアンインストールしますか ?  設定を削除し、以前のディスプレイマネージャーを復元します。sudo 認証のために端末が開きます。"
+  "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": {
+    "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.": "HGS Greeter をアンインストールしますか ?  設定を削除し、以前のディスプレイマネージャーを復元します。sudo 認証のために端末が開きます。"
   },
   "Uninstalled: %1": {
     "Uninstalled: %1": "アンインストールしました: %1"
@@ -8171,8 +8171,8 @@
   "Uses the spotlight-bar IPC action and always opens the minimal bar.": {
     "Uses the spotlight-bar IPC action and always opens the minimal bar.": ""
   },
-  "Using DankCalendar%1": {
-    "Using DankCalendar%1": ""
+  "Using HGSCalendar%1": {
+    "Using HGSCalendar%1": ""
   },
   "Using global monospace font from Settings → Personalization": {
     "Using global monospace font from Settings → Personalization": "設定 → パーソナライズからグローバル等幅フォントを使用する"
@@ -8339,8 +8339,8 @@
   "Welcome": {
     "Welcome": "ようこそ"
   },
-  "Welcome to DankMaterialShell": {
-    "Welcome to DankMaterialShell": "DankMaterialShell へようこそ"
+  "Welcome to HyprGlassShell": {
+    "Welcome to HyprGlassShell": "HyprGlassShell へようこそ"
   },
   "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": {
     "When clicking a dock window in a Hyprland special workspace, bring that special workspace back before focusing the window": "Hyprland の特殊ワークスペースでドックのウィンドウをクリックしたときは、ウィンドウにフォーカスする前にその特殊ワークスペースを戻します"
@@ -8600,14 +8600,14 @@
   "direct": {
     "direct": "直接"
   },
-  "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
-    "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "dms は、<a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3 に着想を得た</a>デザインを持つ、高度にカスタマイズ可能なモダンなデスクトップシェルです。<br /><br/>デスクトップシェルを構築するための QT6 フレームワークである <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a> と、静的型付けのコンパイル言語である <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> で構築されています。"
+  "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "hgs は、<a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3 に着想を得た</a>デザインを持つ、高度にカスタマイズ可能なモダンなデスクトップシェルです。<br /><br/>デスクトップシェルを構築するための QT6 フレームワークである <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a> と、静的型付けのコンパイル言語である <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> で構築されています。"
   },
-  "dms/cursor config exists but is not included. Cursor settings won't apply.": {
-    "dms/cursor config exists but is not included. Cursor settings won't apply.": "dms/cursor 設定は存在しますが、読み込まれていません。カーソル設定は適用されません。"
+  "hgs/cursor config exists but is not included. Cursor settings won't apply.": {
+    "hgs/cursor config exists but is not included. Cursor settings won't apply.": "hgs/cursor 設定は存在しますが、読み込まれていません。カーソル設定は適用されません。"
   },
-  "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
-    "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.": "dms/outputs 設定は存在しますが、コンポジター設定に含まれていません。ディスプレイ変更は保持されません。"
+  "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": {
+    "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.": "hgs/outputs 設定は存在しますが、コンポジター設定に含まれていません。ディスプレイ変更は保持されません。"
   },
   "e.g. /usr/bin/my-script --flag": {
     "e.g. /usr/bin/my-script --flag": ""
@@ -8651,8 +8651,8 @@
   "loginctl activate failed (exit %1)": {
     "loginctl activate failed (exit %1)": ""
   },
-  "loginctl not available - lock integration requires DMS socket connection": {
-    "loginctl not available - lock integration requires DMS socket connection": "loginctlが利用できません- ロック統合のためにDMS socketの接続が必要です。"
+  "loginctl not available - lock integration requires HGS socket connection": {
+    "loginctl not available - lock integration requires HGS socket connection": "loginctlが利用できません- ロック統合のためにHGS socketの接続が必要です。"
   },
   "mango: config reloaded": {
     "mango: config reloaded": ""
@@ -8693,8 +8693,8 @@
   "niri shortcuts config": {
     "niri shortcuts config": "niri ショートカット設定"
   },
-  "niri/dms Discord": {
-    "niri/dms Discord": "niri/dms Discord"
+  "niri/hgs Discord": {
+    "niri/hgs Discord": "niri/hgs Discord"
   },
   "niri: config reloaded": {
     "niri: config reloaded": "niri: 設定が再読み込みされました"
@@ -8765,8 +8765,8 @@
   "up": {
     "up": "上"
   },
-  "update dms for NM integration.": {
-    "update dms for NM integration.": "NM統合のためにDMSを更新します。"
+  "update hgs for NM integration.": {
+    "update hgs for NM integration.": "NM統合のためにHGSを更新します。"
   },
   "useradd failed (exit %1)": {
     "useradd failed (exit %1)": ""

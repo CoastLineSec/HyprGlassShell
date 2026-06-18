@@ -13,14 +13,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/version"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/version"
 )
 
 const (
 	forceQuickshellGit = false
-	forceDMSGit        = false
+	forceHGSGit        = false
 )
 
 // BaseDistribution provides common functionality for all distributions
@@ -107,24 +107,24 @@ func (b *BaseDistribution) detectDgop() deps.Dependency {
 	return b.detectCommand("dgop", "Desktop portal management tool")
 }
 
-func (b *BaseDistribution) detectDMS() deps.Dependency {
-	dmsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/dms")
+func (b *BaseDistribution) detectHGS() deps.Dependency {
+	hgsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/hgs")
 
 	status := deps.StatusMissing
 	currentVersion := ""
 
-	if _, err := os.Stat(dmsPath); err == nil {
+	if _, err := os.Stat(hgsPath); err == nil {
 		status = deps.StatusInstalled
 
 		// Only get current version, don't check for updates (lazy loading)
-		current, err := version.GetCurrentDMSVersion()
+		current, err := version.GetCurrentHGSVersion()
 		if err == nil {
 			currentVersion = current
 		}
 	}
 
 	dep := deps.Dependency{
-		Name:        "dms (DankMaterialShell)",
+		Name:        "hgs (HyprGlassShell)",
 		Status:      status,
 		Description: "Desktop Management System configuration",
 		Required:    true,
@@ -303,66 +303,6 @@ func (b *BaseDistribution) detectWindowManager(wm deps.WindowManager) deps.Depen
 			Status:      status,
 			Version:     version,
 			Description: "Dynamic tiling Wayland compositor",
-			Required:    true,
-			Variant:     variant,
-			CanToggle:   true,
-		}
-	case deps.WindowManagerNiri:
-		status := deps.StatusMissing
-		variant := deps.VariantStable
-		version := ""
-
-		if b.commandExists("niri") {
-			status = deps.StatusInstalled
-			cmd := exec.Command("niri", "--version")
-			if output, err := cmd.Output(); err == nil {
-				outStr := string(output)
-				if strings.Contains(outStr, "git") || strings.Contains(outStr, "+") {
-					variant = deps.VariantGit
-				}
-				if versionRegex := regexp.MustCompile(`niri (\d+\.\d+)`); versionRegex.MatchString(outStr) {
-					matches := versionRegex.FindStringSubmatch(outStr)
-					if len(matches) > 1 {
-						version = matches[1]
-					}
-				}
-			}
-		}
-		return deps.Dependency{
-			Name:        "niri",
-			Status:      status,
-			Version:     version,
-			Description: "Scrollable-tiling Wayland compositor",
-			Required:    true,
-			Variant:     variant,
-			CanToggle:   true,
-		}
-	case deps.WindowManagerMango:
-		status := deps.StatusMissing
-		variant := deps.VariantStable
-		version := ""
-
-		if b.commandExists("mango") {
-			status = deps.StatusInstalled
-			cmd := exec.Command("mango", "-v")
-			if output, err := cmd.Output(); err == nil {
-				outStr := string(output)
-				if strings.Contains(outStr, "git") || strings.Contains(outStr, "dirty") {
-					variant = deps.VariantGit
-				}
-				if versionRegex := regexp.MustCompile(`(\d+\.\d+\.\d+)`); versionRegex.MatchString(outStr) {
-					matches := versionRegex.FindStringSubmatch(outStr)
-					if len(matches) > 1 {
-						version = matches[1]
-					}
-				}
-			}
-		}
-		return deps.Dependency{
-			Name:        "mango",
-			Status:      status,
-			Version:     version,
-			Description: "dwl-based dynamic tiling Wayland compositor",
 			Required:    true,
 			Variant:     variant,
 			CanToggle:   true,
@@ -577,7 +517,7 @@ func (b *BaseDistribution) WriteEnvironmentConfig(terminal deps.Terminal) error 
 TERMINAL=%s
 `, terminalCmd)
 
-	envFile := filepath.Join(envDir, "90-dms.conf")
+	envFile := filepath.Join(envDir, "90-hgs.conf")
 	if err := os.WriteFile(envFile, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to write environment config: %w", err)
 	}
@@ -586,15 +526,10 @@ TERMINAL=%s
 	return nil
 }
 
-func (b *BaseDistribution) EnableDMSService(ctx context.Context, wm deps.WindowManager) error {
-	switch wm {
-	case deps.WindowManagerNiri:
-		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "niri.service", "dms").Run(); err != nil {
-			b.log("Warning: failed to add dms as a want for niri.service")
-		}
-	case deps.WindowManagerHyprland:
-		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "dms").Run(); err != nil {
-			b.log("Warning: failed to add dms as a want for hyprland-session.target")
+func (b *BaseDistribution) EnableHGSService(ctx context.Context, wm deps.WindowManager) error {
+	if wm == deps.WindowManagerHyprland {
+		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "hgs").Run(); err != nil {
+			b.log("Warning: failed to add hgs as a want for hyprland-session.target")
 		}
 	}
 
@@ -636,9 +571,9 @@ After=graphical-session.target
 	return nil
 }
 
-// installDMSBinary installs the DMS binary from GitHub releases
-func (b *BaseDistribution) installDMSBinary(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	b.log("Installing/updating DMS binary...")
+// installHGSBinary installs the HGS binary from GitHub releases
+func (b *BaseDistribution) installHGSBinary(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
+	b.log("Installing/updating HGS binary...")
 
 	// Detect architecture
 	arch := runtime.GOARCH
@@ -646,86 +581,86 @@ func (b *BaseDistribution) installDMSBinary(ctx context.Context, sudoPassword st
 	case "amd64":
 	case "arm64":
 	default:
-		return fmt.Errorf("unsupported architecture for DMS: %s", arch)
+		return fmt.Errorf("unsupported architecture for HGS: %s", arch)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.80,
-		Step:        "Downloading DMS binary...",
+		Step:        "Downloading HGS binary...",
 		IsComplete:  false,
-		CommandInfo: fmt.Sprintf("Downloading dms-%s.gz", arch),
+		CommandInfo: fmt.Sprintf("Downloading hgs-%s.gz", arch),
 	}
 
 	// Get latest release version
 	latestVersionCmd := exec.CommandContext(ctx, "bash", "-c",
-		`curl -s https://api.github.com/repos/AvengeMedia/DankMaterialShell/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`)
+		`curl -s https://api.github.com/repos/CoastLineSec/HyprGlassShell/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'`)
 	versionOutput, err := latestVersionCmd.Output()
 	if err != nil {
-		return fmt.Errorf("failed to get latest DMS version: %w", err)
+		return fmt.Errorf("failed to get latest HGS version: %w", err)
 	}
 	version := strings.TrimSpace(string(versionOutput))
 	if version == "" {
-		return fmt.Errorf("could not determine latest DMS version")
+		return fmt.Errorf("could not determine latest HGS version")
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	tmpDir := filepath.Join(homeDir, ".cache", "dankinstall", "manual-builds")
+	tmpDir := filepath.Join(homeDir, ".cache", "hgsinstall", "manual-builds")
 	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	// Download the gzipped binary
-	downloadURL := fmt.Sprintf("https://github.com/AvengeMedia/DankMaterialShell/releases/download/%s/dms-cli-%s.gz", version, arch)
-	gzPath := filepath.Join(tmpDir, "dms.gz")
+	downloadURL := fmt.Sprintf("https://github.com/CoastLineSec/HyprGlassShell/releases/download/%s/hgs-cli-%s.gz", version, arch)
+	gzPath := filepath.Join(tmpDir, "hgs.gz")
 
 	downloadCmd := exec.CommandContext(ctx, "curl", "-L", downloadURL, "-o", gzPath)
 	if err := downloadCmd.Run(); err != nil {
-		return fmt.Errorf("failed to download DMS binary: %w", err)
+		return fmt.Errorf("failed to download HGS binary: %w", err)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.85,
-		Step:        "Extracting DMS binary...",
+		Step:        "Extracting HGS binary...",
 		IsComplete:  false,
-		CommandInfo: "gunzip dms.gz",
+		CommandInfo: "gunzip hgs.gz",
 	}
 
 	// Extract the binary
 	extractCmd := exec.CommandContext(ctx, "gunzip", gzPath)
 	if err := extractCmd.Run(); err != nil {
-		return fmt.Errorf("failed to extract DMS binary: %w", err)
+		return fmt.Errorf("failed to extract HGS binary: %w", err)
 	}
 
-	binaryPath := filepath.Join(tmpDir, "dms")
+	binaryPath := filepath.Join(tmpDir, "hgs")
 
 	// Make it executable
 	chmodCmd := exec.CommandContext(ctx, "chmod", "+x", binaryPath)
 	if err := chmodCmd.Run(); err != nil {
-		return fmt.Errorf("failed to make DMS binary executable: %w", err)
+		return fmt.Errorf("failed to make HGS binary executable: %w", err)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.88,
-		Step:        "Installing DMS to /usr/local/bin...",
+		Step:        "Installing HGS to /usr/local/bin...",
 		IsComplete:  false,
 		NeedsSudo:   true,
-		CommandInfo: "sudo cp dms /usr/local/bin/",
+		CommandInfo: "sudo cp hgs /usr/local/bin/",
 	}
 
 	// Install to /usr/local/bin
 	installCmd := privesc.ExecCommand(ctx, sudoPassword,
-		fmt.Sprintf("cp %s /usr/local/bin/dms", binaryPath))
+		fmt.Sprintf("cp %s /usr/local/bin/hgs", binaryPath))
 	if err := installCmd.Run(); err != nil {
-		return fmt.Errorf("failed to install DMS binary: %w", err)
+		return fmt.Errorf("failed to install HGS binary: %w", err)
 	}
 
-	b.log("DMS binary installed successfully")
+	b.log("HGS binary installed successfully")
 	return nil
 }

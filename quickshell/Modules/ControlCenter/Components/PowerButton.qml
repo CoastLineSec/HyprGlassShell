@@ -21,7 +21,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Theme.spacingXS
 
-        DankIcon {
+        HGSIcon {
             name: root.iconName
             size: Theme.fontSizeSmall
             color: mouseArea.containsMouse ? Theme.primary : Theme.surfaceText
@@ -36,7 +36,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

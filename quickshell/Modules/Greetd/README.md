@@ -1,12 +1,12 @@
-# Dank (dms) Greeter
+# HGS (hgs) Greeter
 
-A greeter for [greetd](https://github.com/kennylevinsen/greetd) that follows the aesthetics of the dms lock screen.
+A greeter for [greetd](https://github.com/kennylevinsen/greetd) that follows the aesthetics of the hgs lock screen.
 
 ## Features
 
 - **Multi user**: Login with any system user
-- **dms sync**: Sync settings with dms for consistent styling between shell and greeter
-- **Multiple compositors**: The `dms-greeter` wrapper supports niri, Hyprland, sway, scroll, miracle-wm, labwc, and mangowc.
+- **hgs sync**: Sync settings with hgs for consistent styling between shell and greeter
+- **Hyprland session**: The `hgs-greeter` wrapper launches a Hyprland-based greeter session.
 - **Custom PAM**: Supports custom PAM configuration in `/etc/pam.d/greetd`
 - **Session Memory**: Remembers last selected session and user
   - Can be disabled via `settings.json` keys: `greeterRememberLastSession` and `greeterRememberLastUser`
@@ -15,40 +15,40 @@ A greeter for [greetd](https://github.com/kennylevinsen/greetd) that follows the
 
 ### Arch Linux
 
-Arch linux users can install [greetd-dms-greeter-git](https://aur.archlinux.org/packages/greetd-dms-greeter-git) from the AUR.
+Arch linux users can install [greetd-hgs-greeter-git](https://aur.archlinux.org/packages/greetd-hgs-greeter-git) from the AUR.
 
 ```bash
-paru -S greetd-dms-greeter-git
+paru -S greetd-hgs-greeter-git
 # Or with yay
-yay -S greetd-dms-greeter-git
+yay -S greetd-hgs-greeter-git
 ```
 
 ### Debian / openSUSE
 
-Official packages are available from the [DankLinux OBS repository](https://software.opensuse.org/download/package?package=dms-greeter&project=home%3AAvengeMedia%3Adanklinux). Add the repo for your distribution and install:
+Official packages are available from the [CoastLineSec OBS repository](https://software.opensuse.org/download/package?package=hgs-greeter&project=home%3AAvengeMedia%3Acoastlinesec). Add the repo for your distribution and install:
 
 ```bash
 # Debian 13
-sudo apt install dms-greeter   # after adding the repo
+sudo apt install hgs-greeter   # after adding the repo
 
 # openSUSE Tumbleweed
-zypper install dms-greeter     # after adding the repo
+zypper install hgs-greeter     # after adding the repo
 ```
 
-See the [Installation guide](https://danklinux.com/docs/dankgreeter/installation) for full repository setup.
+See the [Installation guide](https://coastlinesec.com/docs/hgsgreeter/installation) for full repository setup.
 
 If you previously installed manually, remove legacy files first:
 
 ```bash
-sudo rm -f /usr/local/bin/dms-greeter
-sudo rm -rf /etc/xdg/quickshell/dms-greeter
+sudo rm -f /usr/local/bin/hgs-greeter
+sudo rm -rf /etc/xdg/quickshell/hgs-greeter
 ```
 
 Then complete setup:
 
 ```bash
-dms greeter enable
-dms greeter sync
+hgs greeter enable
+hgs greeter sync
 ```
 
 #### Syncing themes (Optional)
@@ -66,15 +66,15 @@ sudo usermod -aG greeter <username>
 setfacl -m u:greeter:x ~ ~/.config ~/.local ~/.cache ~/.local/state
 
 # Set group ownership on config directories
-sudo chgrp -R greeter ~/.config/DankMaterialShell
-sudo chgrp -R greeter ~/.local/state/DankMaterialShell
-sudo chgrp -R greeter ~/.cache/DankMaterialShell
-sudo chmod -R g+rX ~/.config/DankMaterialShell ~/.cache/DankMaterialShell ~/.cache/quickshell
+sudo chgrp -R greeter ~/.config/HyprGlassShell
+sudo chgrp -R greeter ~/.local/state/HyprGlassShell
+sudo chgrp -R greeter ~/.cache/HyprGlassShell
+sudo chmod -R g+rX ~/.config/HyprGlassShell ~/.cache/HyprGlassShell ~/.cache/quickshell
 
 # Create symlinks
-sudo ln -sf ~/.config/DankMaterialShell/settings.json /var/cache/dms-greeter/settings.json
-sudo ln -sf ~/.local/state/DankMaterialShell/session.json /var/cache/dms-greeter/session.json
-sudo ln -sf ~/.cache/DankMaterialShell/dms-colors.json /var/cache/dms-greeter/colors.json
+sudo ln -sf ~/.config/HyprGlassShell/settings.json /var/cache/hgs-greeter/settings.json
+sudo ln -sf ~/.local/state/HyprGlassShell/session.json /var/cache/hgs-greeter/session.json
+sudo ln -sf ~/.cache/HyprGlassShell/hgs-colors.json /var/cache/hgs-greeter/colors.json
 
 # Logout and login for group membership to take effect
 ```
@@ -87,18 +87,18 @@ Install from COPR or build the RPM:
 
 ```bash
 # From COPR (when available)
-sudo dnf copr enable avenge/dms
-sudo dnf install dms-greeter
+sudo dnf copr enable avenge/hgs
+sudo dnf install hgs-greeter
 
 # Or build locally
-cd /path/to/DankMaterialShell
+cd /path/to/HyprGlassShell
 rpkg local
-sudo rpm -ivh x86_64/dms-greeter-*.rpm
+sudo rpm -ivh x86_64/hgs-greeter-*.rpm
 ```
 
 The package automatically:
 
-- Creates the greeter user (via `systemd-sysusers` from `/usr/lib/sysusers.d/dms-greeter.conf` for atomic/immutable compatibility, with package script fallback)
+- Creates the greeter user (via `systemd-sysusers` from `/usr/lib/sysusers.d/hgs-greeter.conf` for atomic/immutable compatibility, with package script fallback)
 - Sets up directories and permissions
 - Configures greetd with auto-detected compositor
 - Applies SELinux contexts
@@ -106,8 +106,8 @@ The package automatically:
 Then complete setup:
 
 ```bash
-dms greeter enable
-dms greeter sync
+hgs greeter enable
+hgs greeter sync
 ```
 
 #### Syncing themes (Optional)
@@ -115,15 +115,15 @@ dms greeter sync
 Run:
 
 ```bash
-dms greeter sync
+hgs greeter sync
 ```
 
 Then logout/login to see your wallpaper on the greeter.
 
 ### Automatic
 
-The easiest thing is to run `dms greeter install` or `dms` for interactive installation.
-On Debian/openSUSE, this now prefers the `dms-greeter` package when the OBS repo is configured.
+The easiest thing is to run `hgs greeter install` or `hgs` for interactive installation.
+On Debian/openSUSE, this now prefers the `hgs-greeter` package when the OBS repo is configured.
 
 ### Manual (fallback only)
 
@@ -139,22 +139,22 @@ sudo mkdir -p /var/lib/greeter
 sudo chown greeter:greeter /var/lib/greeter
 ```
 
-3. Clone the dms project to `/etc/xdg/quickshell/dms-greeter`:
+3. Clone the hgs project to `/etc/xdg/quickshell/hgs-greeter`:
 ```bash
-sudo git clone https://github.com/AvengeMedia/DankMaterialShell.git /etc/xdg/quickshell/dms-greeter
+sudo git clone https://github.com/CoastLineSec/HyprGlassShell.git /etc/xdg/quickshell/hgs-greeter
 ```
 
-4. Copy `Modules/Greetd/assets/dms-greeter` to `/usr/local/bin/dms-greeter`:
+4. Copy `Modules/Greetd/assets/hgs-greeter` to `/usr/local/bin/hgs-greeter`:
 ```bash
-sudo cp /etc/xdg/quickshell/dms-greeter/Modules/Greetd/assets/dms-greeter /usr/local/bin/dms-greeter
-sudo chmod +x /usr/local/bin/dms-greeter
+sudo cp /etc/xdg/quickshell/hgs-greeter/Modules/Greetd/assets/hgs-greeter /usr/local/bin/hgs-greeter
+sudo chmod +x /usr/local/bin/hgs-greeter
 ```
 
 5. Create greeter cache directory with proper permissions:
 ```bash
-sudo mkdir -p /var/cache/dms-greeter
-sudo chown <greeter-user>:<greeter-group> /var/cache/dms-greeter
-sudo chmod 2770 /var/cache/dms-greeter
+sudo mkdir -p /var/cache/hgs-greeter
+sudo chown <greeter-user>:<greeter-group> /var/cache/hgs-greeter
+sudo chmod 2770 /var/cache/hgs-greeter
 ```
 
 6. Edit or create `/etc/greetd/config.toml`:
@@ -164,8 +164,7 @@ vt = 1
 
 [default_session]
 user = "greeter"
-# Change compositor to another wrapper-supported compositor if preferred
-command = "/usr/local/bin/dms-greeter --command niri"
+command = "/usr/local/bin/hgs-greeter --command hyprland"
 ```
 
 7. Disable existing display manager and enable greetd:
@@ -179,42 +178,39 @@ sudo systemctl enable greetd
 #### Legacy installation (deprecated)
 
 If you prefer the old method with separate shell scripts and config files:
-1. Copy `assets/dms-niri.kdl` or `assets/dms-hypr.lua` (legacy: `assets/dms-hypr.conf`) to `/etc/greetd`
-2. Copy `assets/greet-niri.sh` or `assets/greet-hyprland.sh` to `/usr/local/bin/start-dms-greetd.sh`
-3. Edit the config file and replace `_DMS_PATH_` with your DMS installation path
-4. Configure greetd to use `/usr/local/bin/start-dms-greetd.sh`
+1. Copy `assets/hgs-hypr.lua` (legacy: `assets/hgs-hypr.conf`) to `/etc/greetd`
+2. Copy `assets/greet-hyprland.sh` to `/usr/local/bin/start-hgs-greetd.sh`
+3. Edit the config file and replace `_HGS_PATH_` with your HGS installation path
+4. Configure greetd to use `/usr/local/bin/start-hgs-greetd.sh`
 
 ### NixOS
 
 To install the greeter on NixOS add the repo to your flake inputs as described in the readme. Then somewhere in your NixOS config add this to imports:
 ```nix
 imports = [
-  inputs.dank-material-shell.nixosModules.greeter
+  inputs.hypr-glass-shell.nixosModules.greeter
 ]
 ```
 
 Enable the greeter with this in your NixOS config:
 ```nix
-programs.dank-material-shell.greeter = {
+programs.hypr-glass-shell.greeter = {
   enable = true;
-  compositor.name = "niri"; # or set to hyprland
-  configHome = "/home/user"; # optionally copyies that users DMS settings (and wallpaper if set) to the greeters data directory as root before greeter starts
+  compositor.name = "hyprland";
+  configHome = "/home/user"; # optionally copyies that users HGS settings (and wallpaper if set) to the greeters data directory as root before greeter starts
 };
 ```
 
 ## Usage
 
-### Using dms-greeter wrapper (recommended)
+### Using hgs-greeter wrapper (recommended)
 
-The `dms-greeter` wrapper simplifies running the greeter with any compositor:
+The `hgs-greeter` wrapper launches the greeter under Hyprland:
 
 ```bash
-dms-greeter --command niri
-dms-greeter --command hyprland
-dms-greeter --command sway
-dms-greeter --command mangowc
-dms-greeter --command niri -C /path/to/custom-niri.kdl
-dms-greeter --command niri --remember-last-user false --remember-last-session false
+hgs-greeter --command hyprland
+hgs-greeter --command hyprland -C /path/to/custom-hyprland.lua
+hgs-greeter --command hyprland --remember-last-user false --remember-last-session false
 ```
 
 Configure greetd to use it in `/etc/greetd/config.toml`:
@@ -224,43 +220,40 @@ vt = 1
 
 [default_session]
 user = "greeter"
-command = "/usr/bin/dms-greeter --command niri"
+command = "/usr/bin/hgs-greeter --command hyprland"
 ```
 
 ### Manual usage
 
-To run dms in greeter mode you can also manually set environment variables:
+To run hgs in greeter mode you can also manually set environment variables:
 
 ```bash
-DMS_RUN_GREETER=1 qs -p /path/to/dms
+HGS_RUN_GREETER=1 qs -p /path/to/hgs
 ```
 
 ### Configuration
 
 #### Compositor
 
-For current wrapper-based installs, the `dms-greeter` wrapper supports niri, hyprland, sway, scroll, miracle-wm, labwc, and mangowc.
+For current wrapper-based installs, the `hgs-greeter` wrapper supports Hyprland.
 
-Only niri currently has a generated greeter config path managed by `dms greeter sync`.
-
-- niri: `dms greeter sync` writes the generated greeter config to `/etc/greetd/niri/config.kdl`. Add local manual tweaks in `/etc/greetd/niri_overrides.kdl`.
-- Other wrapper-supported compositors use the wrapper-generated config by default. If you need a custom compositor config, add `-C /path/to/config` to the `dms-greeter` command in `/etc/greetd/config.toml`.
+Wrapper-based installs use the generated Hyprland greeter config by default. If you need a custom compositor config, add `-C /path/to/config` to the `hgs-greeter` command in `/etc/greetd/config.toml`.
 
 #### Personalization
 
-The greeter can be personalized with wallpapers, themes, weather, clock formats, and more - configured exactly the same as dms.
+The greeter can be personalized with wallpapers, themes, weather, clock formats, and more - configured exactly the same as hgs.
 
-**Easiest method (single user):** Run `dms greeter sync` to automatically sync your DMS theme with the greeter.
+**Easiest method (single user):** Run `hgs greeter sync` to automatically sync your HGS theme with the greeter.
 
-**Multi-user systems:** One **main admin** runs full sync once to set up greetd and the shared cache (`dms greeter sync`, or `dms greeter sync --local` when developing from a checkout). **Every other account**—including other admins—should only run:
+**Multi-user systems:** One **main admin** runs full sync once to set up greetd and the shared cache (`hgs greeter sync`, or `hgs greeter sync --local` when developing from a checkout). **Every other account**—including other admins—should only run:
 
 ```bash
-dms greeter sync --profile
+hgs greeter sync --profile
 ```
 
 Before that, an administrator must add each user to the `greeter` group in **Settings → Users** (greeter toggle) or with `sudo usermod -aG greeter <username>`. Each added user must log out and back in before `--profile` will work.
 
-Per-user settings are stored under `/var/cache/dms-greeter/users/<username>/` for the login picker; the root cache remains the default fallback and is owned by whoever ran full sync.
+Per-user settings are stored under `/var/cache/hgs-greeter/users/<username>/` for the login picker; the root cache remains the default fallback and is owned by whoever ran full sync.
 
 **Manual method:** You can manually synchronize configurations if you want greeter settings to always mirror your shell:
 
@@ -271,18 +264,18 @@ sudo usermod -aG greeter $USER
 # Set ACLs to allow greeter user to traverse your home directory
 setfacl -m u:greeter:x ~ ~/.config ~/.local ~/.cache ~/.local/state
 
-# Set group permissions on DMS directories
-sudo chgrp -R greeter ~/.config/DankMaterialShell ~/.local/state/DankMaterialShell ~/.cache/quickshell
-sudo chmod -R g+rX ~/.config/DankMaterialShell ~/.local/state/DankMaterialShell ~/.cache/quickshell
+# Set group permissions on HGS directories
+sudo chgrp -R greeter ~/.config/HyprGlassShell ~/.local/state/HyprGlassShell ~/.cache/quickshell
+sudo chmod -R g+rX ~/.config/HyprGlassShell ~/.local/state/HyprGlassShell ~/.cache/quickshell
 
 # Create symlinks for theme files
-sudo ln -sf ~/.config/DankMaterialShell/settings.json /var/cache/dms-greeter/settings.json
-sudo ln -sf ~/.local/state/DankMaterialShell/session.json /var/cache/dms-greeter/session.json
-sudo ln -sf ~/.cache/DankMaterialShell/dms-colors.json /var/cache/dms-greeter/colors.json
+sudo ln -sf ~/.config/HyprGlassShell/settings.json /var/cache/hgs-greeter/settings.json
+sudo ln -sf ~/.local/state/HyprGlassShell/session.json /var/cache/hgs-greeter/session.json
+sudo ln -sf ~/.cache/HyprGlassShell/hgs-colors.json /var/cache/hgs-greeter/colors.json
 
 # Logout and login for group membership to take effect
 ```
 
-**Advanced:** You can override the configuration path with the `DMS_GREET_CFG_DIR` environment variable or the `--cache-dir` flag when using `dms-greeter`. The default is `/var/cache/dms-greeter`.
+**Advanced:** You can override the configuration path with the `HGS_GREET_CFG_DIR` environment variable or the `--cache-dir` flag when using `hgs-greeter`. The default is `/var/cache/hgs-greeter`.
 
-The cache directory should be owned by `<greeter-user>:<greeter-group>` with `2770` permissions. If the greeter user is not available yet, DMS falls back to `root:<greeter-group>`.
+The cache directory should be owned by `<greeter-user>:<greeter-group>` with `2770` permissions. If the greeter user is not available yet, HGS falls back to `root:<greeter-group>`.

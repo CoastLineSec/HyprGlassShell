@@ -64,7 +64,7 @@ FloatingWindow {
 
     function installTheme(themeId, themeName, applyAfterInstall) {
         ToastService.showInfo(I18n.tr("Installing: %1", "installation progress").arg(themeName));
-        DMSService.installTheme(themeId, response => {
+        HGSService.installTheme(themeId, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Install failed: %1", "installation error").arg(response.error));
                 return;
@@ -81,7 +81,7 @@ FloatingWindow {
             var theme = installedThemes[i];
             if (theme.id === themeId) {
                 var sourceDir = theme.sourceDir || theme.id;
-                var themePath = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes/" + sourceDir + "/theme.json";
+                var themePath = Quickshell.env("HOME") + "/.config/HyprGlassShell/themes/" + sourceDir + "/theme.json";
                 SettingsData.set("customThemeFile", themePath);
                 Theme.switchThemeCategory("registry", "custom");
                 Theme.switchTheme("custom", true, true);
@@ -93,7 +93,7 @@ FloatingWindow {
 
     function uninstallTheme(themeId, themeName) {
         ToastService.showInfo(I18n.tr("Uninstalling: %1", "uninstallation progress").arg(themeName));
-        DMSService.uninstallTheme(themeId, response => {
+        HGSService.uninstallTheme(themeId, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Uninstall failed: %1", "uninstallation error").arg(response.error));
                 return;
@@ -105,8 +105,8 @@ FloatingWindow {
 
     function refreshThemes() {
         isLoading = true;
-        DMSService.listThemes();
-        DMSService.listInstalledThemes();
+        HGSService.listThemes();
+        HGSService.listInstalledThemes();
     }
 
     function checkPendingInstall() {
@@ -117,7 +117,7 @@ FloatingWindow {
         PopoutService.pendingThemeInstall = "";
         urlInstallConfirm.showWithOptions({
             "title": I18n.tr("Install Theme", "theme installation dialog title"),
-            "message": I18n.tr("Install theme '%1' from the DMS registry?", "theme installation confirmation").arg(themeId),
+            "message": I18n.tr("Install theme '%1' from the HGS registry?", "theme installation confirmation").arg(themeId),
             "confirmText": I18n.tr("Install", "install action button"),
             "cancelText": I18n.tr("Cancel"),
             "onConfirm": () => installTheme(themeId, themeId, true),
@@ -174,7 +174,7 @@ FloatingWindow {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
         function onThemesListReceived(themes) {
             isLoading = false;
             allThemes = themes;
@@ -230,7 +230,7 @@ FloatingWindow {
                     onDoubleClicked: windowControls.tryToggleMaximize()
                 }
 
-                DankIcon {
+                HGSIcon {
                     id: headerIcon
                     name: "palette"
                     size: Theme.iconSize
@@ -255,7 +255,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: refreshButton
                         iconName: "refresh"
                         iconSize: 18
@@ -264,7 +264,7 @@ FloatingWindow {
                         onClicked: root.refreshThemes()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         visible: windowControls.canMaximize
                         iconName: root.maximized ? "fullscreen_exit" : "fullscreen"
                         iconSize: Theme.iconSize - 2
@@ -272,7 +272,7 @@ FloatingWindow {
                         onClicked: windowControls.tryToggleMaximize()
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         id: closeButton
                         iconName: "close"
                         iconSize: Theme.iconSize - 2
@@ -288,13 +288,13 @@ FloatingWindow {
                 anchors.right: parent.right
                 anchors.top: headerArea.bottom
                 anchors.topMargin: Theme.spacingM
-                text: I18n.tr("Install color themes from the DMS theme registry", "theme browser description")
+                text: I18n.tr("Install color themes from the HGS theme registry", "theme browser description")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.outline
                 wrapMode: Text.WordWrap
             }
 
-            DankTextField {
+            HGSTextField {
                 id: browserSearchField
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -335,13 +335,13 @@ FloatingWindow {
                     anchors.fill: parent
                     visible: root.isLoading
 
-                    DankSpinner {
+                    HGSSpinner {
                         anchors.centerIn: parent
                         running: root.isLoading
                     }
                 }
 
-                DankListView {
+                HGSListView {
                     id: themeBrowserList
 
                     anchors.fill: parent
@@ -352,7 +352,7 @@ FloatingWindow {
                     clip: true
                     visible: !root.isLoading
 
-                    ScrollBar.vertical: DankScrollbar {
+                    ScrollBar.vertical: HGSScrollbar {
                         id: browserScrollbar
                     }
 
@@ -377,7 +377,7 @@ FloatingWindow {
                             return variants.default || (variants.options?.[0]?.id ?? "");
                         }
                         property string previewPath: {
-                            const baseDir = "/tmp/dankdots-plugin-registry/themes/" + (modelData.sourceDir || modelData.id);
+                            const baseDir = "/tmp/hgsdots-plugin-registry/themes/" + (modelData.sourceDir || modelData.id);
                             const mode = Theme.isLightMode ? "light" : "dark";
                             if (hasVariants && selectedVariantId) {
                                 if (variants?.type === "multi")
@@ -415,7 +415,7 @@ FloatingWindow {
                                 }
                             }
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "palette"
                                 size: 48
                                 color: Theme.primary
@@ -571,7 +571,7 @@ FloatingWindow {
                                             border.color: Theme.outline
                                             border.width: 1
 
-                                            DankTooltipV2 {
+                                            HGSTooltipV2 {
                                                 id: accentTooltip
                                             }
 
@@ -614,7 +614,7 @@ FloatingWindow {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: isInstalled ? (uninstallMouseArea.containsMouse ? "delete" : "check") : "download"
                                         size: 16
                                         color: isInstalled ? (uninstallMouseArea.containsMouse ? "white" : Theme.surfaceText) : Theme.surface

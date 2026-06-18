@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/errdefs"
 )
 
 // DistroInfo contains basic information about a distribution

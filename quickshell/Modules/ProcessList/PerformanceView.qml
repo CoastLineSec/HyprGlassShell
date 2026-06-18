@@ -253,7 +253,7 @@ Item {
                 Layout.fillWidth: true
                 spacing: Theme.spacingS
 
-                DankIcon {
+                HGSIcon {
                     name: card.icon
                     size: Theme.iconSize
                     color: card.accentColor

@@ -431,8 +431,7 @@ Item {
         if (isPrimaryScreen)
             applyLastSuccessfulUser();
 
-        if (CompositorService.isHyprland)
-            updateHyprlandLayout();
+        updateHyprlandLayout();
 
         fprintdDeviceProbe.running = true;
     }
@@ -643,14 +642,12 @@ Item {
     }
 
     function updateHyprlandLayout() {
-        if (CompositorService.isHyprland) {
-            hyprlandLayoutProcess.running = true;
-        }
+        hyprlandLayoutProcess.running = true;
     }
 
     Process {
         id: greeterAutoLoginPendingProcess
-        command: ["sh", "-c", "mkdir -p $(dirname " + JSON.stringify((Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter") + "/.local/state/auto-login-sync-pending") + ") && touch " + JSON.stringify((Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter") + "/.local/state/auto-login-sync-pending")]
+        command: ["sh", "-c", "mkdir -p $(dirname " + JSON.stringify((Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter") + "/.local/state/auto-login-sync-pending") + ") && touch " + JSON.stringify((Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter") + "/.local/state/auto-login-sync-pending")]
         running: false
     }
 
@@ -707,8 +704,8 @@ Item {
     }
 
     Connections {
-        target: CompositorService.isHyprland ? Hyprland : null
-        enabled: CompositorService.isHyprland
+        target: Hyprland
+        enabled: true
 
         function onRawEvent(event) {
             if (event.name === "activelayout")
@@ -794,7 +791,7 @@ Item {
         }
     }
 
-    DankBackdrop {
+    HGSBackdrop {
         anchors.fill: parent
         screenName: root.screenName
         visible: {
@@ -1019,7 +1016,7 @@ Item {
                         Layout.preferredHeight: 60
                         visible: GreetdSettings.lockScreenShowProfileImage || root.multipleUsersAvailable
 
-                        DankCircularImage {
+                        HGSCircularImage {
                             anchors.fill: parent
                             imageSource: {
                                 const displayUser = GreeterState.username || root.pickerThemeUsername;
@@ -1096,7 +1093,7 @@ Item {
                             onToggleRequested: root.userListOpen = !root.userListOpen
                         }
 
-                        DankIcon {
+                        HGSIcon {
                             id: lockIcon
 
                             anchors.left: parent.left
@@ -1250,7 +1247,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: revealButton
 
                             anchors.right: externalAuthButton.visible ? externalAuthButton.left : (virtualKeyboardButton.visible ? virtualKeyboardButton.left : (enterButton.visible ? enterButton.left : parent.right))
@@ -1262,7 +1259,7 @@ Item {
                             enabled: visible
                             onClicked: parent.showPassword = !parent.showPassword
                         }
-                        DankActionButton {
+                        HGSActionButton {
                             id: externalAuthButton
 
                             anchors.right: virtualKeyboardButton.visible ? virtualKeyboardButton.left : (enterButton.visible ? enterButton.left : parent.right)
@@ -1274,7 +1271,7 @@ Item {
                             enabled: visible
                             onClicked: root.startAuthSession(false)
                         }
-                        DankActionButton {
+                        HGSActionButton {
                             id: virtualKeyboardButton
 
                             anchors.right: enterButton.visible ? enterButton.left : parent.right
@@ -1293,7 +1290,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: enterButton
 
                             anchors.right: parent.right
@@ -1419,7 +1416,7 @@ Item {
                                 }
                             }
 
-                            DankRipple {
+                            HGSRipple {
                                 id: switchUserRipple
                                 cornerRadius: switchUserChip.radius
                                 rippleColor: Theme.surfaceVariantText
@@ -1430,7 +1427,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "people"
                                     size: 16
                                     color: Theme.surfaceVariantText
@@ -1490,7 +1487,7 @@ Item {
                                 }
                             }
 
-                            DankRipple {
+                            HGSRipple {
                                 id: autoLoginRipple
                                 cornerRadius: autoLoginChip.radius
                                 rippleColor: root.autoLoginOnSuccess ? Theme.primaryText : Theme.surfaceVariantText
@@ -1501,7 +1498,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: root.autoLoginOnSuccess ? "check" : "login"
                                     size: 16
                                     color: root.autoLoginOnSuccess ? Theme.primaryText : Theme.surfaceVariantText
@@ -1541,14 +1538,7 @@ Item {
                 width: keyboardLayoutRow.width
                 height: keyboardLayoutRow.height
                 anchors.verticalCenter: parent.verticalCenter
-                visible: {
-                    if (CompositorService.isNiri) {
-                        return NiriService.keyboardLayoutNames.length > 1;
-                    } else if (CompositorService.isHyprland) {
-                        return hyprlandLayoutCount > 1;
-                    }
-                    return false;
-                }
+                visible: hyprlandLayoutCount > 1
 
                 Row {
                     id: keyboardLayoutRow
@@ -1558,7 +1548,7 @@ Item {
                         width: Theme.iconSize
                         height: Theme.iconSize
 
-                        DankIcon {
+                        HGSIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: "white"
@@ -1571,21 +1561,7 @@ Item {
                         height: Theme.iconSize
 
                         StyledText {
-                            text: {
-                                if (CompositorService.isNiri) {
-                                    const layout = NiriService.getCurrentKeyboardLayoutName();
-                                    if (!layout)
-                                        return "";
-                                    const parts = layout.split(" ");
-                                    if (parts.length > 0) {
-                                        return parts[0].substring(0, 2).toUpperCase();
-                                    }
-                                    return layout.substring(0, 2).toUpperCase();
-                                } else if (CompositorService.isHyprland) {
-                                    return hyprlandCurrentLayout;
-                                }
-                                return "";
-                            }
+                            text: hyprlandCurrentLayout
                             font.pixelSize: Theme.fontSizeMedium
                             font.weight: Font.Light
                             color: "white"
@@ -1600,12 +1576,8 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (CompositorService.isNiri) {
-                            NiriService.cycleKeyboardLayout();
-                        } else if (CompositorService.isHyprland) {
-                            Quickshell.execDetached(["hyprctl", "switchxkblayout", hyprlandKeyboard, "next"]);
-                            updateHyprlandLayout();
-                        }
+                        Quickshell.execDetached(["hyprctl", "switchxkblayout", hyprlandKeyboard, "next"]);
+                        updateHyprlandLayout();
                     }
                 }
             }
@@ -1616,7 +1588,7 @@ Item {
                 color: Qt.rgba(255, 255, 255, 0.2)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: {
-                    const keyboardVisible = (CompositorService.isNiri && NiriService.keyboardLayoutNames.length > 1) || (CompositorService.isHyprland && hyprlandLayoutCount > 1);
+                    const keyboardVisible = hyprlandLayoutCount > 1;
                     return keyboardVisible && GreetdSettings.weatherEnabled && WeatherService.weather.available;
                 }
             }
@@ -1626,7 +1598,7 @@ Item {
                 visible: GreetdSettings.weatherEnabled && WeatherService.weather.available
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     name: WeatherService.getWeatherIcon(WeatherService.weather.wCode)
                     size: Theme.iconSize
                     color: "white"
@@ -1655,7 +1627,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: NetworkService.networkStatus !== "disconnected" || (BluetoothService.available && BluetoothService.enabled) || (AudioService.sink && AudioService.sink.audio)
 
-                DankIcon {
+                HGSIcon {
                     name: NetworkService.networkStatus === "ethernet" ? "lan" : NetworkService.wifiSignalIcon
                     size: Theme.iconSize - 2
                     color: NetworkService.networkStatus !== "disconnected" ? "white" : Qt.rgba(255, 255, 255, 0.5)
@@ -1663,7 +1635,7 @@ Item {
                     visible: NetworkService.networkStatus !== "disconnected"
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: "bluetooth"
                     size: Theme.iconSize - 2
                     color: "white"
@@ -1671,7 +1643,7 @@ Item {
                     visible: BluetoothService.available && BluetoothService.enabled
                 }
 
-                DankIcon {
+                HGSIcon {
                     name: {
                         if (!AudioService.sink?.audio) {
                             return "volume_up";
@@ -1705,7 +1677,7 @@ Item {
                 visible: BatteryService.batteryAvailable
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     name: {
                         if (BatteryService.isCharging) {
                             if (BatteryService.batteryLevel >= 90) {
@@ -1812,7 +1784,7 @@ Item {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.margins: Theme.spacingXL
@@ -1854,7 +1826,7 @@ Item {
                 }
             }
 
-            DankDropdown {
+            HGSDropdown {
                 id: sessionDropdown
                 anchors.fill: parent
                 text: ""

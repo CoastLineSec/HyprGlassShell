@@ -721,7 +721,7 @@
     "comment": ""
   },
   {
-    "term": "<a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>",
+    "term": "<a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/LICENSE\" style=\"text-decoration:none; color:%1;\">MIT License</a>",
     "translation": "",
     "context": "",
     "reference": "",
@@ -889,7 +889,7 @@
     "comment": ""
   },
   {
-    "term": "Activate the DMS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.",
+    "term": "Activate the HGS greeter? A terminal will open for sudo authentication. Run Sync after activation to apply your settings.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -994,7 +994,7 @@
     "comment": ""
   },
   {
-    "term": "Add \"%1\" to the %2 group? They must log out and back in, then run dms greeter sync --profile to publish their login-screen theme.",
+    "term": "Add \"%1\" to the %2 group? They must log out and back in, then run hgs greeter sync --profile to publish their login-screen theme.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -1113,7 +1113,7 @@
     "comment": ""
   },
   {
-    "term": "Add the new user to the %1 group so they can run dms greeter sync --profile.",
+    "term": "Add the new user to the %1 group so they can run hgs greeter sync --profile.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -2100,7 +2100,7 @@
     "comment": ""
   },
   {
-    "term": "Automatically lock the screen when DMS starts",
+    "term": "Automatically lock the screen when HGS starts",
     "translation": "",
     "context": "",
     "reference": "",
@@ -3031,7 +3031,7 @@
     "comment": ""
   },
   {
-    "term": "Change the locale used by the DMS interface.",
+    "term": "Change the locale used by the HGS interface.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -3080,7 +3080,7 @@
     "comment": ""
   },
   {
-    "term": "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run dms greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.",
+    "term": "Check sync status on demand. Sync (full) is for the main admin: it copies your theme to the login screen and sets up system greeter config. On multi-user systems, add other accounts in Settings → Users, then have each of them run hgs greeter sync --profile after logging out and back in—not full sync. Authentication changes apply automatically.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -3220,7 +3220,7 @@
     "comment": ""
   },
   {
-    "term": "Choose the logo displayed on the launcher button in DankBar",
+    "term": "Choose the logo displayed on the launcher button in HGSBar",
     "translation": "",
     "context": "",
     "reference": "",
@@ -3619,7 +3619,7 @@
     "comment": ""
   },
   {
-    "term": "Color theme from DMS registry",
+    "term": "Color theme from HGS registry",
     "translation": "",
     "context": "registry theme description",
     "reference": "",
@@ -4172,7 +4172,7 @@
     "comment": ""
   },
   {
-    "term": "Convert to DMS",
+    "term": "Convert to HGS",
     "translation": "",
     "context": "",
     "reference": "",
@@ -4739,84 +4739,84 @@
     "comment": ""
   },
   {
-    "term": "DMS Chooser",
+    "term": "HGS Chooser",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS Plugin Manager Unavailable",
+    "term": "HGS Plugin Manager Unavailable",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS Settings",
+    "term": "HGS Settings",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS Settings writes Lua keybinds. Add the DMS include so edits apply.",
+    "term": "HGS Settings writes Lua keybinds. Add the HGS include so edits apply.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS Shortcuts",
+    "term": "HGS Shortcuts",
     "translation": "",
     "context": "greeter keybinds section header",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS greeter needs: greetd, dms-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.",
+    "term": "HGS greeter needs: greetd, hgs-greeter. Fingerprint: fprintd, pam_fprintd. Security keys: pam_u2f. Add your user to the greeter group. Authentication changes apply automatically and may open a terminal when sudo authentication is required.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS needs administrator access. The terminal closes automatically when done.",
+    "term": "HGS needs administrator access. The terminal closes automatically when done.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS out of date",
+    "term": "HGS out of date",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS server is outdated (API v%1, expected v%2)",
+    "term": "HGS server is outdated (API v%1, expected v%2)",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS service is not connected. Clipboard settings are unavailable.",
+    "term": "HGS service is not connected. Clipboard settings are unavailable.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS shell actions (launcher, clipboard, etc.)",
+    "term": "HGS shell actions (launcher, clipboard, etc.)",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DMS_SOCKET not available",
+    "term": "HGS_SOCKET not available",
     "translation": "",
     "context": "",
     "reference": "",
@@ -4837,56 +4837,56 @@
     "comment": ""
   },
   {
-    "term": "Dank",
+    "term": "HGS",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Dank Bar",
+    "term": "HGS Bar",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankBar",
+    "term": "HGSBar",
     "translation": "",
     "context": "greeter feature card title | greeter settings link",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankCalendar",
+    "term": "HGSCalendar",
     "translation": "",
     "context": "calendar backend option",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankCalendar isn't installed",
+    "term": "HGSCalendar isn't installed",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankCalendar isn't running",
+    "term": "HGSCalendar isn't running",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankMaterialShell is ready to use",
+    "term": "HyprGlassShell is ready to use",
     "translation": "",
     "context": "greeter completion page subtitle",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "DankShell & System Icons (requires restart)",
+    "term": "HGSShell & System Icons (requires restart)",
     "translation": "",
     "context": "",
     "reference": "",
@@ -5838,7 +5838,7 @@
     "comment": ""
   },
   {
-    "term": "Drop your override for %1 so the DMS default action re-applies?",
+    "term": "Drop your override for %1 so the HGS default action re-applies?",
     "translation": "",
     "context": "",
     "reference": "",
@@ -6132,7 +6132,7 @@
     "comment": ""
   },
   {
-    "term": "Enable compositor-targetable blur layer (namespace: dms:blurwallpaper). Requires manual niri configuration.",
+    "term": "Enable compositor-targetable blur layer (namespace: hgs:blurwallpaper). Requires manual niri configuration.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -6153,7 +6153,7 @@
     "comment": ""
   },
   {
-    "term": "Enable fingerprint or security key for DMS Greeter. Authentication changes apply automatically.",
+    "term": "Enable fingerprint or security key for HGS Greeter. Authentication changes apply automatically.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -7028,7 +7028,7 @@
     "comment": ""
   },
   {
-    "term": "Failed to run 'dms greeter status'. Ensure DMS is installed and dms is in PATH.",
+    "term": "Failed to run 'hgs greeter status'. Ensure HGS is installed and hgs is in PATH.",
     "translation": "",
     "context": "greeter status error",
     "reference": "",
@@ -7315,7 +7315,7 @@
     "comment": ""
   },
   {
-    "term": "File search requires dsearch\nInstall from github.com/AvengeMedia/danksearch",
+    "term": "File search requires dsearch\nInstall from github.com/CoastLineSec/hgssearch",
     "translation": "",
     "context": "",
     "reference": "",
@@ -7630,7 +7630,7 @@
     "comment": ""
   },
   {
-    "term": "Follow DMS background color",
+    "term": "Follow HGS background color",
     "translation": "",
     "context": "",
     "reference": "",
@@ -8050,7 +8050,7 @@
     "comment": ""
   },
   {
-    "term": "Gamma control not available. Requires DMS API v6+.",
+    "term": "Gamma control not available. Requires HGS API v6+.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -8064,7 +8064,7 @@
     "comment": ""
   },
   {
-    "term": "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow DMS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/AvengeMedia/DankMaterialShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.",
+    "term": "Generate baseline GTK3/4 or QT5/QT6 (requires qt6ct-kde) configurations to follow HGS colors. Only needed once.<br /><br />It is recommended to configure <a href=\"https://github.com/CoastLineSec/HyprGlassShell/blob/master/README.md#Theming\" style=\"text-decoration:none; color:%1;\">adw-gtk3</a> prior to applying GTK themes.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -8239,7 +8239,7 @@
     "comment": ""
   },
   {
-    "term": "Greeter group members can sync their login-screen theme with dms greeter sync --profile after logging out and back in.",
+    "term": "Greeter group members can sync their login-screen theme with hgs greeter sync --profile after logging out and back in.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -8960,7 +8960,7 @@
     "comment": ""
   },
   {
-    "term": "If autostart app icons don't appear in the system tray, generate a systemd override to ensure DMS starts before autostart apps",
+    "term": "If autostart app icons don't appear in the system tray, generate a systemd override to ensure HGS starts before autostart apps",
     "translation": "",
     "context": "",
     "reference": "",
@@ -9226,7 +9226,7 @@
     "comment": ""
   },
   {
-    "term": "Install color themes from the DMS theme registry",
+    "term": "Install color themes from the HGS theme registry",
     "translation": "",
     "context": "theme browser description",
     "reference": "",
@@ -9261,28 +9261,28 @@
     "comment": ""
   },
   {
-    "term": "Install plugin '%1' from the DMS registry?",
+    "term": "Install plugin '%1' from the HGS registry?",
     "translation": "",
     "context": "plugin installation confirmation",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Install plugins from the DMS plugin registry",
+    "term": "Install plugins from the HGS plugin registry",
     "translation": "",
     "context": "plugin browser description",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Install the DMS greeter? A terminal will open for sudo authentication.",
+    "term": "Install the HGS greeter? A terminal will open for sudo authentication.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Install theme '%1' from the DMS registry?",
+    "term": "Install theme '%1' from the HGS registry?",
     "translation": "",
     "context": "theme installation confirmation",
     "reference": "",
@@ -10129,7 +10129,7 @@
     "comment": ""
   },
   {
-    "term": "Manage and configure plugins for extending DMS functionality",
+    "term": "Manage and configure plugins for extending HGS functionality",
     "translation": "",
     "context": "",
     "reference": "",
@@ -10346,7 +10346,7 @@
     "comment": ""
   },
   {
-    "term": "Material: Material Design 3 Expressive bezier curves. The DMS default feel.",
+    "term": "Material: Material Design 3 Expressive bezier curves. The HGS default feel.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -11305,7 +11305,7 @@
     "comment": ""
   },
   {
-    "term": "Night mode failed: DMS gamma control not available",
+    "term": "Night mode failed: HGS gamma control not available",
     "translation": "",
     "context": "",
     "reference": "",
@@ -11382,7 +11382,7 @@
     "comment": ""
   },
   {
-    "term": "No DMS shortcuts configured",
+    "term": "No HGS shortcuts configured",
     "translation": "",
     "context": "greeter no keybinds message",
     "reference": "",
@@ -12397,7 +12397,7 @@
     "comment": ""
   },
   {
-    "term": "Only affects DMS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.",
+    "term": "Only affects HGS-managed PAM. If greetd already includes pam_fprintd, fingerprint stays enabled.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -14385,7 +14385,7 @@
     "comment": ""
   },
   {
-    "term": "Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across DMS updates.",
+    "term": "Remove the shortcut %1? An unbind entry will be saved to hgs/binds-user.lua so it stays removed across HGS updates.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -14483,14 +14483,14 @@
     "comment": ""
   },
   {
-    "term": "Requires DMS %1",
+    "term": "Requires HGS %1",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Requires DMS server with sysupdate capability",
+    "term": "Requires HGS server with sysupdate capability",
     "translation": "",
     "context": "",
     "reference": "",
@@ -14602,14 +14602,14 @@
     "comment": ""
   },
   {
-    "term": "Restart DMS",
+    "term": "Restart HGS",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Restart the DankMaterialShell",
+    "term": "Restart the HyprGlassShell",
     "translation": "",
     "context": "",
     "reference": "",
@@ -14777,7 +14777,7 @@
     "comment": ""
   },
   {
-    "term": "Rules found in your compositor config. These are read-only here, use Convert to DMS to make an editable copy.",
+    "term": "Rules found in your compositor config. These are read-only here, use Convert to HGS to make an editable copy.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -14791,7 +14791,7 @@
     "comment": ""
   },
   {
-    "term": "Run DMS Templates",
+    "term": "Run HGS Templates",
     "translation": "",
     "context": "",
     "reference": "",
@@ -15008,14 +15008,14 @@
     "comment": ""
   },
   {
-    "term": "Scale DankBar font sizes independently",
+    "term": "Scale HGSBar font sizes independently",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Scale DankBar icon sizes independently",
+    "term": "Scale HGSBar icon sizes independently",
     "translation": "",
     "context": "",
     "reference": "",
@@ -16170,7 +16170,7 @@
     "comment": ""
   },
   {
-    "term": "Show Restart DMS",
+    "term": "Show Restart HGS",
     "translation": "",
     "context": "",
     "reference": "",
@@ -16730,7 +16730,7 @@
     "comment": ""
   },
   {
-    "term": "Some plugins require a newer version of DMS:",
+    "term": "Some plugins require a newer version of HGS:",
     "translation": "",
     "context": "",
     "reference": "",
@@ -16877,7 +16877,7 @@
     "comment": ""
   },
   {
-    "term": "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The DMS default.",
+    "term": "Standard: Classic Material Design 3 — panels rise from below with a subtle scale. The HGS default.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -16970,7 +16970,7 @@
   {
     "term": "Strict auto-hide",
     "translation": "",
-    "context": "Dank bar setting: hide the bar when the pointer leaves even if a menu or bar popover is still open",
+    "context": "HGS bar setting: hide the bar when the pointer leaves even if a menu or bar popover is still open",
     "reference": "",
     "comment": ""
   },
@@ -17367,14 +17367,14 @@
     "comment": ""
   },
   {
-    "term": "Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.",
+    "term": "Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Terminal fallback failed. Install one of the supported terminal emulators or run 'dms greeter sync' manually.",
+    "term": "Terminal fallback failed. Install one of the supported terminal emulators or run 'hgs greeter sync' manually.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -17486,7 +17486,7 @@
     "comment": ""
   },
   {
-    "term": "The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.",
+    "term": "The HGS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the HGS_SOCKET.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -17598,7 +17598,7 @@
     "comment": ""
   },
   {
-    "term": "Third-party plugins are created by the community and are not officially supported by DankMaterialShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.",
+    "term": "Third-party plugins are created by the community and are not officially supported by HyprGlassShell.\n\nThese plugins may pose security and privacy risks - install at your own risk.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -17619,28 +17619,28 @@
     "comment": ""
   },
   {
-    "term": "This install is still using hyprland.conf. Run dms setup to migrate before editing cursor settings.",
+    "term": "This install is still using hyprland.conf. Run hgs setup to migrate before editing cursor settings.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.",
+    "term": "This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings.",
+    "term": "This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "This install is still using hyprland.conf. Run dms setup to migrate before editing window rules in Settings.",
+    "term": "This install is still using hyprland.conf. Run hgs setup to migrate before editing window rules in Settings.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -17899,7 +17899,7 @@
     "comment": ""
   },
   {
-    "term": "To use this DMS bind, remove or change the keybind in your config.kdl",
+    "term": "To use this HGS bind, remove or change the keybind in your config.kdl",
     "translation": "",
     "context": "",
     "reference": "",
@@ -18326,7 +18326,7 @@
     "comment": ""
   },
   {
-    "term": "Uninstall the DMS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.",
+    "term": "Uninstall the HGS greeter? This will remove configuration and restore your previous display manager. A terminal will open for sudo authentication.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -18963,7 +18963,7 @@
     "comment": ""
   },
   {
-    "term": "Using DankCalendar%1",
+    "term": "Using HGSCalendar%1",
     "translation": "",
     "context": "calendar backend status",
     "reference": "",
@@ -19355,7 +19355,7 @@
     "comment": ""
   },
   {
-    "term": "Welcome to DankMaterialShell",
+    "term": "Welcome to HyprGlassShell",
     "translation": "",
     "context": "greeter welcome page title",
     "reference": "",
@@ -19539,7 +19539,7 @@
   {
     "term": "Widgets, layout, style",
     "translation": "",
-    "context": "greeter dankbar description",
+    "context": "greeter hgsbar description",
     "reference": "",
     "comment": ""
   },
@@ -19957,21 +19957,21 @@
     "comment": ""
   },
   {
-    "term": "dms is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.",
+    "term": "hgs is a highly customizable, modern desktop shell with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "dms/cursor config exists but is not included. Cursor settings won't apply.",
+    "term": "hgs/cursor config exists but is not included. Cursor settings won't apply.",
     "translation": "",
     "context": "",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "dms/outputs config exists but is not included in your compositor config. Display changes won't persist.",
+    "term": "hgs/outputs config exists but is not included in your compositor config. Display changes won't persist.",
     "translation": "",
     "context": "",
     "reference": "",
@@ -20076,7 +20076,7 @@
     "comment": ""
   },
   {
-    "term": "loginctl not available - lock integration requires DMS socket connection",
+    "term": "loginctl not available - lock integration requires HGS socket connection",
     "translation": "",
     "context": "",
     "reference": "",
@@ -20174,7 +20174,7 @@
     "comment": ""
   },
   {
-    "term": "niri/dms Discord",
+    "term": "niri/hgs Discord",
     "translation": "",
     "context": "",
     "reference": "",
@@ -20342,7 +20342,7 @@
     "comment": ""
   },
   {
-    "term": "update dms for NM integration.",
+    "term": "update hgs for NM integration.",
     "translation": "",
     "context": "",
     "reference": "",

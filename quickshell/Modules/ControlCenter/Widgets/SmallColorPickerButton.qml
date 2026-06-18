@@ -40,14 +40,14 @@ Rectangle {
         }
     }
 
-    DankIcon {
+    HGSIcon {
         anchors.centerIn: parent
         name: "palette"
         size: Theme.iconSize
         color: Theme.primaryText
     }
 
-    DankRipple {
+    HGSRipple {
         id: ripple
         cornerRadius: root.radius
     }

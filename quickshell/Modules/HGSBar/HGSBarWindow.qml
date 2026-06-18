@@ -1,0 +1,1061 @@
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+import Quickshell.Wayland
+import qs.Common
+import qs.Services
+
+PanelWindow {
+    id: barWindow
+    readonly property var log: Log.scoped("HGSBarWindow")
+
+    Component.onDestruction: {
+        KeyboardFocus.unregisterBarWindow(barWindow);
+        HyprGlassService.removeDescriptor(hyprGlassDescriptorId);
+    }
+
+    required property var rootWindow
+    required property var barConfig
+    property var modelData: item
+    property var hyprlandOverviewLoader: rootWindow ? rootWindow.hyprlandOverviewLoader : null
+
+    property var leftWidgetsModel
+    property var centerWidgetsModel
+    property var rightWidgetsModel
+
+    readonly property bool barRevealed: inputMask.showing
+
+    property var controlCenterButtonRef: null
+    property var clockButtonRef: null
+    property var systemUpdateButtonRef: null
+
+    function triggerSystemUpdate() {
+        systemUpdateLoader.active = true;
+        if (!systemUpdateLoader.item)
+            return;
+        const popout = systemUpdateLoader.item;
+        const barPosition = axis?.edge === "left" ? 2 : (axis?.edge === "right" ? 3 : (axis?.edge === "top" ? 0 : 1));
+        if (systemUpdateButtonRef && popout.setTriggerPosition) {
+            const screenPos = systemUpdateButtonRef.mapToItem(null, 0, 0);
+            const pos = SettingsData.getPopupTriggerPosition(screenPos, barWindow.screen, barWindow.effectiveBarThickness, systemUpdateButtonRef.width, barConfig?.spacing ?? 4, barPosition, barConfig);
+            const section = systemUpdateButtonRef.section || "right";
+            popout.setTriggerPosition(pos.x, pos.y, pos.width, section, barWindow.screen, barPosition, barWindow.effectiveBarThickness, barConfig?.spacing ?? 4, barConfig);
+        } else {
+            popout.screen = barWindow.screen;
+        }
+        PopoutManager.requestPopout(popout, undefined, "systemUpdate");
+    }
+
+    function triggerControlCenter() {
+        controlCenterLoader.active = true;
+        if (!controlCenterLoader.item) {
+            return;
+        }
+
+        if (controlCenterButtonRef && controlCenterLoader.item.setTriggerPosition) {
+            const screenPos = controlCenterButtonRef.mapToItem(null, 0, 0);
+            const barPosition = axis?.edge === "left" ? 2 : (axis?.edge === "right" ? 3 : (axis?.edge === "top" ? 0 : 1));
+            const pos = SettingsData.getPopupTriggerPosition(screenPos, barWindow.screen, barWindow.effectiveBarThickness, controlCenterButtonRef.width, barConfig?.spacing ?? 4, barPosition, barConfig);
+            const section = controlCenterButtonRef.section || "right";
+            controlCenterLoader.item.setTriggerPosition(pos.x, pos.y, pos.width, section, barWindow.screen, barPosition, barWindow.effectiveBarThickness, barConfig?.spacing ?? 4, barConfig);
+        } else {
+            controlCenterLoader.item.triggerScreen = barWindow.screen;
+        }
+
+        controlCenterLoader.item.toggle();
+        if (controlCenterLoader.item.shouldBeVisible && NetworkService.wifiEnabled) {
+            NetworkService.scanWifi();
+        }
+    }
+
+    function triggerDashTab(tabIndex) {
+        hgsDashPopoutLoader.active = true;
+        if (!hgsDashPopoutLoader.item) {
+            return false;
+        }
+
+        let section = "center";
+        if (clockButtonRef && clockButtonRef.visualContent && hgsDashPopoutLoader.item.setTriggerPosition) {
+            // Calculate barPosition from axis.edge
+            const barPosition = axis?.edge === "left" ? 2 : (axis?.edge === "right" ? 3 : (axis?.edge === "top" ? 0 : 1));
+            section = clockButtonRef.section || "center";
+
+            let triggerPos, triggerWidth;
+            if (section === "center") {
+                const centerSection = barWindow.isVertical ? (barWindow.axis?.edge === "left" ? topBarContent.vCenterSection : topBarContent.vCenterSection) : topBarContent.hCenterSection;
+                if (centerSection) {
+                    if (barWindow.isVertical) {
+                        const centerY = centerSection.height / 2;
+                        triggerPos = centerSection.mapToItem(null, 0, centerY);
+                        triggerWidth = centerSection.height;
+                    } else {
+                        triggerPos = centerSection.mapToItem(null, 0, 0);
+                        triggerWidth = centerSection.width;
+                    }
+                } else {
+                    triggerPos = clockButtonRef.visualContent.mapToItem(null, 0, 0);
+                    triggerWidth = clockButtonRef.visualWidth;
+                }
+            } else {
+                triggerPos = clockButtonRef.visualContent.mapToItem(null, 0, 0);
+                triggerWidth = clockButtonRef.visualWidth;
+            }
+
+            const pos = SettingsData.getPopupTriggerPosition(triggerPos, barWindow.screen, barWindow.effectiveBarThickness, triggerWidth, barConfig?.spacing ?? 4, barPosition, barConfig);
+            hgsDashPopoutLoader.item.setTriggerPosition(pos.x, pos.y, pos.width, section, barWindow.screen, barPosition, barWindow.effectiveBarThickness, barConfig?.spacing ?? 4, barConfig);
+        } else {
+            hgsDashPopoutLoader.item.triggerScreen = barWindow.screen;
+        }
+
+        PopoutManager.requestPopout(hgsDashPopoutLoader.item, tabIndex, (barConfig?.id ?? "default") + "-" + section + "-" + tabIndex);
+        return true;
+    }
+
+    function triggerWallpaperBrowser() {
+        triggerDashTab(2);
+    }
+
+    readonly property bool usesOverlayLayer: CompositorService.framePeerSurfacesUseOverlayForScreen(barWindow.screen) || (barConfig?.useOverlayLayer ?? false)
+
+    readonly property var dBarLayer: LayerShell.fromEnv("HGS_HGSBAR_LAYER", barWindow.usesOverlayLayer ? WlrLayer.Overlay : WlrLayer.Top)
+
+    property var blurRegion: null
+    property var _blurWidgetItems: []
+
+    function registerBlurWidget(item) {
+        if (_blurWidgetItems.indexOf(item) >= 0)
+            return;
+        _blurWidgetItems = _blurWidgetItems.concat([item]);
+        _blurRebuildTimer.restart();
+    }
+
+    function unregisterBlurWidget(item) {
+        const idx = _blurWidgetItems.indexOf(item);
+        if (idx < 0)
+            return;
+        const arr = _blurWidgetItems.slice();
+        arr.splice(idx, 1);
+        _blurWidgetItems = arr;
+        _blurRebuildTimer.restart();
+    }
+
+    Timer {
+        id: _blurRebuildTimer
+        interval: 1
+        onTriggered: barBlur.rebuild()
+    }
+
+    Connections {
+        target: barWindow
+        function onUsesConnectedFrameChromeChanged() {
+            _blurRebuildTimer.restart();
+        }
+        function onUsesFrameBarChromeChanged() {
+            _blurRebuildTimer.restart();
+        }
+    }
+
+    Component {
+        id: blurRegionComp
+        Region {}
+    }
+
+    Component {
+        id: blurSubRegionComp
+        Region {
+            property Item w
+            item: w
+            radius: Theme.cornerRadius
+        }
+    }
+
+    Item {
+        id: barBlur
+        visible: false
+
+        readonly property bool barHasTransparency: barWindow._backgroundAlpha > 0 && barWindow._backgroundAlpha < 1
+
+        function rebuild() {
+            teardown();
+            if (!BlurService.enabled || !BlurService.available)
+                return;
+            // In frame mode, FrameWindow owns the blur region for the entire screen edge
+            // (including the bar area). The bar must not set its own competing blur region
+            // so that frameBlurEnabled acts as the single control for all blur in frame mode.
+            if (SettingsData.frameEnabled && barWindow.usesFrameBarChrome)
+                return;
+
+            const widgets = barWindow._blurWidgetItems.filter(w => w && w.visible && w.width > 0 && w.height > 0);
+            const hasBar = barHasTransparency && barWindow.qmlGlassFallbackVisible;
+            if (!hasBar && widgets.length === 0)
+                return;
+
+            const region = blurRegionComp.createObject(barWindow);
+            if (!region) {
+                log.warn("BarBlur: Failed to create blur region");
+                return;
+            }
+
+            if (hasBar) {
+                region.x = Qt.binding(() => topBarMouseArea.x + barUnitInset.x + topBarSlide.x);
+                region.y = Qt.binding(() => topBarMouseArea.y + barUnitInset.y + topBarSlide.y);
+                region.width = Qt.binding(() => barUnitInset.width);
+                region.height = Qt.binding(() => barUnitInset.height);
+                region.radius = Qt.binding(() => barBackground.rt);
+            }
+
+            const subRegions = [];
+            for (let i = 0; i < widgets.length; i++) {
+                const sub = blurSubRegionComp.createObject(region, {
+                    w: widgets[i]
+                });
+                if (sub)
+                    subRegions.push(sub);
+            }
+            region.regions = subRegions;
+
+            barWindow.BackgroundEffect.blurRegion = region;
+            barWindow.blurRegion = region;
+        }
+
+        function teardown() {
+            if (!barWindow.blurRegion)
+                return;
+            try {
+                barWindow.BackgroundEffect.blurRegion = null;
+            } catch (e) {}
+            barWindow.blurRegion.destroy();
+            barWindow.blurRegion = null;
+        }
+
+        onBarHasTransparencyChanged: _blurRebuildTimer.restart()
+        readonly property bool fallbackMaterialVisible: barWindow.qmlGlassFallbackVisible
+        onFallbackMaterialVisibleChanged: _blurRebuildTimer.restart()
+
+        Connections {
+            target: BlurService
+            function onEnabledChanged() {
+                barBlur.rebuild();
+            }
+        }
+
+        Connections {
+            target: SettingsData
+            function onFrameEnabledChanged() {
+                barBlur.rebuild();
+            }
+        }
+
+        Connections {
+            target: topBarSlide
+            function onXChanged() {
+                if (barWindow.blurRegion)
+                    barWindow.blurRegion.changed();
+                barWindow.scheduleHyprGlassDescriptor();
+            }
+            function onYChanged() {
+                if (barWindow.blurRegion)
+                    barWindow.blurRegion.changed();
+                barWindow.scheduleHyprGlassDescriptor();
+            }
+        }
+
+        Component.onCompleted: rebuild()
+        Component.onDestruction: teardown()
+    }
+
+    WlrLayershell.layer: dBarLayer
+    WlrLayershell.namespace: "hgs:bar"
+
+    signal colorPickerRequested
+
+    onColorPickerRequested: rootWindow.colorPickerRequested()
+
+    property alias axis: axis
+
+    AxisContext {
+        id: axis
+        edge: {
+            switch (barConfig?.position ?? 0) {
+            case SettingsData.Position.Top:
+                return "top";
+            case SettingsData.Position.Bottom:
+                return "bottom";
+            case SettingsData.Position.Left:
+                return "left";
+            case SettingsData.Position.Right:
+                return "right";
+            default:
+                return "top";
+            }
+        }
+    }
+
+    readonly property bool isVertical: axis.isVertical
+
+    readonly property color _surfaceContainer: Theme.surfaceContainer
+    readonly property string _barId: barConfig?.id ?? "default"
+    property real _backgroundAlpha: barConfig?.transparency ?? 1.0
+    readonly property color _bgColor: (SettingsData.frameEnabled && usesFrameBarChrome) ? Qt.rgba(SettingsData.effectiveFrameColor.r, SettingsData.effectiveFrameColor.g, SettingsData.effectiveFrameColor.b, SettingsData.frameOpacity) : Theme.withAlpha(_surfaceContainer, _backgroundAlpha)
+
+    function _updateBackgroundAlpha() {
+        const live = SettingsData.barConfigs.find(c => c.id === _barId);
+        _backgroundAlpha = (live ?? barConfig)?.transparency ?? 1.0;
+    }
+    readonly property real _dpr: CompositorService.getScreenScale(barWindow.screen)
+
+    property string screenName: modelData.name
+    readonly property string hyprGlassDescriptorId: `bar/${_barId}/${screenName}`
+    readonly property bool hyprGlassCompositorMaterialReady: HyprGlassService.shouldUseCompositorMaterial(hyprGlassDescriptorId)
+    readonly property bool qmlGlassFallbackVisible: !HyprGlassService.qmlFallbackIsolationEnabled && !hyprGlassCompositorMaterialReady
+
+    function _hyprGlassRect() {
+        if (!topBarMouseArea || !barUnitInset || !topBarSlide)
+            return null;
+        return {
+            x: topBarMouseArea.x + barUnitInset.x + topBarSlide.x,
+            y: topBarMouseArea.y + barUnitInset.y + topBarSlide.y,
+            width: barUnitInset.width,
+            height: barUnitInset.height
+        };
+    }
+
+    function hyprGlassLayerName() {
+        switch (dBarLayer) {
+        case WlrLayer.Background:
+            return "background";
+        case WlrLayer.Bottom:
+            return "bottom";
+        case WlrLayer.Overlay:
+            return "overlay";
+        case WlrLayer.Top:
+        default:
+            return "top";
+        }
+    }
+
+    function scheduleHyprGlassDescriptor() {
+        hyprGlassDescriptorTimer.restart();
+    }
+
+    function updateHyprGlassDescriptor() {
+        const rect = _hyprGlassRect();
+        if (!rect || !screenName || rect.width <= 0 || rect.height <= 0) {
+            HyprGlassService.removeDescriptor(hyprGlassDescriptorId);
+            return;
+        }
+
+        const descriptor = HyprGlassService.buildBarDescriptor(hyprGlassDescriptorId, screenName, rect, barBackground?.rt ?? Theme.cornerRadius, _dpr, {
+            layer: hyprGlassLayerName()
+        });
+        HyprGlassService.upsertDescriptor(hyprGlassDescriptorId, descriptor);
+    }
+
+    Timer {
+        id: hyprGlassDescriptorTimer
+        interval: 100
+        repeat: false
+        onTriggered: barWindow.updateHyprGlassDescriptor()
+    }
+
+    Connections {
+        target: HyprGlassService
+        function onAppearanceRevisionChanged() {
+            barWindow.scheduleHyprGlassDescriptor();
+        }
+    }
+
+    readonly property bool usesConnectedFrameChrome: CompositorService.usesConnectedFrameChromeForScreen(screenName)
+    readonly property bool usesFrameBarChrome: CompositorService.frameWindowVisibleForScreen(screenName)
+    readonly property var renderBarConfig: SettingsData.effectiveBarConfigForRender(barConfig, usesFrameBarChrome)
+
+    property bool gothCornersEnabled: renderBarConfig?.gothCornersEnabled ?? false
+    property real wingtipsRadius: renderBarConfig?.gothCornerRadiusOverride ? (renderBarConfig?.gothCornerRadiusValue ?? 12) : Theme.cornerRadius
+    readonly property real _wingR: Math.max(0, wingtipsRadius)
+
+    // Shadow buffer: extra window space for shadow to render beyond bar bounds
+    readonly property bool _shadowActive: (Theme.elevationEnabled && (typeof SettingsData !== "undefined" ? (SettingsData.barElevationEnabled ?? true) : false)) || (renderBarConfig?.shadowIntensity ?? 0) > 0
+    readonly property real _shadowBuffer: {
+        if (!_shadowActive)
+            return 0;
+        const hasOverride = (renderBarConfig?.shadowIntensity ?? 0) > 0;
+        if (hasOverride) {
+            const blur = (renderBarConfig.shadowIntensity ?? 0) * 0.2;
+            const offset = blur * 0.5;
+            return Theme.snap(Math.max(16, blur + offset + 8), _dpr);
+        }
+        return Theme.snap(Theme.elevationRenderPadding(Theme.elevationLevel2, "top", 4, 8, 16), _dpr);
+    }
+
+    // Flatten/spacing collapse for maximized windows is only for frame-integrated layout.
+    // When the bar draws its own pill, keep rounded corners and spacing like the dock.
+    readonly property bool flattenForMaximizedWindow: !SettingsData.frameEnabled || usesFrameBarChrome
+
+    property bool hasMaximizedToplevel: false
+    property bool shouldHideForWindows: false
+
+    function _updateHasMaximizedToplevel() {
+        if (!(barConfig?.maximizeDetection ?? true)) {
+            hasMaximizedToplevel = false;
+            return;
+        }
+        const filtered = CompositorService.filterCurrentWorkspace(CompositorService.sortedToplevels, screenName);
+        for (let i = 0; i < filtered.length; i++) {
+            if (filtered[i]?.maximized) {
+                hasMaximizedToplevel = true;
+                return;
+            }
+        }
+        hasMaximizedToplevel = false;
+    }
+
+    function _updateShouldHideForWindows() {
+        if (!(barConfig?.showOnWindowsOpen ?? false)) {
+            shouldHideForWindows = false;
+            return;
+        }
+        if (!(barConfig?.autoHide ?? false)) {
+            shouldHideForWindows = false;
+            return;
+        }
+        const filtered = CompositorService.filterCurrentWorkspace(CompositorService.sortedToplevels, screenName);
+        shouldHideForWindows = filtered.length > 0;
+    }
+
+    property real effectiveSpacing: (SettingsData.frameEnabled && usesFrameBarChrome) ? 0 : ((flattenForMaximizedWindow && hasMaximizedToplevel) ? 0 : (barConfig?.spacing ?? 4))
+
+    Behavior on effectiveSpacing {
+        enabled: barWindow.visible
+        NumberAnimation {
+            duration: Theme.shortDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    readonly property int notificationCount: NotificationService.notifications.length
+    readonly property real effectiveBarThickness: (SettingsData.frameEnabled && usesFrameBarChrome) ? SettingsData.frameBarSize : Theme.snap(Math.max(barWindow.widgetThickness + (barConfig?.innerPadding ?? 4) + 4, Theme.barHeight - 4 - (8 - (barConfig?.innerPadding ?? 4))), _dpr)
+    readonly property real widgetThickness: Theme.snap(Math.max(20, 26 + (barConfig?.innerPadding ?? 4) * 0.6), _dpr)
+
+    readonly property bool hasAdjacentTopBar: {
+        if (barConfig?.autoHide ?? false)
+            return false;
+        if (!isVertical)
+            return false;
+        return SettingsData.barConfigs.some(bc => {
+            if (!bc.enabled || bc.id === barConfig?.id)
+                return false;
+            if (bc.autoHide)
+                return false;
+            if (!(bc.visible ?? true))
+                return false;
+            if (bc.position !== SettingsData.Position.Top && bc.position !== 0)
+                return false;
+            const onThisScreen = bc.screenPreferences.includes(screenName) || bc.screenPreferences.length === 0 || bc.screenPreferences.includes("all");
+            if (!onThisScreen)
+                return false;
+            if (bc.showOnLastDisplay && screenName !== barWindow.screenName)
+                return false;
+            return true;
+        });
+    }
+
+    readonly property bool hasAdjacentBottomBar: {
+        if (barConfig?.autoHide ?? false)
+            return false;
+        if (!isVertical)
+            return false;
+        const result = SettingsData.barConfigs.some(bc => {
+            if (!bc.enabled || bc.id === barConfig?.id)
+                return false;
+            if (bc.autoHide)
+                return false;
+            if (!(bc.visible ?? true))
+                return false;
+            if (bc.position !== SettingsData.Position.Bottom && bc.position !== 1)
+                return false;
+            const onThisScreen = bc.screenPreferences.includes(screenName) || bc.screenPreferences.length === 0 || bc.screenPreferences.includes("all");
+            if (!onThisScreen)
+                return false;
+            if (bc.showOnLastDisplay && screenName !== barWindow.screenName)
+                return false;
+            return true;
+        });
+        return result;
+    }
+
+    readonly property bool hasAdjacentLeftBar: {
+        if (barConfig?.autoHide ?? false)
+            return false;
+        if (isVertical)
+            return false;
+        const result = SettingsData.barConfigs.some(bc => {
+            if (!bc.enabled || bc.id === barConfig?.id)
+                return false;
+            if (bc.autoHide)
+                return false;
+            if (!(bc.visible ?? true))
+                return false;
+            if (bc.position !== SettingsData.Position.Left && bc.position !== 2)
+                return false;
+            const onThisScreen = bc.screenPreferences.includes(screenName) || bc.screenPreferences.length === 0 || bc.screenPreferences.includes("all");
+            if (!onThisScreen)
+                return false;
+            if (bc.showOnLastDisplay && screenName !== barWindow.screenName)
+                return false;
+            return true;
+        });
+        return result;
+    }
+
+    readonly property bool hasAdjacentRightBar: {
+        if (barConfig?.autoHide ?? false)
+            return false;
+        if (isVertical)
+            return false;
+        const result = SettingsData.barConfigs.some(bc => {
+            if (!bc.enabled || bc.id === barConfig?.id)
+                return false;
+            if (bc.autoHide)
+                return false;
+            if (!(bc.visible ?? true))
+                return false;
+            if (bc.position !== SettingsData.Position.Right && bc.position !== 3)
+                return false;
+            const onThisScreen = bc.screenPreferences.includes(screenName) || bc.screenPreferences.length === 0 || bc.screenPreferences.includes("all");
+            if (!onThisScreen)
+                return false;
+            if (bc.showOnLastDisplay && screenName !== barWindow.screenName)
+                return false;
+            return true;
+        });
+        return result;
+    }
+
+    screen: modelData
+    implicitHeight: !isVertical ? Theme.px(effectiveBarThickness + effectiveSpacing + ((renderBarConfig?.gothCornersEnabled ?? false) && !hasMaximizedToplevel ? _wingR : 0), _dpr) + _shadowBuffer : 0
+    implicitWidth: isVertical ? Theme.px(effectiveBarThickness + effectiveSpacing + ((renderBarConfig?.gothCornersEnabled ?? false) && !hasMaximizedToplevel ? _wingR : 0), _dpr) + _shadowBuffer : 0
+    color: "transparent"
+
+    Component.onCompleted: {
+        KeyboardFocus.registerBarWindow(barWindow);
+        updateGpuTempConfig();
+        _updateBackgroundAlpha();
+        _updateHasMaximizedToplevel();
+        _updateShouldHideForWindows();
+        scheduleHyprGlassDescriptor();
+    }
+
+    IdleInhibitor {
+        window: barWindow
+        enabled: SessionService.idleInhibited
+    }
+
+    Connections {
+        target: PluginService
+        function onPluginLoaded(pluginId) {
+            log.info("HGSBar: Plugin loaded:", pluginId);
+            SettingsData.widgetDataChanged();
+        }
+        function onPluginUnloaded(pluginId) {
+            log.info("HGSBar: Plugin unloaded:", pluginId);
+            SettingsData.widgetDataChanged();
+        }
+    }
+
+    function updateGpuTempConfig() {
+        const leftWidgets = barConfig?.leftWidgets || [];
+        const centerWidgets = barConfig?.centerWidgets || [];
+        const rightWidgets = barConfig?.rightWidgets || [];
+        const allWidgets = [...leftWidgets, ...centerWidgets, ...rightWidgets];
+
+        const hasGpuTempWidget = allWidgets.some(widget => {
+            const widgetId = typeof widget === "string" ? widget : widget.id;
+            const widgetEnabled = typeof widget === "string" ? true : (widget.enabled !== false);
+            return widgetId === "gpuTemp" && widgetEnabled;
+        });
+
+        DgopService.gpuTempEnabled = hasGpuTempWidget || SessionData.nvidiaGpuTempEnabled || SessionData.nonNvidiaGpuTempEnabled;
+        DgopService.nvidiaGpuTempEnabled = hasGpuTempWidget || SessionData.nvidiaGpuTempEnabled;
+        DgopService.nonNvidiaGpuTempEnabled = hasGpuTempWidget || SessionData.nonNvidiaGpuTempEnabled;
+    }
+
+    Connections {
+        function onBarConfigChanged() {
+            barWindow.updateGpuTempConfig();
+            barWindow._updateBackgroundAlpha();
+            barWindow._updateHasMaximizedToplevel();
+            barWindow._updateShouldHideForWindows();
+            barWindow.scheduleHyprGlassDescriptor();
+        }
+
+        target: rootWindow
+    }
+
+    Connections {
+        target: SettingsData
+        function onBarConfigsChanged() {
+            barWindow._updateBackgroundAlpha();
+            barWindow.scheduleHyprGlassDescriptor();
+        }
+    }
+
+    Connections {
+        target: CompositorService
+        function onToplevelsChanged() {
+            barWindow._updateHasMaximizedToplevel();
+            barWindow._updateShouldHideForWindows();
+        }
+        function onRandrDataReady() {
+            barWindow.scheduleHyprGlassDescriptor();
+        }
+    }
+
+    Connections {
+        function onNvidiaGpuTempEnabledChanged() {
+            barWindow.updateGpuTempConfig();
+        }
+
+        function onNonNvidiaGpuTempEnabledChanged() {
+            barWindow.updateGpuTempConfig();
+        }
+
+        target: SessionData
+    }
+
+    readonly property int barPos: barConfig?.position ?? 0
+
+    anchors.top: !isVertical ? (barPos === SettingsData.Position.Top) : true
+    anchors.bottom: !isVertical ? (barPos === SettingsData.Position.Bottom) : true
+    anchors.left: !isVertical ? true : (barPos === SettingsData.Position.Left)
+    anchors.right: !isVertical ? true : (barPos === SettingsData.Position.Right)
+
+    readonly property bool reserveExclusiveWhenAutoHidden: SettingsData.frameEnabled && usesFrameBarChrome && !!barWindow.screen && SettingsData.isScreenInPreferences(barWindow.screen, SettingsData.frameScreenPreferences)
+
+    exclusiveZone: (!(barConfig?.visible ?? true) || (topBarCore.autoHide && !barWindow.reserveExclusiveWhenAutoHidden)) ? -1 : (barWindow.effectiveBarThickness + effectiveSpacing + (usesFrameBarChrome ? 0 : (barConfig?.bottomGap ?? 0)))
+
+    Item {
+        id: inputMask
+
+        readonly property int barThickness: Theme.px(barWindow.effectiveBarThickness + barWindow.effectiveSpacing, barWindow._dpr)
+
+        readonly property bool inOverviewWithShow: false
+        readonly property bool effectiveVisible: (barConfig?.visible ?? true) || inOverviewWithShow
+        readonly property bool showing: effectiveVisible && (topBarCore.reveal || inOverviewWithShow || !topBarCore.autoHide)
+
+        readonly property int maskThickness: showing ? barThickness : 1
+
+        x: {
+            if (!axis.isVertical) {
+                return 0;
+            } else {
+                switch (barPos) {
+                case SettingsData.Position.Left:
+                    return 0;
+                case SettingsData.Position.Right:
+                    return parent.width - maskThickness;
+                default:
+                    return 0;
+                }
+            }
+        }
+        y: {
+            if (axis.isVertical) {
+                return 0;
+            } else {
+                switch (barPos) {
+                case SettingsData.Position.Top:
+                    return 0;
+                case SettingsData.Position.Bottom:
+                    return parent.height - maskThickness;
+                default:
+                    return 0;
+                }
+            }
+        }
+        width: axis.isVertical ? maskThickness : parent.width
+        height: axis.isVertical ? parent.height : maskThickness
+    }
+
+    readonly property bool clickThroughEnabled: barConfig?.clickThrough ?? false
+
+    readonly property var _leftSection: topBarContent ? (barWindow.isVertical ? topBarContent.vLeftSection : topBarContent.hLeftSection) : null
+    readonly property var _centerSection: topBarContent ? (barWindow.isVertical ? topBarContent.vCenterSection : topBarContent.hCenterSection) : null
+    readonly property var _rightSection: topBarContent ? (barWindow.isVertical ? topBarContent.vRightSection : topBarContent.hRightSection) : null
+    readonly property real _revealProgress: topBarSlide.x + topBarSlide.y
+
+    function sectionRect(section, isCenter, _dep) {
+        if (!section)
+            return {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+            };
+
+        const pos = section.mapToItem(barWindow.contentItem, 0, 0);
+        const implW = section.implicitWidth || 0;
+        const implH = section.implicitHeight || 0;
+
+        const offsetX = isCenter && !barWindow.isVertical ? (section.width - implW) / 2 : 0;
+        const offsetY = !barWindow.isVertical ? (section.height - implH) / 2 : (isCenter ? (section.height - implH) / 2 : 0);
+
+        const edgePad = 2;
+        return {
+            "x": pos.x + offsetX - edgePad,
+            "y": pos.y + offsetY - edgePad,
+            "w": implW + edgePad * 2,
+            "h": implH + edgePad * 2
+        };
+    }
+
+    mask: Region {
+        item: clickThroughEnabled ? null : inputMask
+
+        Region {
+            readonly property var r: barWindow.clickThroughEnabled ? barWindow.sectionRect(barWindow._leftSection, false, barWindow._revealProgress + barWindow.width * 0) : {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+            }
+            x: r.x
+            y: r.y
+            width: r.w
+            height: r.h
+        }
+
+        Region {
+            readonly property var r: barWindow.clickThroughEnabled ? barWindow.sectionRect(barWindow._centerSection, true, barWindow._revealProgress + barWindow.width * 0) : {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+            }
+            x: r.x
+            y: r.y
+            width: r.w
+            height: r.h
+        }
+
+        Region {
+            readonly property var r: barWindow.clickThroughEnabled ? barWindow.sectionRect(barWindow._rightSection, false, barWindow._revealProgress + barWindow.width * 0) : {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+            }
+            x: r.x
+            y: r.y
+            width: r.w
+            height: r.h
+        }
+
+        Region {
+            readonly property bool active: barWindow.clickThroughEnabled && !inputMask.showing
+            x: active ? inputMask.x : 0
+            y: active ? inputMask.y : 0
+            width: active ? inputMask.width : 0
+            height: active ? inputMask.height : 0
+        }
+    }
+
+    Item {
+        id: topBarCore
+        anchors.fill: parent
+        layer.enabled: false
+
+        property bool autoHide: barConfig?.autoHide ?? false
+        property bool revealSticky: false
+        readonly property bool ipcReveal: !!SettingsData.barIpcRevealStates[barConfig?.id ?? ""]
+
+        Timer {
+            id: revealHold
+            interval: barWindow.clickThroughEnabled ? Math.max((barConfig?.autoHideDelay ?? 250) * 6, 1500) : (barConfig?.autoHideDelay ?? 250)
+            repeat: false
+            onTriggered: {
+                if (!topBarMouseArea.containsMouse && !topBarCore.popoutPinsReveal)
+                    topBarCore.revealSticky = false;
+            }
+        }
+
+        property bool hasActivePopout: false
+
+        readonly property bool popoutPinsReveal: !!(hasActivePopout && !(barConfig?.autoHideStrict ?? false))
+
+        onHasActivePopoutChanged: evaluateReveal()
+
+        onPopoutPinsRevealChanged: evaluateReveal()
+
+        function updateActivePopoutState() {
+            if (!barWindow.screen)
+                return;
+            const screenName = barWindow.screen.name;
+            const activePopout = PopoutManager.currentPopoutsByScreen[screenName];
+            const activeTrayMenu = TrayMenuManager.activeTrayMenus[screenName];
+            const trayOpen = rootWindow.systemTrayMenuOpen;
+
+            const hasVisiblePopout = activePopout && activePopout.shouldBeVisible;
+            topBarCore.hasActivePopout = !!(hasVisiblePopout || activeTrayMenu || trayOpen);
+        }
+
+        Connections {
+            target: PopoutManager
+
+            function onPopoutChanged() {
+                topBarCore.updateActivePopoutState();
+            }
+
+            function onPopoutOpening() {
+                topBarCore.evaluateReveal();
+            }
+        }
+
+        Connections {
+            target: TrayMenuManager
+
+            function onActiveTrayMenusChanged() {
+                topBarCore.updateActivePopoutState();
+            }
+        }
+
+        property bool reveal: {
+            const showOnWindowsSetting = barConfig?.showOnWindowsOpen ?? false;
+            if (showOnWindowsSetting && autoHide) {
+                if (barWindow.shouldHideForWindows)
+                    return topBarMouseArea.containsMouse || popoutPinsReveal || revealSticky || ipcReveal;
+                return true;
+            }
+
+            return (barConfig?.visible ?? true) && (!autoHide || topBarMouseArea.containsMouse || popoutPinsReveal || revealSticky || ipcReveal);
+        }
+
+        Connections {
+            function onBarConfigChanged() {
+                topBarCore.autoHide = barConfig?.autoHide ?? false;
+                topBarCore.evaluateReveal();
+            }
+
+            target: rootWindow
+        }
+
+        Component.onCompleted: topBarCore.updateActivePopoutState()
+
+        function evaluateReveal() {
+            if (!autoHide)
+                return;
+
+            if (topBarMouseArea.containsMouse) {
+                SettingsData.setBarIpcReveal(barConfig?.id ?? "", false);
+                revealSticky = true;
+                revealHold.stop();
+                return;
+            }
+
+            if (popoutPinsReveal) {
+                revealSticky = true;
+                revealHold.stop();
+                return;
+            }
+
+            revealHold.restart();
+        }
+
+        Connections {
+            target: topBarMouseArea
+            function onContainsMouseChanged() {
+                topBarCore.evaluateReveal();
+            }
+        }
+
+        MouseArea {
+            id: topBarMouseArea
+            y: !barWindow.isVertical ? (barPos === SettingsData.Position.Bottom ? parent.height - height : 0) : 0
+            x: barWindow.isVertical ? (barPos === SettingsData.Position.Right ? parent.width - width : 0) : 0
+            height: !barWindow.isVertical ? Theme.px(barWindow.effectiveBarThickness + barWindow.effectiveSpacing, barWindow._dpr) : undefined
+            width: barWindow.isVertical ? Theme.px(barWindow.effectiveBarThickness + barWindow.effectiveSpacing, barWindow._dpr) : undefined
+            anchors {
+                left: !barWindow.isVertical ? parent.left : (barPos === SettingsData.Position.Left ? parent.left : undefined)
+                right: !barWindow.isVertical ? parent.right : (barPos === SettingsData.Position.Right ? parent.right : undefined)
+                top: barWindow.isVertical ? parent.top : undefined
+                bottom: barWindow.isVertical ? parent.bottom : undefined
+            }
+            readonly property bool inOverview: false
+            hoverEnabled: (barConfig?.autoHide ?? false) && !inOverview && !topBarCore.popoutPinsReveal
+            acceptedButtons: Qt.NoButton
+            enabled: (barConfig?.autoHide ?? false) && !inOverview
+
+            Item {
+                id: topBarContainer
+                anchors.fill: parent
+
+                transform: Translate {
+                    id: topBarSlide
+                    x: barWindow.isVertical ? Theme.snap(topBarCore.reveal ? 0 : (barPos === SettingsData.Position.Right ? barWindow.implicitWidth : -barWindow.implicitWidth), barWindow._dpr) : 0
+                    y: !barWindow.isVertical ? Theme.snap(topBarCore.reveal ? 0 : (barPos === SettingsData.Position.Bottom ? barWindow.implicitHeight : -barWindow.implicitHeight), barWindow._dpr) : 0
+
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: Theme.shortDuration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: Theme.shortDuration
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+
+                Item {
+                    id: barUnitInset
+                    property int spacingPx: Theme.px(barWindow.effectiveSpacing, barWindow._dpr)
+                    anchors.fill: parent
+                    anchors.leftMargin: !barWindow.isVertical ? spacingPx : (axis.edge === "left" ? spacingPx : 0)
+                    anchors.rightMargin: !barWindow.isVertical ? spacingPx : (axis.edge === "right" ? spacingPx : 0)
+                    anchors.topMargin: barWindow.isVertical ? (barWindow.hasAdjacentTopBar ? 0 : spacingPx) : (axis.outerVisualEdge() === "bottom" ? 0 : spacingPx)
+                    anchors.bottomMargin: barWindow.isVertical ? (barWindow.hasAdjacentBottomBar ? 0 : spacingPx) : (axis.outerVisualEdge() === "bottom" ? spacingPx : 0)
+                    onXChanged: barWindow.scheduleHyprGlassDescriptor()
+                    onYChanged: barWindow.scheduleHyprGlassDescriptor()
+                    onWidthChanged: barWindow.scheduleHyprGlassDescriptor()
+                    onHeightChanged: barWindow.scheduleHyprGlassDescriptor()
+
+                    BarCanvas {
+                        id: barBackground
+                        barWindow: barWindow
+                        axis: axis
+                        barConfig: barWindow.renderBarConfig
+                        onRtChanged: barWindow.scheduleHyprGlassDescriptor()
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        z: -2
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        onClicked: {
+                            const screenName = barWindow.screen?.name;
+                            if (!screenName)
+                                return;
+                            if (PopoutManager.currentPopoutsByScreen[screenName])
+                                PopoutManager.closeAllPopouts();
+                            if (ModalManager.currentModalsByScreen[screenName])
+                                ModalManager.closeAllModalsExcept(null);
+                            TrayMenuManager.closeAllMenus();
+                        }
+                    }
+
+                    MouseArea {
+                        id: scrollArea
+                        anchors.fill: parent
+                        acceptedButtons: Qt.NoButton
+                        propagateComposedEvents: true
+                        z: -1
+
+                        property real touchpadAccumulatorY: 0
+                        property real touchpadAccumulatorX: 0
+                        property real mouseAccumulatorY: 0
+                        property real mouseAccumulatorX: 0
+                        property bool actionInProgress: false
+
+                        Timer {
+                            id: cooldownTimer
+                            interval: 100
+                            onTriggered: parent.actionInProgress = false
+                        }
+
+                        function handleScrollAction(behavior, direction) {
+                            switch (behavior) {
+                            case "workspace":
+                                topBarContent.switchWorkspace(direction);
+                                return true;
+                            default:
+                                return false;
+                            }
+                        }
+
+                        onWheel: wheel => {
+                            if (!(barConfig?.scrollEnabled ?? true) || actionInProgress) {
+                                wheel.accepted = false;
+                                return;
+                            }
+
+                            const deltaY = wheel.angleDelta.y;
+                            const deltaX = wheel.angleDelta.x;
+                            const isTouchpadY = wheel.pixelDelta && wheel.pixelDelta.y !== 0;
+                            const isTouchpadX = wheel.pixelDelta && wheel.pixelDelta.x !== 0;
+                            const xBehavior = "none";
+                            const yBehavior = barConfig?.scrollYBehavior ?? "workspace";
+                            const reverse = SettingsData.reverseScrolling ? -1 : 1;
+
+                            if (xBehavior !== "none" && Math.abs(deltaX) > Math.abs(deltaY)) {
+                                if (isTouchpadX) {
+                                    touchpadAccumulatorX += deltaX;
+                                    if (Math.abs(touchpadAccumulatorX) >= 500) {
+                                        const direction = touchpadAccumulatorX * reverse < 0 ? 1 : -1;
+                                        if (handleScrollAction(xBehavior, direction)) {
+                                            actionInProgress = true;
+                                            cooldownTimer.restart();
+                                        }
+                                        touchpadAccumulatorX = 0;
+                                    }
+                                } else {
+                                    mouseAccumulatorX += deltaX;
+                                    if (Math.abs(mouseAccumulatorX) >= 120) {
+                                        const direction = mouseAccumulatorX * reverse < 0 ? 1 : -1;
+                                        if (handleScrollAction(xBehavior, direction)) {
+                                            actionInProgress = true;
+                                            cooldownTimer.restart();
+                                        }
+                                        mouseAccumulatorX = 0;
+                                    }
+                                }
+                                wheel.accepted = false;
+                                return;
+                            }
+
+                            if (yBehavior === "none") {
+                                wheel.accepted = false;
+                                return;
+                            }
+
+                            if (isTouchpadY) {
+                                touchpadAccumulatorY += deltaY;
+                                if (Math.abs(touchpadAccumulatorY) >= 500) {
+                                    const direction = touchpadAccumulatorY * reverse < 0 ? 1 : -1;
+                                    if (handleScrollAction(yBehavior, direction)) {
+                                        actionInProgress = true;
+                                        cooldownTimer.restart();
+                                    }
+                                    touchpadAccumulatorY = 0;
+                                }
+                            } else {
+                                mouseAccumulatorY += deltaY;
+                                if (Math.abs(mouseAccumulatorY) >= 120) {
+                                    const direction = mouseAccumulatorY * reverse < 0 ? 1 : -1;
+                                    if (handleScrollAction(yBehavior, direction)) {
+                                        actionInProgress = true;
+                                        cooldownTimer.restart();
+                                    }
+                                    mouseAccumulatorY = 0;
+                                }
+                            }
+
+                            wheel.accepted = false;
+                        }
+                    }
+
+                    HGSBarContent {
+                        id: topBarContent
+                        barWindow: barWindow
+                        rootWindow: barWindow.rootWindow
+                        barConfig: barWindow.barConfig
+                        leftWidgetsModel: barWindow.leftWidgetsModel
+                        centerWidgetsModel: barWindow.centerWidgetsModel
+                        rightWidgetsModel: barWindow.rightWidgetsModel
+                    }
+                }
+            }
+        }
+    }
+}

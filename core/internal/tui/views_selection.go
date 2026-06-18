@@ -5,20 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// windowManagerOptions returns the WM enums in selection-list order (debian omits
-// Hyprland). selectedWM indexes into this, so all index->WM conversions use it.
+// windowManagerOptions returns the WM enums in selection-list order.
+// selectedWM indexes into this, so all index->WM conversions use it.
 func (m Model) windowManagerOptions() []deps.WindowManager {
-	opts := []deps.WindowManager{deps.WindowManagerNiri}
-	if m.osInfo == nil || m.osInfo.Distribution.ID != "debian" {
-		opts = append(opts, deps.WindowManagerHyprland)
-	}
-	opts = append(opts, deps.WindowManagerMango)
-	return opts
+	return []deps.WindowManager{deps.WindowManagerHyprland}
 }
 
 // selectedWindowManager maps the current selectedWM index to its WM enum.
@@ -27,7 +22,7 @@ func (m Model) selectedWindowManager() deps.WindowManager {
 	if m.selectedWM >= 0 && m.selectedWM < len(opts) {
 		return opts[m.selectedWM]
 	}
-	return deps.WindowManagerNiri
+	return deps.WindowManagerHyprland
 }
 
 func (m Model) viewSelectWindowManager() string {
@@ -44,20 +39,8 @@ func (m Model) viewSelectWindowManager() string {
 		name        string
 		description string
 	}{
-		{"niri", "Scrollable-tiling Wayland compositor."},
+		{"Hyprland", "Dynamic tiling Wayland compositor."},
 	}
-
-	if m.osInfo == nil || m.osInfo.Distribution.ID != "debian" {
-		options = append(options, struct {
-			name        string
-			description string
-		}{"Hyprland", "Dynamic tiling Wayland compositor."})
-	}
-
-	options = append(options, struct {
-		name        string
-		description string
-	}{"mango", "dwl-based dynamic tiling Wayland compositor."})
 
 	for i, option := range options {
 		if i == m.selectedWM {

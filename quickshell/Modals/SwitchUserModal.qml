@@ -4,7 +4,7 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
     property bool lockOnSwitch: false
@@ -51,7 +51,7 @@ DankModal {
         close();
     }
 
-    layerNamespace: "dms:switch-user-modal"
+    layerNamespace: "hgs:switch-user-modal"
     shouldBeVisible: false
     allowStacking: true
     modalWidth: 420
@@ -86,7 +86,7 @@ DankModal {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "switch_account"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -132,7 +132,7 @@ DankModal {
                                 anchors.margins: Theme.spacingM
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "account_circle"
                                     size: Theme.iconSize + 4
                                     color: Theme.primary
@@ -168,7 +168,7 @@ DankModal {
                                     }
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     id: chevron
                                     name: "chevron_right"
                                     size: Theme.iconSize
@@ -204,7 +204,7 @@ DankModal {
                             anchors.margins: Theme.spacingM
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "info"
                                 size: Theme.iconSize
                                 color: Theme.surfaceVariantText
@@ -241,14 +241,14 @@ DankModal {
                     spacing: Theme.spacingM
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    HGSButton {
                         text: I18n.tr("Close")
                         backgroundColor: Theme.surfaceVariantAlpha
                         textColor: Theme.surfaceText
                         onClicked: root.close()
                     }
 
-                    DankButton {
+                    HGSButton {
                         visible: SessionsService.otherSessions().length === 0 && !root.lockOnSwitch
                         text: I18n.tr("Log Out")
                         iconName: "logout"

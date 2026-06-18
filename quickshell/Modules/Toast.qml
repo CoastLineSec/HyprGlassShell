@@ -8,7 +8,7 @@ import qs.Widgets
 PanelWindow {
     id: root
 
-    WlrLayershell.namespace: "dms:toast"
+    WlrLayershell.namespace: "hgs:toast"
 
     property var modelData
     property bool shouldBeVisible: false
@@ -112,7 +112,7 @@ PanelWindow {
                 width: parent.width
                 height: Math.max(Theme.iconSize + 8, messageText.implicitHeight)
 
-                DankIcon {
+                HGSIcon {
                     id: statusIcon
                     name: {
                         switch (ToastService.currentLevel) {
@@ -163,7 +163,7 @@ PanelWindow {
                     wrapMode: Text.NoWrap
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     id: expandButton
                     iconName: toast.expanded ? "expand_less" : "expand_more"
                     iconSize: Theme.iconSize
@@ -192,7 +192,7 @@ PanelWindow {
                     }
                 }
 
-                DankActionButton {
+                HGSActionButton {
                     id: closeButton
                     iconName: "close"
                     iconSize: Theme.iconSize
@@ -257,7 +257,7 @@ PanelWindow {
                             wrapMode: Text.Wrap
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: copyDetailsButton
                             iconName: "content_copy"
                             iconSize: Theme.iconSizeSmall
@@ -277,7 +277,7 @@ PanelWindow {
                             property bool showTooltip: false
 
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", ToastService.currentDetails]);
+                                Quickshell.execDetached(["hgs", "cl", "copy", ToastService.currentDetails]);
                                 showTooltip = true;
                                 detailsTooltipTimer.start();
                             }
@@ -340,7 +340,7 @@ PanelWindow {
                             wrapMode: Text.Wrap
                         }
 
-                        DankActionButton {
+                        HGSActionButton {
                             id: copyButton
                             iconName: "content_copy"
                             iconSize: Theme.iconSizeSmall
@@ -362,7 +362,7 @@ PanelWindow {
                             property bool showTooltip: false
 
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", ToastService.currentCommand]);
+                                Quickshell.execDetached(["hgs", "cl", "copy", ToastService.currentCommand]);
                                 showTooltip = true;
                                 tooltipTimer.start();
                             }

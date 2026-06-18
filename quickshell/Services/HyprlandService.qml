@@ -13,12 +13,12 @@ Singleton {
     readonly property var log: Log.scoped("HyprlandService")
 
     readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation))
-    readonly property string hyprDmsDir: configDir + "/hypr/dms"
-    readonly property string outputsPath: hyprDmsDir + "/outputs.lua"
-    readonly property string layoutPath: hyprDmsDir + "/layout.lua"
-    readonly property string cursorPath: hyprDmsDir + "/cursor.lua"
-    readonly property string windowrulesPath: hyprDmsDir + "/windowrules.lua"
-    readonly property bool luaConfigActive: CompositorService.isHyprland && (Hyprland.usingLua === true || luaConfigDetected)
+    readonly property string hyprHgsDir: configDir + "/hypr/hgs"
+    readonly property string monitorsPath: hyprHgsDir + "/monitors.lua"
+    readonly property string layoutPath: hyprHgsDir + "/layout.lua"
+    readonly property string cursorPath: hyprHgsDir + "/cursor.lua"
+    readonly property string rulesPath: hyprHgsDir + "/rules.lua"
+    readonly property bool luaConfigActive: Hyprland.usingLua === true || luaConfigDetected
 
     property int _lastGapValue: -1
     property bool luaConfigDetected: false
@@ -28,18 +28,16 @@ Singleton {
 
     onLuaConfigActiveChanged: {
         if (luaConfigActive)
-            ensureDmsLuaConfigs();
+            ensureHgsLuaConfigs();
     }
 
     Component.onCompleted: {
-        if (CompositorService.isHyprland) {
-            refreshLuaConfigStatus();
-            if (luaConfigActive)
-                ensureDmsLuaConfigs();
-        }
+        refreshLuaConfigStatus();
+        if (luaConfigActive)
+            ensureHgsLuaConfigs();
     }
 
-    function ensureDmsLuaConfigs() {
+    function ensureHgsLuaConfigs() {
         Qt.callLater(generateLayoutConfig);
         Qt.callLater(ensureWindowrulesConfig);
     }
@@ -47,38 +45,20 @@ Singleton {
     function ensureWindowrulesConfig() {
         if (!canWriteLuaConfig("windowrules"))
             return;
-        Proc.runCommand("hypr-ensure-windowrules", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && [ ! -f "${windowrulesPath}" ] && touch "${windowrulesPath}" || true`], (output, exitCode) => {
+        Proc.runCommand("hypr-ensure-windowrules", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && [ ! -f "${rulesPath}" ] && touch "${rulesPath}" || true`], (output, exitCode) => {
             if (exitCode !== 0)
-                log.warn("Failed to ensure windowrules.lua:", output);
+                log.warn("Failed to ensure rules.lua:", output);
         });
     }
 
     Connections {
         target: SettingsData
         function onBarConfigsChanged() {
-            if (!CompositorService.isHyprland)
-                return;
             const newGaps = Math.max(4, (SettingsData.barConfigs[0]?.spacing ?? 4));
             if (newGaps === root._lastGapValue)
                 return;
             root._lastGapValue = newGaps;
             generateLayoutConfig();
-        }
-    }
-
-    Connections {
-        target: CompositorService
-        function onIsHyprlandChanged() {
-            if (CompositorService.isHyprland) {
-                refreshLuaConfigStatus();
-                if (luaConfigActive)
-                    ensureDmsLuaConfigs();
-                return;
-            }
-            luaConfigDetected = false;
-            luaConfigStatusReady = false;
-            luaConfigStatusLoading = false;
-            luaConfigFormat = "";
         }
     }
 
@@ -93,18 +73,11 @@ Singleton {
     }
 
     function refreshLuaConfigStatus() {
-        if (!CompositorService.isHyprland) {
-            luaConfigDetected = false;
-            luaConfigStatusReady = false;
-            luaConfigStatusLoading = false;
-            luaConfigFormat = "";
-            return;
-        }
         if (luaConfigStatusLoading)
             return;
 
         luaConfigStatusLoading = true;
-        Proc.runCommand("hypr-lua-config-status", ["dms", "config", "resolve-include", "hyprland", "outputs.lua"], (output, exitCode) => {
+        Proc.runCommand("hypr-lua-config-status", ["hgs", "config", "resolve-include", "hyprland", "monitors.lua"], (output, exitCode) => {
             luaConfigStatusLoading = false;
             luaConfigStatusReady = true;
             if (exitCode !== 0) {
@@ -126,9 +99,9 @@ Singleton {
     function canWriteLuaConfig(name) {
         if (luaConfigActive)
             return true;
-        if (CompositorService.isHyprland && !luaConfigStatusReady && !luaConfigStatusLoading)
+        if (!luaConfigStatusReady && !luaConfigStatusLoading)
             refreshLuaConfigStatus();
-        if (CompositorService.isHyprland && (luaConfigStatusLoading || !luaConfigStatusReady)) {
+        if (luaConfigStatusLoading || !luaConfigStatusReady) {
             log.debug("Deferring Hyprland", name || "config", "Lua write until config format is known");
             return false;
         }
@@ -157,7 +130,7 @@ Singleton {
         }
 
         const settings = hyprlandSettings || SettingsData.hyprlandOutputSettings;
-        let lines = ["-- Auto-generated by DMS — do not edit manually", ""];
+        let lines = ["-- Auto-generated by HGS — do not edit manually", ""];
 
         for (const outputName in outputsData) {
             const output = outputsData[outputName];
@@ -222,16 +195,15 @@ Singleton {
         lines.push("");
         const content = lines.join("\n");
 
-        Proc.runCommand("hypr-write-outputs", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${outputsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-outputs", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && cat > "${monitorsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write outputs config:", output);
                 if (callback)
                     callback(false);
                 return;
             }
-            log.info("Generated outputs config at", outputsPath);
-            if (CompositorService.isHyprland)
-                reloadConfig();
+            log.info("Generated outputs config at", monitorsPath);
+            reloadConfig();
             if (callback)
                 callback(true);
         });
@@ -245,8 +217,6 @@ Singleton {
     }
 
     function generateLayoutConfig() {
-        if (!CompositorService.isHyprland)
-            return;
         if (!canWriteLuaConfig("layout"))
             return;
 
@@ -259,7 +229,7 @@ Singleton {
         const borderSize = (typeof SettingsData !== "undefined" && SettingsData.hyprlandLayoutBorderSize >= 0) ? SettingsData.hyprlandLayoutBorderSize : defaultBorderSize;
         const resizeOnBorder = (typeof SettingsData !== "undefined" && SettingsData.hyprlandResizeOnBorder) ? true : false;
 
-        let content = `-- Auto-generated by DMS — do not edit manually
+        let content = `-- Auto-generated by HGS — do not edit manually
 
 hl.config({
 	general = {
@@ -274,7 +244,7 @@ hl.config({
 })
 `;
 
-        Proc.runCommand("hypr-write-layout", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-layout", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write layout config:", output);
                 return;
@@ -331,14 +301,12 @@ hl.config({
     }
 
     function generateCursorConfig() {
-        if (!CompositorService.isHyprland)
-            return;
         if (!canWriteLuaConfig("cursor"))
             return;
 
         const settings = typeof SettingsData !== "undefined" ? SettingsData.cursorSettings : null;
         if (!settings) {
-            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && printf '%s\\n' "-- Auto-generated by DMS — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
+            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && printf '%s\\n' "-- Auto-generated by HGS — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to write cursor config:", output);
             });
@@ -356,14 +324,14 @@ hl.config({
         const hasCursorSettings = hideOnKeyPress || hideOnTouch || inactiveTimeout > 0;
 
         if (!hasTheme && !hasNonDefaultSize && !hasCursorSettings) {
-            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && printf '%s\\n' "-- Auto-generated by DMS — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
+            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && printf '%s\\n' "-- Auto-generated by HGS — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to write cursor config:", output);
             });
             return;
         }
 
-        let lines = ["-- Auto-generated by DMS — do not edit manually", ""];
+        let lines = ["-- Auto-generated by HGS — do not edit manually", ""];
 
         if (hasTheme) {
             lines.push(`hl.env("HYPRCURSOR_THEME", ${luaQuoted(themeName)})`);
@@ -389,7 +357,7 @@ hl.config({
         lines.push("");
         const content = lines.join("\n");
 
-        Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprHgsDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write cursor config:", output);
                 return;

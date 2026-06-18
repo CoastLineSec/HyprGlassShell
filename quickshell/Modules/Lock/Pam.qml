@@ -88,9 +88,9 @@ Scope {
     }
 
     FileView {
-        id: dankshellConfigWatcher
+        id: hgsshellConfigWatcher
 
-        path: "/etc/pam.d/dankshell"
+        path: "/etc/pam.d/hgsshell"
         printErrors: false
     }
 
@@ -104,18 +104,18 @@ Scope {
     FileView {
         id: u2fConfigWatcher
 
-        path: "/etc/pam.d/dankshell-u2f"
+        path: "/etc/pam.d/hgsshell-u2f"
         printErrors: false
     }
 
-    // Detects Nix-installed DMS on non-NixOS systems
+    // Detects Nix-installed HGS on non-NixOS systems
     readonly property bool runningFromNixStore: Quickshell.shellDir.startsWith("/nix/store/")
 
     PamContext {
         id: passwd
 
-        config: dankshellConfigWatcher.loaded ? "dankshell" : "login"
-        configDirectory: (dankshellConfigWatcher.loaded || nixosMarker.loaded || root.runningFromNixStore) ? "/etc/pam.d" : Quickshell.shellDir + "/assets/pam"
+        config: hgsshellConfigWatcher.loaded ? "hgsshell" : "login"
+        configDirectory: (hgsshellConfigWatcher.loaded || nixosMarker.loaded || root.runningFromNixStore) ? "/etc/pam.d" : Quickshell.shellDir + "/assets/pam"
 
         onMessageChanged: {
             if (message.startsWith("The account is locked")) {
@@ -276,7 +276,7 @@ Scope {
             start();
         }
 
-        config: u2fConfigWatcher.loaded ? "dankshell-u2f" : "u2f"
+        config: u2fConfigWatcher.loaded ? "hgsshell-u2f" : "u2f"
         configDirectory: u2fConfigWatcher.loaded ? "/etc/pam.d" : Quickshell.shellDir + "/assets/pam"
 
         onMessageChanged: {

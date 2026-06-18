@@ -1,16 +1,16 @@
-# DMS Backend & CLI
+# HGS Backend & CLI
 
-Go-based backend for DankMaterialShell providing system integration, IPC, and installation tools.
+Go-based backend for HyprGlassShell providing system integration, IPC, and installation tools.
 
 **See [root README](../README.md) for project overview and installation.**
 
 ## Components
 
-**dms CLI**
+**hgs CLI**
 Command-line interface and daemon for shell management and system control.
 
-**dankinstall**
-Distribution-aware installer for deploying DMS and compositor configurations on Arch, Fedora, Debian, Ubuntu, openSUSE, and Gentoo. Supports both an interactive TUI and a headless (unattended) mode via CLI flags.
+**hgsinstall**
+Distribution-aware installer for deploying HGS and Hyprland configurations on Arch, Fedora, Debian, Ubuntu, openSUSE, and Gentoo. Supports both an interactive TUI and a headless (unattended) mode via CLI flags.
 
 ## System Integration
 
@@ -29,7 +29,6 @@ All Wayland protocols are consumed as a client - connecting to the compositor.
 | `keyboard-shortcuts-inhibit-unstable-v1`  | Inhibit compositor shortcuts during color picker/screenshot |
 | `ext-data-control-v1`                     | Clipboard history and persistence                           |
 | `ext-workspace-v1`                        | Workspace integration                                       |
-| `dwl-ipc-unstable-v2`                     | dwl/MangoWC IPC for tags, outputs, etc.                     |
 
 ### DBus Interfaces
 
@@ -63,33 +62,26 @@ Custom IPC via unix socket (JSON API) for shell communication.
 | evdev     | `/dev/input/event*` | Keyboard state (caps lock LED)     |
 | udev      | netlink monitor     | Backlight device updates (for OSD) |
 
-### Plugin System
-
-- Plugin registry integration
-- Plugin lifecycle management
-- Settings persistence
-
 ## CLI Commands
 
-- `dms run [-d]` - Start shell (optionally as daemon)
-- `dms restart` / `dms kill` - Manage running processes
-- `dms ipc <command>` - Send IPC commands (toggle launcher, notifications, etc.)
-- `dms plugins [install|browse|search]` - Plugin management
-- `dms brightness [list|set]` - Control display/monitor brightness
-- `dms color pick` - Native color picker (see below)
-- `dms update` - Update DMS and dependencies (disabled in distro packages)
-- `dms greeter install` - Install greetd greeter (disabled in distro packages)
+- `hgs run [-d]` - Start shell (optionally as daemon)
+- `hgs restart` / `hgs kill` - Manage running processes
+- `hgs ipc <command>` - Send IPC commands (toggle launcher, notifications, etc.)
+- `hgs brightness [list|set]` - Control display/monitor brightness
+- `hgs color pick` - Native color picker (see below)
+- `hgs update` - Update HGS and dependencies (disabled in distro packages)
+- `hgs greeter install` - Install greetd greeter (disabled in distro packages)
 
 ### Color Picker
 
 Native Wayland color picker with magnifier, no external dependencies. Supports HiDPI and fractional scaling.
 
 ```bash
-dms color pick              # Pick color, output hex
-dms color pick --rgb        # Output as RGB (255 128 64)
-dms color pick --hsv        # Output as HSV (24 75% 100%)
-dms color pick --json       # Output all formats as JSON
-dms color pick -a           # Auto-copy to clipboard
+hgs color pick              # Pick color, output hex
+hgs color pick --rgb        # Output as RGB (255 128 64)
+hgs color pick --hsv        # Output as HSV (24 75% 100%)
+hgs color pick --json       # Output all formats as JSON
+hgs color pick -a           # Auto-copy to clipboard
 ```
 
 The on-screen preview displays the selected format. JSON output includes hex, RGB, HSL, HSV, and CMYK values.
@@ -101,8 +93,8 @@ Requires Go 1.25+
 **Development build:**
 
 ```bash
-make              # Build dms CLI
-make dankinstall  # Build installer
+make              # Build hgs CLI
+make hgsinstall  # Build installer
 make test         # Run tests
 ```
 
@@ -112,12 +104,12 @@ make test         # Run tests
 make dist         # Build without update/greeter features
 ```
 
-Produces `bin/dms-linux-amd64` and `bin/dms-linux-arm64`
+Produces `bin/hgs-linux-amd64` and `bin/hgs-linux-arm64`
 
 **Installation:**
 
 ```bash
-sudo make install  # Install to /usr/local/bin/dms
+sudo make install  # Install to /usr/local/bin/hgs
 ```
 
 ## Development
@@ -140,17 +132,17 @@ go-wayland-scanner -i internal/proto/xml/wlr-gamma-control-unstable-v1.xml \
 
 **Module Structure:**
 
-- `cmd/` - Binary entrypoints (dms, dankinstall)
+- `cmd/` - Binary entrypoints (hgs, hgsinstall)
 - `internal/distros/` - Distribution-specific installation logic
 - `internal/proto/` - Wayland protocol bindings
 - `pkg/` - Shared packages
 
-## Installation via dankinstall
+## Installation via hgsinstall
 
 **Interactive (TUI):**
 
 ```bash
-curl -fsSL https://install.danklinux.com | sh
+curl -fsSL https://install.coastlinesec.com | sh
 ```
 
 **Headless (unattended):**
@@ -158,15 +150,14 @@ curl -fsSL https://install.danklinux.com | sh
 Headless mode requires cached sudo credentials. Run `sudo -v` first:
 
 ```bash
-sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c niri -t ghostty -y
-sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c hyprland -t kitty --include-deps dms-greeter -y
+sudo -v && curl -fsSL https://install.coastlinesec.com | sh -s -- -c hyprland -t kitty --include-deps hgs-greeter -y
 ```
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--compositor <niri|hyprland>` | `-c` | Compositor/WM to install (required for headless) |
+| `--compositor <hyprland>` | `-c` | Compositor/WM to install (required for headless) |
 | `--term <ghostty|kitty|alacritty>` | `-t` | Terminal emulator (required for headless) |
-| `--include-deps <name,...>` | | Enable optional dependencies (e.g. `dms-greeter`) |
+| `--include-deps <name,...>` | | Enable optional dependencies (e.g. `hgs-greeter`) |
 | `--exclude-deps <name,...>` | | Skip specific dependencies |
 | `--replace-configs <name,...>` | | Replace specific configuration files (mutually exclusive with `--replace-configs-all`) |
 | `--replace-configs-all` | | Replace all configuration files (mutually exclusive with `--replace-configs`) |
@@ -174,9 +165,9 @@ sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c hyprland -t ki
 
 Headless mode requires `--yes` to proceed; without it, the installer exits with an error.
 Configuration files are not replaced by default unless `--replace-configs` or `--replace-configs-all` is specified.
-`dms-greeter` is disabled by default; use `--include-deps dms-greeter` to enable it.
+`hgs-greeter` is disabled by default; use `--include-deps hgs-greeter` to enable it.
 
-When no flags are provided, `dankinstall` launches the interactive TUI.
+When no flags are provided, `hgsinstall` launches the interactive TUI.
 
 ### Headless mode validation rules
 
@@ -188,8 +179,8 @@ Headless mode activates when `--compositor` or `--term` is provided.
 
 ### Log file location
 
-`dankinstall` writes logs to `/tmp` by default.
-Set the `DANKINSTALL_LOG_DIR` environment variable to override the log directory.
+`hgsinstall` writes logs to `/tmp` by default.
+Set the `HGSINSTALL_LOG_DIR` environment variable to override the log directory.
 
 ## Supported Distributions
 
@@ -200,13 +191,13 @@ Uses `pacman` for system packages, builds AUR packages via `makepkg`, no AUR hel
 
 **Fedora**
 
-Uses COPR repositories (`avengemedia/danklinux`, `avengemedia/dms`).
+Uses COPR repositories (`avengemedia/coastlinesec`, `avengemedia/hgs`).
 
 **Ubuntu**
 Requires PPA support. Most packages built from source (slow first install).
 
 **Debian**
-Debian 13+ (Trixie). niri only, no Hyprland support. Builds from source.
+Debian 13+ (Trixie). Hyprland support is the target path.
 
 **openSUSE**
 Most packages available in standard repos. Minimal building required.

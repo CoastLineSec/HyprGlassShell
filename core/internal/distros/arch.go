@@ -10,8 +10,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
 )
 
 func init() {
@@ -88,8 +88,8 @@ func (a *ArchDistribution) DetectDependencies(ctx context.Context, wm deps.Windo
 func (a *ArchDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	// DMS at the top (shell is prominent)
-	dependencies = append(dependencies, a.detectDMS())
+	// HGS at the top (shell is prominent)
+	dependencies = append(dependencies, a.detectHGS())
 
 	// Terminal with choice support
 	dependencies = append(dependencies, a.detectSpecificTerminal(terminal))
@@ -98,23 +98,13 @@ func (a *ArchDistribution) DetectDependenciesWithTerminal(ctx context.Context, w
 	dependencies = append(dependencies, a.detectGit())
 	dependencies = append(dependencies, a.detectWindowManager(wm))
 	dependencies = append(dependencies, a.detectQuickshell())
-	dependencies = append(dependencies, a.detectDMSGreeter())
+	dependencies = append(dependencies, a.detectHGSGreeter())
 	dependencies = append(dependencies, a.detectXDGPortal())
 	dependencies = append(dependencies, a.detectAccountsService())
 
 	// Hyprland-specific tools
 	if wm == deps.WindowManagerHyprland {
 		dependencies = append(dependencies, a.detectHyprlandTools()...)
-	}
-
-	// Niri-specific tools
-	if wm == deps.WindowManagerNiri {
-		dependencies = append(dependencies, a.detectXwaylandSatellite())
-	}
-
-	// Mango-specific tools (dwl-based, uses xwayland-satellite like niri)
-	if wm == deps.WindowManagerMango {
-		dependencies = append(dependencies, a.detectXwaylandSatellite())
 	}
 
 	dependencies = append(dependencies, a.detectMatugen())
@@ -131,8 +121,8 @@ func (a *ArchDistribution) detectAccountsService() deps.Dependency {
 	return a.detectPackage("accountsservice", "D-Bus interface for user account query and manipulation", a.packageInstalled("accountsservice"))
 }
 
-func (a *ArchDistribution) detectDMSGreeter() deps.Dependency {
-	return a.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", a.packageInstalled("greetd-dms-greeter-git"))
+func (a *ArchDistribution) detectHGSGreeter() deps.Dependency {
+	return a.detectOptionalPackage("hgs-greeter", "HyprGlassShell greetd greeter", a.packageInstalled("greetd-hgs-greeter-git"))
 }
 
 func (a *ArchDistribution) packageInstalled(pkg string) bool {
@@ -188,17 +178,17 @@ func (a *ArchDistribution) GetPackageMapping(wm deps.WindowManager) map[string]P
 
 func (a *ArchDistribution) GetPackageMappingWithVariants(wm deps.WindowManager, variants map[string]deps.PackageVariant) map[string]PackageMapping {
 	packages := map[string]PackageMapping{
-		"dms (DankMaterialShell)": a.getDMSMapping(variants["dms (DankMaterialShell)"]),
-		"git":                     {Name: "git", Repository: RepoTypeSystem},
-		"quickshell":              a.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             {Name: "greetd-dms-greeter-git", Repository: RepoTypeAUR},
-		"matugen":                 a.getMatugenMapping(variants["matugen"]),
-		"dgop":                    {Name: "dgop", Repository: RepoTypeSystem},
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypeSystem},
-		"kitty":                   {Name: "kitty", Repository: RepoTypeSystem},
-		"alacritty":               {Name: "alacritty", Repository: RepoTypeSystem},
-		"xdg-desktop-portal-gtk":  {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
-		"accountsservice":         {Name: "accountsservice", Repository: RepoTypeSystem},
+		"hgs (HyprGlassShell)":   a.getHGSMapping(variants["hgs (HyprGlassShell)"]),
+		"git":                    {Name: "git", Repository: RepoTypeSystem},
+		"quickshell":             a.getQuickshellMapping(variants["quickshell"]),
+		"hgs-greeter":            {Name: "greetd-hgs-greeter-git", Repository: RepoTypeAUR},
+		"matugen":                a.getMatugenMapping(variants["matugen"]),
+		"dgop":                   {Name: "dgop", Repository: RepoTypeSystem},
+		"ghostty":                {Name: "ghostty", Repository: RepoTypeSystem},
+		"kitty":                  {Name: "kitty", Repository: RepoTypeSystem},
+		"alacritty":              {Name: "alacritty", Repository: RepoTypeSystem},
+		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
+		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
 	}
 
 	switch wm {
@@ -206,12 +196,6 @@ func (a *ArchDistribution) GetPackageMappingWithVariants(wm deps.WindowManager, 
 		packages["hyprland"] = a.getHyprlandMapping(variants["hyprland"])
 		packages["hyprctl"] = a.getHyprlandMapping(variants["hyprland"])
 		packages["jq"] = PackageMapping{Name: "jq", Repository: RepoTypeSystem}
-	case deps.WindowManagerNiri:
-		packages["niri"] = a.getNiriMapping(variants["niri"])
-		packages["xwayland-satellite"] = PackageMapping{Name: "xwayland-satellite", Repository: RepoTypeSystem}
-	case deps.WindowManagerMango:
-		packages["mango"] = a.getMangoMapping(variants["mango"])
-		packages["xwayland-satellite"] = PackageMapping{Name: "xwayland-satellite", Repository: RepoTypeSystem}
 	}
 
 	return packages
@@ -228,20 +212,6 @@ func (a *ArchDistribution) getHyprlandMapping(_ deps.PackageVariant) PackageMapp
 	return PackageMapping{Name: "hyprland", Repository: RepoTypeSystem}
 }
 
-func (a *ArchDistribution) getNiriMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "niri-git", Repository: RepoTypeAUR}
-	}
-	return PackageMapping{Name: "niri", Repository: RepoTypeSystem}
-}
-
-func (a *ArchDistribution) getMangoMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "mangowm-git", Repository: RepoTypeAUR}
-	}
-	return PackageMapping{Name: "mangowm", Repository: RepoTypeAUR}
-}
-
 func (a *ArchDistribution) getMatugenMapping(variant deps.PackageVariant) PackageMapping {
 	if runtime.GOARCH == "arm64" {
 		return PackageMapping{Name: "matugen-git", Repository: RepoTypeAUR}
@@ -253,30 +223,16 @@ func (a *ArchDistribution) getMatugenMapping(variant deps.PackageVariant) Packag
 	return PackageMapping{Name: "matugen", Repository: RepoTypeSystem}
 }
 
-func (a *ArchDistribution) getDMSMapping(variant deps.PackageVariant) PackageMapping {
-	if forceDMSGit || variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-shell-git", Repository: RepoTypeAUR}
+func (a *ArchDistribution) getHGSMapping(variant deps.PackageVariant) PackageMapping {
+	if forceHGSGit || variant == deps.VariantGit {
+		return PackageMapping{Name: "hgs-shell-git", Repository: RepoTypeAUR}
 	}
 
-	if a.packageInstalled("dms-shell-git") {
-		return PackageMapping{Name: "dms-shell-git", Repository: RepoTypeAUR}
+	if a.packageInstalled("hgs-shell-git") {
+		return PackageMapping{Name: "hgs-shell-git", Repository: RepoTypeAUR}
 	}
 
-	return PackageMapping{Name: "dms-shell", Repository: RepoTypeSystem}
-}
-
-func (a *ArchDistribution) detectXwaylandSatellite() deps.Dependency {
-	status := deps.StatusMissing
-	if a.commandExists("xwayland-satellite") {
-		status = deps.StatusInstalled
-	}
-
-	return deps.Dependency{
-		Name:        "xwayland-satellite",
-		Status:      status,
-		Description: "Xwayland support",
-		Required:    true,
-	}
+	return PackageMapping{Name: "hgs-shell", Repository: RepoTypeSystem}
 }
 
 func (a *ArchDistribution) InstallPrerequisites(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
@@ -344,7 +300,7 @@ func (a *ArchDistribution) InstallPackages(ctx context.Context, dependencies []d
 
 	systemPkgs, aurPkgs, manualPkgs, variantMap := a.categorizePackages(dependencies, wm, reinstallFlags, disabledFlags)
 
-	if slices.Contains(aurPkgs, "quickshell-git") && slices.Contains(systemPkgs, "dms-shell") {
+	if slices.Contains(aurPkgs, "quickshell-git") && slices.Contains(systemPkgs, "hgs-shell") {
 		if err := a.preinstallQuickshellGit(ctx, sudoPassword, progressChan); err != nil {
 			return fmt.Errorf("failed to preinstall quickshell-git: %w", err)
 		}
@@ -418,8 +374,8 @@ func (a *ArchDistribution) InstallPackages(ctx context.Context, dependencies []d
 		a.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := a.EnableDMSService(ctx, wm); err != nil {
-		a.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := a.EnableHGSService(ctx, wm); err != nil {
+		a.log(fmt.Sprintf("Warning: failed to enable hgs service: %v", err))
 	}
 
 	// Phase 7: Complete
@@ -514,7 +470,7 @@ func (a *ArchDistribution) preinstallQuickshellGit(ctx context.Context, sudoPass
 		Progress:    0.18,
 		Step:        "Building quickshell-git before system packages...",
 		IsComplete:  false,
-		CommandInfo: "Installing quickshell-git ahead of dms-shell to avoid conflict",
+		CommandInfo: "Installing quickshell-git ahead of hgs-shell to avoid conflict",
 	}
 	return a.installSingleAURPackage(ctx, "quickshell-git", sudoPassword, progressChan, 0.18, 0.32)
 }
@@ -527,8 +483,8 @@ func (a *ArchDistribution) installSystemPackages(ctx context.Context, packages [
 	a.log(fmt.Sprintf("Installing system packages: %s", strings.Join(packages, ", ")))
 
 	args := []string{"pacman", "-S", "--needed", "--noconfirm"}
-	if slices.Contains(packages, "dms-shell") {
-		args = append(args, "--assume-installed", "dms-shell-compositor=1")
+	if slices.Contains(packages, "hgs-shell") {
+		args = append(args, "--assume-installed", "hgs-shell-compositor=1")
 	}
 	args = append(args, packages...)
 
@@ -552,31 +508,7 @@ func (a *ArchDistribution) installAURPackages(ctx context.Context, packages []st
 
 	a.log(fmt.Sprintf("Installing AUR packages manually: %s", strings.Join(packages, ", ")))
 
-	hasNiri := false
-	for _, pkg := range packages {
-		if pkg == "niri-git" {
-			hasNiri = true
-		}
-	}
-
-	// If niri is in the list, install makepkg-git-lfs-proto first if not already installed
-	if hasNiri {
-		if !a.packageInstalled("makepkg-git-lfs-proto") {
-			progressChan <- InstallProgressMsg{
-				Phase:       PhaseAURPackages,
-				Progress:    0.65,
-				Step:        "Installing makepkg-git-lfs-proto for niri...",
-				IsComplete:  false,
-				CommandInfo: "Installing prerequisite for niri-git",
-			}
-
-			if err := a.installSingleAURPackage(ctx, "makepkg-git-lfs-proto", sudoPassword, progressChan, 0.65, 0.67); err != nil {
-				return fmt.Errorf("failed to install makepkg-git-lfs-proto prerequisite for niri: %w", err)
-			}
-		}
-	}
-
-	// Reorder packages to ensure dms-shell-git dependencies are installed first
+	// Reorder packages to ensure hgs-shell-git dependencies are installed first
 	orderedPackages := a.reorderAURPackages(packages)
 
 	baseProgress := 0.67
@@ -610,18 +542,18 @@ func (a *ArchDistribution) installAURPackages(ctx context.Context, packages []st
 }
 
 func (a *ArchDistribution) reorderAURPackages(packages []string) []string {
-	dmsDepencies := []string{"quickshell", "quickshell-git", "dgop"}
+	hgsDepencies := []string{"quickshell", "quickshell-git", "dgop"}
 
 	var deps []string
 	var others []string
-	var dmsShell []string
+	var hgsShell []string
 
 	for _, pkg := range packages {
-		if pkg == "dms-shell-git" {
-			dmsShell = append(dmsShell, pkg)
+		if pkg == "hgs-shell-git" {
+			hgsShell = append(hgsShell, pkg)
 		} else {
 			isDep := false
-			if slices.Contains(dmsDepencies, pkg) {
+			if slices.Contains(hgsDepencies, pkg) {
 				deps = append(deps, pkg)
 				isDep = true
 			}
@@ -632,7 +564,7 @@ func (a *ArchDistribution) reorderAURPackages(packages []string) []string {
 	}
 
 	result := append(deps, others...)
-	result = append(result, dmsShell...)
+	result = append(result, hgsShell...)
 	return result
 }
 
@@ -652,7 +584,7 @@ func (a *ArchDistribution) installSingleAURPackageInternal(ctx context.Context, 
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	buildDir := filepath.Join(homeDir, ".cache", "dankinstall", "aur-builds", pkg)
+	buildDir := filepath.Join(homeDir, ".cache", "hgsinstall", "aur-builds", pkg)
 
 	// Clean up any existing cache first
 	if err := os.RemoveAll(buildDir); err != nil {
@@ -684,21 +616,7 @@ func (a *ArchDistribution) installSingleAURPackageInternal(ctx context.Context, 
 
 	packageDir := filepath.Join(buildDir, pkg)
 
-	if pkg == "niri-git" {
-		pkgbuildPath := filepath.Join(packageDir, "PKGBUILD")
-		sedCmd := exec.CommandContext(ctx, "sed", "-i", "s/makepkg-git-lfs-proto//g", pkgbuildPath)
-		if err := sedCmd.Run(); err != nil {
-			return fmt.Errorf("failed to patch PKGBUILD for niri-git: %w", err)
-		}
-
-		srcinfoPath := filepath.Join(packageDir, ".SRCINFO")
-		sedCmd2 := exec.CommandContext(ctx, "sed", "-i", "/makedepends = makepkg-git-lfs-proto/d", srcinfoPath)
-		if err := sedCmd2.Run(); err != nil {
-			return fmt.Errorf("failed to patch .SRCINFO for niri-git: %w", err)
-		}
-	}
-
-	if pkg == "dms-shell-git" {
+	if pkg == "hgs-shell-git" {
 		srcinfoPath := filepath.Join(packageDir, ".SRCINFO")
 		depsToRemove := []string{
 			"depends = quickshell",

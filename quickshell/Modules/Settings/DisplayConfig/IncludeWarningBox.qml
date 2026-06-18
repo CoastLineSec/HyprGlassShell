@@ -31,7 +31,7 @@ StyledRect {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            HGSIcon {
                 name: "warning"
                 size: Theme.iconSize
                 color: Theme.primary
@@ -63,11 +63,11 @@ StyledRect {
                 StyledText {
                     text: {
                         if (root.showLegacy)
-                            return I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing display settings.");
+                            return I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing display settings.");
                         if (root.showSetup)
-                            return I18n.tr("Click 'Setup' to create the outputs config and add include to your compositor config.");
+                            return I18n.tr("Click 'Setup' to create the monitors config and add include to your compositor config.");
                         if (root.showError)
-                            return I18n.tr("dms/outputs config exists but is not included in your compositor config. Display changes won't persist.");
+                            return I18n.tr("hgs/monitors config exists but is not included in your compositor config. Display changes won't persist.");
                         return "";
                     }
                     font.pixelSize: Theme.fontSizeSmall
@@ -78,7 +78,7 @@ StyledRect {
                 }
             }
 
-            DankButton {
+            HGSButton {
                 id: fixButton
                 visible: !root.showLegacy && (root.showError || root.showSetup)
                 text: {

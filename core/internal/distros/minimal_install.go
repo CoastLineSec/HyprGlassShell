@@ -6,12 +6,7 @@ type minimalInstallGroup struct {
 }
 
 func shouldPreferMinimalInstall(pkg string) bool {
-	switch pkg {
-	case "niri", "niri-git":
-		return true
-	default:
-		return false
-	}
+	return false
 }
 
 func splitMinimalInstallPackages(packages []string) (normal []string, minimal []string) {

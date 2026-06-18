@@ -97,7 +97,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    HGSIcon {
                         name: "add_circle"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -119,7 +119,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.spacingXS
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -137,7 +137,7 @@ FloatingWindow {
                     anchors.margins: Theme.spacingL
                     spacing: Theme.spacingM
 
-                    DankTextField {
+                    HGSTextField {
                         id: searchField
                         width: parent.width
                         height: 48
@@ -160,7 +160,7 @@ FloatingWindow {
                         }
                     }
 
-                    DankListView {
+                    HGSListView {
                         id: appList
                         width: parent.width
                         height: parent.height - searchField.height - Theme.spacingM
@@ -223,7 +223,7 @@ FloatingWindow {
                                     }
                                 }
 
-                                DankIcon {
+                                HGSIcon {
                                     name: "add"
                                     size: Theme.iconSize - 4
                                     color: Theme.primary

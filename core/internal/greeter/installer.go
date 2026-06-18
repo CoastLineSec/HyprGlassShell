@@ -14,28 +14,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/matugen"
-	sharedpam "github.com/AvengeMedia/DankMaterialShell/core/internal/pam"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
-	"github.com/sblinch/kdl-go"
-	"github.com/sblinch/kdl-go/document"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/config"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/distros"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/matugen"
+	sharedpam "github.com/CoastLineSec/HyprGlassShell/core/internal/pam"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/privesc"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 )
 
 var appArmorProfileData []byte
 
-const appArmorProfileDest = "/etc/apparmor.d/usr.bin.dms-greeter"
+const appArmorProfileDest = "/etc/apparmor.d/usr.bin.hgs-greeter"
 
-const GreeterCacheDir = "/var/cache/dms-greeter"
+const GreeterCacheDir = "/var/cache/hgs-greeter"
 
-func DetectDMSPath() (string, error) {
-	return config.LocateDMSConfig()
+func DetectHGSPath() (string, error) {
+	return config.LocateHGSConfig()
 }
 
 // IsNixOS returns true when running on NixOS, which manages PAM configs through
-// its module system. The DMS PAM managed block won't be written on NixOS.
+// its module system. The HGS PAM managed block won't be written on NixOS.
 func IsNixOS() bool {
 	_, err := os.Stat("/etc/NIXOS")
 	return err == nil
@@ -384,7 +382,7 @@ func execFromDesktopFile(path string) (string, error) {
 func resolveGreeterAutoLoginState(cacheDir, homeDir string) (enabled bool, loginUser string, sessionExec string, err error) {
 	settingsPath := filepath.Join(cacheDir, "settings.json")
 	if _, statErr := os.Stat(settingsPath); statErr != nil {
-		settingsPath = filepath.Join(homeDir, ".config", "DankMaterialShell", "settings.json")
+		settingsPath = filepath.Join(homeDir, ".config", "HyprGlassShell", "settings.json")
 	}
 
 	cfg, err := readGreeterAutoLoginConfig(settingsPath)
@@ -636,52 +634,46 @@ func DetectGreeterUser() string {
 }
 
 func resolveGreeterWrapperPath() string {
-	if override := strings.TrimSpace(os.Getenv("DMS_GREETER_WRAPPER_CMD")); override != "" {
+	if override := strings.TrimSpace(os.Getenv("HGS_GREETER_WRAPPER_CMD")); override != "" {
 		return override
 	}
 
 	// Packaged installs only use the official wrapper; never fall back to /usr/local/bin.
 	if IsGreeterPackaged() {
-		packagedWrapper := "/usr/bin/dms-greeter"
+		packagedWrapper := "/usr/bin/hgs-greeter"
 		if info, err := os.Stat(packagedWrapper); err == nil && !info.IsDir() && (info.Mode()&0o111) != 0 {
 			return packagedWrapper
 		}
-		fmt.Fprintln(os.Stderr, "⚠ Warning: packaged dms-greeter detected, but /usr/bin/dms-greeter is missing or not executable")
+		fmt.Fprintln(os.Stderr, "⚠ Warning: packaged hgs-greeter detected, but /usr/bin/hgs-greeter is missing or not executable")
 		return packagedWrapper
 	}
 
-	for _, candidate := range []string{"/usr/bin/dms-greeter", "/usr/local/bin/dms-greeter"} {
+	for _, candidate := range []string{"/usr/bin/hgs-greeter", "/usr/local/bin/hgs-greeter"} {
 		if info, err := os.Stat(candidate); err == nil && !info.IsDir() && (info.Mode()&0o111) != 0 {
 			return candidate
 		}
 	}
 
-	if path, err := exec.LookPath("dms-greeter"); err == nil {
+	if path, err := exec.LookPath("hgs-greeter"); err == nil {
 		resolved := path
 		if realPath, realErr := filepath.EvalSymlinks(path); realErr == nil {
 			resolved = realPath
 		}
 		if strings.HasPrefix(resolved, "/home/") || strings.HasPrefix(resolved, "/tmp/") {
-			fmt.Fprintf(os.Stderr, "⚠ Warning: ignoring non-system dms-greeter on PATH: %s\n", path)
+			fmt.Fprintf(os.Stderr, "⚠ Warning: ignoring non-system hgs-greeter on PATH: %s\n", path)
 		} else {
 			return path
 		}
 	}
 
-	return "/usr/bin/dms-greeter"
+	return "/usr/bin/hgs-greeter"
 }
 
 func DetectCompositors() []string {
 	var compositors []string
 
-	if utils.CommandExists("niri") {
-		compositors = append(compositors, "niri")
-	}
 	if utils.CommandExists("Hyprland") {
 		compositors = append(compositors, "Hyprland")
-	}
-	if utils.CommandExists("mango") {
-		compositors = append(compositors, "mango")
 	}
 
 	return compositors
@@ -773,23 +765,23 @@ func EnsureGreetdInstalled(logFunc func(string), sudoPassword string) error {
 	return nil
 }
 
-// IsGreeterPackaged returns true if dms-greeter was installed from a system package.
+// IsGreeterPackaged returns true if hgs-greeter was installed from a system package.
 func IsGreeterPackaged() bool {
-	if !utils.CommandExists("dms-greeter") {
+	if !utils.CommandExists("hgs-greeter") {
 		return false
 	}
-	packagedPath := "/usr/share/quickshell/dms-greeter"
+	packagedPath := "/usr/share/quickshell/hgs-greeter"
 	info, err := os.Stat(packagedPath)
 	return err == nil && info.IsDir()
 }
 
 // HasLegacyLocalGreeterWrapper returns true when a manually installed wrapper exists.
 func HasLegacyLocalGreeterWrapper() bool {
-	info, err := os.Stat("/usr/local/bin/dms-greeter")
+	info, err := os.Stat("/usr/local/bin/hgs-greeter")
 	return err == nil && !info.IsDir()
 }
 
-// TryInstallGreeterPackage attempts to install dms-greeter from the distro's official repo.
+// TryInstallGreeterPackage attempts to install hgs-greeter from the distro's official repo.
 func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 	osInfo, err := distros.GetOSInfo()
 	if err != nil {
@@ -801,7 +793,7 @@ func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 	}
 
 	if IsGreeterPackaged() {
-		logFunc("✓ dms-greeter package already installed")
+		logFunc("✓ hgs-greeter package already installed")
 		return true
 	}
 
@@ -812,10 +804,10 @@ func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 	switch config.Family {
 	case distros.FamilyDebian:
 		obsSlug := getDebianOBSSlug(osInfo)
-		keyURL := fmt.Sprintf("https://download.opensuse.org/repositories/home:AvengeMedia:danklinux/%s/Release.key", obsSlug)
-		repoLine := fmt.Sprintf("deb [signed-by=/etc/apt/keyrings/danklinux.gpg] https://download.opensuse.org/repositories/home:/AvengeMedia:/danklinux/%s/ /", obsSlug)
-		failHint = fmt.Sprintf("⚠ dms-greeter install failed. Add OBS repo manually:\nsudo apt-get install -y gnupg\nsudo mkdir -p /etc/apt/keyrings\ncurl -fsSL %s | sudo gpg --dearmor -o /etc/apt/keyrings/danklinux.gpg\necho '%s' | sudo tee /etc/apt/sources.list.d/danklinux.list\nsudo apt update && sudo apt-get install -y dms-greeter", keyURL, repoLine)
-		logFunc(fmt.Sprintf("Adding DankLinux OBS repository (%s)...", obsSlug))
+		keyURL := fmt.Sprintf("https://download.opensuse.org/repositories/home:AvengeMedia:coastlinesec/%s/Release.key", obsSlug)
+		repoLine := fmt.Sprintf("deb [signed-by=/etc/apt/keyrings/coastlinesec.gpg] https://download.opensuse.org/repositories/home:/AvengeMedia:/coastlinesec/%s/ /", obsSlug)
+		failHint = fmt.Sprintf("⚠ hgs-greeter install failed. Add OBS repo manually:\nsudo apt-get install -y gnupg\nsudo mkdir -p /etc/apt/keyrings\ncurl -fsSL %s | sudo gpg --dearmor -o /etc/apt/keyrings/coastlinesec.gpg\necho '%s' | sudo tee /etc/apt/sources.list.d/coastlinesec.list\nsudo apt update && sudo apt-get install -y hgs-greeter", keyURL, repoLine)
+		logFunc(fmt.Sprintf("Adding CoastLineSec OBS repository (%s)...", obsSlug))
 		if _, err := exec.LookPath("gpg"); err != nil {
 			logFunc("Installing gnupg for OBS repository key import...")
 			installGPGCmd := privesc.ExecCommand(ctx, sudoPassword, "apt-get install -y gnupg")
@@ -830,44 +822,44 @@ func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 		mkdirCmd.Stderr = os.Stderr
 		mkdirCmd.Run()
 		addKeyCmd := privesc.ExecCommand(ctx, sudoPassword,
-			fmt.Sprintf(`bash -c "curl -fsSL %s | gpg --dearmor -o /etc/apt/keyrings/danklinux.gpg"`, keyURL))
+			fmt.Sprintf(`bash -c "curl -fsSL %s | gpg --dearmor -o /etc/apt/keyrings/coastlinesec.gpg"`, keyURL))
 		addKeyCmd.Stdout = os.Stdout
 		addKeyCmd.Stderr = os.Stderr
 		addKeyCmd.Run()
 		addRepoCmd := privesc.ExecCommand(ctx, sudoPassword,
-			fmt.Sprintf(`bash -c "echo '%s' > /etc/apt/sources.list.d/danklinux.list"`, repoLine))
+			fmt.Sprintf(`bash -c "echo '%s' > /etc/apt/sources.list.d/coastlinesec.list"`, repoLine))
 		addRepoCmd.Stdout = os.Stdout
 		addRepoCmd.Stderr = os.Stderr
 		addRepoCmd.Run()
 		privesc.ExecCommand(ctx, sudoPassword, "apt-get update").Run()
-		installCmd = privesc.ExecCommand(ctx, sudoPassword, "apt-get install -y dms-greeter")
+		installCmd = privesc.ExecCommand(ctx, sudoPassword, "apt-get install -y hgs-greeter")
 	case distros.FamilySUSE:
 		repoURL := getOpenSUSEOBSRepoURL(osInfo)
-		failHint = fmt.Sprintf("⚠ dms-greeter install failed. Add OBS repo manually:\nsudo zypper addrepo %s\nsudo zypper refresh && sudo zypper install dms-greeter", repoURL)
-		logFunc("Adding DankLinux OBS repository...")
+		failHint = fmt.Sprintf("⚠ hgs-greeter install failed. Add OBS repo manually:\nsudo zypper addrepo %s\nsudo zypper refresh && sudo zypper install hgs-greeter", repoURL)
+		logFunc("Adding CoastLineSec OBS repository...")
 		addRepoCmd := privesc.ExecCommand(ctx, sudoPassword, fmt.Sprintf("zypper addrepo %s", repoURL))
 		addRepoCmd.Stdout = os.Stdout
 		addRepoCmd.Stderr = os.Stderr
 		addRepoCmd.Run()
 		privesc.ExecCommand(ctx, sudoPassword, "zypper refresh").Run()
-		installCmd = privesc.ExecCommand(ctx, sudoPassword, "zypper install -y dms-greeter")
+		installCmd = privesc.ExecCommand(ctx, sudoPassword, "zypper install -y hgs-greeter")
 	case distros.FamilyUbuntu:
-		failHint = "⚠ dms-greeter install failed. Add PPA manually: sudo add-apt-repository ppa:avengemedia/danklinux && sudo apt-get update && sudo apt-get install -y dms-greeter"
-		logFunc("Enabling PPA ppa:avengemedia/danklinux...")
-		ppacmd := privesc.ExecCommand(ctx, sudoPassword, "add-apt-repository -y ppa:avengemedia/danklinux")
+		failHint = "⚠ hgs-greeter install failed. Add PPA manually: sudo add-apt-repository ppa:avengemedia/coastlinesec && sudo apt-get update && sudo apt-get install -y hgs-greeter"
+		logFunc("Enabling PPA ppa:avengemedia/coastlinesec...")
+		ppacmd := privesc.ExecCommand(ctx, sudoPassword, "add-apt-repository -y ppa:avengemedia/coastlinesec")
 		ppacmd.Stdout = os.Stdout
 		ppacmd.Stderr = os.Stderr
 		ppacmd.Run()
 		privesc.ExecCommand(ctx, sudoPassword, "apt-get update").Run()
-		installCmd = privesc.ExecCommand(ctx, sudoPassword, "apt-get install -y dms-greeter")
+		installCmd = privesc.ExecCommand(ctx, sudoPassword, "apt-get install -y hgs-greeter")
 	case distros.FamilyFedora:
-		failHint = "⚠ dms-greeter install failed. Enable COPR manually: sudo dnf copr enable avengemedia/danklinux && sudo dnf install dms-greeter"
-		logFunc("Enabling COPR avengemedia/danklinux...")
-		coprcmd := privesc.ExecCommand(ctx, sudoPassword, "dnf copr enable -y avengemedia/danklinux")
+		failHint = "⚠ hgs-greeter install failed. Enable COPR manually: sudo dnf copr enable avengemedia/coastlinesec && sudo dnf install hgs-greeter"
+		logFunc("Enabling COPR avengemedia/coastlinesec...")
+		coprcmd := privesc.ExecCommand(ctx, sudoPassword, "dnf copr enable -y avengemedia/coastlinesec")
 		coprcmd.Stdout = os.Stdout
 		coprcmd.Stderr = os.Stderr
 		coprcmd.Run()
-		installCmd = privesc.ExecCommand(ctx, sudoPassword, "dnf install -y dms-greeter")
+		installCmd = privesc.ExecCommand(ctx, sudoPassword, "dnf install -y hgs-greeter")
 	case distros.FamilyArch:
 		aurHelper := ""
 		for _, helper := range []string{"paru", "yay"} {
@@ -877,16 +869,16 @@ func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 			}
 		}
 		if aurHelper == "" {
-			logFunc("⚠ No AUR helper found (paru/yay). Install greetd-dms-greeter-git from AUR: https://aur.archlinux.org/packages/greetd-dms-greeter-git")
+			logFunc("⚠ No AUR helper found (paru/yay). Install greetd-hgs-greeter-git from AUR: https://aur.archlinux.org/packages/greetd-hgs-greeter-git")
 			return false
 		}
-		failHint = fmt.Sprintf("⚠ dms-greeter install failed. Install from AUR: %s -S greetd-dms-greeter-git", aurHelper)
-		installCmd = exec.CommandContext(ctx, aurHelper, "-S", "--noconfirm", "greetd-dms-greeter-git")
+		failHint = fmt.Sprintf("⚠ hgs-greeter install failed. Install from AUR: %s -S greetd-hgs-greeter-git", aurHelper)
+		installCmd = exec.CommandContext(ctx, aurHelper, "-S", "--noconfirm", "greetd-hgs-greeter-git")
 	default:
 		return false
 	}
 
-	logFunc("Installing dms-greeter from official repository...")
+	logFunc("Installing hgs-greeter from official repository...")
 	installCmd.Stdout = os.Stdout
 	installCmd.Stderr = os.Stderr
 
@@ -895,35 +887,35 @@ func TryInstallGreeterPackage(logFunc func(string), sudoPassword string) bool {
 		return false
 	}
 
-	logFunc("✓ dms-greeter package installed")
+	logFunc("✓ hgs-greeter package installed")
 	return true
 }
 
-// CopyGreeterFiles installs the dms-greeter wrapper and sets up cache directory
-func CopyGreeterFiles(dmsPath, compositor string, logFunc func(string), sudoPassword string) error {
+// CopyGreeterFiles installs the hgs-greeter wrapper and sets up cache directory
+func CopyGreeterFiles(hgsPath, compositor string, logFunc func(string), sudoPassword string) error {
 	if IsGreeterPackaged() {
-		logFunc("✓ dms-greeter package already installed")
+		logFunc("✓ hgs-greeter package already installed")
 	} else {
-		if dmsPath == "" {
-			return fmt.Errorf("dms path is required for manual dms-greeter wrapper installs")
+		if hgsPath == "" {
+			return fmt.Errorf("hgs path is required for manual hgs-greeter wrapper installs")
 		}
 
-		assetsDir := filepath.Join(dmsPath, "Modules", "Greetd", "assets")
-		wrapperSrc := filepath.Join(assetsDir, "dms-greeter")
+		assetsDir := filepath.Join(hgsPath, "Modules", "Greetd", "assets")
+		wrapperSrc := filepath.Join(assetsDir, "hgs-greeter")
 
 		if _, err := os.Stat(wrapperSrc); os.IsNotExist(err) {
-			return fmt.Errorf("dms-greeter wrapper not found at %s", wrapperSrc)
+			return fmt.Errorf("hgs-greeter wrapper not found at %s", wrapperSrc)
 		}
 
-		wrapperDst := "/usr/local/bin/dms-greeter"
+		wrapperDst := "/usr/local/bin/hgs-greeter"
 		action := "Installed"
 		if info, err := os.Stat(wrapperDst); err == nil && !info.IsDir() {
 			action = "Updated"
 		}
 		if err := privesc.Run(context.Background(), sudoPassword, "cp", wrapperSrc, wrapperDst); err != nil {
-			return fmt.Errorf("failed to copy dms-greeter wrapper: %w", err)
+			return fmt.Errorf("failed to copy hgs-greeter wrapper: %w", err)
 		}
-		logFunc(fmt.Sprintf("✓ %s dms-greeter wrapper at %s", action, wrapperDst))
+		logFunc(fmt.Sprintf("✓ %s hgs-greeter wrapper at %s", action, wrapperDst))
 
 		if err := privesc.Run(context.Background(), sudoPassword, "chmod", "+x", wrapperDst); err != nil {
 			return fmt.Errorf("failed to make wrapper executable: %w", err)
@@ -935,13 +927,13 @@ func CopyGreeterFiles(dmsPath, compositor string, logFunc func(string), sudoPass
 				if err := privesc.Run(context.Background(), sudoPassword, "semanage", "fcontext", "-a", "-t", "bin_t", wrapperDst); err != nil {
 					logFunc(fmt.Sprintf("⚠ Warning: Failed to set SELinux fcontext: %v", err))
 				} else {
-					logFunc("✓ Set SELinux fcontext for dms-greeter")
+					logFunc("✓ Set SELinux fcontext for hgs-greeter")
 				}
 
 				if err := privesc.Run(context.Background(), sudoPassword, "restorecon", "-v", wrapperDst); err != nil {
 					logFunc(fmt.Sprintf("⚠ Warning: Failed to restore SELinux context: %v", err))
 				} else {
-					logFunc("✓ Restored SELinux context for dms-greeter")
+					logFunc("✓ Restored SELinux context for hgs-greeter")
 				}
 			}
 		}
@@ -954,7 +946,7 @@ func CopyGreeterFiles(dmsPath, compositor string, logFunc func(string), sudoPass
 	return nil
 }
 
-// EnsureGreeterCacheDir creates /var/cache/dms-greeter with correct ownership if it does not exist.
+// EnsureGreeterCacheDir creates /var/cache/hgs-greeter with correct ownership if it does not exist.
 // It is safe to call multiple times (idempotent) and will repair ownership/mode
 // when the directory already exists with stale permissions.
 func EnsureGreeterCacheDir(logFunc func(string), sudoPassword string) error {
@@ -1078,7 +1070,7 @@ func InstallAppArmorProfile(logFunc func(string), sudoPassword string) error {
 		return fmt.Errorf("failed to create /etc/apparmor.d: %w", err)
 	}
 
-	tmp, err := os.CreateTemp("", "dms-apparmor-*")
+	tmp, err := os.CreateTemp("", "hgs-apparmor-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for AppArmor profile: %w", err)
 	}
@@ -1113,7 +1105,7 @@ func InstallAppArmorProfile(logFunc func(string), sudoPassword string) error {
 	return nil
 }
 
-// UninstallAppArmorProfile removes the DMS AppArmor profile and reloads AppArmor.
+// UninstallAppArmorProfile removes the HGS AppArmor profile and reloads AppArmor.
 // It is a no-op when AppArmor is not active or the profile does not exist.
 func UninstallAppArmorProfile(logFunc func(string), sudoPassword string) error {
 	if IsNixOS() {
@@ -1132,7 +1124,7 @@ func UninstallAppArmorProfile(logFunc func(string), sudoPassword string) error {
 	if err := privesc.Run(context.Background(), sudoPassword, "rm", "-f", appArmorProfileDest); err != nil {
 		return fmt.Errorf("failed to remove AppArmor profile: %w", err)
 	}
-	logFunc("  ✓ Removed DMS AppArmor profile")
+	logFunc("  ✓ Removed HGS AppArmor profile")
 	return nil
 }
 
@@ -1257,9 +1249,9 @@ func RemediateStaleACLs(logFunc func(string), sudoPassword string) {
 	dirs := []string{
 		homeDir,
 		filepath.Join(homeDir, ".config"),
-		filepath.Join(homeDir, ".config", "DankMaterialShell"),
+		filepath.Join(homeDir, ".config", "HyprGlassShell"),
 		filepath.Join(homeDir, ".cache"),
-		filepath.Join(homeDir, ".cache", "DankMaterialShell"),
+		filepath.Join(homeDir, ".cache", "HyprGlassShell"),
 		filepath.Join(homeDir, ".local"),
 		filepath.Join(homeDir, ".local", "state"),
 		filepath.Join(homeDir, ".local", "share"),
@@ -1305,7 +1297,7 @@ func RemediateStaleAppArmor(logFunc func(string), sudoPassword string) {
 	_ = UninstallAppArmorProfile(logFunc, sudoPassword)
 }
 
-func SetupDMSGroup(logFunc func(string), sudoPassword string) error {
+func SetupHGSGroup(logFunc func(string), sudoPassword string) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
@@ -1362,9 +1354,9 @@ func SetupDMSGroup(logFunc func(string), sudoPassword string) error {
 		path string
 		desc string
 	}{
-		{filepath.Join(homeDir, ".config", "DankMaterialShell"), "DankMaterialShell config"},
-		{filepath.Join(homeDir, ".local", "state", "DankMaterialShell"), "DankMaterialShell state"},
-		{filepath.Join(homeDir, ".cache", "DankMaterialShell"), "DankMaterialShell cache"},
+		{filepath.Join(homeDir, ".config", "HyprGlassShell"), "HyprGlassShell config"},
+		{filepath.Join(homeDir, ".local", "state", "HyprGlassShell"), "HyprGlassShell state"},
+		{filepath.Join(homeDir, ".cache", "HyprGlassShell"), "HyprGlassShell cache"},
 		{filepath.Join(homeDir, ".cache", "quickshell"), "quickshell cache"},
 		{filepath.Join(homeDir, ".config", "quickshell"), "quickshell config"},
 		{filepath.Join(homeDir, ".local", "share", "wayland-sessions"), "wayland sessions"},
@@ -1427,15 +1419,15 @@ type greeterThemeSyncState struct {
 }
 
 func defaultGreeterColorsSource(homeDir string) string {
-	return filepath.Join(homeDir, ".cache", "DankMaterialShell", "dms-colors.json")
+	return filepath.Join(homeDir, ".cache", "HyprGlassShell", "hgs-colors.json")
 }
 
 func greeterOverrideColorsStateDir(homeDir string) string {
-	return filepath.Join(homeDir, ".cache", "DankMaterialShell", "greeter-colors")
+	return filepath.Join(homeDir, ".cache", "HyprGlassShell", "greeter-colors")
 }
 
 func greeterOverrideColorsSource(homeDir string) string {
-	return filepath.Join(greeterOverrideColorsStateDir(homeDir), "dms-colors.json")
+	return filepath.Join(greeterOverrideColorsStateDir(homeDir), "hgs-colors.json")
 }
 
 func readOptionalJSONFile(path string, dst any) error {
@@ -1458,7 +1450,7 @@ func readGreeterThemeSyncSettings(homeDir string) (greeterThemeSyncSettings, err
 		MatugenScheme:    "scheme-tonal-spot",
 		IconTheme:        "System Default",
 	}
-	settingsPath := filepath.Join(homeDir, ".config", "DankMaterialShell", "settings.json")
+	settingsPath := filepath.Join(homeDir, ".config", "HyprGlassShell", "settings.json")
 	if err := readOptionalJSONFile(settingsPath, &settings); err != nil {
 		return greeterThemeSyncSettings{}, fmt.Errorf("failed to parse settings at %s: %w", settingsPath, err)
 	}
@@ -1467,7 +1459,7 @@ func readGreeterThemeSyncSettings(homeDir string) (greeterThemeSyncSettings, err
 
 func readGreeterThemeSyncSession(homeDir string) (greeterThemeSyncSession, error) {
 	session := greeterThemeSyncSession{}
-	sessionPath := filepath.Join(homeDir, ".local", "state", "DankMaterialShell", "session.json")
+	sessionPath := filepath.Join(homeDir, ".local", "state", "HyprGlassShell", "session.json")
 	if err := readOptionalJSONFile(sessionPath, &session); err != nil {
 		return greeterThemeSyncSession{}, fmt.Errorf("failed to parse session at %s: %w", sessionPath, err)
 	}
@@ -1541,7 +1533,7 @@ func ensureGreeterSyncSourceFile(path string) error {
 	return nil
 }
 
-func syncGreeterDynamicOverrideColors(dmsPath, homeDir string, state greeterThemeSyncState, logFunc func(string)) error {
+func syncGreeterDynamicOverrideColors(hgsPath, homeDir string, state greeterThemeSyncState, logFunc func(string)) error {
 	if !state.UsesDynamicWallpaperOverride {
 		return nil
 	}
@@ -1561,7 +1553,7 @@ func syncGreeterDynamicOverrideColors(dmsPath, homeDir string, state greeterThem
 
 	opts := matugen.Options{
 		StateDir:         greeterOverrideColorsStateDir(homeDir),
-		ShellDir:         dmsPath,
+		ShellDir:         hgsPath,
 		ConfigDir:        filepath.Join(homeDir, ".config"),
 		Kind:             "image",
 		Value:            state.ResolvedGreeterWallpaperPath,
@@ -1610,7 +1602,7 @@ func syncGreeterColorSource(homeDir, cacheDir string, state greeterThemeSyncStat
 	return nil
 }
 
-func SyncDMSConfigs(dmsPath, compositor string, logFunc func(string), sudoPassword string) error {
+func SyncHGSConfigs(hgsPath, compositor string, logFunc func(string), sudoPassword string) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
@@ -1624,12 +1616,12 @@ func SyncDMSConfigs(dmsPath, compositor string, logFunc func(string), sudoPasswo
 		desc   string
 	}{
 		{
-			source: filepath.Join(homeDir, ".config", "DankMaterialShell", "settings.json"),
+			source: filepath.Join(homeDir, ".config", "HyprGlassShell", "settings.json"),
 			target: filepath.Join(cacheDir, "settings.json"),
 			desc:   "core settings (theme, clock formats, etc)",
 		},
 		{
-			source: filepath.Join(homeDir, ".local", "state", "DankMaterialShell", "session.json"),
+			source: filepath.Join(homeDir, ".local", "state", "HyprGlassShell", "session.json"),
 			target: filepath.Join(cacheDir, "session.json"),
 			desc:   "state (wallpaper configuration)",
 		},
@@ -1663,7 +1655,7 @@ func SyncDMSConfigs(dmsPath, compositor string, logFunc func(string), sudoPasswo
 		return fmt.Errorf("failed to resolve greeter color source: %w", err)
 	}
 
-	if err := syncGreeterDynamicOverrideColors(dmsPath, homeDir, state, logFunc); err != nil {
+	if err := syncGreeterDynamicOverrideColors(hgsPath, homeDir, state, logFunc); err != nil {
 		return err
 	}
 
@@ -1687,14 +1679,6 @@ func SyncDMSConfigs(dmsPath, compositor string, logFunc func(string), sudoPasswo
 
 	if err := SyncGreetdAutoLogin(cacheDir, homeDir, logFunc, sudoPassword); err != nil {
 		logFunc(fmt.Sprintf("⚠ Warning: greeter auto-login sync failed: %v", err))
-	}
-
-	if strings.ToLower(compositor) != "niri" {
-		return nil
-	}
-
-	if err := syncNiriGreeterConfig(logFunc, sudoPassword); err != nil {
-		logFunc(fmt.Sprintf("⚠ Warning: Failed to sync niri greeter config: %v", err))
 	}
 
 	return nil
@@ -1737,189 +1721,6 @@ func syncGreeterWallpaperOverride(cacheDir string, logFunc func(string), sudoPas
 	return nil
 }
 
-type niriGreeterSync struct {
-	processed   map[string]bool
-	nodes       []*document.Node
-	inputCount  int
-	outputCount int
-	cursorCount int
-	debugCount  int
-	cursorNode  *document.Node
-	inputNode   *document.Node
-	outputNodes map[string]*document.Node
-}
-
-func syncNiriGreeterConfig(logFunc func(string), sudoPassword string) error {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return fmt.Errorf("failed to resolve user config directory: %w", err)
-	}
-
-	configPath := filepath.Join(configDir, "niri", "config.kdl")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		logFunc("ℹ Niri config not found; skipping greeter niri sync")
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to stat niri config: %w", err)
-	}
-
-	extractor := &niriGreeterSync{
-		processed:   make(map[string]bool),
-		outputNodes: make(map[string]*document.Node),
-	}
-
-	if err := extractor.processFile(configPath); err != nil {
-		return err
-	}
-
-	if len(extractor.nodes) == 0 {
-		logFunc("ℹ No niri input/output sections found; skipping greeter niri sync")
-		return nil
-	}
-
-	content := extractor.render()
-	if strings.TrimSpace(content) == "" {
-		logFunc("ℹ No niri input/output content to sync; skipping greeter niri sync")
-		return nil
-	}
-
-	greeterDir := "/etc/greetd/niri"
-	greeterGroup := DetectGreeterGroup()
-	if err := privesc.Run(context.Background(), sudoPassword, "mkdir", "-p", greeterDir); err != nil {
-		return fmt.Errorf("failed to create greetd niri directory: %w", err)
-	}
-	if err := privesc.Run(context.Background(), sudoPassword, "chown", fmt.Sprintf("root:%s", greeterGroup), greeterDir); err != nil {
-		return fmt.Errorf("failed to set greetd niri directory ownership: %w", err)
-	}
-	if err := privesc.Run(context.Background(), sudoPassword, "chmod", "755", greeterDir); err != nil {
-		return fmt.Errorf("failed to set greetd niri directory permissions: %w", err)
-	}
-
-	dmsTemp, err := os.CreateTemp("", "dms-greeter-niri-dms-*.kdl")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer os.Remove(dmsTemp.Name())
-
-	if _, err := dmsTemp.WriteString(content); err != nil {
-		_ = dmsTemp.Close()
-		return fmt.Errorf("failed to write temp niri config: %w", err)
-	}
-	if err := dmsTemp.Close(); err != nil {
-		return fmt.Errorf("failed to close temp niri config: %w", err)
-	}
-
-	dmsPath := filepath.Join(greeterDir, "dms.kdl")
-	if err := backupFileIfExists(sudoPassword, dmsPath, ".backup"); err != nil {
-		return fmt.Errorf("failed to backup %s: %w", dmsPath, err)
-	}
-	if err := privesc.Run(context.Background(), sudoPassword, "install", "-o", "root", "-g", greeterGroup, "-m", "0644", dmsTemp.Name(), dmsPath); err != nil {
-		return fmt.Errorf("failed to install greetd niri dms config: %w", err)
-	}
-
-	mainContent := fmt.Sprintf("%s\ninclude \"%s\"\n", config.NiriGreeterConfig, dmsPath)
-	mainTemp, err := os.CreateTemp("", "dms-greeter-niri-main-*.kdl")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer os.Remove(mainTemp.Name())
-
-	if _, err := mainTemp.WriteString(mainContent); err != nil {
-		_ = mainTemp.Close()
-		return fmt.Errorf("failed to write temp niri main config: %w", err)
-	}
-	if err := mainTemp.Close(); err != nil {
-		return fmt.Errorf("failed to close temp niri main config: %w", err)
-	}
-
-	mainPath := filepath.Join(greeterDir, "config.kdl")
-	if err := backupFileIfExists(sudoPassword, mainPath, ".backup"); err != nil {
-		return fmt.Errorf("failed to backup %s: %w", mainPath, err)
-	}
-	if err := privesc.Run(context.Background(), sudoPassword, "install", "-o", "root", "-g", greeterGroup, "-m", "0644", mainTemp.Name(), mainPath); err != nil {
-		return fmt.Errorf("failed to install greetd niri main config: %w", err)
-	}
-
-	if err := ensureGreetdNiriConfig(logFunc, sudoPassword, mainPath); err != nil {
-		logFunc(fmt.Sprintf("⚠ Warning: Failed to update greetd config for niri: %v", err))
-	}
-
-	logFunc(fmt.Sprintf("✓ Synced niri greeter config (%d input, %d output, %d cursor, %d debug) to %s", extractor.inputCount, extractor.outputCount, extractor.cursorCount, extractor.debugCount, dmsPath))
-	return nil
-}
-
-func ensureGreetdNiriConfig(logFunc func(string), sudoPassword string, niriConfigPath string) error {
-	configPath := "/etc/greetd/config.toml"
-	data, err := os.ReadFile(configPath)
-	if os.IsNotExist(err) {
-		logFunc("ℹ greetd config not found; skipping niri config wiring")
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("failed to read greetd config: %w", err)
-	}
-
-	lines := strings.Split(string(data), "\n")
-	updated := false
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if !strings.HasPrefix(trimmed, "command") {
-			continue
-		}
-
-		parts := strings.SplitN(trimmed, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		command := strings.Trim(strings.TrimSpace(parts[1]), "\"")
-		if !strings.Contains(command, "dms-greeter") {
-			continue
-		}
-		if !strings.Contains(command, "--command niri") {
-			continue
-		}
-		command = stripConfigFlag(command)
-		command = stripCacheDirFlag(command)
-		command = strings.TrimSpace(command + " --cache-dir " + GreeterCacheDir)
-
-		newCommand := fmt.Sprintf("%s -C %s", command, niriConfigPath)
-		idx := strings.Index(line, "command")
-		leading := ""
-		if idx > 0 {
-			leading = line[:idx]
-		}
-		lines[i] = fmt.Sprintf("%scommand = \"%s\"", leading, newCommand)
-		updated = true
-		break
-	}
-
-	if !updated {
-		return nil
-	}
-
-	tmpFile, err := os.CreateTemp("", "greetd-config-*.toml")
-	if err != nil {
-		return fmt.Errorf("failed to create temp greetd config: %w", err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err := tmpFile.WriteString(strings.Join(lines, "\n")); err != nil {
-		_ = tmpFile.Close()
-		return fmt.Errorf("failed to write temp greetd config: %w", err)
-	}
-	if err := tmpFile.Close(); err != nil {
-		return fmt.Errorf("failed to close temp greetd config: %w", err)
-	}
-
-	if err := privesc.Run(context.Background(), sudoPassword, "mv", tmpFile.Name(), configPath); err != nil {
-		return fmt.Errorf("failed to update greetd config: %w", err)
-	}
-
-	logFunc(fmt.Sprintf("✓ Updated greetd config to use niri config %s", niriConfigPath))
-	return nil
-}
-
 func backupFileIfExists(sudoPassword string, path string, suffix string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil
@@ -1934,189 +1735,7 @@ func backupFileIfExists(sudoPassword string, path string, suffix string) error {
 	return privesc.Run(context.Background(), sudoPassword, "chmod", "644", backupPath)
 }
 
-func (s *niriGreeterSync) processFile(filePath string) error {
-	absPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to resolve path %s: %w", filePath, err)
-	}
-
-	if s.processed[absPath] {
-		return nil
-	}
-	s.processed[absPath] = true
-
-	data, err := os.ReadFile(absPath)
-	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", absPath, err)
-	}
-
-	doc, err := kdl.Parse(strings.NewReader(string(data)))
-	if err != nil {
-		return fmt.Errorf("failed to parse KDL in %s: %w", absPath, err)
-	}
-
-	baseDir := filepath.Dir(absPath)
-	for _, node := range doc.Nodes {
-		name := node.Name.String()
-		switch name {
-		case "include":
-			if err := s.handleInclude(node, baseDir); err != nil {
-				return err
-			}
-		case "input":
-			if s.inputNode == nil {
-				s.inputNode = node
-				s.inputNode.Children = dedupeCursorChildren(s.inputNode.Children)
-				s.nodes = append(s.nodes, node)
-			} else if len(node.Children) > 0 {
-				s.inputNode.Children = mergeInputChildren(s.inputNode.Children, node.Children)
-			}
-			s.inputCount++
-		case "output":
-			key := outputNodeKey(node)
-			if existing, ok := s.outputNodes[key]; ok {
-				*existing = *node
-			} else {
-				s.outputNodes[key] = node
-				s.nodes = append(s.nodes, node)
-			}
-			s.outputCount++
-		case "cursor":
-			if s.cursorNode == nil {
-				s.cursorNode = node
-				s.cursorNode.Children = dedupeCursorChildren(s.cursorNode.Children)
-				s.nodes = append(s.nodes, node)
-				s.cursorCount++
-			} else if len(node.Children) > 0 {
-				s.cursorNode.Children = mergeCursorChildren(s.cursorNode.Children, node.Children)
-			}
-		case "debug":
-			s.nodes = append(s.nodes, node)
-			s.debugCount++
-		}
-	}
-
-	return nil
-}
-
-func mergeCursorChildren(existing []*document.Node, incoming []*document.Node) []*document.Node {
-	if len(incoming) == 0 {
-		return existing
-	}
-
-	indexByName := make(map[string]int, len(existing))
-	for i, child := range existing {
-		indexByName[child.Name.String()] = i
-	}
-
-	for _, child := range incoming {
-		name := child.Name.String()
-		if idx, ok := indexByName[name]; ok {
-			existing[idx] = child
-			continue
-		}
-		indexByName[name] = len(existing)
-		existing = append(existing, child)
-	}
-
-	return existing
-}
-
-func dedupeCursorChildren(children []*document.Node) []*document.Node {
-	if len(children) == 0 {
-		return children
-	}
-
-	var result []*document.Node
-	indexByName := make(map[string]int, len(children))
-	for _, child := range children {
-		name := child.Name.String()
-		if idx, ok := indexByName[name]; ok {
-			result[idx] = child
-			continue
-		}
-		indexByName[name] = len(result)
-		result = append(result, child)
-	}
-
-	return result
-}
-
-func mergeInputChildren(existing []*document.Node, incoming []*document.Node) []*document.Node {
-	if len(incoming) == 0 {
-		return existing
-	}
-
-	indexByName := make(map[string]int, len(existing))
-	for i, child := range existing {
-		indexByName[child.Name.String()] = i
-	}
-
-	for _, child := range incoming {
-		name := child.Name.String()
-		if idx, ok := indexByName[name]; ok {
-			existing[idx] = child
-			continue
-		}
-		indexByName[name] = len(existing)
-		existing = append(existing, child)
-	}
-
-	return existing
-}
-
-func outputNodeKey(node *document.Node) string {
-	if len(node.Arguments) > 0 {
-		return strings.Trim(node.Arguments[0].String(), "\"")
-	}
-	return ""
-}
-
-func (s *niriGreeterSync) handleInclude(node *document.Node, baseDir string) error {
-	if len(node.Arguments) == 0 {
-		return nil
-	}
-
-	includePath := strings.Trim(node.Arguments[0].String(), "\"")
-	if includePath == "" {
-		return nil
-	}
-
-	fullPath := includePath
-	if !filepath.IsAbs(includePath) {
-		fullPath = filepath.Join(baseDir, includePath)
-	}
-
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to stat include %s: %w", fullPath, err)
-	}
-
-	return s.processFile(fullPath)
-}
-
-func (s *niriGreeterSync) render() string {
-	if len(s.nodes) == 0 {
-		return ""
-	}
-
-	var builder strings.Builder
-	for _, node := range s.nodes {
-		_, _ = node.WriteToOptions(&builder, document.NodeWriteOptions{
-			LeadingTrailingSpace: true,
-			NameAndType:          true,
-			Depth:                0,
-			Indent:               []byte("    "),
-			IgnoreFlags:          false,
-		})
-		builder.WriteString("\n")
-	}
-
-	return builder.String()
-}
-
-func ConfigureGreetd(dmsPath, compositor string, logFunc func(string), sudoPassword string) error {
+func ConfigureGreetd(hgsPath, compositor string, logFunc func(string), sudoPassword string) error {
 	configPath := "/etc/greetd/config.toml"
 
 	backupPath := fmt.Sprintf("%s.backup-%s", configPath, time.Now().Format("20060102-150405"))
@@ -2146,8 +1765,8 @@ vt = 1
 
 	compositorLower := strings.ToLower(compositor)
 	commandValue := fmt.Sprintf("%s --command %s --cache-dir %s", wrapperCmd, compositorLower, GreeterCacheDir)
-	if dmsPath != "" {
-		commandValue = fmt.Sprintf("%s -p %s", commandValue, dmsPath)
+	if hgsPath != "" {
+		commandValue = fmt.Sprintf("%s -p %s", commandValue, hgsPath)
 	}
 
 	commandLine := fmt.Sprintf(`command = "%s"`, commandValue)
@@ -2236,7 +1855,7 @@ func getDebianOBSSlug(osInfo *distros.OSInfo) string {
 
 // getOpenSUSEOBSRepoURL returns the OBS .repo file URL for the running openSUSE variant.
 func getOpenSUSEOBSRepoURL(osInfo *distros.OSInfo) string {
-	const base = "https://download.opensuse.org/repositories/home:AvengeMedia:danklinux"
+	const base = "https://download.opensuse.org/repositories/home:AvengeMedia:coastlinesec"
 	var slug string
 	switch osInfo.Distribution.ID {
 	case "opensuse-leap":
@@ -2253,7 +1872,7 @@ func getOpenSUSEOBSRepoURL(osInfo *distros.OSInfo) string {
 	default: // opensuse-tumbleweed || unknown version
 		slug = "openSUSE_Tumbleweed"
 	}
-	return fmt.Sprintf("%s/%s/home:AvengeMedia:danklinux.repo", base, slug)
+	return fmt.Sprintf("%s/%s/home:AvengeMedia:coastlinesec.repo", base, slug)
 }
 
 func checkSystemdEnabled(service string) (string, error) {
@@ -2328,9 +1947,13 @@ func EnsureGraphicalTarget(sudoPassword string, logFunc func(string)) error {
 
 // AutoSetupGreeter performs the full non-interactive greeter setup
 func AutoSetupGreeter(compositor, sudoPassword string, logFunc func(string)) error {
+	if strings.ToLower(compositor) != "hyprland" {
+		return fmt.Errorf("unsupported greeter compositor %q: HyprGlassShell currently supports Hyprland only", compositor)
+	}
+
 	if IsGreeterPackaged() && HasLegacyLocalGreeterWrapper() {
-		return fmt.Errorf("legacy manual wrapper detected at /usr/local/bin/dms-greeter; " +
-			"remove it before using packaged dms-greeter: sudo rm -f /usr/local/bin/dms-greeter")
+		return fmt.Errorf("legacy manual wrapper detected at /usr/local/bin/hgs-greeter; " +
+			"remove it before using packaged hgs-greeter: sudo rm -f /usr/local/bin/hgs-greeter")
 	}
 
 	logFunc("Ensuring greetd is installed...")
@@ -2338,39 +1961,39 @@ func AutoSetupGreeter(compositor, sudoPassword string, logFunc func(string)) err
 		return fmt.Errorf("greetd install failed: %w", err)
 	}
 
-	dmsPath := ""
+	hgsPath := ""
 	if !IsGreeterPackaged() {
-		detected, err := DetectDMSPath()
+		detected, err := DetectHGSPath()
 		if err != nil {
-			return fmt.Errorf("DMS installation not found: %w", err)
+			return fmt.Errorf("HGS installation not found: %w", err)
 		}
-		dmsPath = detected
-		logFunc(fmt.Sprintf("✓ Found DMS at: %s", dmsPath))
+		hgsPath = detected
+		logFunc(fmt.Sprintf("✓ Found HGS at: %s", hgsPath))
 	} else {
-		logFunc("✓ Using packaged dms-greeter (/usr/share/quickshell/dms-greeter)")
+		logFunc("✓ Using packaged hgs-greeter (/usr/share/quickshell/hgs-greeter)")
 	}
 
-	logFunc("Setting up dms-greeter group and permissions...")
-	if err := SetupDMSGroup(logFunc, sudoPassword); err != nil {
+	logFunc("Setting up hgs-greeter group and permissions...")
+	if err := SetupHGSGroup(logFunc, sudoPassword); err != nil {
 		logFunc(fmt.Sprintf("⚠ Warning: group/permissions setup error: %v", err))
 	}
 
 	logFunc("Copying greeter files...")
-	if err := CopyGreeterFiles(dmsPath, compositor, logFunc, sudoPassword); err != nil {
+	if err := CopyGreeterFiles(hgsPath, compositor, logFunc, sudoPassword); err != nil {
 		return fmt.Errorf("failed to copy greeter files: %w", err)
 	}
 
 	logFunc("Configuring greetd...")
 	greeterPathForConfig := ""
 	if !IsGreeterPackaged() {
-		greeterPathForConfig = dmsPath
+		greeterPathForConfig = hgsPath
 	}
 	if err := ConfigureGreetd(greeterPathForConfig, compositor, logFunc, sudoPassword); err != nil {
 		return fmt.Errorf("failed to configure greetd: %w", err)
 	}
 
-	logFunc("Synchronizing DMS configurations...")
-	if err := SyncDMSConfigs(dmsPath, compositor, logFunc, sudoPassword); err != nil {
+	logFunc("Synchronizing HGS configurations...")
+	if err := SyncHGSConfigs(hgsPath, compositor, logFunc, sudoPassword); err != nil {
 		logFunc(fmt.Sprintf("⚠ Warning: config sync error: %v", err))
 	}
 
@@ -2394,6 +2017,6 @@ func AutoSetupGreeter(compositor, sudoPassword string, logFunc func(string)) err
 		logFunc(fmt.Sprintf("⚠ Warning: %v", err))
 	}
 
-	logFunc("✓ DMS greeter setup complete")
+	logFunc("✓ HGS greeter setup complete")
 	return nil
 }

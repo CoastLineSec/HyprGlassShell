@@ -1,0 +1,82 @@
+#!/usr/bin/make -f
+
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed 's/-[^-]*$$//')
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd --name=hgs
+
+override_dh_auto_build:
+	if [ "$(DEB_HOST_ARCH)" = "amd64" ]; then \
+		if [ -f hgs-distropkg-amd64.gz ]; then \
+			gunzip -c hgs-distropkg-amd64.gz > hgs; \
+		elif [ -f ../SOURCES/hgs-distropkg-amd64.gz ]; then \
+			gunzip -c ../SOURCES/hgs-distropkg-amd64.gz > hgs; \
+		elif [ -f ../../SOURCES/hgs-distropkg-amd64.gz ]; then \
+			gunzip -c ../../SOURCES/hgs-distropkg-amd64.gz > hgs; \
+		else \
+			echo "ERROR: hgs-distropkg-amd64.gz not found!" && exit 1; \
+		fi \
+	elif [ "$(DEB_HOST_ARCH)" = "arm64" ]; then \
+		if [ -f hgs-distropkg-arm64.gz ]; then \
+			gunzip -c hgs-distropkg-arm64.gz > hgs; \
+		elif [ -f ../SOURCES/hgs-distropkg-arm64.gz ]; then \
+			gunzip -c ../SOURCES/hgs-distropkg-arm64.gz > hgs; \
+		elif [ -f ../../SOURCES/hgs-distropkg-arm64.gz ]; then \
+			gunzip -c ../../SOURCES/hgs-distropkg-arm64.gz > hgs; \
+		else \
+			echo "ERROR: hgs-distropkg-arm64.gz not found!" && exit 1; \
+		fi \
+	else \
+		echo "Unsupported architecture: $(DEB_HOST_ARCH)" && exit 1; \
+	fi
+	chmod +x hgs
+
+	# Extract source if needed
+	if [ ! -d HyprGlassShell-$(UPSTREAM_VERSION) ]; then \
+		if [ -f ../SOURCES/hgs-source.tar.gz ]; then \
+			tar -xzf ../SOURCES/hgs-source.tar.gz; \
+		elif [ -f hgs-source.tar.gz ]; then \
+			tar -xzf hgs-source.tar.gz; \
+		fi; \
+	fi
+	# Rename directory to match expected version
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "HyprGlassShell-*" ! -name "HyprGlassShell-$(UPSTREAM_VERSION)" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ]; then \
+		echo "Renaming $$SOURCE_DIR to HyprGlassShell-$(UPSTREAM_VERSION)"; \
+		mv "$$SOURCE_DIR" HyprGlassShell-$(UPSTREAM_VERSION); \
+	fi
+
+
+override_dh_auto_install:
+	install -Dm755 hgs debian/hgs/usr/bin/hgs
+
+	mkdir -p debian/hgs/usr/share/quickshell/hgs debian/hgs/usr/lib/systemd/user
+	# Ensure directory has correct version name for install step
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "HyprGlassShell-*" ! -name "HyprGlassShell-$(UPSTREAM_VERSION)" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ]; then \
+		echo "Renaming $$SOURCE_DIR to HyprGlassShell-$(UPSTREAM_VERSION) for install"; \
+		mv "$$SOURCE_DIR" HyprGlassShell-$(UPSTREAM_VERSION); \
+	fi
+	if [ -d HyprGlassShell-$(UPSTREAM_VERSION) ]; then \
+		cp -r HyprGlassShell-$(UPSTREAM_VERSION)/quickshell/* debian/hgs/usr/share/quickshell/hgs/; \
+		install -Dm644 HyprGlassShell-$(UPSTREAM_VERSION)/assets/systemd/hgs.service debian/hgs/usr/lib/systemd/user/hgs.service; \
+		install -Dm644 HyprGlassShell-$(UPSTREAM_VERSION)/assets/hgs-open.desktop debian/hgs/usr/share/applications/hgs-open.desktop; \
+		install -Dm644 HyprGlassShell-$(UPSTREAM_VERSION)/assets/hgslogo.svg debian/hgs/usr/share/icons/hicolor/scalable/apps/hgslogo.svg; \
+	else \
+		echo "ERROR: HyprGlassShell-$(UPSTREAM_VERSION) directory not found!" && \
+		echo "Contents of current directory:" && ls -la && \
+		exit 1; \
+	fi
+
+	rm -rf debian/hgs/usr/share/quickshell/hgs/core \
+		debian/hgs/usr/share/quickshell/hgs/distro
+
+override_dh_auto_clean:
+	rm -f hgs
+	rm -rf HyprGlassShell-$(UPSTREAM_VERSION)
+	dh_auto_clean

@@ -5,10 +5,10 @@ import qs.Modals.Common
 import qs.Modules.Notifications.Center
 import qs.Services
 
-DankModal {
+HGSModal {
     id: notificationModal
 
-    layerNamespace: "dms:notification-center-modal"
+    layerNamespace: "hgs:notification-center-modal"
 
     property bool notificationModalOpen: false
     property var notificationListRef: null

@@ -1,6 +1,6 @@
 # Example with Variants Plugin
 
-This plugin demonstrates the dynamic variant system for DankMaterialShell plugins.
+This plugin demonstrates the dynamic variant system for HyprGlassShell plugins.
 
 ## What are Variants?
 

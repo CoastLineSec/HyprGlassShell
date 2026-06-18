@@ -65,7 +65,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: nameField
                         width: parent.width
                         placeholderText: "Variant Name"
@@ -82,7 +82,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: iconField
                         width: parent.width
                         placeholderText: "star"
@@ -99,7 +99,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    HGSTextField {
                         id: textField
                         width: parent.width
                         placeholderText: "Display Text"
@@ -107,7 +107,7 @@ PluginSettings {
                 }
             }
 
-            DankButton {
+            HGSButton {
                 text: "Create Variant"
                 iconName: "add"
                 onClicked: {
@@ -179,7 +179,7 @@ PluginSettings {
                             height: Theme.iconSize
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: model.icon || "widgets"
                                 size: Theme.iconSize
@@ -220,7 +220,7 @@ PluginSettings {
                             color: deleteArea.containsMouse ? Theme.error : "transparent"
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankIcon {
+                            HGSIcon {
                                 anchors.centerIn: parent
                                 name: "delete"
                                 size: 16
@@ -274,7 +274,7 @@ PluginSettings {
             Row {
                 spacing: Theme.spacingM
 
-                DankIcon {
+                HGSIcon {
                     name: "info"
                     size: Theme.iconSize
                     color: Theme.primary

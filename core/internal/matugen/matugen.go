@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/dank16"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/hgs16"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/utils"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -51,9 +51,7 @@ type TemplateDef struct {
 
 var templateRegistry = []TemplateDef{
 	{ID: "gtk", Kind: TemplateKindGTK, RunUnconditionally: true},
-	{ID: "niri", Commands: []string{"niri"}, ConfigFile: "niri.toml"},
 	{ID: "hyprland", Commands: []string{"Hyprland"}, ConfigFile: "hyprland.toml"},
-	{ID: "mangowc", Commands: []string{"mango"}, ConfigFile: "mangowc.toml"},
 	{ID: "qt5ct", Commands: []string{"qt5ct"}, ConfigFile: "qt5ct.toml"},
 	{ID: "qt6ct", Commands: []string{"qt6ct"}, ConfigFile: "qt6ct.toml"},
 	{ID: "firefox", Commands: []string{"firefox"}, ConfigFile: "firefox.toml"},
@@ -118,7 +116,7 @@ type ColorsOutput struct {
 }
 
 func (o *Options) ColorsOutput() string {
-	return filepath.Join(o.StateDir, "dms-colors.json")
+	return filepath.Join(o.StateDir, "hgs-colors.json")
 }
 
 func (o *Options) ShouldSkipTemplate(name string) bool {
@@ -208,7 +206,7 @@ func buildOnce(opts *Options) (bool, error) {
 	oldColors, _ := os.ReadFile(opts.ColorsOutput())
 
 	var primaryDark, primaryLight, surface string
-	var dank16JSON string
+	var hgs16JSON string
 	var importArgs []string
 
 	if opts.StockColors != "" {
@@ -224,8 +222,8 @@ func buildOnce(opts *Options) (bool, error) {
 			primaryLight = primaryDark
 		}
 
-		dank16JSON = generateDank16Variants(primaryDark, primaryLight, surface, opts.Mode)
-		importData := fmt.Sprintf(`{"colors": %s, "dank16": %s}`, opts.StockColors, dank16JSON)
+		hgs16JSON = generateHGS16Variants(primaryDark, primaryLight, surface, opts.Mode)
+		importData := fmt.Sprintf(`{"colors": %s, "hgs16": %s}`, opts.StockColors, hgs16JSON)
 		importArgs = []string{"--import-json-string", importData}
 
 		log.Info("Running matugen color hex with stock color overrides")
@@ -254,11 +252,11 @@ func buildOnce(opts *Options) (bool, error) {
 			primaryLight = primaryDark
 		}
 
-		dank16JSON = generateDank16Variants(primaryDark, primaryLight, surface, opts.Mode)
-		importData := fmt.Sprintf(`{"dank16": %s}`, dank16JSON)
+		hgs16JSON = generateHGS16Variants(primaryDark, primaryLight, surface, opts.Mode)
+		importData := fmt.Sprintf(`{"hgs16": %s}`, hgs16JSON)
 		importArgs = []string{"--import-json-string", importData}
 
-		log.Infof("Running matugen %s with dank16 injection", opts.Kind)
+		log.Infof("Running matugen %s with hgs16 injection", opts.Kind)
 		var args []string
 		switch opts.Kind {
 		case "hex":
@@ -283,7 +281,7 @@ func buildOnce(opts *Options) (bool, error) {
 		return true, nil
 	}
 
-	if isDMSGTKActive(opts.ConfigDir) {
+	if isHGSGTKActive(opts.ConfigDir) {
 		switch opts.Mode {
 		case ColorModeLight:
 			syncAccentColor(primaryLight)
@@ -341,8 +339,8 @@ func buildMergedConfig(opts *Options, cfgFile *os.File, tmpDir string) error {
 		cfgFile.WriteString("\n")
 	}
 
-	fmt.Fprintf(cfgFile, `[templates.dank]
-input_path = '%s/matugen/templates/dank.json'
+	fmt.Fprintf(cfgFile, `[templates.hgs]
+input_path = '%s/matugen/templates/hgs.json'
 output_path = '%s'
 
 `, opts.ShellDir, opts.ColorsOutput())
@@ -393,7 +391,7 @@ output_path = '%s'
 		}
 	}
 
-	userPluginConfigDir := filepath.Join(opts.ConfigDir, "matugen", "dms", "configs")
+	userPluginConfigDir := filepath.Join(opts.ConfigDir, "matugen", "hgs", "configs")
 	if entries, err := os.ReadDir(userPluginConfigDir); err == nil {
 		for _, entry := range entries {
 			if !strings.HasSuffix(entry.Name(), ".toml") {
@@ -504,7 +502,7 @@ func appExists(checker utils.AppChecker, checkCmd []string, checkFlatpaks []stri
 }
 
 func appendVSCodeConfig(cfgFile *os.File, name, extBaseDir, shellDir string) {
-	pattern := filepath.Join(extBaseDir, "danklinux.dms-theme-*")
+	pattern := filepath.Join(extBaseDir, "coastlinesec.hgs-theme-*")
 	matches, err := filepath.Glob(pattern)
 	if err != nil || len(matches) == 0 {
 		return
@@ -512,17 +510,17 @@ func appendVSCodeConfig(cfgFile *os.File, name, extBaseDir, shellDir string) {
 
 	extDir := matches[0]
 	templateDir := filepath.Join(shellDir, "matugen", "templates")
-	fmt.Fprintf(cfgFile, `[templates.dms%sdefault]
+	fmt.Fprintf(cfgFile, `[templates.hgs%sdefault]
 input_path = '%s/vscode-color-theme-default.json'
-output_path = '%s/themes/dankshell-default.json'
+output_path = '%s/themes/hgsshell-default.json'
 
-[templates.dms%sdark]
+[templates.hgs%sdark]
 input_path = '%s/vscode-color-theme-dark.json'
-output_path = '%s/themes/dankshell-dark.json'
+output_path = '%s/themes/hgsshell-dark.json'
 
-[templates.dms%slight]
+[templates.hgs%slight]
 input_path = '%s/vscode-color-theme-light.json'
-output_path = '%s/themes/dankshell-light.json'
+output_path = '%s/themes/hgsshell-light.json'
 
 `, name, templateDir, extDir,
 		name, templateDir, extDir,
@@ -764,19 +762,19 @@ func extractNestedColor(jsonStr, colorName, variant string) string {
 	return color
 }
 
-func generateDank16Variants(primaryDark, primaryLight, surface string, mode ColorMode) string {
-	variantOpts := dank16.VariantOptions{
+func generateHGS16Variants(primaryDark, primaryLight, surface string, mode ColorMode) string {
+	variantOpts := hgs16.VariantOptions{
 		PrimaryDark:  primaryDark,
 		PrimaryLight: primaryLight,
 		Background:   surface,
 		UseDPS:       true,
 		IsLightMode:  mode == ColorModeLight,
 	}
-	variantColors := dank16.GenerateVariantPalette(variantOpts)
-	return dank16.GenerateVariantJSON(variantColors)
+	variantColors := hgs16.GenerateVariantPalette(variantOpts)
+	return hgs16.GenerateVariantJSON(variantColors)
 }
 
-func isDMSGTKActive(configDir string) bool {
+func isHGSGTKActive(configDir string) bool {
 	gtkCSS := filepath.Join(configDir, "gtk-3.0", "gtk.css")
 
 	info, err := os.Lstat(gtkCSS)
@@ -786,11 +784,11 @@ func isDMSGTKActive(configDir string) bool {
 
 	if info.Mode()&os.ModeSymlink != 0 {
 		target, err := os.Readlink(gtkCSS)
-		return err == nil && strings.Contains(target, "dank-colors.css")
+		return err == nil && strings.Contains(target, "hgs-colors.css")
 	}
 
 	data, err := os.ReadFile(gtkCSS)
-	return err == nil && strings.Contains(string(data), "dank-colors.css")
+	return err == nil && strings.Contains(string(data), "hgs-colors.css")
 }
 
 func refreshGTK(mode ColorMode) {
@@ -970,7 +968,7 @@ func checkVSCodeExtension(homeDir string) bool {
 	}
 
 	for _, extDir := range extDirs {
-		pattern := filepath.Join(extDir, "danklinux.dms-theme-*")
+		pattern := filepath.Join(extDir, "coastlinesec.hgs-theme-*")
 		if matches, err := filepath.Glob(pattern); err == nil && len(matches) > 0 {
 			return true
 		}

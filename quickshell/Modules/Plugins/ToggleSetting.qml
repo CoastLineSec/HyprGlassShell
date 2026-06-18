@@ -71,7 +71,7 @@ Row {
         }
     }
 
-    DankToggle {
+    HGSToggle {
         id: toggle
         anchors.verticalCenter: parent.verticalCenter
         checked: root.value

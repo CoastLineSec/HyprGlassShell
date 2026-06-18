@@ -1,0 +1,9 @@
+<services>
+  <!-- Download hgs-qml source tarball from GitHub releases (greeter + quickshell content) -->
+  <service name="download_url">
+    <param name="protocol">https</param>
+    <param name="host">github.com</param>
+    <param name="path">/CoastLineSec/HyprGlassShell/releases/download/v1.4.3/hgs-qml.tar.gz</param>
+    <param name="filename">hgs-qml.tar.gz</param>
+  </service>
+</services>

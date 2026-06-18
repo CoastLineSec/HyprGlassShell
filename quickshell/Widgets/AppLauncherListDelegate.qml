@@ -79,7 +79,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankIcon {
+                HGSIcon {
                     id: pinIcon
                     visible: model.pinned === true
                     name: "push_pin"

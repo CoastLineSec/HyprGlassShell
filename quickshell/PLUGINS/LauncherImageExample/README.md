@@ -10,9 +10,9 @@ Example launcher plugin demonstrating tile mode with URL-based images.
 
 ## Usage
 
-1. Open the launcher (DankLauncherV2)
+1. Open the launcher (HGSLauncherV2)
 2. Type `img` to activate the plugin
-3. Browse DankMaterialShell screenshots in tile view
+3. Browse HyprGlassShell screenshots in tile view
 
 ## Plugin Configuration
 

@@ -2,14 +2,14 @@
   lib,
   config,
   pkgs,
-  dmsPkgs,
+  hgsPkgs,
   options,
   ...
 }:
 let
   inherit (lib) types;
-  cfg = config.programs.dank-material-shell.greeter;
-  cfgDms = config.programs.dank-material-shell;
+  cfg = config.programs.hypr-glass-shell.greeter;
+  cfgHgs = config.programs.hypr-glass-shell;
 
   inherit (config.services.greetd.settings.default_session) user;
 
@@ -19,8 +19,8 @@ let
     in
     if configured != null then configured else builtins.getAttr cfg.compositor.name pkgs;
 
-  cacheDir = "/var/lib/dms-greeter";
-  greeterScript = pkgs.writeShellScriptBin "dms-greeter" ''
+  cacheDir = "/var/lib/hgs-greeter";
+  greeterScript = pkgs.writeShellScriptBin "hgs-greeter" ''
     export PATH=$PATH:${
       lib.makeBinPath [
         cfg.quickshell.package
@@ -32,17 +32,17 @@ let
       lib.escapeShellArgs (
         [
           "sh"
-          "${cfg.package}/share/quickshell/dms/Modules/Greetd/assets/dms-greeter"
+          "${cfg.package}/share/quickshell/hgs/Modules/Greetd/assets/hgs-greeter"
           "--cache-dir"
           cacheDir
           "--command"
           cfg.compositor.name
           "-p"
-          "${cfg.package}/share/quickshell/dms"
+          "${cfg.package}/share/quickshell/hgs"
         ]
         ++ lib.optionals (cfg.compositor.customConfig != "") [
           "-C"
-          "${pkgs.writeText "dmsgreeter-compositor-config" cfg.compositor.customConfig}"
+          "${pkgs.writeText "hgsgreeter-compositor-config" cfg.compositor.customConfig}"
         ]
       )
     } ${lib.optionalString cfg.logs.save "> ${cfg.logs.path} 2>&1"}
@@ -53,46 +53,38 @@ in
 {
   imports =
     let
-      msg = "The option 'programs.dank-material-shell.greeter.compositor.extraConfig' is deprecated. Please use 'programs.dank-material-shell.greeter.compositor.customConfig' instead.";
+      msg = "The option 'programs.hypr-glass-shell.greeter.compositor.extraConfig' is deprecated. Please use 'programs.hypr-glass-shell.greeter.compositor.customConfig' instead.";
     in
     [
       (lib.mkRemovedOptionModule [
         "programs"
-        "dank-material-shell"
+        "hypr-glass-shell"
         "greeter"
         "compositor"
         "extraConfig"
       ] msg)
-      ./dms-rename.nix
+      ./hgs-rename.nix
     ];
 
-  options.programs.dank-material-shell.greeter = {
-    enable = lib.mkEnableOption "DankMaterialShell greeter";
+  options.programs.hypr-glass-shell.greeter = {
+    enable = lib.mkEnableOption "HyprGlassShell greeter";
     package = lib.mkOption {
       type = types.package;
-      default = if cfgDms.enable or false then cfgDms.package else dmsPkgs.dms-shell;
+      default = if cfgHgs.enable or false then cfgHgs.package else hgsPkgs.hgs-shell;
       defaultText = lib.literalExpression ''
-        if config.programs.dank-material-shell.enable
-        then config.programs.dank-material-shell.package
+        if config.programs.hypr-glass-shell.enable
+        then config.programs.hypr-glass-shell.package
         else built from source;
       '';
       description = ''
-        The DankMaterialShell package to use for the greeter.
+        The HyprGlassShell package to use for the greeter.
 
-        Defaults to the package from `programs.dank-material-shell` if it is enabled,
+        Defaults to the package from `programs.hypr-glass-shell` if it is enabled,
         otherwise defaults to building from source.
       '';
     };
     compositor.name = lib.mkOption {
-      type = types.enum [
-        "niri"
-        "hyprland"
-        "sway"
-        "labwc"
-        "mango"
-        "scroll"
-        "miracle"
-      ];
+      type = types.enum [ "hyprland" ];
       description = "Compositor to run greeter in";
     };
     compositor.customConfig = lib.mkOption {
@@ -105,7 +97,7 @@ in
       default = [ ];
       description = "Config files to copy into data directory";
       example = [
-        "/home/user/.config/DankMaterialShell/settings.json"
+        "/home/user/.config/HyprGlassShell/settings.json"
       ];
     };
     configHome = lib.mkOption {
@@ -114,36 +106,36 @@ in
       example = "/home/user";
       description = ''
         User home directory to copy configurations for greeter
-        If DMS config files are in non-standard locations then use the configFiles option instead
+        If HGS config files are in non-standard locations then use the configFiles option instead
       '';
     };
     quickshell = {
       package = lib.mkOption {
         default =
-          if (lib.hasAttrByPath [ "programs" "dank-material-shell" "quickshell" "package" ] options) then
-            config.programs.dank-material-shell.quickshell.package
+          if (lib.hasAttrByPath [ "programs" "hypr-glass-shell" "quickshell" "package" ] options) then
+            config.programs.hypr-glass-shell.quickshell.package
           else
             pkgs.quickshell;
 
         defaultText = ''
-          if (lib.hasAttrByPath [ "programs" "dank-material-shell" "quickshell" "package" ] options) then
-            config.programs.dank-material-shell.quickshell.package
+          if (lib.hasAttrByPath [ "programs" "hypr-glass-shell" "quickshell" "package" ] options) then
+            config.programs.hypr-glass-shell.quickshell.package
           else
             pkgs.quickshell;
         '';
 
         description = ''
           The quickshell package to use (we recommend at least 0.3.0, currently available in nixos-unstable).
-          Defaults to the same set in `programs.dank-material-shell.quickshell.package`, if using the NixOS module.";
+          Defaults to the same set in `programs.hypr-glass-shell.quickshell.package`, if using the NixOS module.";
         '';
       };
     };
-    logs.save = lib.mkEnableOption "saving logs from DMS greeter to file";
+    logs.save = lib.mkEnableOption "saving logs from HGS greeter to file";
     logs.path = lib.mkOption {
       type = types.path;
-      default = "/tmp/dms-greeter.log";
+      default = "/tmp/hgs-greeter.log";
       description = ''
-        File path to save DMS greeter logs to
+        File path to save HGS greeter logs to
       '';
     };
   };
@@ -152,14 +144,14 @@ in
       {
         assertion = (config.users.users.${user} or { }) != { };
         message = ''
-          dmsgreeter: user set for greetd default_session ${user} does not exist. Please create it before referencing it.
+          hgsgreeter: user set for greetd default_session ${user} does not exist. Please create it before referencing it.
         '';
       }
     ];
-    # DMS currently relies on /etc/pam.d/login for lock screen password auth on NixOS.
-    # Declare security.pam.services.dankshell only if you want to override that runtime fallback.
-    # U2F and fingerprint are handled separately by DMS — do not add pam_u2f or pam_fprintd here.
-    # security.pam.services.dankshell = {
+    # HGS currently relies on /etc/pam.d/login for lock screen password auth on NixOS.
+    # Declare security.pam.services.hgsshell only if you want to override that runtime fallback.
+    # U2F and fingerprint are handled separately by HGS — do not add pam_u2f or pam_fprintd here.
+    # security.pam.services.hgsshell = {
     #   # Example: add faillock
     #   faillock.enable = true;
     # };
@@ -172,7 +164,7 @@ in
       inter
       material-symbols
     ];
-    systemd.tmpfiles.settings."10-dmsgreeter" = {
+    systemd.tmpfiles.settings."10-hgsgreeter" = {
       ${cacheDir}.d = {
         inherit user;
         group =
@@ -228,13 +220,13 @@ in
           fi
       fi
 
-      mv dms-colors.json colors.json || :
+      mv hgs-colors.json colors.json || :
       chown ${user}: * || :
     '';
-    programs.dank-material-shell.greeter.configFiles = lib.mkIf (cfg.configHome != null) [
-      "${cfg.configHome}/.config/DankMaterialShell/settings.json"
-      "${cfg.configHome}/.local/state/DankMaterialShell/session.json"
-      "${cfg.configHome}/.cache/DankMaterialShell/dms-colors.json"
+    programs.hypr-glass-shell.greeter.configFiles = lib.mkIf (cfg.configHome != null) [
+      "${cfg.configHome}/.config/HyprGlassShell/settings.json"
+      "${cfg.configHome}/.local/state/HyprGlassShell/session.json"
+      "${cfg.configHome}/.cache/HyprGlassShell/hgs-colors.json"
     ];
   };
 }

@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+HGSOSD {
     id: root
 
     readonly property bool useVertical: isVerticalLayout
@@ -89,7 +89,7 @@ DankOSD {
                 x: parent.gap
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: getVolumeIcon(player?.volume ?? 0)
                     size: Theme.iconSize
@@ -107,7 +107,7 @@ DankOSD {
                 }
             }
 
-            DankSlider {
+            HGSSlider {
                 id: volumeSlider
 
                 width: parent.width - Theme.iconSize - parent.gap * 3
@@ -155,7 +155,7 @@ DankOSD {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: gap
 
-                DankIcon {
+                HGSIcon {
                     anchors.centerIn: parent
                     name: getVolumeIcon(player?.volume ?? 0)
                     size: Theme.iconSize

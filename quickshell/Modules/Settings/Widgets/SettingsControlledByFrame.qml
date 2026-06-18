@@ -30,7 +30,7 @@ StyledRect {
         anchors.rightMargin: Theme.spacingM
         spacing: Theme.spacingM
 
-        DankIcon {
+        HGSIcon {
             name: "frame_source"
             size: Theme.iconSize
             color: Theme.primary
@@ -61,7 +61,7 @@ StyledRect {
             }
         }
 
-        DankButton {
+        HGSButton {
             id: openButton
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.tr("Open Frame")

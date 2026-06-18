@@ -29,7 +29,7 @@ Column {
                 smooth: true
                 mipmap: true
                 asynchronous: true
-                source: "file://" + Theme.shellDir + "/assets/danklogonormal.svg"
+                source: "file://" + Theme.shellDir + "/assets/hgslogonormal.svg"
                 layer.enabled: true
                 layer.smooth: true
                 layer.mipmap: true
@@ -48,7 +48,7 @@ Column {
                     spacing: Theme.spacingS
 
                     StyledText {
-                        text: "DMS " + ChangelogService.currentVersion
+                        text: "HGS " + ChangelogService.currentVersion
                         font.pixelSize: Theme.fontSizeXLarge + 2
                         font.weight: Font.Bold
                         color: Theme.surfaceText
@@ -109,9 +109,9 @@ Column {
             ChangelogFeatureCard {
                 width: (parent.width - Theme.spacingS) / 2
                 iconName: "space_dashboard"
-                title: "Dank Launcher V2"
-                description: "New capabilities & plugins"
-                onClicked: PopoutService.openDankLauncherV2()
+                title: "HGS Launcher V2"
+                description: "New capabilities and actions"
+                onClicked: PopoutService.openHGSLauncherV2()
             }
 
             ChangelogFeatureCard {
@@ -119,7 +119,7 @@ Column {
                 iconName: "smartphone"
                 title: "Phone Connect"
                 description: "KDE Connect & Valent"
-                onClicked: Qt.openUrlExternally("https://github.com/AvengeMedia/dms-plugins/tree/master/DankKDEConnect")
+                onClicked: PopoutService.openSettingsWithTab("network")
             }
 
             ChangelogFeatureCard {
@@ -134,8 +134,7 @@ Column {
                 width: (parent.width - Theme.spacingS) / 2
                 iconName: "window"
                 title: "Window Rules"
-                description: "niri window rule manager"
-                visible: CompositorService.isNiri
+                description: "Hyprland window rule manager"
                 onClicked: PopoutService.openSettingsWithTab("window_rules")
             }
 
@@ -144,7 +143,6 @@ Column {
                 iconName: "notifications_active"
                 title: "Enhanced Notifications"
                 description: "Configurable rules & styling"
-                visible: !CompositorService.isNiri
                 onClicked: PopoutService.openSettingsWithTab("notifications")
             }
 
@@ -166,10 +164,10 @@ Column {
 
             ChangelogFeatureCard {
                 width: (parent.width - Theme.spacingS) / 2
-                iconName: "extension"
-                title: "Enhanced Plugin System"
-                description: "Enables new types of plugins"
-                onClicked: PopoutService.openSettingsWithTab("plugins")
+                iconName: "settings_applications"
+                title: "Hyprland Controls"
+                description: "Compositor-focused settings"
+                onClicked: PopoutService.openSettingsWithTab("compositor")
             }
 
             ChangelogFeatureCard {
@@ -196,7 +194,7 @@ Column {
         Row {
             spacing: Theme.spacingS
 
-            DankIcon {
+            HGSIcon {
                 name: "warning"
                 size: Theme.iconSizeSmall
                 color: Theme.warning
@@ -230,12 +228,12 @@ Column {
 
                 ChangelogUpgradeNote {
                     width: parent.width
-                    text: "Spotlight replaced by Dank Launcher V2 — check settings for new options"
+                    text: "Spotlight replaced by HGS Launcher V2 — check settings for new options"
                 }
 
                 ChangelogUpgradeNote {
                     width: parent.width
-                    text: "Plugin API updated — third-party plugins may need updates"
+                    text: "External plugin registry access is disabled in HyprGlassShell"
                 }
             }
         }

@@ -5,7 +5,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankToggle {
+HGSToggle {
     id: root
 
     LayoutMirroring.enabled: I18n.isRtl

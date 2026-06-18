@@ -45,11 +45,11 @@ jobs:
       - name: Test
         run: go test -v ./...
 
-      - name: Build dms
-        run: go build -v ./cmd/dms
+      - name: Build hgs
+        run: go build -v ./cmd/hgs
 
-      - name: Build dms (distropkg)
-        run: go build -v -tags distro_binary ./cmd/dms
+      - name: Build hgs (distropkg)
+        run: go build -v -tags distro_binary ./cmd/hgs
 
-      - name: Build dankinstall
-        run: go build -v ./cmd/dankinstall
+      - name: Build hgsinstall
+        run: go build -v ./cmd/hgsinstall

@@ -136,7 +136,7 @@ Singleton {
         const filtered = (mimeTypes || []).filter(m => m && m.length > 0);
         if (filtered.length === 0)
             return;
-        DMSService.sendRequest("mime.setDefaults", {
+        HGSService.sendRequest("mime.setDefaults", {
             "mimeTypes": filtered,
             "desktopId": desktopFileId
         }, response => {
@@ -147,7 +147,7 @@ Singleton {
     }
 
     function getDefaultApp(mimeType, callbackId = "") {
-        DMSService.sendRequest("mime.getDefault", {
+        HGSService.sendRequest("mime.getDefault", {
             "mimeType": mimeType
         }, response => {
             if (response.error) {
@@ -160,7 +160,7 @@ Singleton {
     }
 
     function getAppsForMimeType(mimeType, callbackId = "") {
-        DMSService.sendRequest("mime.appsForMime", {
+        HGSService.sendRequest("mime.appsForMime", {
             "mimeType": mimeType
         }, response => {
             if (response.error) {

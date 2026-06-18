@@ -36,7 +36,7 @@ Item {
             onCloseClicked: modal.hide()
         }
 
-        DankTextField {
+        HGSTextField {
             id: searchField
             width: parent.width
             placeholderText: ""
@@ -73,7 +73,7 @@ Item {
         anchors.bottomMargin: (modal.showKeyboardHints ? (ClipboardConstants.keyboardHintsHeight + Theme.spacingM * 2) : 0) + Theme.spacingXS
         clip: true
 
-        DankListView {
+        HGSListView {
             id: clipboardListView
             anchors.fill: parent
             model: ScriptModel {
@@ -147,7 +147,7 @@ Item {
             }
         }
 
-        DankListView {
+        HGSListView {
             id: savedListView
             anchors.fill: parent
             model: ScriptModel {

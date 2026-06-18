@@ -64,7 +64,7 @@ AGENTS-temp.md
 niri-colors.generated.kdl
 ghostty-colors.generated.conf
 
-# Notepad files (should be in ~/.local/state/DankMaterialShell/)
+# Notepad files (should be in ~/.local/state/HyprGlassShell/)
 untitled-*.txt
 file:*
 notepad-files/
@@ -113,7 +113,7 @@ core.*
 # direnv
 .envrc
 .direnv/
-quickshell/dms-plugins
+quickshell/hgs-plugins
 __pycache__
 
 .vscode/

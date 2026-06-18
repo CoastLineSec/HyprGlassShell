@@ -106,7 +106,7 @@ Item {
             z: parent.z - 1
         }
 
-        DankFlickable {
+        HGSFlickable {
             id: settingsFlickable
             anchors.fill: parent
             clip: true
@@ -142,7 +142,7 @@ Item {
                     color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.2)
                 }
 
-                DankToggle {
+                HGSToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -154,7 +154,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                HGSToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -166,7 +166,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                HGSToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -201,7 +201,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        HGSIcon {
                             name: "search"
                             size: Theme.iconSize - 2
                             color: Theme.primary
@@ -234,7 +234,7 @@ Item {
                     color: "transparent"
                     visible: !SettingsData.notepadUseMonospace
 
-                    DankDropdown {
+                    HGSDropdown {
                         id: fontDropdown
                         anchors.left: parent.left
                         anchors.leftMargin: -Theme.spacingM
@@ -292,7 +292,7 @@ Item {
                             spacing: Theme.spacingS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 32
                                 iconName: "remove"
                                 iconSize: Theme.iconSizeSmall
@@ -322,7 +322,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            HGSActionButton {
                                 buttonSize: 32
                                 iconName: "add"
                                 iconSize: Theme.iconSizeSmall
@@ -348,7 +348,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingS
 
-                        DankToggle {
+                        HGSToggle {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -364,7 +364,7 @@ Item {
                             }
                         }
 
-                        DankSlider {
+                        HGSSlider {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -406,7 +406,7 @@ Item {
                                 color: Theme.surfaceText
                             }
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 model: [I18n.tr("Slideout"), I18n.tr("Popout")]
                                 size: "small"
                                 currentIndex: SettingsData.notepadDefaultMode === "popout" ? 1 : 0
@@ -430,7 +430,7 @@ Item {
                                 color: Theme.surfaceText
                             }
 
-                            DankButtonGroup {
+                            HGSButtonGroup {
                                 model: [I18n.tr("Right"), I18n.tr("Left")]
                                 size: "small"
                                 currentIndex: SettingsData.notepadSlideoutSide === "left" ? 1 : 0
@@ -442,7 +442,7 @@ Item {
                             }
                         }
 
-                        DankToggle {
+                        HGSToggle {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -462,7 +462,7 @@ Item {
                             color: Theme.surfaceText
                         }
 
-                        DankSlider {
+                        HGSSlider {
                             anchors.left: parent.left
                             anchors.leftMargin: Theme.spacingXS
                             width: parent.width - Theme.spacingXS * 2
@@ -515,7 +515,7 @@ Item {
                         height: 36
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: root.shortcutsExpanded ? "expand_less" : "expand_more"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText

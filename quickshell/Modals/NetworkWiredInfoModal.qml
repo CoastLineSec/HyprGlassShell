@@ -4,10 +4,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:network-info-wired"
+    layerNamespace: "hgs:network-info-wired"
 
     keepPopoutsOpen: true
 
@@ -74,7 +74,7 @@ DankModal {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -93,7 +93,7 @@ DankModal {
                     border.width: 1
                     clip: true
 
-                    DankFlickable {
+                    HGSFlickable {
                         anchors.fill: parent
                         anchors.margins: Theme.spacingM
                         contentHeight: detailsText.contentHeight

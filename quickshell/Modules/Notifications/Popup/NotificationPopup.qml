@@ -46,7 +46,7 @@ PanelWindow {
         blurRadius: win.connectedFrameMode ? Theme.connectedSurfaceRadius : Theme.cornerRadius
     }
 
-    WlrLayershell.namespace: "dms:notification-popup"
+    WlrLayershell.namespace: "hgs:notification-popup"
 
     required property var notificationData
     required property string notificationId
@@ -158,7 +158,7 @@ PanelWindow {
     WlrLayershell.layer: {
         const shouldUseOverlay = notificationData && (SettingsData.notificationOverlayEnabled || notificationData.urgency === NotificationUrgency.Critical);
         const fallback = shouldUseOverlay ? WlrLayer.Overlay : WlrLayer.Top;
-        return LayerShell.fromEnv("DMS_NOTIFICATION_LAYER", fallback);
+        return LayerShell.fromEnv("HGS_NOTIFICATION_LAYER", fallback);
     }
     WlrLayershell.exclusiveZone: -1
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -800,7 +800,7 @@ PanelWindow {
                 height: effectiveCollapsedHeight + extraHeight
                 clip: SettingsData.notificationPopupPrivacyMode && !descriptionExpanded
 
-                DankCircularImage {
+                HGSCircularImage {
                     id: iconContainer
 
                     readonly property string rawImage: notificationData?.image || ""
@@ -978,7 +978,7 @@ PanelWindow {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: closeButton
 
                 anchors.right: parent.right
@@ -996,7 +996,7 @@ PanelWindow {
                 }
             }
 
-            DankActionButton {
+            HGSActionButton {
                 id: expandButton
 
                 anchors.right: closeButton.left

@@ -52,7 +52,7 @@ Item {
 
     visible: iconValue !== undefined && iconValue !== ""
 
-    DankIcon {
+    HGSIcon {
         anchors.centerIn: parent
         name: root.materialName
         size: root.iconSize - root.materialIconSizeAdjustment
@@ -68,7 +68,7 @@ Item {
         visible: root.isUnicode
     }
 
-    DankSVGIcon {
+    HGSSVGIcon {
         anchors.centerIn: parent
         source: root.svgSource
         size: root.iconSize

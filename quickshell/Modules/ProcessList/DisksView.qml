@@ -47,7 +47,7 @@ Item {
                     Row {
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        HGSIcon {
                             name: "storage"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -120,7 +120,7 @@ Item {
                 Row {
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    HGSIcon {
                         name: "folder"
                         size: Theme.iconSize - 2
                         color: Theme.secondary
@@ -142,7 +142,7 @@ Item {
                     color: Theme.outlineLight
                 }
 
-                DankListView {
+                HGSListView {
                     id: mountListView
 
                     Layout.fillWidth: true
@@ -184,7 +184,7 @@ Item {
                                 Row {
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    HGSIcon {
                                         name: {
                                             const mp = modelData?.mount ?? "";
                                             if (mp === "/")
@@ -324,7 +324,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            HGSIcon {
                                 name: "storage"
                                 size: 32
                                 color: Theme.surfaceVariantText

@@ -121,7 +121,7 @@ Item {
                 height: 36
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankActionButton {
+                HGSActionButton {
                     id: resetButton
                     anchors.centerIn: parent
                     buttonSize: 36
@@ -139,7 +139,7 @@ Item {
             }
         }
 
-        DankSlider {
+        HGSSlider {
             id: slider
             width: parent.width
             height: 32

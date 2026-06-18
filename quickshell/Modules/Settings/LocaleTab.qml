@@ -29,7 +29,7 @@ Item {
         return "";
     }
 
-    DankFlickable {
+    HGSFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -54,7 +54,7 @@ Item {
                     tags: ["locale", "language", "country"]
                     settingKey: "locale"
                     text: I18n.tr("Current Locale")
-                    description: I18n.tr("Change the locale used by the DMS interface.")
+                    description: I18n.tr("Change the locale used by the HGS interface.")
                     options: localeTab._allLocaleOptions()
                     enableFuzzySearch: true
 

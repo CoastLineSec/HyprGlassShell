@@ -164,7 +164,7 @@ Column {
                                         visible: NotepadStorageService.tabs.length > 1
                                         anchors.verticalCenter: parent.verticalCenter
 
-                                        DankIcon {
+                                        HGSIcon {
                                             name: "close"
                                             size: 14
                                             color: Theme.surfaceTextMedium
@@ -269,7 +269,7 @@ Column {
             }
         }
 
-        DankActionButton {
+        HGSActionButton {
             id: newTabButton
             width: 32
             height: 32

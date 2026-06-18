@@ -17,7 +17,7 @@ Singleton {
             consumeGreeterAutoLoginPendingSync();
     }
 
-    readonly property string greeterAutoLoginPendingSyncPath: (Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/dms-greeter") + "/.local/state/auto-login-sync-pending"
+    readonly property string greeterAutoLoginPendingSyncPath: (Quickshell.env("HGS_GREET_CFG_DIR") || "/var/cache/hgs-greeter") + "/.local/state/auto-login-sync-pending"
 
     function consumeGreeterAutoLoginPendingSync() {
         if (!settingsRoot || settingsRoot.isGreeterMode)
@@ -49,7 +49,7 @@ Singleton {
     property string systemLocalLoginPamText: ""
     property string commonAuthPcPamText: ""
     property string loginPamText: ""
-    property string dankshellU2fPamText: ""
+    property string hgsshellU2fPamText: ""
     property string u2fKeysText: ""
 
     property string fingerprintProbeOutput: ""
@@ -62,7 +62,7 @@ Singleton {
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string u2fKeysPath: homeDir ? homeDir + "/.config/Yubico/u2f_keys" : ""
     readonly property bool homeU2fKeysDetected: u2fKeysPath !== "" && u2fKeysWatcher.loaded && u2fKeysText.trim() !== ""
-    readonly property bool lockU2fCustomConfigDetected: pamModuleEnabled(dankshellU2fPamText, "pam_u2f")
+    readonly property bool lockU2fCustomConfigDetected: pamModuleEnabled(hgsshellU2fPamText, "pam_u2f")
     readonly property bool greeterPamHasFprint: greeterPamStackHasModule("pam_fprintd")
     readonly property bool greeterPamHasU2f: greeterPamStackHasModule("pam_u2f")
 
@@ -75,8 +75,8 @@ Singleton {
         return null;
     }
 
-    readonly property var forcedFprintAvailable: envFlag("DMS_FORCE_FPRINT_AVAILABLE")
-    readonly property var forcedU2fAvailable: envFlag("DMS_FORCE_U2F_AVAILABLE")
+    readonly property var forcedFprintAvailable: envFlag("HGS_FORCE_FPRINT_AVAILABLE")
+    readonly property var forcedU2fAvailable: envFlag("HGS_FORCE_U2F_AVAILABLE")
 
     // --- Derived auth probe state ---
 
@@ -159,13 +159,13 @@ Singleton {
 
     readonly property string greeterFingerprintSource: {
         if (forcedFprintAvailable !== null)
-            return forcedFprintAvailable ? "dms" : "none";
+            return forcedFprintAvailable ? "hgs" : "none";
         if (greeterPamHasFprint)
             return "pam";
         switch (fingerprintProbeState) {
         case "ready":
         case "missing_enrollment":
-            return "dms";
+            return "hgs";
         default:
             return "none";
         }
@@ -227,11 +227,11 @@ Singleton {
 
     readonly property string greeterU2fSource: {
         if (forcedU2fAvailable !== null)
-            return forcedU2fAvailable ? "dms" : "none";
+            return forcedU2fAvailable ? "hgs" : "none";
         if (greeterPamHasU2f)
             return "pam";
         if (greeterU2fCanEnable)
-            return "dms";
+            return "hgs";
         return "none";
     }
 
@@ -361,7 +361,7 @@ Singleton {
     }
 
     function launchGreeterAutoLoginSyncTerminalFallback(details) {
-        ToastService.showWarning(I18n.tr("Opening terminal to update greetd"), I18n.tr("DMS needs administrator access. The terminal closes automatically when done.") + (details ? "\n\n" + details : ""), "dms greeter sync --autologin", "greeter-autologin-sync");
+        ToastService.showWarning(I18n.tr("Opening terminal to update greetd"), I18n.tr("HGS needs administrator access. The terminal closes automatically when done.") + (details ? "\n\n" + details : ""), "hgs greeter sync --autologin", "greeter-autologin-sync");
         greeterAutoLoginSyncTerminalFallbackStderr = "";
         greeterAutoLoginSyncTerminalFallbackProcess.running = true;
     }
@@ -530,7 +530,7 @@ Singleton {
     }
 
     property var greeterAutoLoginSyncProcess: Process {
-        command: ["dms", "greeter", "sync", "--yes", "--autologin"]
+        command: ["hgs", "greeter", "sync", "--yes", "--autologin"]
         running: false
 
         stdout: StdioCollector {
@@ -570,7 +570,7 @@ Singleton {
         onExited: exitCode => {
             const enabling = root.settingsRoot && root.settingsRoot.greeterAutoLogin;
             if (exitCode === 0) {
-                ToastService.showWarning(enabling ? I18n.tr("Applying auto-login on startup...") : I18n.tr("Disabling auto-login on startup..."), "", "dms greeter sync --autologin", "greeter-autologin-sync");
+                ToastService.showWarning(enabling ? I18n.tr("Applying auto-login on startup...") : I18n.tr("Disabling auto-login on startup..."), "", "hgs greeter sync --autologin", "greeter-autologin-sync");
                 root.greeterAutoLoginSyncProcess.running = true;
                 return;
             }
@@ -580,7 +580,7 @@ Singleton {
     }
 
     property var greeterAutoLoginSyncTerminalFallbackProcess: Process {
-        command: ["dms", "greeter", "sync", "--terminal", "--yes", "--autologin"]
+        command: ["hgs", "greeter", "sync", "--terminal", "--yes", "--autologin"]
         running: false
 
         stderr: StdioCollector {
@@ -592,14 +592,14 @@ Singleton {
                 root.greeterAutoLoginSyncSuccessToast("");
             } else {
                 let details = (root.greeterAutoLoginSyncTerminalFallbackStderr || "").trim();
-                ToastService.showError(I18n.tr("Couldn't open a terminal for the auto-login update.") + " (exit " + exitCode + ")", details, "dms greeter sync --autologin", "greeter-autologin-sync");
+                ToastService.showError(I18n.tr("Couldn't open a terminal for the auto-login update.") + " (exit " + exitCode + ")", details, "hgs greeter sync --autologin", "greeter-autologin-sync");
             }
             root.finishGreeterAutoLoginSync();
         }
     }
 
     property var authApplyProcess: Process {
-        command: ["dms", "auth", "sync", "--yes"]
+        command: ["hgs", "auth", "sync", "--yes"]
         running: false
 
         stdout: StdioCollector {
@@ -655,7 +655,7 @@ Singleton {
     }
 
     property var authApplyTerminalFallbackProcess: Process {
-        command: ["dms", "auth", "sync", "--terminal", "--yes"]
+        command: ["hgs", "auth", "sync", "--terminal", "--yes"]
         running: false
 
         stderr: StdioCollector {
@@ -668,7 +668,7 @@ Singleton {
                 ToastService.showInfo(message, "", "", "auth-sync");
             } else {
                 let details = (root.authApplyTerminalFallbackStderr || "").trim();
-                ToastService.showError(I18n.tr("Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.") + " (exit " + exitCode + ")", details, "", "auth-sync");
+                ToastService.showError(I18n.tr("Terminal fallback failed. Install a supported terminal emulator or run 'hgs auth sync' manually.") + " (exit " + exitCode + ")", details, "", "auth-sync");
             }
             root.finishAuthApply();
         }
@@ -739,11 +739,11 @@ Singleton {
     }
 
     FileView {
-        id: dankshellU2fPamWatcher
-        path: "/etc/pam.d/dankshell-u2f"
+        id: hgsshellU2fPamWatcher
+        path: "/etc/pam.d/hgsshell-u2f"
         printErrors: false
-        onLoaded: root.dankshellU2fPamText = text()
-        onLoadFailed: root.dankshellU2fPamText = ""
+        onLoaded: root.hgsshellU2fPamText = text()
+        onLoadFailed: root.hgsshellU2fPamText = ""
     }
 
     FileView {

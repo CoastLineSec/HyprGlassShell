@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
 )
 
 func TestParseWindowManager(t *testing.T) {
@@ -14,11 +14,10 @@ func TestParseWindowManager(t *testing.T) {
 		want    deps.WindowManager
 		wantErr bool
 	}{
-		{"niri lowercase", "niri", deps.WindowManagerNiri, false},
-		{"niri mixed case", "Niri", deps.WindowManagerNiri, false},
 		{"hyprland lowercase", "hyprland", deps.WindowManagerHyprland, false},
 		{"hyprland mixed case", "Hyprland", deps.WindowManagerHyprland, false},
-		{"invalid", "sway", 0, true},
+		{"unsupported compositor", "river", 0, true},
+		{"invalid", "cosmic", 0, true},
 		{"empty", "", 0, true},
 	}
 
@@ -70,10 +69,10 @@ func TestParseTerminal(t *testing.T) {
 
 func TestDepExists(t *testing.T) {
 	dependencies := []deps.Dependency{
-		{Name: "niri", Status: deps.StatusInstalled},
+		{Name: "hyprland", Status: deps.StatusInstalled},
 		{Name: "ghostty", Status: deps.StatusMissing},
-		{Name: "dms (DankMaterialShell)", Status: deps.StatusInstalled},
-		{Name: "dms-greeter", Status: deps.StatusMissing},
+		{Name: "hgs (HyprGlassShell)", Status: deps.StatusInstalled},
+		{Name: "hgs-greeter", Status: deps.StatusMissing},
 	}
 
 	tests := []struct {
@@ -81,9 +80,9 @@ func TestDepExists(t *testing.T) {
 		dep  string
 		want bool
 	}{
-		{"existing dep", "niri", true},
-		{"existing dep with special chars", "dms (DankMaterialShell)", true},
-		{"existing optional dep", "dms-greeter", true},
+		{"existing dep", "hyprland", true},
+		{"existing dep with special chars", "hgs (HyprGlassShell)", true},
+		{"existing optional dep", "hgs-greeter", true},
 		{"non-existing dep", "firefox", false},
 		{"empty name", "", false},
 	}
@@ -100,9 +99,9 @@ func TestDepExists(t *testing.T) {
 
 func TestNewRunner(t *testing.T) {
 	cfg := Config{
-		Compositor:  "niri",
+		Compositor:  "hyprland",
 		Terminal:    "ghostty",
-		IncludeDeps: []string{"dms-greeter"},
+		IncludeDeps: []string{"hgs-greeter"},
 		ExcludeDeps: []string{"some-pkg"},
 		Yes:         true,
 	}
@@ -111,8 +110,8 @@ func TestNewRunner(t *testing.T) {
 	if r == nil {
 		t.Fatal("NewRunner returned nil")
 	}
-	if r.cfg.Compositor != "niri" {
-		t.Errorf("cfg.Compositor = %q, want %q", r.cfg.Compositor, "niri")
+	if r.cfg.Compositor != "hyprland" {
+		t.Errorf("cfg.Compositor = %q, want %q", r.cfg.Compositor, "hyprland")
 	}
 	if r.cfg.Terminal != "ghostty" {
 		t.Errorf("cfg.Terminal = %q, want %q", r.cfg.Terminal, "ghostty")
@@ -165,13 +164,13 @@ func TestRunRequiresYes(t *testing.T) {
 
 func TestConfigYesStoredCorrectly(t *testing.T) {
 	// Yes=false (default) should be stored
-	rNo := NewRunner(Config{Compositor: "niri", Terminal: "ghostty", Yes: false})
+	rNo := NewRunner(Config{Compositor: "hyprland", Terminal: "ghostty", Yes: false})
 	if rNo.cfg.Yes {
 		t.Error("cfg.Yes = true, want false")
 	}
 
 	// Yes=true should be stored
-	rYes := NewRunner(Config{Compositor: "niri", Terminal: "ghostty", Yes: true})
+	rYes := NewRunner(Config{Compositor: "hyprland", Terminal: "ghostty", Yes: true})
 	if !rYes.cfg.Yes {
 		t.Error("cfg.Yes = false, want true")
 	}
@@ -204,7 +203,7 @@ func TestValidConfigNamesCompleteness(t *testing.T) {
 }
 
 func TestBuildReplaceConfigs(t *testing.T) {
-	allDeployerKeys := []string{"Niri", "Hyprland", "Ghostty", "Kitty", "Alacritty"}
+	allDeployerKeys := []string{"Hyprland", "Ghostty", "Kitty", "Alacritty"}
 
 	tests := []struct {
 		name           string
@@ -226,13 +225,13 @@ func TestBuildReplaceConfigs(t *testing.T) {
 		},
 		{
 			name:           "specific configs",
-			replaceConfigs: []string{"niri", "ghostty"},
+			replaceConfigs: []string{"hyprland", "ghostty"},
 			wantNil:        false,
-			wantEnabled:    []string{"Niri", "Ghostty"},
+			wantEnabled:    []string{"Hyprland", "Ghostty"},
 		},
 		{
 			name:           "both flags set",
-			replaceConfigs: []string{"niri"},
+			replaceConfigs: []string{"hyprland"},
 			replaceAll:     true,
 			wantErr:        true,
 		},
@@ -243,9 +242,9 @@ func TestBuildReplaceConfigs(t *testing.T) {
 		},
 		{
 			name:           "case insensitive",
-			replaceConfigs: []string{"NIRI", "Ghostty"},
+			replaceConfigs: []string{"HYPRLAND", "Ghostty"},
 			wantNil:        false,
-			wantEnabled:    []string{"Niri", "Ghostty"},
+			wantEnabled:    []string{"Hyprland", "Ghostty"},
 		},
 		{
 			name:           "single config",
@@ -255,15 +254,15 @@ func TestBuildReplaceConfigs(t *testing.T) {
 		},
 		{
 			name:           "whitespace entry",
-			replaceConfigs: []string{"  ", "niri"},
+			replaceConfigs: []string{"  ", "hyprland"},
 			wantNil:        false,
-			wantEnabled:    []string{"Niri"},
+			wantEnabled:    []string{"Hyprland"},
 		},
 		{
 			name:           "duplicate entry",
-			replaceConfigs: []string{"niri", "niri"},
+			replaceConfigs: []string{"hyprland", "hyprland"},
 			wantNil:        false,
-			wantEnabled:    []string{"Niri"},
+			wantEnabled:    []string{"Hyprland"},
 		},
 	}
 
@@ -315,9 +314,9 @@ func TestBuildReplaceConfigs(t *testing.T) {
 
 func TestConfigReplaceConfigsStoredCorrectly(t *testing.T) {
 	r := NewRunner(Config{
-		Compositor:        "niri",
+		Compositor:        "hyprland",
 		Terminal:          "ghostty",
-		ReplaceConfigs:    []string{"niri", "ghostty"},
+		ReplaceConfigs:    []string{"hyprland", "ghostty"},
 		ReplaceConfigsAll: false,
 	})
 	if len(r.cfg.ReplaceConfigs) != 2 {
@@ -328,7 +327,7 @@ func TestConfigReplaceConfigsStoredCorrectly(t *testing.T) {
 	}
 
 	r2 := NewRunner(Config{
-		Compositor:        "niri",
+		Compositor:        "hyprland",
 		Terminal:          "ghostty",
 		ReplaceConfigsAll: true,
 	})
@@ -342,10 +341,10 @@ func TestConfigReplaceConfigsStoredCorrectly(t *testing.T) {
 
 func TestBuildDisabledItems(t *testing.T) {
 	dependencies := []deps.Dependency{
-		{Name: "niri", Status: deps.StatusInstalled},
+		{Name: "hyprland", Status: deps.StatusInstalled},
 		{Name: "ghostty", Status: deps.StatusMissing},
-		{Name: "dms (DankMaterialShell)", Status: deps.StatusInstalled},
-		{Name: "dms-greeter", Status: deps.StatusMissing},
+		{Name: "hgs (HyprGlassShell)", Status: deps.StatusInstalled},
+		{Name: "hgs-greeter", Status: deps.StatusMissing},
 		{Name: "waybar", Status: deps.StatusMissing},
 	}
 
@@ -360,19 +359,19 @@ func TestBuildDisabledItems(t *testing.T) {
 		wantEnabled  []string // dep names that should NOT be in disabledItems (extra check)
 	}{
 		{
-			name:         "no flags set, dms-greeter disabled by default",
-			wantDisabled: []string{"dms-greeter"},
-			wantEnabled:  []string{"niri", "ghostty", "waybar"},
+			name:         "no flags set, hgs-greeter disabled by default",
+			wantDisabled: []string{"hgs-greeter"},
+			wantEnabled:  []string{"hyprland", "ghostty", "waybar"},
 		},
 		{
-			name:        "include dms-greeter enables it",
-			includeDeps: []string{"dms-greeter"},
-			wantEnabled: []string{"dms-greeter"},
+			name:        "include hgs-greeter enables it",
+			includeDeps: []string{"hgs-greeter"},
+			wantEnabled: []string{"hgs-greeter"},
 		},
 		{
 			name:         "exclude a regular dep",
 			excludeDeps:  []string{"waybar"},
-			wantDisabled: []string{"dms-greeter", "waybar"},
+			wantDisabled: []string{"hgs-greeter", "waybar"},
 		},
 		{
 			name:        "include unknown dep returns error",
@@ -387,28 +386,28 @@ func TestBuildDisabledItems(t *testing.T) {
 			errContains: "--exclude-deps",
 		},
 		{
-			name:        "exclude DMS itself is forbidden",
-			excludeDeps: []string{"dms (DankMaterialShell)"},
+			name:        "exclude HGS itself is forbidden",
+			excludeDeps: []string{"hgs (HyprGlassShell)"},
 			wantErr:     true,
 			errContains: "cannot exclude required package",
 		},
 		{
 			name:         "include and exclude same dep",
-			includeDeps:  []string{"dms-greeter"},
-			excludeDeps:  []string{"dms-greeter"},
-			wantDisabled: []string{"dms-greeter"},
+			includeDeps:  []string{"hgs-greeter"},
+			excludeDeps:  []string{"hgs-greeter"},
+			wantDisabled: []string{"hgs-greeter"},
 		},
 		{
 			name:        "whitespace entries are skipped",
-			includeDeps: []string{"  ", "dms-greeter"},
-			wantEnabled: []string{"dms-greeter"},
+			includeDeps: []string{"  ", "hgs-greeter"},
+			wantEnabled: []string{"hgs-greeter"},
 		},
 		{
-			name: "no dms-greeter in deps, nothing disabled by default",
+			name: "no hgs-greeter in deps, nothing disabled by default",
 			deps: []deps.Dependency{
-				{Name: "niri", Status: deps.StatusInstalled},
+				{Name: "hyprland", Status: deps.StatusInstalled},
 			},
-			wantEnabled: []string{"niri"},
+			wantEnabled: []string{"hyprland"},
 		},
 	}
 

@@ -7,7 +7,7 @@ import Quickshell
 Singleton {
     id: root
 
-    readonly property bool locationAvailable: DMSService.isConnected && DMSService.capabilities.includes("location")
+    readonly property bool locationAvailable: HGSService.isConnected && HGSService.capabilities.includes("location")
     readonly property bool valid: latitude !== 0 || longitude !== 0
 
     property var latitude: 0.0
@@ -21,7 +21,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: HGSService
 
         function onLocationStateUpdate(data) {
             if (!locationAvailable)
@@ -45,7 +45,7 @@ Singleton {
         if (!locationAvailable)
             return;
 
-        DMSService.sendRequest("location.getState", null, response => {
+        HGSService.sendRequest("location.getState", null, response => {
             if (response.result)
                 handleStateUpdate(response.result);
         });

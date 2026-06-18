@@ -14,27 +14,11 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("KeybindsService")
 
-    property bool available: CompositorService.isNiri || CompositorService.isHyprland || CompositorService.isMango
-    property string currentProvider: {
-        if (CompositorService.isNiri)
-            return "niri";
-        if (CompositorService.isHyprland)
-            return "hyprland";
-        if (CompositorService.isMango)
-            return "mangowc";
-        return "";
-    }
+    property bool available: true
+    readonly property string currentProvider: "hyprland"
 
-    readonly property string cheatsheetProvider: {
-        if (CompositorService.isNiri)
-            return "niri";
-        if (CompositorService.isHyprland)
-            return "hyprland";
-        if (CompositorService.isMango)
-            return "mangowc";
-        return "";
-    }
-    property bool cheatsheetAvailable: cheatsheetProvider !== ""
+    readonly property string cheatsheetProvider: currentProvider
+    property bool cheatsheetAvailable: true
     property bool cheatsheetLoading: false
     property var cheatsheet: ({})
 
@@ -42,14 +26,14 @@ Singleton {
     property bool saving: false
     property bool fixing: false
     property string lastError: ""
-    property bool dmsBindsIncluded: true
+    property bool hgsBindsIncluded: true
 
-    property var dmsStatus: ({
+    property var hgsStatus: ({
             "exists": true,
             "included": true,
             "includePosition": -1,
             "totalIncludes": 0,
-            "bindsAfterDms": 0,
+            "bindsAfterHgs": 0,
             "effective": true,
             "overriddenBy": 0,
             "statusMessage": "",
@@ -68,69 +52,19 @@ Singleton {
 
     readonly property var categoryOrder: Actions.getCategoryOrder()
     readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation))
-    readonly property string compositorConfigDir: {
-        switch (currentProvider) {
-        case "niri":
-            return configDir + "/niri";
-        case "hyprland":
-            return configDir + "/hypr";
-        case "mangowc":
-            return configDir + "/mango";
-        default:
-            return "";
-        }
-    }
-    readonly property string dmsBindsPath: {
-        switch (currentProvider) {
-        case "niri":
-            return compositorConfigDir + "/dms/binds.kdl";
-        case "hyprland":
-            return compositorConfigDir + "/dms/binds.lua";
-        case "mangowc":
-            return compositorConfigDir + "/dms/binds.conf";
-        default:
-            return "";
-        }
-    }
-    readonly property string mainConfigPath: {
-        switch (currentProvider) {
-        case "niri":
-            return compositorConfigDir + "/config.kdl";
-        case "hyprland":
-            return compositorConfigDir + "/hyprland.lua";
-        case "mangowc":
-            return compositorConfigDir + "/config.conf";
-        default:
-            return "";
-        }
-    }
-    readonly property bool readOnly: currentProvider === "hyprland" && dmsStatus.readOnly === true
+    readonly property string compositorConfigDir: configDir + "/hypr"
+    readonly property string hgsBindsPath: compositorConfigDir + "/hgs/keybinds.lua"
+    readonly property string mainConfigPath: compositorConfigDir + "/hyprland.lua"
+    readonly property bool readOnly: hgsStatus.readOnly === true
     readonly property var actionTypes: Actions.getActionTypes()
-    readonly property var dmsActions: getDmsActions()
+    readonly property var hgsActions: getHgsActions()
 
     signal bindsLoaded
     signal bindSaved(string key)
     signal bindSaveCompleted(bool success)
     signal bindRemoved(string key)
-    signal dmsBindsFixed
+    signal hgsBindsFixed
     signal cheatsheetLoaded
-
-    Connections {
-        target: CompositorService
-        function onCompositorChanged() {
-            if (!CompositorService.isNiri && !CompositorService.isMango)
-                return;
-            Qt.callLater(root.loadBinds);
-        }
-    }
-
-    Connections {
-        target: NiriService
-        enabled: CompositorService.isNiri
-        function onConfigReloaded() {
-            Qt.callLater(root.loadBinds, false);
-        }
-    }
 
     Process {
         id: cheatsheetProcess
@@ -203,8 +137,6 @@ Singleton {
             }
             root.lastError = "";
             root.bindSaveCompleted(true);
-            if (CompositorService.isMango)
-                MangoService.reloadConfig();
             root.loadBinds(false);
         }
     }
@@ -228,8 +160,6 @@ Singleton {
                 return;
             }
             root.lastError = "";
-            if (CompositorService.isMango)
-                MangoService.reloadConfig();
             root.loadBinds(false);
         }
     }
@@ -254,18 +184,16 @@ Singleton {
                 return;
             }
             root.lastError = "";
-            root.dmsBindsIncluded = true;
-            root.dmsBindsFixed();
-            const bindsRel = root.currentProvider === "niri" ? "dms/binds.kdl" : root.currentProvider === "hyprland" ? "dms/binds.lua" : "dms/binds.conf";
+            root.hgsBindsIncluded = true;
+            root.hgsBindsFixed();
+            const bindsRel = "hgs/keybinds.lua";
             ToastService.showInfo(I18n.tr("Binds include added"), I18n.tr("%1 is now included in config").arg(bindsRel), "", "keybinds");
-            if (CompositorService.isMango)
-                MangoService.reloadConfig();
             Qt.callLater(root.forceReload);
         }
     }
 
-    function fixDmsBindsInclude() {
-        if (fixing || dmsBindsIncluded || !compositorConfigDir)
+    function fixHgsBindsInclude() {
+        if (fixing || hgsBindsIncluded || !compositorConfigDir)
             return;
         if (readOnly) {
             showHyprlandReadOnlyWarning();
@@ -273,48 +201,22 @@ Singleton {
         }
         fixing = true;
         const timestamp = Math.floor(Date.now() / 1000);
-        const backupPath = `${mainConfigPath}.dmsbackup${timestamp}`;
-        let script;
-        switch (currentProvider) {
-        case "niri":
-            script = ConfigIncludeResolve.buildRepairScript({
-                configFile: mainConfigPath,
-                backupFile: backupPath,
-                fragmentFile: compositorConfigDir + "/dms/binds.kdl",
-                grepPattern: 'include.*"dms/binds.kdl"',
-                includeLine: 'include "dms/binds.kdl"'
-            });
-            break;
-        case "hyprland":
-            script = ConfigIncludeResolve.buildRepairScript({
-                configFile: mainConfigPath,
-                backupFile: backupPath,
-                fragmentFiles: [compositorConfigDir + "/dms/binds.lua", compositorConfigDir + "/dms/binds-user.lua"],
-                includes: [
-                    {
-                        grepPattern: "dms.binds",
-                        includeLine: "require(\"dms.binds\")"
-                    },
-                    {
-                        grepPattern: "dms.binds-user",
-                        includeLine: "require(\"dms.binds-user\")"
-                    }
-                ]
-            });
-            break;
-        case "mangowc":
-            script = ConfigIncludeResolve.buildRepairScript({
-                configFile: mainConfigPath,
-                backupFile: backupPath,
-                fragmentFile: compositorConfigDir + "/dms/binds.conf",
-                grepPattern: "source.*dms/binds.conf",
-                includeLine: "source = ./dms/binds.conf"
-            });
-            break;
-        default:
-            fixing = false;
-            return;
-        }
+        const backupPath = `${mainConfigPath}.hgsbackup${timestamp}`;
+        const script = ConfigIncludeResolve.buildRepairScript({
+            configFile: mainConfigPath,
+            backupFile: backupPath,
+            fragmentFiles: [compositorConfigDir + "/hgs/keybinds.lua", compositorConfigDir + "/hgs/user-keybinds.lua"],
+            includes: [
+                {
+                    grepPattern: "hgs.keybinds",
+                    includeLine: "require(\"hgs.keybinds\")"
+                },
+                {
+                    grepPattern: "hgs.user-keybinds",
+                    includeLine: "require(\"hgs.user-keybinds\")"
+                }
+            ]
+        });
         fixProcess.command = ["sh", "-c", script];
         fixProcess.running = true;
     }
@@ -333,7 +235,7 @@ Singleton {
         if (!target)
             return;
         cheatsheetLoading = true;
-        cheatsheetProcess.command = ["dms", "keybinds", "show", target];
+        cheatsheetProcess.command = ["hgs", "keybinds", "show", target];
         cheatsheetProcess.running = true;
     }
 
@@ -342,21 +244,21 @@ Singleton {
             return;
         const hasData = Object.keys(_allBinds).length > 0;
         loading = showLoading !== false && !hasData;
-        loadProcess.command = ["dms", "keybinds", "show", currentProvider];
+        loadProcess.command = ["hgs", "keybinds", "show", currentProvider];
         loadProcess.running = true;
     }
 
     function _processData() {
         keybinds = _rawData || {};
-        dmsBindsIncluded = _rawData?.dmsBindsIncluded ?? true;
-        const status = _rawData?.dmsStatus;
+        hgsBindsIncluded = _rawData?.hgsBindsIncluded ?? true;
+        const status = _rawData?.hgsStatus;
         if (status) {
-            dmsStatus = {
+            hgsStatus = {
                 "exists": status.exists ?? true,
                 "included": status.included ?? true,
                 "includePosition": status.includePosition ?? -1,
                 "totalIncludes": status.totalIncludes ?? 0,
-                "bindsAfterDms": status.bindsAfterDms ?? 0,
+                "bindsAfterHgs": status.bindsAfterHgs ?? 0,
                 "effective": status.effective ?? true,
                 "overriddenBy": status.overriddenBy ?? 0,
                 "statusMessage": status.statusMessage ?? "",
@@ -386,7 +288,7 @@ Singleton {
             const binds = bindsData[cat];
             for (var i = 0; i < binds.length; i++) {
                 const bind = binds[i];
-                const targetCat = Actions.isDmsAction(bind.action) ? "DMS" : cat;
+                const targetCat = Actions.isHgsAction(bind.action) ? "HGS" : cat;
                 if (!processed[targetCat])
                     processed[targetCat] = [];
                 processed[targetCat].push(bind);
@@ -414,8 +316,8 @@ Singleton {
                     "key": bind.key || "",
                     "desc": bind.desc || "",
                     "source": sourceStr,
-                    "isOverride": sourceStr === "dms",
-                    "isDMSManaged": sourceStr === "dms" || sourceStr === "dms-default",
+                    "isOverride": sourceStr === "hgs",
+                    "isHGSManaged": sourceStr === "hgs" || sourceStr === "hgs-default",
                     "hasDefault": bind.hasDefault === true,
                     "cooldownMs": bind.cooldownMs || 0,
                     "flags": bind.flags || "",
@@ -508,7 +410,7 @@ Singleton {
         if (!bindData.key || !Actions.isValidAction(bindData.action))
             return;
         saving = true;
-        const cmd = ["dms", "keybinds", "set", currentProvider, bindData.key, bindData.action, "--desc", bindData.desc || ""];
+        const cmd = ["hgs", "keybinds", "set", currentProvider, bindData.key, bindData.action, "--desc", bindData.desc || ""];
         if (originalKey && originalKey !== bindData.key)
             cmd.push("--replace-key", originalKey);
         if (bindData.cooldownMs > 0)
@@ -531,21 +433,19 @@ Singleton {
     function _maybeWarnHyprlandLegacyConf() {
         if (_hyprlandLegacyWarnShown)
             return;
-        if (currentProvider !== "hyprland")
-            return;
         if (readOnly) {
             _hyprlandLegacyWarnShown = true;
             showHyprlandReadOnlyWarning();
             return;
         }
-        if (!dmsStatus.exists || dmsStatus.included)
+        if (!hgsStatus.exists || hgsStatus.included)
             return;
         _hyprlandLegacyWarnShown = true;
-        ToastService.showWarning(I18n.tr("Hyprland config include missing"), I18n.tr("DMS Settings writes Lua keybinds. Add the DMS include so edits apply."), "dms setup", "hyprland-migration");
+        ToastService.showWarning(I18n.tr("Hyprland config include missing"), I18n.tr("HGS Settings writes Lua keybinds. Add the HGS include so edits apply."), "hgs setup", "hyprland-migration");
     }
 
     function showHyprlandReadOnlyWarning() {
-        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before editing shortcuts in Settings."), "dms setup", "hyprland-migration");
+        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run hgs setup to migrate before editing shortcuts in Settings."), "hgs setup", "hyprland-migration");
     }
 
     function removeBind(key) {
@@ -555,7 +455,7 @@ Singleton {
         }
         if (!key)
             return;
-        removeProcess.command = ["dms", "keybinds", "remove", currentProvider, key];
+        removeProcess.command = ["hgs", "keybinds", "remove", currentProvider, key];
         removeProcess.running = true;
         bindRemoved(key);
     }
@@ -567,13 +467,13 @@ Singleton {
         }
         if (!key)
             return;
-        removeProcess.command = ["dms", "keybinds", "reset", currentProvider, key];
+        removeProcess.command = ["hgs", "keybinds", "reset", currentProvider, key];
         removeProcess.running = true;
         bindRemoved(key);
     }
 
-    function isDmsAction(action) {
-        return Actions.isDmsAction(action);
+    function isHgsAction(action) {
+        return Actions.isHgsAction(action);
     }
 
     function isValidAction(action) {
@@ -596,8 +496,8 @@ Singleton {
         return Actions.getCompositorActions(currentProvider, category);
     }
 
-    function getDmsActions() {
-        return Actions.getDmsActions(CompositorService.isNiri, CompositorService.isHyprland);
+    function getHgsActions() {
+        return Actions.getHgsActions();
     }
 
     function buildSpawnAction(command, args) {

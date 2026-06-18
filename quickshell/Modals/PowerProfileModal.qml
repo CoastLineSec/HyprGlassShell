@@ -5,10 +5,10 @@ import qs.Services
 import qs.Widgets
 import Quickshell.Services.UPower
 
-DankModal {
+HGSModal {
     id: root
 
-    layerNamespace: "dms:power-profiles"
+    layerNamespace: "hgs:power-profiles"
     keepPopoutsOpen: true
 
     property int selectedIndex: 0
@@ -143,7 +143,7 @@ DankModal {
                         }
                     }
 
-                    DankActionButton {
+                    HGSActionButton {
                         iconName: "close"
                         iconSize: Theme.iconSize - 4
                         iconColor: Theme.surfaceText
@@ -210,7 +210,7 @@ DankModal {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                HGSIcon {
                                     name: Theme.getPowerProfileIcon(modelData)
                                     size: Theme.iconSize + 16
                                     color: isActive ? Theme.primary : Theme.surfaceText
@@ -259,7 +259,7 @@ DankModal {
                     spacing: Theme.spacingXS
                     opacity: 0.5
 
-                    DankIcon {
+                    HGSIcon {
                         name: "keyboard"
                         size: Theme.fontSizeSmall
                         color: Theme.surfaceText

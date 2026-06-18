@@ -1,0 +1,22 @@
+Source: hgs-greeter
+Section: x11
+Priority: optional
+Maintainer: Avenge Media <AvengeMedia.US@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/CoastLineSec/HyprGlassShell
+Vcs-Browser: https://github.com/CoastLineSec/HyprGlassShell
+Vcs-Git: https://github.com/CoastLineSec/HyprGlassShell.git
+
+Package: hgs-greeter
+Architecture: any
+Depends: ${misc:Depends},
+  greetd,
+  quickshell-git | quickshell
+Suggests: hyprland
+Description: HyprGlassShell greeter for greetd
+  HyprGlassShell greeter for greetd login manager. A modern, Material Design 3
+  inspired greeter interface built with Quickshell for Wayland compositors.
+  .
+  Targets the Hyprland compositor with automatic configuration. Features session selection, user
+  authentication, and dynamic theming.
