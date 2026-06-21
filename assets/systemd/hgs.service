@@ -5,8 +5,8 @@ After=graphical-session.target
 Requisite=graphical-session.target
 
 [Service]
-Type=dbus
-BusName=org.freedesktop.Notifications
+Type=simple
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/bin/hgs run --session
 ExecReload=/usr/bin/pkill -USR1 -x hgs
 Restart=on-failure

@@ -117,3 +117,17 @@ quickshell/hgs-plugins
 __pycache__
 
 .vscode/
+
+# Local AI agent workspace state
+.agents/
+**/.agents/
+.claude/
+**/.claude/
+.codex/
+**/.codex/
+.cursor/
+**/.cursor/
+.windsurf/
+**/.windsurf/
+.continue/
+**/.continue/

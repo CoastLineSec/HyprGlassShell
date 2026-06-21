@@ -2,7 +2,7 @@
 
 Minimal Hyprland plugin used by HyprGlassShell to prove the hyprglass control/status and compositor render path.
 
-This plugin currently registers hyprctl commands, stores descriptor payloads, reports geometry diagnostics, draws an optional debug bounds overlay, and can draw an opt-in flat compositor material. It does not render Liquid Glass yet.
+This plugin currently registers hyprctl commands, stores descriptor payloads, reports geometry diagnostics, draws an optional debug bounds overlay, and can draw opt-in compositor material modes including a Fluid Glass preview.
 
 ## Descriptor Apply Semantics
 
@@ -64,6 +64,8 @@ Material v0.1 resolves only deterministic flat color, opacity, and uniform round
 `flat` draws the resolved rounded/tinted rectangle without blur. `blur-native` uses the same rect, color, alpha, and radius path, but sets `CRectPassElement::SRectData.blur = true` so Hyprland applies its existing native blur behind the translucent rect.
 
 Hyprland native blur does not expose per-descriptor blur radius through this pass. Descriptor `material.frost` is a normalized `0..1` request. In `blur-native`, HyprGlass maps it to `CRectPassElement::SRectData.blurA`, which Hyprland passes into `blurMainFramebuffer()` and then uses as the blurred background texture alpha. This is per-surface blur blend/alpha only; effective blur kernel size and passes still come from global Hyprland `decoration:blur` configuration.
+
+`fluid-glass` is an opt-in preview mode. It uses a capture-backed shader path with shared display-to-capture source mapping, and falls back to `glass-v1` only when capture, shader, texture, or source-quad state is unavailable.
 
 Material v0.1 does not copy the framebuffer, sample a custom backdrop texture, refract, lens, draw rim lighting, draw shadows, draw glossy highlights, or run a custom shader. Per-corner radii are not represented in this v0.1 path.
 

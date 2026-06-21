@@ -226,6 +226,10 @@ func runShellInteractive(session bool) {
 		cmd.Env = append(cmd.Env, "QT_QPA_PLATFORM=wayland;xcb")
 	}
 
+	// Keep the instance identity stable for Quickshell IPC and desktop matching
+	// in both terminal-launched and daemon-launched sessions.
+	cmd.Env = append(cmd.Env, "QS_APP_ID=io.github.coastlinesec.hgs")
+
 	cmd.Env = appendLogEnv(cmd.Env)
 
 	cmd.Stdin = os.Stdin

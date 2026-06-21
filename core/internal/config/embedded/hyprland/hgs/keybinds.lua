@@ -165,7 +165,7 @@ hl.bind("CTRL + Print", hl.dsp.exec_cmd("hgs screenshot full"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd("hgs screenshot window"))
 
 -- === Display Profiles ===
-hl.bind("SUPER + P", hl.dsp.exec_cmd("hgs ipc outputs cycleProfile"))
+hl.bind("SUPER + P", hl.dsp.exec_cmd("hgs ipc call outputs cycleProfile"))
 
 -- === System Controls ===
 hl.bind("SUPER + SHIFT + P", hl.dsp.dpms({ action = "toggle" }))

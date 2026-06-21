@@ -13,7 +13,7 @@ Built with [Quickshell](https://quickshell.org/), [Go](https://go.dev/), and a H
 
 HyprGlassShell is a Hyprland-first desktop shell forked from DankMaterialShell and redirected toward CoastLineSec goals. The project is currently focused on building a compositor-aware glass material pipeline for Hyprland while retaining a working shell foundation.
 
-This is not a finished Liquid Glass implementation yet. The current milestone proves descriptor publishing, plugin communication, surface matching, coordinate diagnostics, debug overlays, and opt-in compositor material rendering.
+This is not a finished Fluid Glass implementation yet. The current milestone proves descriptor publishing, plugin communication, surface matching, coordinate diagnostics, debug overlays, and opt-in compositor material rendering.
 
 ## Current Status
 
@@ -29,6 +29,7 @@ HyprGlassShell is in early development. The current foundation includes:
 - Opt-in compositor material modes:
   - `flat`: rounded/tinted diagnostic material.
   - `blur-native`: Hyprland native blur plus resolved tint/alpha.
+  - `fluid-glass`: Fluid Glass preview on transform-0 outputs with `glass-v1` fallback on transformed outputs.
 - Shell-side appearance resolver for neutral glass, color glass, and normalized frost amount.
 - Per-surface QML fallback handoff when plugin status proves compositor material is drawing that descriptor.
 - Lifecycle resync when the plugin appears, reloads, or loses descriptors.
@@ -36,8 +37,8 @@ HyprGlassShell is in early development. The current foundation includes:
 
 Not implemented yet:
 
-- Final Liquid Glass visual design.
-- Custom backdrop sampling.
+- Final Fluid Glass visual design.
+- Production-ready transformed capture-backed sampling.
 - Custom blur shaders.
 - Refraction or lensing.
 - Rim lighting, glossy highlights, shadows, saturation, vibrancy, or adaptive contrast.

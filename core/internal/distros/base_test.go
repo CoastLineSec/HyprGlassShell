@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/CoastLineSec/HyprGlassShell/core/internal/deps"
@@ -33,6 +34,30 @@ func TestBaseDistribution_detectHGS_NotInstalled(t *testing.T) {
 
 	if !dep.Required {
 		t.Error("Expected Required to be true")
+	}
+}
+
+func TestBaseDistribution_WriteHyprlandSessionTargetWantsHGS(t *testing.T) {
+	tempDir := t.TempDir()
+	t.Setenv("HOME", tempDir)
+
+	logChan := make(chan string, 10)
+	defer close(logChan)
+
+	base := NewBaseDistribution(logChan)
+	if err := base.WriteHyprlandSessionTarget(); err != nil {
+		t.Fatalf("WriteHyprlandSessionTarget() error = %v", err)
+	}
+
+	targetPath := filepath.Join(tempDir, ".config", "systemd", "user", "hyprland-session.target")
+	data, err := os.ReadFile(targetPath)
+	if err != nil {
+		t.Fatalf("failed to read target: %v", err)
+	}
+
+	content := string(data)
+	if !strings.Contains(content, "Wants=hgs.service") {
+		t.Fatalf("target should pull in hgs.service, got:\n%s", content)
 	}
 }
 

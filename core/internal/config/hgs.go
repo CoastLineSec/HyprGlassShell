@@ -15,6 +15,16 @@ func LocateHGSConfig() (string, error) {
 		primaryPaths = append(primaryPaths, filepath.Join(configHome, "quickshell", "hgs"))
 	}
 
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		if homeDir, err := os.UserHomeDir(); err == nil && homeDir != "" {
+			dataHome = filepath.Join(homeDir, ".local", "share")
+		}
+	}
+	if dataHome != "" {
+		primaryPaths = append(primaryPaths, filepath.Join(dataHome, "quickshell", "hgs"))
+	}
+
 	// System data directories
 	dataDirs := os.Getenv("XDG_DATA_DIRS")
 	if dataDirs == "" {

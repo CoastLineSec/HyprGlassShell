@@ -5,19 +5,28 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/protocols/LayerShell.hpp>
 #include <hyprland/src/render/Renderer.hpp>
+#include <hyprland/src/render/OpenGL.hpp>
 #include <hyprland/src/render/pass/BorderPassElement.hpp>
 #include <hyprland/src/render/pass/RectPassElement.hpp>
+#include <hyprland/src/render/pass/TexPassElement.hpp>
 #include <hyprland/src/state/MonitorState.hpp>
 
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
+#include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <cmath>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <map>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -60,10 +69,21 @@ std::string           g_lastApplyStatus = "none";
 std::string           g_lastError;
 std::string           g_lastDebugOverlayRenderStatus = "disabled";
 std::string           g_lastMaterialRenderStatus = "disabled";
+std::string           g_lastBackdropCaptureStatus = "disabled";
+std::string           g_lastBackdropCaptureError;
 std::string           g_materialMode = "off";
 uint64_t              g_generation = 0;
 uint64_t              g_applyCount  = 0;
+uint64_t              g_captureGeneration = 0;
 bool                  g_debugOverlayEnabled = false;
+
+
+
+
+SP<CShader>  g_fluidGlassShader;
+bool         g_fluidGlassShaderCompileAttempted = false;
+bool         g_fluidGlassShaderCompiled = false;
+std::string  g_fluidGlassShaderError;
 
 struct RectSummary {
     double x      = 0.0;
@@ -189,6 +209,47 @@ struct DebugOverlayDescriptor {
     bool                     mismatch = false;
 };
 
+struct EdgeLensBandSummary {
+    bool        enabled = false;
+    RectSummary destination;
+    RectSummary source;
+    double      offsetX = 0.0;
+    double      offsetY = 0.0;
+};
+
+struct UvCandidateSliceSummary {
+    int         index = 0;
+    std::string candidateName;
+    std::string formula;
+    bool        inBounds = false;
+    RectSummary destinationSliceRect;
+    RectSummary sourceSliceRect;
+    RectSummary sourceUvTopLeft;
+    RectSummary sourceUvTopRight;
+    RectSummary sourceUvBottomRight;
+    RectSummary sourceUvBottomLeft;
+};
+
+struct CaptureQuadCandidate {
+    std::string name;
+    std::string formula;
+    std::string notes;
+    std::string space = "capture-texture-pixels";
+    RectSummary topLeft;
+    RectSummary topRight;
+    RectSummary bottomRight;
+    RectSummary bottomLeft;
+    RectSummary bounds;
+    RectSummary uvTopLeft;
+    RectSummary uvTopRight;
+    RectSummary uvBottomRight;
+    RectSummary uvBottomLeft;
+    int         transform = 0;
+    bool        axisAligned = false;
+    bool        inBounds = false;
+    std::string confidence = "diagnostic";
+};
+
 struct MaterialDescriptor {
     std::string              status;
     std::string              reason;
@@ -207,8 +268,45 @@ struct MaterialDescriptor {
     std::string              innerEdgeTechnique = "disabled";
     std::string              innerEdgeColorUsed;
     std::string              drawMapping;
+    std::string              descriptorId;
+    std::string              captureMonitor;
+    std::string              captureStage = "RENDER_POST_WINDOWS";
+    std::string              captureStatus = "not-attempted";
+    std::string              captureError;
+    std::string              captureBackend;
+    std::string              sourceMapping;
+    std::string              sourceMappingEvidence;
+    std::string              sourceCroppingMode = "ctex-axis-aligned-uv-rect";
+    std::string              uvMappingType = "axis-aligned-uv-rect-two-corner";
+    std::string              shaderBackend = "ctex-pass-custom-uv";
+    std::string              shaderError;
+    std::string              sdfTechnique = "disabled";
+    std::string              shaderSourceMapTechnique = "disabled";
+    std::string              edgeLensBackend = "ctex-pass-band-offsets";
+    std::string              transformPolicy = "renderer-projected-band-offsets";
+    std::string              roundedCornerStrategy = "full-rounded-base-plus-corner-inset-bands";
+    std::string              backendUsed;
+    std::string              fallbackReason;
     std::vector<std::string> drawWarnings;
     CHyprColor               color = CHyprColor(0.92F, 0.95F, 1.0F, 0.0F);
+    RectSummary              sourceBackdropRect;
+    RectSummary              destinationRect;
+    RectSummary              textureSize;
+    RectSummary              sourceExtent;
+    RectSummary              sourceUvRect;
+    RectSummary              sourceUvTopLeft;
+    RectSummary              sourceUvTopRight;
+    RectSummary              sourceUvBottomRight;
+    RectSummary              sourceUvBottomLeft;
+    RectSummary              centerRegion;
+    CaptureQuadCandidate     selectedSourceQuad;
+    std::vector<CaptureQuadCandidate> sourceMappingCandidates;
+    EdgeLensBandSummary      topBand;
+    EdgeLensBandSummary      bottomBand;
+    EdgeLensBandSummary      leftBand;
+    EdgeLensBandSummary      rightBand;
+    std::vector<UvCandidateSliceSummary> candidateSlices;
+    double                   monitorScale = 1.0;
     double                   radiusRequested = 0.0;
     double                   radiusUsed = 0.0;
     double                   opacityRequested = 0.0;
@@ -223,6 +321,12 @@ struct MaterialDescriptor {
     double                   innerEdgeInsetPx = 0.0;
     double                   highlightAlphaUsed = 0.0;
     double                   shadowAlphaUsed = 0.0;
+    double                   displacementOffsetX = 0.0;
+    double                   displacementOffsetY = 0.0;
+    double                   edgeWidthPx = 0.0;
+    double                   lensOffsetPx = 0.0;
+    double                   sdfDisplacementStrengthPx = 0.0;
+    double                   sdfEdgeWidthPx = 0.0;
     int                      drawTransform = 0;
     int                      passCount = 0;
     bool                     drawable = false;
@@ -236,8 +340,142 @@ struct MaterialDescriptor {
     bool                     shadowEnabled = false;
     bool                     drawTransformSupported = true;
     bool                     perSurfaceBlurSupported = false;
+    bool                     captureEnabled = false;
+    bool                     captureAttempted = false;
+    bool                     captureReady = false;
+    bool                     captureTextureReady = false;
+    bool                     textureReady = false;
+    bool                     sampled = false;
+    bool                     descriptorRendered = false;
+    bool                     descriptorUsedCapture = false;
+    bool                     renderedFromStaleCapture = false;
+    bool                     shaderEnabled = false;
+    bool                     shaderCompiled = false;
+    bool                     shaderReady = true;
+    bool                     displacementEnabled = false;
+    bool                     edgeLensEnabled = false;
+    bool                     edgeLensSupported = false;
+    bool                     sdfMaskEnabled = false;
+    bool                     uvOrientationEnabled = false;
+    bool                     refractionDebugEnabled = false;
+    bool                     transformShaderSupported = true;
+    bool                     roundedMaskEnabled = false;
+    bool                     refractionEnabled = false;
+    bool                     selfSamplingRisk = true;
+    bool                     transformCaptureSupported = false;
+    bool                     transformCaptureDiagnosticEnabled = false;
+    bool                     shaderUsesFourCornerUV = false;
+    bool                     distortionUsesLocalPixelSpace = false;
+    bool                     distortionUsesSourceQuadBasis = false;
+    bool                     distortionClampedToSourceQuad = false;
+    uint64_t                 captureGeneration = 0;
     std::string              perSurfaceBlurSupport;
 };
+
+struct BackdropCaptureRecord {
+    std::string descriptorId;
+    std::string monitor;
+    std::string status = "not-attempted";
+    std::string error;
+    std::string backend = "hyprland-renderer-temp-fb-texture-copy";
+    std::string sourceMapping = "monitor-framebuffer-axis-aligned-uv";
+    std::string sourceCroppingMode = "ctex-axis-aligned-uv-rect";
+    std::string uvMappingType = "axis-aligned-uv-rect";
+    RectSummary sourceBackdropRect;
+    RectSummary destinationRect;
+    RectSummary textureSize;
+    RectSummary sourceExtent;
+    RectSummary sourceUvRect;
+    RectSummary sourceUvTopLeft;
+    RectSummary sourceUvTopRight;
+    RectSummary sourceUvBottomRight;
+    RectSummary sourceUvBottomLeft;
+    std::vector<UvCandidateSliceSummary> candidateSlices;
+    CaptureQuadCandidate selectedSourceQuad;
+    std::vector<CaptureQuadCandidate> sourceMappingCandidates;
+    std::string selectedSourceMappingCandidate;
+    uint64_t    captureGeneration = 0;
+    bool        captureAttempted = false;
+    bool        transformCaptureDiagnosticEnabled = false;
+    bool        shaderUsesFourCornerUV = false;
+    bool        captureReady = false;
+    bool        captureTextureReady = false;
+    bool        textureReady = false;
+    bool        sampled = false;
+    bool        descriptorRendered = false;
+    bool        descriptorUsedCapture = false;
+    bool        renderedFromStaleCapture = false;
+    bool        selfSamplingRisk = true;
+};
+
+struct MonitorBackdropCaptureRecord {
+    std::string monitor;
+    std::string status = "not-attempted";
+    std::string error;
+    std::string backend = "hyprland-renderer-temp-fb-texture-copy";
+    std::string captureCopyMethod = "tex-pass-existing-projection";
+    std::string captureCopyProjection = "unknown";
+    RectSummary textureSize;
+    RectSummary sourceExtent;
+    uint64_t    captureGeneration = 0;
+    bool        captureAttempted = false;
+    bool        captureFaithfulCopyAttempted = false;
+    bool        captureCopyProjectionRestored = false;
+    bool        captureReady = false;
+    bool        captureTextureReady = false;
+    bool        textureReady = false;
+    bool        selfSamplingRisk = true;
+};
+
+
+bool positiveExtent(const RectSummary& rect) {
+    return rect.width > 0.0 && rect.height > 0.0;
+}
+
+bool monitorCaptureRecordReady(const MonitorBackdropCaptureRecord& record) {
+    return record.captureReady && record.captureTextureReady && record.textureReady && positiveExtent(record.textureSize) && positiveExtent(record.sourceExtent);
+}
+
+bool captureRecordReady(const BackdropCaptureRecord& record) {
+    return record.captureReady && record.captureTextureReady && record.textureReady && positiveExtent(record.textureSize) && positiveExtent(record.sourceExtent);
+}
+
+void copyMonitorCaptureStateToDescriptorRecord(BackdropCaptureRecord& record, const MonitorBackdropCaptureRecord& monitorRecord) {
+    record.captureAttempted = monitorRecord.captureAttempted;
+    record.captureGeneration = monitorRecord.captureGeneration;
+    record.backend = monitorRecord.backend;
+    record.sourceExtent = monitorRecord.sourceExtent;
+    record.textureSize = monitorRecord.textureSize;
+    record.captureTextureReady = monitorRecord.captureTextureReady && positiveExtent(monitorRecord.textureSize);
+    record.textureReady = monitorRecord.textureReady && positiveExtent(monitorRecord.textureSize);
+    record.captureReady = monitorCaptureRecordReady(monitorRecord);
+    record.selfSamplingRisk = !record.captureReady || monitorRecord.selfSamplingRisk;
+}
+
+std::string selectedSourceMappingCandidateName(int transform);
+const CaptureQuadCandidate* findCaptureQuadCandidate(const std::vector<CaptureQuadCandidate>& candidates, std::string_view name);
+
+struct ShaderSourceUvMapping {
+    bool        supported = false;
+    bool        inBounds = true;
+    bool        diagnosticOnly = true;
+    std::string mapping;
+    std::string error;
+    std::string selectedCandidateName;
+    RectSummary topLeft;
+    RectSummary topRight;
+    RectSummary bottomRight;
+    RectSummary bottomLeft;
+    RectSummary bounds;
+    CaptureQuadCandidate selectedQuad;
+    std::vector<CaptureQuadCandidate> candidates;
+};
+
+ShaderSourceUvMapping shaderSourceUvMappingFor(const MaterialDescriptor& material, double sourceWidth, double sourceHeight);
+
+std::map<std::string, BackdropCaptureRecord>       g_backdropCaptureRecords;
+std::map<std::string, MonitorBackdropCaptureRecord> g_backdropMonitorCaptureRecords;
+std::map<std::string, SP<Render::IFramebuffer>>    g_backdropCaptureFramebuffers;
 
 struct MaterialColorResolution {
     std::string tintColorRequested;
@@ -271,9 +509,10 @@ json buildInfoToJSON() {
 
 json capabilitiesToJSON() {
     return {
-        {"materials", json::array({"flat", "blur-native", "glass-v1"})},
+        {"materials", json::array({"flat", "blur-native", "glass-v1", "fluid-glass"})},
         {"debugOverlay", true},
         {"nativeBlur", true},
+        {"fluidGlass", true},
         {"renderStages", {
             {"material", "RENDER_POST_WINDOWS"},
             {"debugOverlay", "RENDER_LAST_MOMENT"},
@@ -334,6 +573,80 @@ bool getBool(const json& object, std::string_view key, bool defaultValue = false
         return defaultValue;
     return it->get<bool>();
 }
+
+uint64_t nextCaptureGeneration() {
+    std::lock_guard guard(g_stateMutex);
+    return ++g_captureGeneration;
+}
+
+BackdropCaptureRecord backdropCaptureRecordFor(const std::string& descriptorId) {
+    std::lock_guard guard(g_stateMutex);
+    auto it = g_backdropCaptureRecords.find(descriptorId);
+    if (it == g_backdropCaptureRecords.end()) {
+        BackdropCaptureRecord record;
+        record.descriptorId = descriptorId;
+        return record;
+    }
+    return it->second;
+}
+
+void updateBackdropCaptureRecord(const BackdropCaptureRecord& record) {
+    std::lock_guard guard(g_stateMutex);
+    g_backdropCaptureRecords[record.descriptorId] = record;
+    g_lastBackdropCaptureStatus = record.status;
+    g_lastBackdropCaptureError = record.error;
+}
+
+MonitorBackdropCaptureRecord monitorBackdropCaptureRecordFor(const std::string& monitor) {
+    std::lock_guard guard(g_stateMutex);
+    auto it = g_backdropMonitorCaptureRecords.find(monitor);
+    if (it == g_backdropMonitorCaptureRecords.end()) {
+        MonitorBackdropCaptureRecord record;
+        record.monitor = monitor;
+        return record;
+    }
+    return it->second;
+}
+
+void updateMonitorBackdropCaptureRecord(const MonitorBackdropCaptureRecord& record) {
+    std::lock_guard guard(g_stateMutex);
+    g_backdropMonitorCaptureRecords[record.monitor] = record;
+    g_lastBackdropCaptureStatus = record.status;
+    g_lastBackdropCaptureError = record.error;
+}
+
+
+
+
+
+struct FluidGlassShaderStatus {
+    bool        compileAttempted = false;
+    bool        compiled = false;
+    bool        ready = false;
+    std::string backend = "hyprland-cshader-gles-custom-pass";
+    std::string error;
+};
+
+
+FluidGlassShaderStatus fluidGlassShaderStatus() {
+    std::lock_guard guard(g_stateMutex);
+    return {
+        .compileAttempted = g_fluidGlassShaderCompileAttempted,
+        .compiled = g_fluidGlassShaderCompiled,
+        .ready = g_fluidGlassShaderCompiled && g_fluidGlassShaderError.empty(),
+        .backend = "hyprland-cshader-gles-custom-pass",
+        .error = g_fluidGlassShaderError,
+    };
+}
+
+
+void updateFluidGlassShaderStatus(bool compiled, std::string error) {
+    std::lock_guard guard(g_stateMutex);
+    g_fluidGlassShaderCompileAttempted = true;
+    g_fluidGlassShaderCompiled = compiled;
+    g_fluidGlassShaderError = std::move(error);
+}
+
 
 const json* getObject(const json& object, std::string_view key) {
     auto it = object.find(key);
@@ -495,6 +808,40 @@ json rectWithSpaceToJSON(std::string_view space, const RectSummary& rect) {
     out["space"] = space;
     return out;
 }
+
+json pointWithSpaceToJSON(std::string_view space, double x, double y) {
+    return {
+        {"x", x},
+        {"y", y},
+        {"space", space},
+    };
+}
+
+
+
+
+json captureQuadCandidateToJSON(const CaptureQuadCandidate& quad) {
+    return {
+        {"name", quad.name},
+        {"formula", quad.formula},
+        {"notes", quad.notes},
+        {"space", quad.space},
+        {"transform", quad.transform},
+        {"topLeft", pointWithSpaceToJSON(quad.space, quad.topLeft.x, quad.topLeft.y)},
+        {"topRight", pointWithSpaceToJSON(quad.space, quad.topRight.x, quad.topRight.y)},
+        {"bottomRight", pointWithSpaceToJSON(quad.space, quad.bottomRight.x, quad.bottomRight.y)},
+        {"bottomLeft", pointWithSpaceToJSON(quad.space, quad.bottomLeft.x, quad.bottomLeft.y)},
+        {"bounds", rectWithSpaceToJSON(quad.space, quad.bounds)},
+        {"uvTopLeft", pointWithSpaceToJSON("normalized-uv", quad.uvTopLeft.x, quad.uvTopLeft.y)},
+        {"uvTopRight", pointWithSpaceToJSON("normalized-uv", quad.uvTopRight.x, quad.uvTopRight.y)},
+        {"uvBottomRight", pointWithSpaceToJSON("normalized-uv", quad.uvBottomRight.x, quad.uvBottomRight.y)},
+        {"uvBottomLeft", pointWithSpaceToJSON("normalized-uv", quad.uvBottomLeft.x, quad.uvBottomLeft.y)},
+        {"axisAligned", quad.axisAligned},
+        {"inBounds", quad.inBounds},
+        {"confidence", quad.confidence},
+    };
+}
+
 
 json radiiToJSON(const RadiiSummary& radius) {
     return {
@@ -666,9 +1013,170 @@ bool materialModeUsesNativeBlur(std::string_view mode) {
     return mode == "blur-native" || mode == "glass-v1";
 }
 
-bool materialModeIsSupported(std::string_view mode) {
-    return mode == "flat" || materialModeUsesNativeBlur(mode);
+
+bool materialModeUsesFluidGlass(std::string_view mode) {
+    return mode == "fluid-glass";
 }
+
+bool materialModeUsesFluidShader(std::string_view mode) {
+    return materialModeUsesFluidGlass(mode);
+}
+
+bool materialModeUsesSdfRefraction(std::string_view mode) {
+    return materialModeUsesFluidShader(mode);
+}
+
+
+
+
+
+
+
+
+bool materialModeUsesBackdropCapture(std::string_view mode) {
+    return materialModeUsesSdfRefraction(mode);
+}
+
+
+
+
+
+
+
+bool materialModeIsSupported(std::string_view mode) {
+    return mode == "flat" || materialModeUsesNativeBlur(mode) || materialModeUsesFluidGlass(mode);
+}
+
+bool fluidGlassShaderSupportsTransform(int transform) {
+    return transform >= 0 && transform <= 7;
+}
+
+std::string fluidGlassShaderTransformName(int transform) {
+    if (transform == 0)
+        return "shared-source-quad-currentDirectRect-transform-0";
+    if (transform >= 0 && transform <= 7)
+        return "shared-source-quad-diagnostic-transform-" + std::to_string(transform);
+    return "shader-source-map-transform-" + std::to_string(transform) + "-unsupported";
+}
+
+
+
+
+bool fluidV0SupportsTransform(int transform) {
+    return transform == 0;
+}
+
+bool fluidGlassSupportsTransform(int transform) {
+    return fluidGlassShaderSupportsTransform(transform);
+}
+
+bool fluidShaderSupportsTransform(std::string_view mode, int transform) {
+    if (materialModeUsesFluidGlass(mode))
+        return fluidGlassSupportsTransform(transform);
+    return fluidV0SupportsTransform(transform);
+}
+
+
+
+
+std::string fluidV0SourceMappingName(int transform) {
+    if (transform == 0)
+        return "fluid-v0-direct-source-uv-transform-0";
+    if (transform >= 0 && transform <= 7)
+        return "fluid-v0-transform-" + std::to_string(transform) + "-unvalidated-skipped";
+    return "fluid-v0-transform-" + std::to_string(transform) + "-unsupported";
+}
+
+std::string fluidV0EvidenceForTransform(int transform) {
+    if (transform == 0)
+        return "transform 0 direct source UV mapping was live-validated through fluid-glass";
+    return "transformed capture-backed sampling is shelved; fluid-v0-debug remains skipped for this transform";
+}
+
+std::string fluidV0ValidationStatus(int transform) {
+    if (transform == 0)
+        return "live-validated";
+    if (transform >= 1 && transform <= 7)
+        return "unvalidated-skipped";
+    return "unsupported";
+}
+
+std::string fluidGlassSourceMappingName(int transform) {
+    if (transform == 0)
+        return "fluid-glass-direct-source-uv-transform-0";
+    if (transform >= 0 && transform <= 7)
+        return "fluid-glass-shared-source-quad-transform-" + std::to_string(transform);
+    return "fluid-glass-transform-" + std::to_string(transform) + "-unsupported";
+}
+
+std::string fluidGlassEvidenceForTransform(int transform) {
+    if (transform == 0)
+        return "fluid-glass uses the validated direct source UV shader path on transform 0";
+    if (transform >= 1 && transform <= 7)
+        return "fluid-glass uses the selected shared display-to-capture quad when it is valid for this descriptor";
+    return "unsupported transform";
+}
+
+std::string fluidGlassValidationStatus(int transform) {
+    if (transform == 0)
+        return "live-validated";
+    if (transform >= 1 && transform <= 7)
+        return "quad-mapped-if-valid";
+    return "unsupported";
+}
+
+std::string fluidShaderSourceMappingName(std::string_view mode, int transform) {
+    if (materialModeUsesFluidGlass(mode))
+        return fluidGlassSourceMappingName(transform);
+    return fluidV0SourceMappingName(transform);
+}
+
+std::string fluidShaderEvidenceForTransform(std::string_view mode, int transform) {
+    if (materialModeUsesFluidGlass(mode))
+        return fluidGlassEvidenceForTransform(transform);
+    return fluidV0EvidenceForTransform(transform);
+}
+
+std::string fluidShaderValidationStatus(std::string_view mode, int transform) {
+    if (materialModeUsesFluidGlass(mode))
+        return fluidGlassValidationStatus(transform);
+    return fluidV0ValidationStatus(transform);
+}
+
+
+
+double fluidV0DisplacementFor(double frost) {
+    return clampDouble(1.5 + frost * 8.0, 1.5, 9.5);
+}
+
+double fluidV0EdgeWidthFor(const RectSummary& rect) {
+    return clampDouble(std::min(rect.width, rect.height) * 0.30, 6.0, 18.0);
+}
+
+
+
+
+RectSummary rectFromXYWH(double x, double y, double width, double height) {
+    return {
+        .x = x,
+        .y = y,
+        .width = width,
+        .height = height,
+    };
+}
+
+
+RectSummary mapDrawRectToCaptureSource(const RectSummary& drawRect) {
+    if (!rectValid(drawRect))
+        return {};
+
+    // The capture texture is copied in the monitor framebuffer UV basis. Draw
+    // boxes are already monitor-local framebuffer rects; Hyprland projects the
+    // destination transform separately when rendering the pass.
+    return roundRect(drawRect);
+}
+
+
 
 double glassRimAlpha(double frost) {
     return clampDouble(0.024 + frost * 0.046, 0.024, 0.07);
@@ -747,6 +1255,67 @@ std::string colorToHexRGB(const CHyprColor& color) {
 
 double uniformRadiusFromDescriptor(const RadiiSummary& radius) {
     return std::min({radius.topLeft, radius.topRight, radius.bottomRight, radius.bottomLeft});
+}
+
+void configureGlassPolish(MaterialDescriptor& material, double strengthMultiplier = 1.0) {
+    const double strength = clampDouble(strengthMultiplier, 0.0, 1.0);
+    material.tintOverlayAlphaUsed = glassTintOverlayAlpha(material.requestedFrost, material.tintOpacityRequested) * strength;
+    material.rimAlphaUsed = glassRimAlpha(material.requestedFrost) * strength;
+    material.rimExpansionPx = 0.0;
+    material.innerEdgeAlphaUsed = glassInnerEdgeAlpha(material.requestedFrost) * strength;
+    material.innerEdgeInsetPx = 2.0;
+    material.highlightAlphaUsed = glassHighlightAlpha(material.requestedFrost) * strength;
+    material.shadowAlphaUsed = 0.0;
+
+    material.tintOverlayEnabled = material.tintOverlayAlphaUsed > 0.001;
+    material.rimEnabled = material.rimAlphaUsed > 0.001;
+    material.rimTechnique = material.rimEnabled ? "rounded-border-pass" : "disabled";
+    material.rimColorUsed = material.rimEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.52, 1.0)) : "";
+    material.innerEdgeEnabled = material.innerEdgeAlphaUsed > 0.001 && material.rectUsed.width > material.innerEdgeInsetPx * 2.0 + 1.0 && material.rectUsed.height > material.innerEdgeInsetPx * 2.0 + 1.0;
+    material.innerEdgeTechnique = material.innerEdgeEnabled ? "rounded-border-pass" : "disabled";
+    material.innerEdgeColorUsed = material.innerEdgeEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.62, 1.0)) : "";
+    material.highlightTransformSafe = material.drawTransformSupported && isTransformSupported(material.drawTransform);
+    material.highlightEnabled = material.highlightTransformSafe && material.highlightAlphaUsed > 0.001 && material.rectUsed.width > material.radiusUsed * 2.0 + 8.0;
+    material.shadowEnabled = false;
+
+    if (material.tintOverlayEnabled)
+        ++material.passCount;
+    if (material.rimEnabled)
+        ++material.passCount;
+    if (material.innerEdgeEnabled)
+        ++material.passCount;
+    if (material.highlightEnabled)
+        ++material.passCount;
+}
+
+void configureGlassV1Backend(MaterialDescriptor& material, std::string backend, std::string fallbackReason = {}) {
+    material.backendUsed = std::move(backend);
+    material.fallbackReason = std::move(fallbackReason);
+    material.blurAlphaUsed = material.requestedFrost;
+    material.blurEnabled = material.blurAlphaUsed > 0.01;
+    material.effectiveBlurSource = "native-hyprland";
+    material.effectiveBlurControl = "global-kernel-per-surface-alpha";
+    material.perSurfaceBlurSupported = false;
+    material.perSurfaceBlurSupport = "alpha-only";
+    material.captureEnabled = false;
+    material.captureReady = false;
+    material.textureReady = false;
+    material.sampled = false;
+    material.shaderEnabled = false;
+    material.shaderCompiled = false;
+    material.shaderReady = false;
+    material.shaderError.clear();
+    material.sdfMaskEnabled = false;
+    material.roundedMaskEnabled = false;
+    material.refractionDebugEnabled = false;
+    material.refractionEnabled = false;
+    material.transformCaptureSupported = false;
+    material.sourceMapping = "none-glass-v1-fallback";
+    material.sourceMappingEvidence = "no capture source is sampled for glass-v1 fallback";
+    material.sourceCroppingMode = "none";
+    material.uvMappingType = "none";
+    material.passCount = 1;
+    configureGlassPolish(material, 1.0);
 }
 
 MaterialColorResolution resolveMaterialColor(const DescriptorSummary& descriptor, std::vector<std::string>& warnings) {
@@ -1029,6 +1598,7 @@ MaterialDescriptor analyzeMaterialDrawable(
     const std::vector<SurfaceCandidate>& candidates
 ) {
     MaterialDescriptor material;
+    material.descriptorId = descriptor.id;
     material.mode = materialMode;
     material.status = "skipped";
     material.reason = "material mode off";
@@ -1098,6 +1668,9 @@ MaterialDescriptor analyzeMaterialDrawable(
     material.reason = "coordinate " + coordinate.status;
     material.rectUsed = drawMapping.rect;
     material.rectUsedSpace = drawMapping.space;
+    material.destinationRect = material.rectUsed;
+    material.sourceBackdropRect = mapDrawRectToCaptureSource(material.destinationRect);
+    material.monitorScale = candidate.scale;
     material.globalRectUsed = {
         .x      = descriptor.logical.x + candidate.monitorLogical.x,
         .y      = descriptor.logical.y + candidate.monitorLogical.y,
@@ -1125,6 +1698,142 @@ MaterialDescriptor analyzeMaterialDrawable(
 
     material.requestedFrost = clampDouble(descriptor.frost, 0.0, 1.0);
     material.passCount = 1;
+    if (materialModeUsesFluidGlass(materialMode)) {
+        const auto shaderStatus = fluidGlassShaderStatus();
+        material.shaderEnabled = true;
+        material.shaderBackend = shaderStatus.backend;
+        material.shaderCompiled = shaderStatus.compiled;
+        material.shaderReady = shaderStatus.ready;
+        material.shaderError = shaderStatus.error;
+        material.sdfMaskEnabled = material.rounded;
+        material.roundedMaskEnabled = material.rounded;
+        material.refractionDebugEnabled = true;
+        material.refractionEnabled = true;
+        material.distortionUsesLocalPixelSpace = true;
+        material.distortionUsesSourceQuadBasis = true;
+        material.distortionClampedToSourceQuad = true;
+        material.sdfTechnique = "fluid-glass-rounded-sdf-edge-displacement";
+        material.sdfDisplacementStrengthPx = fluidV0DisplacementFor(material.requestedFrost);
+        material.sdfEdgeWidthPx = fluidV0EdgeWidthFor(material.destinationRect);
+        material.transformPolicy = "fluid-glass uses capture-backed shader sampling when the selected shared display-to-capture quad is valid; otherwise it uses glass-v1 fallback";
+        material.transformShaderSupported = material.drawTransformSupported && fluidShaderSupportsTransform(materialMode, material.drawTransform);
+        material.transformCaptureSupported = material.transformShaderSupported;
+        material.sourceMapping = fluidShaderSourceMappingName(materialMode, material.drawTransform);
+        material.sourceMappingEvidence = fluidShaderEvidenceForTransform(materialMode, material.drawTransform);
+        material.sourceCroppingMode = "custom-shader-corner-uv";
+        material.uvMappingType = "custom-shader-corner-uv";
+        material.passCount = 1;
+        material.backendUsed = "fluid-shader";
+        if (!candidate.hasMonitorFramebuffer || !rectValid(candidate.monitorFramebuffer)) {
+            configureGlassV1Backend(material, "glass-v1-fallback", "Fluid Glass capture source extent unavailable; using glass-v1 fallback");
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            material.transformPolicy = "fluid-glass fallback: capture source extent is unavailable for selected quad mapping";
+            addWarning(material.warnings, "fluid-glass could not compute a capture source extent for this descriptor and drew glass-v1 fallback instead");
+            return material;
+        }
+
+        const auto previewMapping = shaderSourceUvMappingFor(material, candidate.monitorFramebuffer.width, candidate.monitorFramebuffer.height);
+        material.sourceMappingCandidates = previewMapping.candidates;
+        material.selectedSourceQuad = previewMapping.selectedQuad;
+        material.sourceUvTopLeft = previewMapping.topLeft;
+        material.sourceUvTopRight = previewMapping.topRight;
+        material.sourceUvBottomRight = previewMapping.bottomRight;
+        material.sourceUvBottomLeft = previewMapping.bottomLeft;
+        material.sourceUvRect = previewMapping.bounds;
+        material.sourceExtent = rectFromXYWH(0.0, 0.0, candidate.monitorFramebuffer.width, candidate.monitorFramebuffer.height);
+        material.shaderUsesFourCornerUV = true;
+        material.transformCaptureDiagnosticEnabled = material.drawTransform != 0;
+        material.transformShaderSupported = material.drawTransformSupported && previewMapping.supported;
+        material.transformCaptureSupported = material.transformShaderSupported;
+        material.sourceMapping = previewMapping.supported ? previewMapping.mapping : fluidGlassSourceMappingName(material.drawTransform);
+        material.sourceMappingEvidence = previewMapping.supported ?
+            "fluid-glass using quad-mapped capture source candidate: " + previewMapping.selectedCandidateName :
+            "fluid-glass falling back because selected capture quad is invalid: " + (previewMapping.error.empty() ? "unknown" : previewMapping.error);
+
+        if (!previewMapping.supported) {
+            const std::string fallbackReason = previewMapping.error.empty() ? "Fluid Glass selected capture quad invalid; using glass-v1 fallback" : "Fluid Glass selected capture quad invalid: " + previewMapping.error;
+            configureGlassV1Backend(material, "glass-v1-fallback", fallbackReason);
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            material.transformPolicy = "fluid-glass fallback: selected shared display-to-capture quad was invalid or out of bounds";
+            addWarning(material.warnings, fallbackReason);
+            return material;
+        }
+        addWarning(material.warnings, "fluid-glass uses capture-backed Fluid Glass shader sampling with a shared display-to-capture source quad");
+        if (!material.transformShaderSupported) {
+            configureGlassV1Backend(material, "glass-v1-fallback", "Fluid Glass selected capture quad unavailable; using glass-v1 fallback");
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            material.transformPolicy = "fluid-glass fallback: selected shared display-to-capture quad is unavailable";
+            addWarning(material.warnings, "fluid-glass skipped capture-backed sampling because selected quad mapping was unavailable and drew glass-v1 fallback instead");
+            return material;
+        }
+        if (shaderStatus.compileAttempted && !shaderStatus.ready) {
+            configureGlassV1Backend(material, "glass-v1-fallback", "Fluid Glass shader unavailable; using glass-v1 fallback");
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            addWarning(material.warnings, "fluid-glass shader was unavailable, so this descriptor uses glass-v1 fallback");
+            return material;
+        }
+    }
+    if (materialModeUsesBackdropCapture(materialMode)) {
+        material.captureEnabled = true;
+        material.captureMonitor = candidate.monitor;
+        const auto record = backdropCaptureRecordFor(descriptor.id);
+        material.captureStatus = record.status;
+        material.captureError = record.error;
+        material.captureBackend = record.backend;
+        material.captureGeneration = record.captureGeneration;
+        material.captureAttempted = record.captureAttempted;
+        material.captureReady = captureRecordReady(record);
+        material.captureTextureReady = record.captureTextureReady && positiveExtent(record.textureSize);
+        material.textureReady = record.textureReady && positiveExtent(record.textureSize);
+        material.textureSize = record.textureSize;
+        material.sourceExtent = record.sourceExtent;
+        material.sourceUvRect = record.sourceUvRect;
+        material.sourceUvTopLeft = record.sourceUvTopLeft;
+        material.sourceUvTopRight = record.sourceUvTopRight;
+        material.sourceUvBottomRight = record.sourceUvBottomRight;
+        material.sourceUvBottomLeft = record.sourceUvBottomLeft;
+        material.sourceMapping = record.sourceMapping;
+        material.sourceCroppingMode = record.sourceCroppingMode;
+        material.uvMappingType = record.uvMappingType;
+        material.candidateSlices = record.candidateSlices;
+        material.selectedSourceQuad = record.selectedSourceQuad;
+        material.sourceMappingCandidates = record.sourceMappingCandidates;
+        if (!record.selectedSourceMappingCandidate.empty())
+            material.sourceMappingEvidence = "fluid-glass selected shared source mapping candidate: " + record.selectedSourceMappingCandidate;
+        material.transformCaptureDiagnosticEnabled = record.transformCaptureDiagnosticEnabled;
+        material.shaderUsesFourCornerUV = record.shaderUsesFourCornerUV;
+        material.sampled = record.sampled && material.captureReady;
+        material.descriptorRendered = record.descriptorRendered && material.captureReady;
+        material.descriptorUsedCapture = record.descriptorUsedCapture && material.captureReady;
+        material.renderedFromStaleCapture = record.renderedFromStaleCapture && material.captureReady;
+        material.selfSamplingRisk = !material.captureReady || record.selfSamplingRisk;
+        material.blurEnabled = false;
+        if (material.captureReady && material.textureReady) {
+            material.reason = "coordinate " + coordinate.status + "; backdrop capture ready";
+        } else {
+            addWarning(material.warnings, "fluid-glass uses glass-v1 fallback until captureReady, textureReady, shaderReady, and selected capture quad validity are true");
+            if (!material.captureError.empty())
+                addWarning(material.warnings, material.captureError);
+            else if (!material.captureAttempted)
+                addWarning(material.warnings, "capture has not run for this descriptor yet; waiting for the next damaged frame");
+        }
+        if (material.captureStatus != "not-attempted" && material.captureStatus != "ok") {
+            const std::string fallbackReason = material.captureError.empty() ? "Fluid Glass shader/capture render failed; using glass-v1 fallback" : "Fluid Glass shader/capture render failed: " + material.captureError;
+            configureGlassV1Backend(material, "glass-v1-fallback", fallbackReason);
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            material.transformPolicy = "fluid-glass fallback: shader render path reported " + material.captureStatus;
+            addWarning(material.warnings, fallbackReason);
+            return material;
+        }
+        if (material.captureStatus != "not-attempted" && (!material.captureReady || !material.textureReady)) {
+            const std::string fallbackReason = "Fluid Glass capture unavailable; using glass-v1 fallback";
+            configureGlassV1Backend(material, "glass-v1-fallback", fallbackReason);
+            material.reason = "coordinate " + coordinate.status + "; fluid-glass using glass-v1 fallback";
+            material.transformPolicy = "fluid-glass fallback: shader capture is used only when capture, texture, shader, and selected quad state are ready";
+            addWarning(material.warnings, fallbackReason);
+            return material;
+        }
+    }
     if (materialModeUsesNativeBlur(materialMode)) {
         material.blurAlphaUsed = material.requestedFrost;
         material.blurEnabled = material.blurAlphaUsed > 0.01;
@@ -1137,36 +1846,13 @@ MaterialDescriptor analyzeMaterialDrawable(
             addWarning(material.warnings, "native blur requires translucent material alpha in CRectPassElement; resolved alpha is opaque");
     }
     if (materialMode == "glass-v1") {
-        material.tintOverlayAlphaUsed = glassTintOverlayAlpha(material.requestedFrost, material.tintOpacityRequested);
-        material.rimAlphaUsed = glassRimAlpha(material.requestedFrost);
-        material.rimExpansionPx = 0.0;
-        material.innerEdgeAlphaUsed = glassInnerEdgeAlpha(material.requestedFrost);
-        material.innerEdgeInsetPx = 2.0;
-        material.highlightAlphaUsed = glassHighlightAlpha(material.requestedFrost);
-        material.shadowAlphaUsed = 0.0;
-
-        material.tintOverlayEnabled = material.tintOverlayAlphaUsed > 0.001;
-        material.rimEnabled = material.rimAlphaUsed > 0.001;
-        material.rimTechnique = material.rimEnabled ? "rounded-border-pass" : "disabled";
-        material.rimColorUsed = material.rimEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.52, 1.0)) : "";
-        material.innerEdgeEnabled = material.innerEdgeAlphaUsed > 0.001 && material.rectUsed.width > material.innerEdgeInsetPx * 2.0 + 1.0 && material.rectUsed.height > material.innerEdgeInsetPx * 2.0 + 1.0;
-        material.innerEdgeTechnique = material.innerEdgeEnabled ? "rounded-border-pass" : "disabled";
-        material.innerEdgeColorUsed = material.innerEdgeEnabled ? colorToHexRGB(mixColor(material.color, 1.0F, 1.0F, 1.0F, 0.62, 1.0)) : "";
-        material.highlightTransformSafe = material.drawTransformSupported && isTransformSupported(material.drawTransform);
-        material.highlightEnabled = material.highlightTransformSafe && material.highlightAlphaUsed > 0.001 && material.rectUsed.width > material.radiusUsed * 2.0 + 8.0;
-        material.shadowEnabled = false;
-
         material.passCount = 1;
-        if (material.tintOverlayEnabled)
-            ++material.passCount;
-        if (material.rimEnabled)
-            ++material.passCount;
-        if (material.innerEdgeEnabled)
-            ++material.passCount;
-        if (material.highlightEnabled)
-            ++material.passCount;
-
+        configureGlassPolish(material, 1.0);
         addWarning(material.warnings, "glass-v1 rim uses CBorderPassElement rounded border pass; square outline layers remain disabled");
+    }
+    if (materialModeUsesFluidGlass(materialMode)) {
+        configureGlassPolish(material, 0.82);
+        addWarning(material.warnings, "fluid-glass uses the shared-quad Fluid Glass shader path plus conservative glass-v1 rounded polish overlays");
     }
 
     return material;
@@ -1227,6 +1913,11 @@ json materialDescriptorToJSON(const MaterialDescriptor& material) {
         out["alphaUsed"] = material.alphaUsed;
         out["blurEnabled"] = material.blurEnabled;
         out["passCount"] = material.passCount;
+        if (!material.backendUsed.empty())
+            out["backendUsed"] = material.backendUsed;
+        if (!material.fallbackReason.empty())
+            out["fallbackReason"] = material.fallbackReason;
+        out["transformCaptureSupported"] = material.transformCaptureSupported;
         if (materialModeUsesNativeBlur(material.mode)) {
             out["blurAlphaUsed"] = material.blurAlphaUsed;
             out["effectiveBlurSource"] = material.effectiveBlurSource;
@@ -1234,7 +1925,7 @@ json materialDescriptorToJSON(const MaterialDescriptor& material) {
             out["perSurfaceBlurSupported"] = material.perSurfaceBlurSupported;
             out["perSurfaceBlurSupport"] = material.perSurfaceBlurSupport;
         }
-        if (material.mode == "glass-v1") {
+        if (material.mode == "glass-v1" || materialModeUsesFluidShader(material.mode) || material.backendUsed == "glass-v1-fallback") {
             out["tintOverlayEnabled"] = material.tintOverlayEnabled;
             out["tintOverlayAlphaUsed"] = material.tintOverlayAlphaUsed;
             out["rimEnabled"] = material.rimEnabled;
@@ -1252,6 +1943,102 @@ json materialDescriptorToJSON(const MaterialDescriptor& material) {
             out["highlightTransformSafe"] = material.highlightTransformSafe;
             out["shadowEnabled"] = material.shadowEnabled;
             out["shadowAlphaUsed"] = material.shadowEnabled ? material.shadowAlphaUsed : 0.0;
+        }
+        if (materialModeUsesBackdropCapture(material.mode)) {
+            out["captureEnabled"] = material.captureEnabled;
+            out["captureStage"] = material.captureStage;
+            out["captureAttempted"] = material.captureAttempted;
+            out["captureGeneration"] = material.captureGeneration;
+            out["captureReady"] = material.captureReady;
+            out["captureStatus"] = material.captureStatus;
+            out["captureMonitor"] = material.captureMonitor;
+            out["captureBackend"] = material.captureBackend;
+            out["captureTextureReady"] = material.captureTextureReady;
+            out["textureReady"] = material.textureReady;
+            out["textureSize"] = rectWithSpaceToJSON("pixels", material.textureSize);
+            out["sourceBackdropRect"] = rectWithSpaceToJSON(material.rectUsedSpace, material.sourceBackdropRect);
+            out["destinationRect"] = rectWithSpaceToJSON(material.rectUsedSpace, material.destinationRect);
+            out["sourceExtent"] = rectWithSpaceToJSON("monitor-framebuffer-uv-basis", material.sourceExtent);
+            out["sourceUvRect"] = rectWithSpaceToJSON("normalized-uv", material.sourceUvRect);
+            out["sourceUvTopLeft"] = pointWithSpaceToJSON("normalized-uv", material.sourceUvTopLeft.x, material.sourceUvTopLeft.y);
+            out["sourceUvTopRight"] = pointWithSpaceToJSON("normalized-uv", material.sourceUvTopRight.x, material.sourceUvTopRight.y);
+            out["sourceUvBottomRight"] = pointWithSpaceToJSON("normalized-uv", material.sourceUvBottomRight.x, material.sourceUvBottomRight.y);
+            out["sourceUvBottomLeft"] = pointWithSpaceToJSON("normalized-uv", material.sourceUvBottomLeft.x, material.sourceUvBottomLeft.y);
+            out["sourceMapping"] = material.sourceMapping;
+            out["sourceCroppingMode"] = material.sourceCroppingMode;
+            out["uvMappingType"] = material.uvMappingType;
+            out["transformCaptureSupportedForProduction"] = material.transformCaptureSupported;
+            out["transformCaptureDiagnosticEnabled"] = material.transformCaptureDiagnosticEnabled;
+            out["shaderUsesFourCornerUV"] = material.shaderUsesFourCornerUV;
+            if (!material.selectedSourceQuad.name.empty()) {
+                out["selectedSourceMappingCandidate"] = material.selectedSourceQuad.name;
+                out["selectedSourceQuad"] = captureQuadCandidateToJSON(material.selectedSourceQuad);
+                out["selectedUvQuad"] = {
+                    {"topLeft", pointWithSpaceToJSON("normalized-uv", material.selectedSourceQuad.uvTopLeft.x, material.selectedSourceQuad.uvTopLeft.y)},
+                    {"topRight", pointWithSpaceToJSON("normalized-uv", material.selectedSourceQuad.uvTopRight.x, material.selectedSourceQuad.uvTopRight.y)},
+                    {"bottomRight", pointWithSpaceToJSON("normalized-uv", material.selectedSourceQuad.uvBottomRight.x, material.selectedSourceQuad.uvBottomRight.y)},
+                    {"bottomLeft", pointWithSpaceToJSON("normalized-uv", material.selectedSourceQuad.uvBottomLeft.x, material.selectedSourceQuad.uvBottomLeft.y)},
+                };
+                out["selectedBounds"] = rectWithSpaceToJSON(material.selectedSourceQuad.space, material.selectedSourceQuad.bounds);
+                out["selectedInBounds"] = material.selectedSourceQuad.inBounds;
+            }
+            if (!material.sourceMappingCandidates.empty()) {
+                json candidateQuads = json::array();
+                for (const auto& candidate : material.sourceMappingCandidates)
+                    candidateQuads.push_back(captureQuadCandidateToJSON(candidate));
+                out["candidateQuads"] = candidateQuads;
+            }
+            out["transformSourceMapping"] = material.sourceMapping;
+            if (!material.sourceMappingEvidence.empty())
+                out["sourceMappingEvidence"] = material.sourceMappingEvidence;
+            out["monitorScale"] = material.monitorScale;
+            out["sampled"] = material.sampled;
+            out["descriptorSampled"] = material.sampled;
+            out["descriptorRendered"] = material.descriptorRendered;
+            out["descriptorUsedCapture"] = material.descriptorUsedCapture;
+            out["renderedFromStaleCapture"] = material.renderedFromStaleCapture;
+            if (!material.captureAttempted)
+                out["captureWaitReason"] = "waiting-for-capture-frame";
+            else if (material.captureAttempted && !material.captureReady) {
+                if (!material.captureTextureReady || !material.textureReady)
+                    out["captureWaitReason"] = material.captureError.empty() ? "capture-texture-not-ready" : material.captureError;
+                else if (!positiveExtent(material.sourceExtent))
+                    out["captureWaitReason"] = material.captureError.empty() ? "capture-source-extent-invalid" : material.captureError;
+                else
+                    out["captureWaitReason"] = material.captureError.empty() ? "capture-attempted-but-not-ready" : material.captureError;
+            }
+            if (materialModeUsesFluidGlass(material.mode)) {
+                out["shaderEnabled"] = material.shaderEnabled;
+                out["shaderBackend"] = material.shaderBackend;
+                out["shaderCompiled"] = material.shaderCompiled;
+                out["shaderReady"] = material.shaderReady;
+                out["shaderError"] = material.shaderError;
+                out["sdfMaskEnabled"] = material.sdfMaskEnabled;
+                out["sdfTechnique"] = material.sdfTechnique;
+                out["refractionDebugEnabled"] = material.refractionDebugEnabled;
+                out["displacementStrengthPx"] = material.sdfDisplacementStrengthPx;
+                out["edgeWidthPx"] = material.sdfEdgeWidthPx;
+                out["distortionUsesLocalPixelSpace"] = material.distortionUsesLocalPixelSpace;
+                out["distortionUsesSourceQuadBasis"] = material.distortionUsesSourceQuadBasis;
+                out["distortionClampedToSourceQuad"] = material.distortionClampedToSourceQuad;
+                out["transformShaderSupported"] = material.transformShaderSupported;
+                out["shaderTransformSupported"] = material.transformShaderSupported;
+                out["shaderTransformValidation"] = fluidShaderValidationStatus(material.mode, material.drawTransform);
+                out["implementedShaderTransforms"] = json::array({0});
+                out["supportedShaderTransforms"] = material.transformShaderSupported ? json::array({material.drawTransform}) : json::array();
+                out["failedShaderTransforms"] = json::array();
+                out["targetShaderTransforms"] = json::array({material.drawTransform});
+                out["shaderCaptureTransformPolicy"] = "per-descriptor selected shared source quad";
+                out["monitorTransform"] = material.drawTransform;
+                out["transformSourceMapping"] = material.sourceMapping;
+                out["sourceMappingEvidence"] = material.sourceMappingEvidence;
+                out["transformPolicy"] = material.transformPolicy;
+            }
+            out["selfSamplingRisk"] = material.selfSamplingRisk;
+            out["blurEnabled"] = false;
+            out["refractionEnabled"] = material.refractionEnabled;
+            if (!material.captureError.empty())
+                out["lastCaptureError"] = material.captureError;
         }
     }
 
@@ -1584,6 +2371,8 @@ struct StatusSnapshot {
     std::string lastError;
     std::string lastDebugOverlayRenderStatus;
     std::string lastMaterialRenderStatus;
+    std::string lastBackdropCaptureStatus;
+    std::string lastBackdropCaptureError;
     std::string materialMode;
     uint64_t generation = 0;
     uint64_t applyCount = 0;
@@ -1598,6 +2387,8 @@ StatusSnapshot activeStatusSnapshot() {
         .lastError = g_lastError,
         .lastDebugOverlayRenderStatus = g_lastDebugOverlayRenderStatus,
         .lastMaterialRenderStatus = g_lastMaterialRenderStatus,
+        .lastBackdropCaptureStatus = g_lastBackdropCaptureStatus,
+        .lastBackdropCaptureError = g_lastBackdropCaptureError,
         .materialMode = g_materialMode,
         .generation = g_generation,
         .applyCount = g_applyCount,
@@ -1758,6 +2549,10 @@ std::vector<std::string> collectMaterialWarnings(
         addWarning(warnings, "glass-v1 frost maps to CRectPassElement blurA alpha; effective blur kernel strength still comes from global Hyprland decoration:blur settings");
         addWarning(warnings, "glass-v1 highlight uses the same renderer-projected rounded rect path on transforms 0-7");
     }
+    if (materialMode == "fluid-glass") {
+        addWarning(warnings, "fluid-glass uses capture-backed Fluid Glass shader sampling with selected shared display-to-capture source quads");
+        addWarning(warnings, "fluid-glass uses glass-v1 fallback only when capture, shader, texture, or selected source quad state is unavailable");
+    }
     for (const auto& [id, descriptor] : descriptors) {
         const auto material = analyzeMaterialDrawable(materialMode, descriptor, matches.at(id), coordinates.at(id), candidates);
         for (const auto& warning : material.warnings)
@@ -1797,6 +2592,9 @@ void drawDebugLine(const RectSummary& rect, const CHyprColor& color) {
     data.xray = false;
     g_pHyprRenderer->m_renderPass.add(makeUnique<CRectPassElement>(std::move(data)));
 }
+
+
+
 
 void drawMaterialRect(const RectSummary& rect, const CHyprColor& color, int round, bool blur, double blurAlpha) {
     if (!g_pHyprRenderer || !rectValid(rect))
@@ -1856,13 +2654,8 @@ RectSummary insetRect(const RectSummary& rect, double inset) {
     };
 }
 
-void drawGlassV1Material(const MaterialDescriptor& material) {
-    if (!material.drawable)
-        return;
-
+void drawGlassPolishOverlays(const MaterialDescriptor& material) {
     const int round = static_cast<int>(std::round(material.radiusUsed));
-    drawMaterialRect(material.rectUsed, material.color, round, material.blurEnabled, material.blurAlphaUsed);
-
     if (material.tintOverlayEnabled)
         drawMaterialRect(material.rectUsed, withAlpha(material.color, material.tintOverlayAlphaUsed), round, false, 0.0);
 
@@ -1888,6 +2681,1260 @@ void drawGlassV1Material(const MaterialDescriptor& material) {
                 drawMaterialRect(highlight, CHyprColor(1.0F, 1.0F, 1.0F, static_cast<float>(material.highlightAlphaUsed)), highlightRound, false, 0.0);
         }
     }
+}
+
+void drawGlassV1Material(const MaterialDescriptor& material) {
+    if (!material.drawable)
+        return;
+
+    const int round = static_cast<int>(std::round(material.radiusUsed));
+    drawMaterialRect(material.rectUsed, material.color, round, material.blurEnabled, material.blurAlphaUsed);
+    drawGlassPolishOverlays(material);
+}
+
+SP<Render::IFramebuffer> backdropCaptureFramebufferFor(const PHLMONITOR& monitor, const SP<Render::IFramebuffer>& sourceFB) {
+    if (!g_pHyprRenderer || !monitor || !sourceFB)
+        return nullptr;
+
+    const std::string key = monitor->m_name;
+    auto& framebuffer = g_backdropCaptureFramebuffers[key];
+    if (!framebuffer)
+        framebuffer = g_pHyprRenderer->createFB("hgs backdrop debug " + key);
+    if (!framebuffer)
+        return nullptr;
+
+    const auto sourceTexture = sourceFB->getTexture();
+    if (!sourceTexture || !sourceTexture->ok())
+        return nullptr;
+
+    const int width = static_cast<int>(std::round(sourceTexture->m_size.x));
+    const int height = static_cast<int>(std::round(sourceTexture->m_size.y));
+    if (width <= 0 || height <= 0)
+        return nullptr;
+
+    auto format = sourceFB->m_drmFormat;
+    if (format == DRM_FORMAT_INVALID)
+        format = DRM_FORMAT_ABGR8888;
+
+    framebuffer->alloc(width, height, format);
+    if (const auto imageDescription = sourceFB->imageDescription())
+        framebuffer->setImageDescription(imageDescription);
+    else
+        framebuffer->setImageDescription(monitor->workBufferImageDescription());
+
+    return framebuffer;
+}
+
+RectSummary textureSizeSummary(const SP<Render::ITexture>& texture) {
+    if (!texture)
+        return {};
+    return {
+        .x = 0.0,
+        .y = 0.0,
+        .width = texture->m_size.x,
+        .height = texture->m_size.y,
+    };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const char* fluidGlassVertexSource() {
+    return R"HGS_SHADER(#version 320 es
+
+uniform mat3 proj;
+
+in vec2 pos;
+in vec2 texcoord;
+
+out vec2 v_texcoord;
+
+void main() {
+    gl_Position = vec4(proj * vec3(pos, 1.0), 1.0);
+    v_texcoord = texcoord;
+}
+)HGS_SHADER";
+}
+
+const char* fluidGlassFragmentSource() {
+    return R"HGS_SHADER(#version 320 es
+
+precision highp float;
+
+in vec2 v_texcoord;
+
+uniform sampler2D tex;
+uniform vec2 uSourceTopLeft;
+uniform vec2 uSourceTopRight;
+uniform vec2 uSourceBottomRight;
+uniform vec2 uSourceBottomLeft;
+uniform vec2 uDestinationSize;
+uniform float uDisplacementPx;
+uniform float uRadiusPx;
+uniform float uEdgeWidthPx;
+uniform float uAlpha;
+uniform vec4 uTint;
+
+layout(location = 0) out vec4 fragColor;
+
+float roundedRectSdf(vec2 point, vec2 size, float radius) {
+    vec2 halfSize = size * 0.5;
+    float safeRadius = clamp(radius, 0.0, min(halfSize.x, halfSize.y));
+    vec2 q = abs(point - halfSize) - (halfSize - vec2(safeRadius));
+    return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - safeRadius;
+}
+
+vec2 sourceUvForLocal(vec2 local) {
+    vec2 clampedLocal = clamp(local, vec2(0.0), vec2(1.0));
+    vec2 topUv = mix(uSourceTopLeft, uSourceTopRight, clampedLocal.x);
+    vec2 bottomUv = mix(uSourceBottomLeft, uSourceBottomRight, clampedLocal.x);
+    return mix(topUv, bottomUv, clampedLocal.y);
+}
+
+void main() {
+    vec2 localUv = clamp(v_texcoord, vec2(0.0), vec2(1.0));
+    vec2 localPx = localUv * uDestinationSize;
+
+    float sdf = roundedRectSdf(localPx, uDestinationSize, uRadiusPx);
+    float mask = 1.0 - smoothstep(0.0, 1.25, sdf);
+    if (mask <= 0.001)
+        discard;
+
+    float insideDistance = max(-sdf, 0.0);
+    float edgeFactor = 1.0 - smoothstep(0.0, max(uEdgeWidthPx, 0.001), insideDistance);
+    vec2 fromCenter = localPx - uDestinationSize * 0.5;
+    vec2 direction = length(fromCenter) > 0.001 ? normalize(fromCenter) : vec2(0.0);
+    vec2 localOffsetUv = (direction * uDisplacementPx * edgeFactor) / max(uDestinationSize, vec2(1.0));
+    vec2 displacedLocalUv = clamp(localUv + localOffsetUv, vec2(0.0), vec2(1.0));
+    vec2 displacedUv = sourceUvForLocal(displacedLocalUv);
+
+    vec4 sampleColor = texture(tex, displacedUv);
+    vec3 tinted = mix(sampleColor.rgb, uTint.rgb, clamp(uTint.a, 0.0, 1.0));
+    fragColor = vec4(tinted, sampleColor.a * clamp(uAlpha, 0.0, 1.0) * mask);
+}
+)HGS_SHADER";
+}
+
+bool ensureFluidGlassShader() {
+    if (g_fluidGlassShader && g_fluidGlassShaderCompiled)
+        return true;
+    if (g_fluidGlassShaderCompileAttempted && !g_fluidGlassShaderCompiled)
+        return false;
+    if (!Render::GL::g_pHyprOpenGL) {
+        updateFluidGlassShaderStatus(false, "OpenGL renderer unavailable for fluid-glass");
+        return false;
+    }
+
+    auto shader = makeShared<CShader>();
+    if (!shader || !shader->createProgram(fluidGlassVertexSource(), fluidGlassFragmentSource(), true, true)) {
+        g_fluidGlassShader.reset();
+        updateFluidGlassShaderStatus(false, "fluid-glass shader compile/link failed");
+        return false;
+    }
+
+    shader->setUsesCustomUV(true);
+    g_fluidGlassShader = shader;
+    updateFluidGlassShaderStatus(true, "");
+    return true;
+}
+
+
+RectSummary uvPointForCapture(double x, double y, double sourceWidth, double sourceHeight) {
+    if (sourceWidth <= 0.0 || sourceHeight <= 0.0)
+        return {};
+    return rectFromXYWH(clampDouble(x / sourceWidth, 0.0, 1.0), clampDouble(y / sourceHeight, 0.0, 1.0), 0.0, 0.0);
+}
+
+RectSummary uvBoundsForCorners(const RectSummary& topLeft, const RectSummary& topRight, const RectSummary& bottomRight, const RectSummary& bottomLeft) {
+    const double minX = std::min({topLeft.x, topRight.x, bottomRight.x, bottomLeft.x});
+    const double minY = std::min({topLeft.y, topRight.y, bottomRight.y, bottomLeft.y});
+    const double maxX = std::max({topLeft.x, topRight.x, bottomRight.x, bottomLeft.x});
+    const double maxY = std::max({topLeft.y, topRight.y, bottomRight.y, bottomLeft.y});
+    return rectFromXYWH(minX, minY, std::max(0.0, maxX - minX), std::max(0.0, maxY - minY));
+}
+
+CaptureQuadCandidate selectedCaptureQuadCandidateForShaderSourceMap(
+    const RectSummary& displayRect,
+    const RectSummary& currentSourceRect,
+    int transform,
+    const RectSummary& sourceExtent,
+    std::vector<CaptureQuadCandidate>& candidates,
+    std::string& selectedName
+);
+
+ShaderSourceUvMapping shaderSourceUvMappingFor(const MaterialDescriptor& material, double sourceWidth, double sourceHeight) {
+    ShaderSourceUvMapping mapping;
+    mapping.mapping = fluidGlassShaderTransformName(material.drawTransform);
+    mapping.diagnosticOnly = material.drawTransform != 0;
+
+    if (!fluidGlassShaderSupportsTransform(material.drawTransform)) {
+        mapping.error = "shader-source-map-debug transform " + std::to_string(material.drawTransform) + " is not validated";
+        return mapping;
+    }
+    if (sourceWidth <= 0.0 || sourceHeight <= 0.0 || !rectValid(material.sourceBackdropRect) || !rectValid(material.destinationRect)) {
+        mapping.error = "shader-source-map-debug source extent or source rect is invalid";
+        return mapping;
+    }
+
+    const auto sourceExtent = rectFromXYWH(0.0, 0.0, sourceWidth, sourceHeight);
+    mapping.selectedQuad = selectedCaptureQuadCandidateForShaderSourceMap(
+        material.destinationRect,
+        material.sourceBackdropRect,
+        material.drawTransform,
+        sourceExtent,
+        mapping.candidates,
+        mapping.selectedCandidateName
+    );
+    if (mapping.selectedCandidateName == "none" || mapping.selectedQuad.name.empty()) {
+        mapping.error = "shader-source-map-debug source mapping candidate was not found";
+        return mapping;
+    }
+    if (!mapping.selectedQuad.inBounds) {
+        mapping.error = "shader-source-map-debug selected source mapping candidate is out of bounds: " + mapping.selectedCandidateName;
+        return mapping;
+    }
+
+    mapping.topLeft = mapping.selectedQuad.uvTopLeft;
+    mapping.topRight = mapping.selectedQuad.uvTopRight;
+    mapping.bottomRight = mapping.selectedQuad.uvBottomRight;
+    mapping.bottomLeft = mapping.selectedQuad.uvBottomLeft;
+
+    mapping.bounds = uvBoundsForCorners(mapping.topLeft, mapping.topRight, mapping.bottomRight, mapping.bottomLeft);
+    auto uvInBounds = [](const RectSummary& point) {
+        constexpr double epsilon = 0.0001;
+        return std::isfinite(point.x) && std::isfinite(point.y) &&
+            point.x >= -epsilon && point.y >= -epsilon &&
+            point.x <= 1.0 + epsilon && point.y <= 1.0 + epsilon;
+    };
+    mapping.inBounds = uvInBounds(mapping.topLeft) &&
+        uvInBounds(mapping.topRight) &&
+        uvInBounds(mapping.bottomRight) &&
+        uvInBounds(mapping.bottomLeft);
+    if (!mapping.inBounds) {
+        mapping.error = "shader-source-map-debug UV mapping is out of bounds for candidate " + mapping.selectedCandidateName;
+        return mapping;
+    }
+
+    mapping.mapping = "shared-source-quad:" + mapping.selectedCandidateName;
+    mapping.supported = true;
+    return mapping;
+}
+
+
+
+
+
+
+
+
+
+RectSummary transformedSourceRectCandidate(const RectSummary& rect, int transform, const RectSummary& extent) {
+    if (!rectValid(rect) || !rectValid(extent) || transform < 0 || transform > 7)
+        return {};
+
+    CBox box(rect.x - extent.x, rect.y - extent.y, rect.width, rect.height);
+    box.transform(static_cast<eTransform>(transform), extent.width, extent.height);
+    auto out = rectFromBox(box);
+    out.x += extent.x;
+    out.y += extent.y;
+    return roundRect(out);
+}
+
+RectSummary inverseTransformedSourceRectCandidate(const RectSummary& rect, int transform, const RectSummary& extent) {
+    if (!rectValid(rect) || !rectValid(extent) || transform < 0 || transform > 7)
+        return {};
+
+    const auto inverse = Math::wlTransformToHyprutils(Math::invertTransform(static_cast<wl_output_transform>(transform)));
+    CBox box(rect.x - extent.x, rect.y - extent.y, rect.width, rect.height);
+    box.transform(inverse, extent.width, extent.height);
+    auto out = rectFromBox(box);
+    out.x += extent.x;
+    out.y += extent.y;
+    return roundRect(out);
+}
+
+
+RectSummary pointSummary(double x, double y) {
+    return rectFromXYWH(x, y, 0.0, 0.0);
+}
+
+RectSummary boundsForQuad(const RectSummary& topLeft, const RectSummary& topRight, const RectSummary& bottomRight, const RectSummary& bottomLeft) {
+    const double minX = std::min({topLeft.x, topRight.x, bottomRight.x, bottomLeft.x});
+    const double minY = std::min({topLeft.y, topRight.y, bottomRight.y, bottomLeft.y});
+    const double maxX = std::max({topLeft.x, topRight.x, bottomRight.x, bottomLeft.x});
+    const double maxY = std::max({topLeft.y, topRight.y, bottomRight.y, bottomLeft.y});
+    return rectFromXYWH(minX, minY, std::max(0.0, maxX - minX), std::max(0.0, maxY - minY));
+}
+
+bool pointInExtent(const RectSummary& point, const RectSummary& extent) {
+    if (!rectValid(extent) || !std::isfinite(point.x) || !std::isfinite(point.y))
+        return false;
+    constexpr double epsilon = 0.5;
+    return point.x >= extent.x - epsilon && point.y >= extent.y - epsilon &&
+        point.x <= extent.x + extent.width + epsilon && point.y <= extent.y + extent.height + epsilon;
+}
+
+bool isAxisAlignedQuad(const RectSummary& topLeft, const RectSummary& topRight, const RectSummary& bottomRight, const RectSummary& bottomLeft) {
+    constexpr double epsilon = 0.5;
+    return std::abs(topLeft.y - topRight.y) <= epsilon &&
+        std::abs(bottomLeft.y - bottomRight.y) <= epsilon &&
+        std::abs(topLeft.x - bottomLeft.x) <= epsilon &&
+        std::abs(topRight.x - bottomRight.x) <= epsilon;
+}
+
+CaptureQuadCandidate captureQuadFromPoints(
+    std::string name,
+    std::string formula,
+    std::string notes,
+    const RectSummary& topLeft,
+    const RectSummary& topRight,
+    const RectSummary& bottomRight,
+    const RectSummary& bottomLeft,
+    const RectSummary& sourceExtent,
+    int transform = 0,
+    std::string confidence = "diagnostic"
+) {
+    CaptureQuadCandidate quad;
+    quad.name = std::move(name);
+    quad.formula = std::move(formula);
+    quad.notes = std::move(notes);
+    quad.topLeft = topLeft;
+    quad.topRight = topRight;
+    quad.bottomRight = bottomRight;
+    quad.bottomLeft = bottomLeft;
+    quad.bounds = boundsForQuad(topLeft, topRight, bottomRight, bottomLeft);
+    quad.uvTopLeft = uvPointForCapture(topLeft.x - sourceExtent.x, topLeft.y - sourceExtent.y, sourceExtent.width, sourceExtent.height);
+    quad.uvTopRight = uvPointForCapture(topRight.x - sourceExtent.x, topRight.y - sourceExtent.y, sourceExtent.width, sourceExtent.height);
+    quad.uvBottomRight = uvPointForCapture(bottomRight.x - sourceExtent.x, bottomRight.y - sourceExtent.y, sourceExtent.width, sourceExtent.height);
+    quad.uvBottomLeft = uvPointForCapture(bottomLeft.x - sourceExtent.x, bottomLeft.y - sourceExtent.y, sourceExtent.width, sourceExtent.height);
+    quad.transform = transform;
+    quad.axisAligned = isAxisAlignedQuad(topLeft, topRight, bottomRight, bottomLeft);
+    quad.inBounds = pointInExtent(topLeft, sourceExtent) && pointInExtent(topRight, sourceExtent) &&
+        pointInExtent(bottomRight, sourceExtent) && pointInExtent(bottomLeft, sourceExtent);
+    quad.confidence = std::move(confidence);
+    return quad;
+}
+
+CaptureQuadCandidate captureQuadFromRect(
+    std::string name,
+    std::string formula,
+    std::string notes,
+    const RectSummary& rect,
+    const RectSummary& sourceExtent,
+    int transform = 0,
+    std::string confidence = "diagnostic"
+) {
+    return captureQuadFromPoints(
+        std::move(name),
+        std::move(formula),
+        std::move(notes),
+        pointSummary(rect.x, rect.y),
+        pointSummary(rect.x + rect.width, rect.y),
+        pointSummary(rect.x + rect.width, rect.y + rect.height),
+        pointSummary(rect.x, rect.y + rect.height),
+        sourceExtent,
+        transform,
+        std::move(confidence)
+    );
+}
+
+RectSummary transformCapturePoint(const RectSummary& point, int transform, const RectSummary& sourceExtent) {
+    if (!rectValid(sourceExtent))
+        return {};
+    const auto transformed = Vector2D(point.x - sourceExtent.x, point.y - sourceExtent.y)
+        .transform(static_cast<eTransform>(transform), Vector2D(sourceExtent.width, sourceExtent.height));
+    return pointSummary(transformed.x + sourceExtent.x, transformed.y + sourceExtent.y);
+}
+
+bool transformSwapsSourceAxes(int transform) {
+    return transform == 1 || transform == 3 || transform == 5 || transform == 7;
+}
+
+RectSummary displayExtentForPhysicalCaptureExtent(const RectSummary& sourceExtent, int transform) {
+    if (!rectValid(sourceExtent))
+        return {};
+
+    if (transformSwapsSourceAxes(transform))
+        return rectFromXYWH(sourceExtent.x, sourceExtent.y, sourceExtent.height, sourceExtent.width);
+
+    return sourceExtent;
+}
+
+RectSummary preblurInverseTransformCapturePoint(const RectSummary& point, int transform, const RectSummary& sourceExtent) {
+    const auto displayExtent = displayExtentForPhysicalCaptureExtent(sourceExtent, transform);
+    if (!rectValid(displayExtent))
+        return {};
+
+    const double x = point.x - displayExtent.x;
+    const double y = point.y - displayExtent.y;
+    const double w = displayExtent.width;
+    const double h = displayExtent.height;
+    const auto   inverse = Math::wlTransformToHyprutils(Math::invertTransform(static_cast<wl_output_transform>(transform)));
+
+    double outX = x;
+    double outY = y;
+    switch (static_cast<int>(inverse)) {
+        case 0:
+            outX = x;
+            outY = y;
+            break;
+        case 1:
+            outX = h - y;
+            outY = x;
+            break;
+        case 2:
+            outX = w - x;
+            outY = h - y;
+            break;
+        case 3:
+            outX = y;
+            outY = w - x;
+            break;
+        case 4:
+            outX = w - x;
+            outY = y;
+            break;
+        case 5:
+            outX = h - y;
+            outY = w - x;
+            break;
+        case 6:
+            outX = x;
+            outY = h - y;
+            break;
+        case 7:
+            outX = y;
+            outY = x;
+            break;
+        default:
+            return {};
+    }
+
+    return pointSummary(outX + sourceExtent.x, outY + sourceExtent.y);
+}
+
+RectSummary manualTransformCapturePoint(const RectSummary& point, int transform, const RectSummary& sourceExtent) {
+    if (!rectValid(sourceExtent))
+        return {};
+
+    const double x = point.x - sourceExtent.x;
+    const double y = point.y - sourceExtent.y;
+    const double w = sourceExtent.width;
+    const double h = sourceExtent.height;
+
+    double outX = x;
+    double outY = y;
+    switch (transform) {
+        case 0:
+            outX = x;
+            outY = y;
+            break;
+        case 1:
+            outX = h - y;
+            outY = x;
+            break;
+        case 2:
+            outX = w - x;
+            outY = h - y;
+            break;
+        case 3:
+            outX = y;
+            outY = w - x;
+            break;
+        case 4:
+            outX = w - x;
+            outY = y;
+            break;
+        case 5:
+            outX = h - y;
+            outY = w - x;
+            break;
+        case 6:
+            outX = x;
+            outY = h - y;
+            break;
+        case 7:
+            outX = y;
+            outY = x;
+            break;
+        default:
+            return {};
+    }
+
+    return pointSummary(outX + sourceExtent.x, outY + sourceExtent.y);
+}
+
+CaptureQuadCandidate pointTransformQuadForRect(
+    std::string name,
+    std::string formula,
+    std::string notes,
+    const RectSummary& displayRect,
+    int transform,
+    const RectSummary& sourceExtent
+) {
+    const auto topLeft = pointSummary(displayRect.x, displayRect.y);
+    const auto topRight = pointSummary(displayRect.x + displayRect.width, displayRect.y);
+    const auto bottomRight = pointSummary(displayRect.x + displayRect.width, displayRect.y + displayRect.height);
+    const auto bottomLeft = pointSummary(displayRect.x, displayRect.y + displayRect.height);
+    return captureQuadFromPoints(
+        std::move(name),
+        std::move(formula),
+        std::move(notes),
+        transformCapturePoint(topLeft, transform, sourceExtent),
+        transformCapturePoint(topRight, transform, sourceExtent),
+        transformCapturePoint(bottomRight, transform, sourceExtent),
+        transformCapturePoint(bottomLeft, transform, sourceExtent),
+        sourceExtent,
+        transform,
+        "hyprutils-point-transform"
+    );
+}
+
+CaptureQuadCandidate preblurInverseTransformQuadForRect(
+    const RectSummary& displayRect,
+    int transform,
+    const RectSummary& sourceExtent
+) {
+    const auto topLeft = pointSummary(displayRect.x, displayRect.y);
+    const auto topRight = pointSummary(displayRect.x + displayRect.width, displayRect.y);
+    const auto bottomRight = pointSummary(displayRect.x + displayRect.width, displayRect.y + displayRect.height);
+    const auto bottomLeft = pointSummary(displayRect.x, displayRect.y + displayRect.height);
+    const auto displayExtent = displayExtentForPhysicalCaptureExtent(sourceExtent, transform);
+    return captureQuadFromPoints(
+        "preblurInverseTransformCandidate",
+        "explicit point table for invertTransform(monitorTransform) over monitor transformed display extent",
+        "Hyprland preblur-style candidate: descriptor points start in transformed display space and map through the inverse monitor transform into the physical currentFB/capture texture basis; transform 3 maps physicalX = captureW - displayY, physicalY = displayX",
+        preblurInverseTransformCapturePoint(topLeft, transform, sourceExtent),
+        preblurInverseTransformCapturePoint(topRight, transform, sourceExtent),
+        preblurInverseTransformCapturePoint(bottomRight, transform, sourceExtent),
+        preblurInverseTransformCapturePoint(bottomLeft, transform, sourceExtent),
+        sourceExtent,
+        transform,
+        transform == 0 ? "validated-transform-0-baseline" :
+                         "hyprland-preblur-inspired-inverse-transform-display-extent-" +
+                             std::to_string(static_cast<int>(displayExtent.width)) + "x" +
+                             std::to_string(static_cast<int>(displayExtent.height))
+    );
+}
+
+CaptureQuadCandidate manualTransformQuadForRect(
+    std::string name,
+    std::string formula,
+    std::string notes,
+    const RectSummary& displayRect,
+    int transform,
+    const RectSummary& sourceExtent
+) {
+    const auto topLeft = pointSummary(displayRect.x, displayRect.y);
+    const auto topRight = pointSummary(displayRect.x + displayRect.width, displayRect.y);
+    const auto bottomRight = pointSummary(displayRect.x + displayRect.width, displayRect.y + displayRect.height);
+    const auto bottomLeft = pointSummary(displayRect.x, displayRect.y + displayRect.height);
+    return captureQuadFromPoints(
+        std::move(name),
+        std::move(formula),
+        std::move(notes),
+        manualTransformCapturePoint(topLeft, transform, sourceExtent),
+        manualTransformCapturePoint(topRight, transform, sourceExtent),
+        manualTransformCapturePoint(bottomRight, transform, sourceExtent),
+        manualTransformCapturePoint(bottomLeft, transform, sourceExtent),
+        sourceExtent,
+        transform,
+        "manual-point-transform"
+    );
+}
+
+std::vector<CaptureQuadCandidate> displayToCaptureQuadCandidatesForRect(
+    const RectSummary& displayRect,
+    const RectSummary& currentSourceRect,
+    int transform,
+    const RectSummary& sourceExtent
+) {
+    std::vector<CaptureQuadCandidate> quads;
+    if (!rectValid(displayRect) || !rectValid(currentSourceRect) || !rectValid(sourceExtent) || transform < 0 || transform > 7)
+        return quads;
+
+    quads.push_back(captureQuadFromRect(
+        "currentDirectRect",
+        "sourceBackdropRect = round(destinationRect)",
+        "current source crop used by capture-backed modes",
+        currentSourceRect,
+        sourceExtent,
+        transform,
+        transform == 0 ? "validated-transform-0-baseline" : "diagnostic-direct-rect"
+    ));
+
+    quads.push_back(preblurInverseTransformQuadForRect(
+        displayRect,
+        transform,
+        sourceExtent
+    ));
+
+    quads.push_back(pointTransformQuadForRect(
+        "hyprutilsPointTransform",
+        "Vector2D::transform(monitorTransform, sourceExtent)",
+        "point-based display-to-capture candidate; preserves corner orientation",
+        displayRect,
+        transform,
+        sourceExtent
+    ));
+
+    const auto inverse = Math::wlTransformToHyprutils(Math::invertTransform(static_cast<wl_output_transform>(transform)));
+    quads.push_back(pointTransformQuadForRect(
+        "hyprutilsPointInverseTransform",
+        "Vector2D::transform(invertTransform(monitorTransform), sourceExtent)",
+        "inverse point-transform candidate for comparison",
+        displayRect,
+        static_cast<int>(inverse),
+        sourceExtent
+    ));
+
+    quads.push_back(manualTransformQuadForRect(
+        "manualTransformCandidate",
+        "manual display point transform table using monitorTransform",
+        "manual point-transform candidate; preserves corner orientation and avoids CBox bounds collapse",
+        displayRect,
+        transform,
+        sourceExtent
+    ));
+
+    quads.push_back(manualTransformQuadForRect(
+        "manualInverseTransformCandidate",
+        "manual display point transform table using invertTransform(monitorTransform)",
+        "manual inverse point-transform candidate; preserves corner orientation and avoids CBox bounds collapse",
+        displayRect,
+        static_cast<int>(inverse),
+        sourceExtent
+    ));
+
+    quads.push_back(captureQuadFromRect(
+        "cboxDirectBounds",
+        "CBox::transform(monitorTransform, sourceExtent) bounds only",
+        "box-transform comparison only; loses corner orientation",
+        transformedSourceRectCandidate(currentSourceRect, transform, sourceExtent),
+        sourceExtent,
+        transform,
+        "comparison-only"
+    ));
+
+    quads.push_back(captureQuadFromRect(
+        "cboxInverseBounds",
+        "CBox::transform(invertTransform(monitorTransform), sourceExtent) bounds only",
+        "inverse box-transform comparison only; loses corner orientation",
+        inverseTransformedSourceRectCandidate(currentSourceRect, transform, sourceExtent),
+        sourceExtent,
+        transform,
+        "comparison-only"
+    ));
+
+    return quads;
+}
+
+
+std::string sourceMappingCandidateOverrideValue() {
+    return "";
+}
+
+
+std::string selectedSourceMappingCandidateName(int transform) {
+    const auto override = sourceMappingCandidateOverrideValue();
+    if (!override.empty())
+        return override;
+    if (const char* candidate = std::getenv("HGS_HYPRGLASS_SOURCE_MAPPING_CANDIDATE"); candidate && candidate[0] != '\0')
+        return candidate;
+    if (transform == 0)
+        return "currentDirectRect";
+    return "preblurInverseTransformCandidate";
+}
+
+const CaptureQuadCandidate* findCaptureQuadCandidate(const std::vector<CaptureQuadCandidate>& candidates, std::string_view name) {
+    for (const auto& candidate : candidates) {
+        if (candidate.name == name)
+            return &candidate;
+    }
+    return nullptr;
+}
+
+CaptureQuadCandidate selectedCaptureQuadCandidateForShaderSourceMap(
+    const RectSummary& displayRect,
+    const RectSummary& currentSourceRect,
+    int transform,
+    const RectSummary& sourceExtent,
+    std::vector<CaptureQuadCandidate>& candidates,
+    std::string& selectedName
+) {
+    candidates = displayToCaptureQuadCandidatesForRect(displayRect, currentSourceRect, transform, sourceExtent);
+    selectedName = selectedSourceMappingCandidateName(transform);
+
+    if (const auto* selected = findCaptureQuadCandidate(candidates, selectedName); selected)
+        return *selected;
+
+    selectedName = transform == 0 ? "currentDirectRect" : "preblurInverseTransformCandidate";
+    if (const auto* selected = findCaptureQuadCandidate(candidates, selectedName); selected)
+        return *selected;
+
+    selectedName = "none";
+    return {};
+}
+
+
+
+
+
+
+void applyShaderSourceUvMappingToRecord(const ShaderSourceUvMapping& mapping, BackdropCaptureRecord& record) {
+    record.sourceUvTopLeft = mapping.topLeft;
+    record.sourceUvTopRight = mapping.topRight;
+    record.sourceUvBottomRight = mapping.bottomRight;
+    record.sourceUvBottomLeft = mapping.bottomLeft;
+    record.sourceUvRect = mapping.bounds;
+    record.sourceMapping = mapping.mapping;
+    record.sourceCroppingMode = "custom-shader-corner-uv";
+    record.uvMappingType = "custom-shader-corner-uv";
+    record.selectedSourceMappingCandidate = mapping.selectedCandidateName;
+    record.selectedSourceQuad = mapping.selectedQuad;
+    record.sourceMappingCandidates = mapping.candidates;
+    record.transformCaptureDiagnosticEnabled = mapping.diagnosticOnly;
+    record.shaderUsesFourCornerUV = true;
+}
+
+
+
+
+
+
+bool drawFluidGlassShaderNow(
+    const MaterialDescriptor& material,
+    const SP<Render::ITexture>& captureTexture,
+    double sourceWidth,
+    double sourceHeight,
+    const RectSummary& sourceUvRect,
+    BackdropCaptureRecord& record
+) {
+    (void)sourceUvRect;
+    if (!Render::GL::g_pHyprOpenGL) {
+        record.status = "shader backend unavailable";
+        record.error = "OpenGL renderer unavailable for fluid-glass";
+        updateFluidGlassShaderStatus(false, record.error);
+        return false;
+    }
+    if (!ensureFluidGlassShader()) {
+        const auto shaderStatus = fluidGlassShaderStatus();
+        record.status = "shader unavailable";
+        record.error = shaderStatus.error.empty() ? "fluid-glass shader unavailable" : shaderStatus.error;
+        return false;
+    }
+    if (!g_pHyprRenderer || !g_pHyprRenderer->m_renderData.pMonitor) {
+        record.status = "current monitor unavailable";
+        record.error = "current monitor unavailable for fluid-glass";
+        return false;
+    }
+    if (!captureTexture || !captureTexture->ok()) {
+        record.status = "capture texture unavailable";
+        record.error = "capture texture unavailable for fluid-glass";
+        return false;
+    }
+    if (sourceWidth <= 0.0 || sourceHeight <= 0.0 || !rectValid(material.destinationRect) || !rectValid(material.sourceBackdropRect)) {
+        record.status = "source mapping invalid";
+        record.error = "fluid-glass source or destination rect is invalid";
+        return false;
+    }
+    const auto uvMapping = shaderSourceUvMappingFor(material, sourceWidth, sourceHeight);
+    if (!uvMapping.supported) {
+        record.status = "source mapping unsupported";
+        record.error = uvMapping.error.empty() ? "fluid-glass source mapping unsupported" : uvMapping.error;
+        record.selectedSourceMappingCandidate = uvMapping.selectedCandidateName;
+        record.selectedSourceQuad = uvMapping.selectedQuad;
+        record.sourceMappingCandidates = uvMapping.candidates;
+        record.transformCaptureDiagnosticEnabled = uvMapping.diagnosticOnly;
+        record.shaderUsesFourCornerUV = true;
+        return false;
+    }
+    applyShaderSourceUvMappingToRecord(uvMapping, record);
+
+    CBox box(material.destinationRect.x, material.destinationRect.y, material.destinationRect.width, material.destinationRect.height);
+    CRegion drawDamage{g_pHyprRenderer->m_renderData.damage};
+    drawDamage.intersect(box.x, box.y, box.width, box.height);
+    if (drawDamage.empty()) {
+        record.status = "ok";
+        record.error.clear();
+        return true;
+    }
+
+    CBox projectedBox = box;
+    g_pHyprRenderer->m_renderData.renderModif.applyToBox(projectedBox);
+
+    auto transform = captureTexture->m_transform;
+    if (g_pHyprRenderer->monitorTransformEnabled()) {
+        const auto monitor = g_pHyprRenderer->m_renderData.pMonitor.lock();
+        if (monitor) {
+            const auto monitorInverted = Math::wlTransformToHyprutils(Math::invertTransform(monitor->m_transform));
+            transform = Math::composeTransform(monitorInverted, transform);
+        }
+    }
+
+    const auto glMatrix = g_pHyprRenderer->projectBoxToTarget(projectedBox, transform);
+    auto shader = Render::GL::g_pHyprOpenGL->useShader(g_fluidGlassShader);
+    if (!shader || shader->program() == 0) {
+        record.status = "shader unavailable";
+        record.error = "fluid-glass shader program unavailable";
+        updateFluidGlassShaderStatus(false, record.error);
+        return false;
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    captureTexture->bind();
+    captureTexture->setTexParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    captureTexture->setTexParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    captureTexture->setTexParameter(GL_TEXTURE_MAG_FILTER, captureTexture->magFilter);
+    captureTexture->setTexParameter(GL_TEXTURE_MIN_FILTER, captureTexture->minFilter);
+
+    shader->setUniformMatrix3fv(SHADER_PROJ, 1, GL_TRUE, glMatrix.getMatrix());
+    shader->setUniformInt(SHADER_TEX, 0);
+    shader->setUniformFloat(SHADER_ALPHA, static_cast<float>(clampDouble(material.alphaUsed, 0.0, 1.0)));
+
+    const GLuint program = shader->program();
+    auto setUniform1f = [&](const char* name, float value) {
+        const GLint loc = glGetUniformLocation(program, name);
+        if (loc >= 0)
+            glUniform1f(loc, value);
+    };
+    auto setUniform2f = [&](const char* name, float x, float y) {
+        const GLint loc = glGetUniformLocation(program, name);
+        if (loc >= 0)
+            glUniform2f(loc, x, y);
+    };
+    auto setUniform4f = [&](const char* name, float x, float y, float z, float w) {
+        const GLint loc = glGetUniformLocation(program, name);
+        if (loc >= 0)
+            glUniform4f(loc, x, y, z, w);
+    };
+
+    setUniform2f("uSourceTopLeft", static_cast<float>(uvMapping.topLeft.x), static_cast<float>(uvMapping.topLeft.y));
+    setUniform2f("uSourceTopRight", static_cast<float>(uvMapping.topRight.x), static_cast<float>(uvMapping.topRight.y));
+    setUniform2f("uSourceBottomRight", static_cast<float>(uvMapping.bottomRight.x), static_cast<float>(uvMapping.bottomRight.y));
+    setUniform2f("uSourceBottomLeft", static_cast<float>(uvMapping.bottomLeft.x), static_cast<float>(uvMapping.bottomLeft.y));
+    setUniform2f("uDestinationSize", static_cast<float>(material.destinationRect.width), static_cast<float>(material.destinationRect.height));
+    setUniform1f("uDisplacementPx", static_cast<float>(material.sdfDisplacementStrengthPx));
+    setUniform1f("uRadiusPx", static_cast<float>(material.radiusUsed));
+    setUniform1f("uEdgeWidthPx", static_cast<float>(material.sdfEdgeWidthPx));
+    setUniform1f("uAlpha", static_cast<float>(clampDouble(material.alphaUsed, 0.0, 1.0)));
+    setUniform4f(
+        "uTint",
+        material.color.r,
+        material.color.g,
+        material.color.b,
+        static_cast<float>(clampDouble(material.tintOpacityRequested * 0.45 + 0.025, 0.025, 0.16))
+    );
+
+    glBindVertexArray(shader->getUniformLocation(SHADER_SHADER_VAO));
+    glBindBuffer(GL_ARRAY_BUFFER, shader->getUniformLocation(SHADER_SHADER_VBO));
+
+    auto verts = Render::GL::fullVerts;
+    verts[0].u = 0.0F;
+    verts[0].v = 0.0F;
+    verts[1].u = 0.0F;
+    verts[1].v = 1.0F;
+    verts[2].u = 1.0F;
+    verts[2].v = 0.0F;
+    verts[3].u = 1.0F;
+    verts[3].v = 1.0F;
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), nullptr, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts.data());
+
+    Render::GL::g_pHyprOpenGL->blend(true);
+    drawDamage.forEachRect([](const auto& rect) {
+        Render::GL::g_pHyprOpenGL->scissor(&rect, g_pHyprRenderer->m_renderData.transformDamage);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    });
+    Render::GL::g_pHyprOpenGL->scissor(nullptr);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    captureTexture->unbind();
+
+    record.status = "ok";
+    record.error.clear();
+    return true;
+}
+
+bool captureBackdropForCurrentMonitorNow() {
+    MonitorBackdropCaptureRecord record;
+    record.captureAttempted = true;
+    record.captureGeneration = nextCaptureGeneration();
+    if (!g_pHyprRenderer) {
+        record.status = "renderer unavailable";
+        record.error = "renderer unavailable";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto currentMonitor = g_pHyprRenderer->renderData().pMonitor.lock();
+    if (!currentMonitor) {
+        record.status = "current monitor unavailable";
+        record.error = "current monitor unavailable";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+    record.monitor = currentMonitor->m_name;
+
+    const auto sourceFB = g_pHyprRenderer->renderData().currentFB;
+    if (!sourceFB || !sourceFB->isAllocated() || !sourceFB->getTexture()) {
+        record.status = "source framebuffer unavailable";
+        record.error = "current framebuffer texture unavailable";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto captureFB = backdropCaptureFramebufferFor(currentMonitor, sourceFB);
+    if (!captureFB || !captureFB->isAllocated()) {
+        record.status = "capture framebuffer unavailable";
+        record.error = "failed to allocate capture framebuffer";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto sourceTexture = sourceFB->getTexture();
+    if (!sourceTexture || !sourceTexture->ok()) {
+        record.status = "source framebuffer texture unavailable";
+        record.error = "current framebuffer texture unavailable";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const CBox sourceBox = {0, 0, sourceTexture->m_size.x, sourceTexture->m_size.y};
+    if (sourceBox.width <= 0 || sourceBox.height <= 0) {
+        record.status = "monitor framebuffer geometry invalid";
+        record.error = "current framebuffer texture size is invalid";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+    record.sourceExtent = {
+        .x = 0.0,
+        .y = 0.0,
+        .width = static_cast<double>(sourceBox.width),
+        .height = static_cast<double>(sourceBox.height),
+    };
+
+    {
+        auto guard = g_pHyprRenderer->bindTempFB(captureFB);
+        const auto oldProjectionType = g_pHyprRenderer->m_renderData.projectionType;
+        const auto oldFbSize = g_pHyprRenderer->m_renderData.fbSize;
+        const auto oldTransformDamage = g_pHyprRenderer->m_renderData.transformDamage;
+
+        record.captureFaithfulCopyAttempted = true;
+        record.captureCopyMethod = "tex-pass-export-projection";
+        record.captureCopyProjection = "RPT_EXPORT";
+
+        g_pHyprRenderer->m_renderData.fbSize = Vector2D{static_cast<double>(sourceBox.width), static_cast<double>(sourceBox.height)};
+        g_pHyprRenderer->setProjectionType(Render::RPT_EXPORT);
+        g_pHyprRenderer->m_renderData.transformDamage = false;
+        g_pHyprRenderer->setViewport(0, 0, sourceBox.width, sourceBox.height);
+        g_pHyprRenderer->blend(false);
+
+        CTexPassElement::SRenderData copyData;
+        copyData.tex = sourceTexture;
+        copyData.box = sourceBox;
+        copyData.a = 1.0F;
+        copyData.damage = CRegion{CBox(0, 0, sourceBox.width, sourceBox.height)};
+        copyData.allowCustomUV = false;
+        copyData.wrapX = WRAP_CLAMP_TO_EDGE;
+        copyData.wrapY = WRAP_CLAMP_TO_EDGE;
+        g_pHyprRenderer->draw(copyData, copyData.damage);
+
+        g_pHyprRenderer->blend(true);
+        g_pHyprRenderer->m_renderData.fbSize = oldFbSize;
+        g_pHyprRenderer->m_renderData.transformDamage = oldTransformDamage;
+        g_pHyprRenderer->setProjectionType(oldProjectionType);
+        g_pHyprRenderer->setViewport(0, 0, static_cast<int>(currentMonitor->m_pixelSize.x), static_cast<int>(currentMonitor->m_pixelSize.y));
+        record.captureCopyProjectionRestored = true;
+    }
+
+    const auto captureTexture = captureFB->getTexture();
+    if (!captureTexture || !captureTexture->ok()) {
+        record.status = "capture texture unavailable";
+        record.error = "capture framebuffer texture was not ready after copy";
+        updateMonitorBackdropCaptureRecord(record);
+        return false;
+    }
+
+    record.captureReady = true;
+    record.captureTextureReady = true;
+    record.textureReady = true;
+    record.selfSamplingRisk = false;
+    record.status = "ok";
+    record.error.clear();
+    record.backend = "hyprland-renderer-temp-fb-texture-copy";
+    record.textureSize = textureSizeSummary(captureTexture);
+    updateMonitorBackdropCaptureRecord(record);
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool drawFluidGlassNow(const MaterialDescriptor& material) {
+    BackdropCaptureRecord record;
+    record.descriptorId = material.descriptorId;
+    record.monitor = material.captureMonitor;
+    record.sourceBackdropRect = material.sourceBackdropRect;
+    record.destinationRect = material.destinationRect;
+
+    if (!g_pHyprRenderer) {
+        record.status = "renderer unavailable";
+        record.error = "renderer unavailable";
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto currentMonitor = g_pHyprRenderer->renderData().pMonitor.lock();
+    if (!currentMonitor) {
+        record.status = "current monitor unavailable";
+        record.error = "current monitor unavailable";
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+    record.monitor = currentMonitor->m_name;
+
+    const auto monitorRecord = monitorBackdropCaptureRecordFor(record.monitor);
+    copyMonitorCaptureStateToDescriptorRecord(record, monitorRecord);
+    if (!captureRecordReady(record)) {
+        record.status = monitorRecord.status.empty() ? "monitor capture not ready" : monitorRecord.status;
+        record.error = monitorRecord.error.empty() ? "monitor backdrop capture was not ready before descriptor sampling" : monitorRecord.error;
+        record.selfSamplingRisk = true;
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto sourceFB = g_backdropCaptureFramebuffers[record.monitor];
+    if (!sourceFB || !sourceFB->isAllocated() || !sourceFB->getTexture()) {
+        record.status = "capture framebuffer unavailable";
+        record.error = "monitor capture framebuffer texture unavailable";
+        copyMonitorCaptureStateToDescriptorRecord(record, monitorRecord);
+        record.selfSamplingRisk = true;
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const auto captureTexture = sourceFB->getTexture();
+    if (!captureTexture || !captureTexture->ok()) {
+        record.status = "capture texture unavailable";
+        record.error = "monitor capture texture unavailable";
+        copyMonitorCaptureStateToDescriptorRecord(record, monitorRecord);
+        record.selfSamplingRisk = true;
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    const double sourceWidth = monitorRecord.sourceExtent.width > 0 ? monitorRecord.sourceExtent.width : captureTexture->m_size.x;
+    const double sourceHeight = monitorRecord.sourceExtent.height > 0 ? monitorRecord.sourceExtent.height : captureTexture->m_size.y;
+    record.sourceExtent = {
+        .x = 0.0,
+        .y = 0.0,
+        .width = sourceWidth,
+        .height = sourceHeight,
+    };
+    if (sourceWidth <= 0.0 || sourceHeight <= 0.0 || !rectValid(material.sourceBackdropRect) || !rectValid(material.destinationRect)) {
+        record.status = "source mapping invalid";
+        record.error = "backdrop source or destination rect is invalid";
+        record.textureSize = textureSizeSummary(captureTexture);
+        record.captureTextureReady = positiveExtent(record.textureSize);
+        record.textureReady = record.captureTextureReady;
+        record.captureReady = captureRecordReady(record);
+        record.selfSamplingRisk = true;
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    auto uvFor = [&](const RectSummary& source) {
+        const double u0 = clampDouble(source.x / sourceWidth, 0.0, 1.0);
+        const double v0 = clampDouble(source.y / sourceHeight, 0.0, 1.0);
+        const double u1 = clampDouble((source.x + source.width) / sourceWidth, 0.0, 1.0);
+        const double v1 = clampDouble((source.y + source.height) / sourceHeight, 0.0, 1.0);
+        return RectSummary{
+            .x = u0,
+            .y = v0,
+            .width = std::max(0.0, u1 - u0),
+            .height = std::max(0.0, v1 - v0),
+        };
+    };
+
+    auto setRecordUvCorners = [&](const RectSummary& uv) {
+        record.sourceUvTopLeft = rectFromXYWH(uv.x, uv.y, 0.0, 0.0);
+        record.sourceUvTopRight = rectFromXYWH(uv.x + uv.width, uv.y, 0.0, 0.0);
+        record.sourceUvBottomRight = rectFromXYWH(uv.x + uv.width, uv.y + uv.height, 0.0, 0.0);
+        record.sourceUvBottomLeft = rectFromXYWH(uv.x, uv.y + uv.height, 0.0, 0.0);
+        record.uvMappingType = "axis-aligned-uv-rect-two-corner";
+    };
+
+    record.sourceUvRect = uvFor(material.sourceBackdropRect);
+    setRecordUvCorners(record.sourceUvRect);
+
+    if (!drawFluidGlassShaderNow(material, captureTexture, sourceWidth, sourceHeight, record.sourceUvRect, record)) {
+        record.sourceMapping = record.selectedSourceMappingCandidate.empty() ?
+            fluidShaderSourceMappingName(material.mode, material.drawTransform) :
+            "shared-source-quad:" + record.selectedSourceMappingCandidate;
+        record.sourceCroppingMode = "custom-shader-corner-uv";
+        record.uvMappingType = "custom-shader-corner-uv";
+        record.textureSize = textureSizeSummary(captureTexture);
+        record.captureTextureReady = positiveExtent(record.textureSize);
+        record.textureReady = record.captureTextureReady;
+        record.captureReady = captureRecordReady(record);
+        record.selfSamplingRisk = true;
+        record.sampled = false;
+        updateBackdropCaptureRecord(record);
+        return false;
+    }
+
+    drawGlassPolishOverlays(material);
+
+    record.textureSize = textureSizeSummary(captureTexture);
+    record.captureTextureReady = positiveExtent(record.textureSize);
+    record.textureReady = record.captureTextureReady;
+    record.captureReady = captureRecordReady(record);
+    record.selfSamplingRisk = false;
+    record.status = "ok";
+    record.error.clear();
+    record.sourceMapping = record.selectedSourceMappingCandidate.empty() ?
+        fluidShaderSourceMappingName(material.mode, material.drawTransform) :
+        "shared-source-quad:" + record.selectedSourceMappingCandidate;
+    record.sourceCroppingMode = "custom-shader-corner-uv";
+    record.uvMappingType = "custom-shader-corner-uv";
+    record.sampled = record.captureReady;
+    record.descriptorRendered = record.captureReady && !record.renderedFromStaleCapture;
+    record.descriptorUsedCapture = record.captureReady;
+    updateBackdropCaptureRecord(record);
+    return true;
+}
+
+class CFluidGlassMonitorCapturePassElement : public IPassElement {
+  public:
+    bool needsLiveBlur() override {
+        return false;
+    }
+
+    bool needsPrecomputeBlur() override {
+        return false;
+    }
+
+    const char* passName() override {
+        return "HGSFluidGlassMonitorCapturePassElement";
+    }
+
+    ePassElementType type() override {
+        return EK_CUSTOM;
+    }
+
+    std::optional<CBox> boundingBox() override {
+        return std::nullopt;
+    }
+
+    CRegion opaqueRegion() override {
+        return {};
+    }
+
+    std::vector<UP<IPassElement>> draw() override {
+        captureBackdropForCurrentMonitorNow();
+        return {};
+    }
+};
+
+class CFluidGlassPassElement : public IPassElement {
+  public:
+    explicit CFluidGlassPassElement(MaterialDescriptor material_) : material(std::move(material_)) {}
+
+    bool needsLiveBlur() override {
+        return false;
+    }
+
+    bool needsPrecomputeBlur() override {
+        return false;
+    }
+
+    const char* passName() override {
+        return "HGSFluidGlassPassElement";
+    }
+
+    ePassElementType type() override {
+        return EK_CUSTOM;
+    }
+
+    std::optional<CBox> boundingBox() override {
+        if (!rectValid(material.destinationRect) || !g_pHyprRenderer || !g_pHyprRenderer->m_renderData.pMonitor || g_pHyprRenderer->m_renderData.pMonitor->m_scale <= 0)
+            return std::nullopt;
+        return CBox(material.destinationRect.x, material.destinationRect.y, material.destinationRect.width, material.destinationRect.height)
+            .scale(1.0 / g_pHyprRenderer->m_renderData.pMonitor->m_scale)
+            .round();
+    }
+
+    CRegion opaqueRegion() override {
+        return {};
+    }
+
+    std::vector<UP<IPassElement>> draw() override {
+        drawFluidGlassNow(material);
+        return {};
+    }
+
+    MaterialDescriptor material;
+};
+
+
+
+void drawFluidGlassMaterial(const MaterialDescriptor& material) {
+    if (!material.drawable || !g_pHyprRenderer)
+        return;
+
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CFluidGlassPassElement>(material));
+}
+
+
+
+
+
+
+void drawFluidGlassMonitorCapture() {
+    if (!g_pHyprRenderer)
+        return;
+
+    g_pHyprRenderer->m_renderPass.add(makeUnique<CFluidGlassMonitorCapturePassElement>());
 }
 
 void drawMismatchMarker(const RectSummary& rect) {
@@ -1979,6 +4026,11 @@ void renderCompositorMaterial(eRenderStage stage) {
     }
 
     int renderedCount = 0;
+    const bool shouldCaptureThisMonitor = materialModeUsesBackdropCapture(snapshot.materialMode) &&
+        (!materialModeUsesFluidGlass(snapshot.materialMode) || fluidGlassSupportsTransform(static_cast<int>(currentMonitor->m_transform)));
+    if (shouldCaptureThisMonitor)
+        drawFluidGlassMonitorCapture();
+
     for (const auto& [id, descriptor] : snapshot.descriptors) {
         const auto& match = matches.at(id);
         const auto* candidate = matchedCandidate(match, candidates);
@@ -1989,8 +4041,10 @@ void renderCompositorMaterial(eRenderStage stage) {
         if (!material.drawable)
             continue;
 
-        if (snapshot.materialMode == "glass-v1")
+        if (snapshot.materialMode == "glass-v1" || material.backendUsed == "glass-v1-fallback")
             drawGlassV1Material(material);
+        else if (materialModeUsesBackdropCapture(snapshot.materialMode))
+            drawFluidGlassMaterial(material);
         else
             drawMaterialRect(material.rectUsed, material.color, static_cast<int>(std::round(material.radiusUsed)), material.blurEnabled, material.blurAlphaUsed);
         ++renderedCount;
@@ -2053,11 +4107,142 @@ json materialStatusToJSON(
         {"lastRenderStatus", snapshot.materialMode != "off" ? snapshot.lastMaterialRenderStatus : "disabled"},
         {"warnings", collectMaterialWarnings(snapshot.materialMode, snapshot.descriptors, matches, coordinates, candidates)},
     };
+    if (materialModeUsesFluidGlass(snapshot.materialMode)) {
+        int shaderDescriptorCount = 0;
+        int fallbackDescriptorCount = 0;
+        std::set<int> activeShaderTransforms;
+        for (const auto& [id, descriptor] : snapshot.descriptors) {
+            const auto material = analyzeMaterialDrawable(snapshot.materialMode, descriptor, matches.at(id), coordinates.at(id), candidates);
+            if (!material.drawable)
+                continue;
+            if (material.backendUsed == "fluid-shader") {
+                ++shaderDescriptorCount;
+                activeShaderTransforms.insert(material.drawTransform);
+            } else if (material.backendUsed == "glass-v1-fallback")
+                ++fallbackDescriptorCount;
+        }
+        json activeTransforms = json::array();
+        for (const auto transform : activeShaderTransforms)
+            activeTransforms.push_back(transform);
+        out["shaderCaptureSupportedTransforms"] = json::array({0});
+        out["activeShaderCaptureTransforms"] = activeTransforms;
+        out["shaderCaptureTransformPolicy"] = "transform 0 is the baseline; transformed descriptors may use fluid-shader only when the selected shared source quad is valid";
+        out["transformedCaptureSamplingStatus"] = "per-descriptor-quad-mapped-when-selected-quad-valid";
+        out["fallbackBackend"] = "glass-v1";
+        out["shaderDescriptorCount"] = shaderDescriptorCount;
+        out["fallbackDescriptorCount"] = fallbackDescriptorCount;
+    }
     if (materialModeUsesNativeBlur(snapshot.materialMode)) {
         out["nativeBlurEnabled"] = true;
         out["effectiveBlurControl"] = "global-kernel-per-surface-alpha";
         out["perSurfaceBlurSupported"] = false;
         out["perSurfaceBlurSupport"] = "alpha-only";
+    }
+    if (materialModeUsesBackdropCapture(snapshot.materialMode)) {
+        std::set<std::string> capturedMonitors;
+        int sampledDescriptorCount = 0;
+        int captureAttemptedDescriptorCount = 0;
+        int renderedDescriptorCount = 0;
+        int usedCaptureDescriptorCount = 0;
+        int renderedFromStaleCaptureDescriptorCount = 0;
+        bool anyCaptureAttempted = false;
+        bool anyCaptureReady = false;
+        bool anySelfSamplingRisk = false;
+        uint64_t maxCaptureGeneration = 0;
+        {
+            std::lock_guard guard(g_stateMutex);
+            for (const auto& [id, descriptor] : snapshot.descriptors) {
+                auto it = g_backdropCaptureRecords.find(id);
+                if (it == g_backdropCaptureRecords.end())
+                    continue;
+                const auto& record = it->second;
+                if (record.captureAttempted) {
+                    ++captureAttemptedDescriptorCount;
+                    anyCaptureAttempted = true;
+                }
+                const bool recordReady = captureRecordReady(record);
+                if (record.descriptorRendered && recordReady)
+                    ++renderedDescriptorCount;
+                if (record.descriptorUsedCapture && recordReady)
+                    ++usedCaptureDescriptorCount;
+                if (record.renderedFromStaleCapture && recordReady)
+                    ++renderedFromStaleCaptureDescriptorCount;
+                maxCaptureGeneration = std::max(maxCaptureGeneration, record.captureGeneration);
+                if (record.sampled && recordReady) {
+                    ++sampledDescriptorCount;
+                    anyCaptureReady = true;
+                    if (!record.monitor.empty())
+                        capturedMonitors.insert(record.monitor);
+                }
+                anySelfSamplingRisk = anySelfSamplingRisk || record.selfSamplingRisk;
+            }
+            for (const auto& [monitor, record] : g_backdropMonitorCaptureRecords) {
+                if (record.captureAttempted)
+                    anyCaptureAttempted = true;
+                maxCaptureGeneration = std::max(maxCaptureGeneration, record.captureGeneration);
+                if (monitorCaptureRecordReady(record)) {
+                    anyCaptureReady = true;
+                    if (!monitor.empty())
+                        capturedMonitors.insert(monitor);
+                }
+                anySelfSamplingRisk = anySelfSamplingRisk || record.selfSamplingRisk;
+            }
+        }
+        out["captureEnabled"] = true;
+        out["captureStage"] = "RENDER_POST_WINDOWS";
+        out["captureAttempted"] = anyCaptureAttempted;
+        out["captureGeneration"] = maxCaptureGeneration;
+        out["captureReady"] = anyCaptureReady;
+        out["capturedMonitorCount"] = capturedMonitors.size();
+        out["captureAttemptedDescriptorCount"] = captureAttemptedDescriptorCount;
+        out["renderedDescriptorCount"] = renderedDescriptorCount;
+        out["usedCaptureDescriptorCount"] = usedCaptureDescriptorCount;
+        out["renderedFromStaleCaptureDescriptorCount"] = renderedFromStaleCaptureDescriptorCount;
+        out["sampledDescriptorCount"] = sampledDescriptorCount;
+        out["lastCaptureStatus"] = snapshot.lastBackdropCaptureStatus;
+        out["lastCaptureError"] = snapshot.lastBackdropCaptureError;
+        out["selfSamplingRisk"] = anySelfSamplingRisk;
+        out["captureBackend"] = "hyprland-renderer-temp-fb-texture-copy";
+        out["sourceCroppingSupported"] = true;
+        out["sourceCroppingMode"] = "custom-shader-corner-uv";
+        out["uvMappingType"] = "custom-shader-corner-uv";
+        out["ctexSupportsCustomUvCorners"] = false;
+        out["ctexSupportsAxisAlignedUvRect"] = true;
+        out["ctexCanRotateSourceCrop"] = false;
+        out["transformSourceMapping"] = "fluid-glass-selected-shared-source-quad-per-descriptor";
+        out["fractionalSourceMapping"] = "monitor-local-logical-times-scale-rounded";
+        if (materialModeUsesFluidGlass(snapshot.materialMode)) {
+            double displacementStrengthPx = 0.0;
+            double edgeWidthPx = 0.0;
+            for (const auto& [id, descriptor] : snapshot.descriptors) {
+                const auto material = analyzeMaterialDrawable(snapshot.materialMode, descriptor, matches.at(id), coordinates.at(id), candidates);
+                if (!material.drawable || !material.refractionDebugEnabled)
+                    continue;
+                displacementStrengthPx = material.sdfDisplacementStrengthPx;
+                edgeWidthPx = material.sdfEdgeWidthPx;
+                break;
+            }
+            const auto shaderStatus = fluidGlassShaderStatus();
+            out["shaderEnabled"] = true;
+            out["shaderBackend"] = shaderStatus.backend;
+            out["shaderCompiled"] = shaderStatus.compiled;
+            out["shaderReady"] = shaderStatus.ready;
+            out["shaderError"] = shaderStatus.error;
+            out["sdfMaskEnabled"] = true;
+            out["refractionDebugEnabled"] = true;
+            out["displacementStrengthPx"] = displacementStrengthPx;
+            out["edgeWidthPx"] = edgeWidthPx;
+            out["displacementFormula"] = "clamp(1.5 + frost * 8.0, 1.5, 9.5)";
+            out["edgeWidthFormula"] = "clamp(min(width, height) * 0.30, 6, 18)";
+            out["implementedShaderTransforms"] = json::array({0});
+            out["supportedShaderTransforms"] = json::array({0});
+            out["failedShaderTransforms"] = json::array();
+            out["targetShaderTransforms"] = json::array({0});
+            out["sourceMappingEvidence"] = "fluid-glass uses shared display-to-capture source quads; transformed descriptors are shader-backed only when their selected quad is valid";
+            out["transformPolicy"] = "fluid-glass supports capture-backed shader sampling per descriptor when a selected shared source quad is valid, with glass-v1 fallback otherwise";
+        }
+        out["blurEnabled"] = false;
+        out["refractionEnabled"] = materialModeUsesSdfRefraction(snapshot.materialMode);
     }
     return out;
 }
@@ -2078,7 +4263,7 @@ std::string normalStatus() {
     out << "  buildTime: " << HGS_HYPRGLASS_BUILD_TIME << "\n";
     out << "  gitCommit: " << HGS_HYPRGLASS_GIT_COMMIT << "\n";
     out << "  buildType: " << HGS_HYPRGLASS_BUILD_TYPE << "\n";
-    out << "  materialModesSupported: flat,blur-native,glass-v1\n";
+    out << "  materialModesSupported: flat,blur-native,glass-v1,fluid-glass\n";
     out << "  compositorRendering: " << (snapshot.materialMode != "off" ? "true" : "false") << "\n";
     out << "  materialMode: " << snapshot.materialMode << "\n";
     out << "  materialRenderStage: " << materialRenderStageFor(snapshot.materialMode) << "\n";
@@ -2209,6 +4394,12 @@ std::string applyDescriptorPayload(std::string payload) {
     {
         std::lock_guard guard(g_stateMutex);
         g_descriptors = std::move(parsed);
+        g_backdropCaptureRecords.clear();
+        g_backdropMonitorCaptureRecords.clear();
+        if (materialModeUsesBackdropCapture(g_materialMode)) {
+            g_lastBackdropCaptureStatus = "pending";
+            g_lastBackdropCaptureError.clear();
+        }
         g_lastApplyStatus = "accepted";
         g_lastError.clear();
         ++g_generation;
@@ -2225,6 +4416,10 @@ std::string clearDescriptors() {
     {
         std::lock_guard guard(g_stateMutex);
         g_descriptors.clear();
+        g_backdropCaptureRecords.clear();
+        g_backdropMonitorCaptureRecords.clear();
+        g_lastBackdropCaptureStatus = materialModeUsesBackdropCapture(g_materialMode) ? "no descriptors" : g_lastBackdropCaptureStatus;
+        g_lastBackdropCaptureError.clear();
         g_lastApplyStatus = "cleared";
         g_lastError.clear();
         ++g_generation;
@@ -2268,11 +4463,51 @@ std::string materialCommandStatus(eHyprCtlOutputFormat format) {
             {"renderStage", materialRenderStageFor(snapshot.materialMode)},
             {"lastRenderStatus", snapshot.materialMode != "off" ? snapshot.lastMaterialRenderStatus : "disabled"},
         };
+        if (materialModeUsesFluidGlass(snapshot.materialMode)) {
+            status["shaderCaptureSupportedTransforms"] = json::array({0});
+            status["shaderCaptureTransformPolicy"] = "transform 0 is the baseline; transformed descriptors may use fluid-shader only when the selected shared source quad is valid";
+            status["transformedCaptureSamplingStatus"] = "per-descriptor-quad-mapped-when-selected-quad-valid";
+            status["fallbackBackend"] = "glass-v1";
+        }
         if (materialModeUsesNativeBlur(snapshot.materialMode)) {
             status["nativeBlurEnabled"] = true;
             status["effectiveBlurControl"] = "global-kernel-per-surface-alpha";
             status["perSurfaceBlurSupported"] = false;
             status["perSurfaceBlurSupport"] = "alpha-only";
+        }
+        if (materialModeUsesBackdropCapture(snapshot.materialMode)) {
+            status["captureEnabled"] = true;
+            status["captureStage"] = "RENDER_POST_WINDOWS";
+            status["lastCaptureStatus"] = snapshot.lastBackdropCaptureStatus;
+            status["lastCaptureError"] = snapshot.lastBackdropCaptureError;
+            status["captureBackend"] = "hyprland-renderer-temp-fb-texture-copy";
+            status["sourceCroppingMode"] = "custom-shader-corner-uv";
+            status["uvMappingType"] = "custom-shader-corner-uv";
+            status["ctexSupportsCustomUvCorners"] = false;
+            status["ctexSupportsAxisAlignedUvRect"] = true;
+            status["ctexCanRotateSourceCrop"] = false;
+            status["transformSourceMapping"] = "fluid-glass-selected-shared-source-quad-per-descriptor";
+            status["fractionalSourceMapping"] = "monitor-local-logical-times-scale-rounded";
+            if (materialModeUsesFluidGlass(snapshot.materialMode)) {
+                const auto shaderStatus = fluidGlassShaderStatus();
+                status["shaderEnabled"] = true;
+                status["shaderBackend"] = shaderStatus.backend;
+                status["shaderCompiled"] = shaderStatus.compiled;
+                status["shaderReady"] = shaderStatus.ready;
+                status["shaderError"] = shaderStatus.error;
+                status["sdfMaskEnabled"] = true;
+                status["refractionDebugEnabled"] = true;
+                status["displacementStrengthPx"] = "clamp(1.5 + frost * 8.0, 1.5, 9.5)";
+                status["edgeWidthPx"] = "clamp(min(width, height) * 0.30, 6, 18)";
+                status["implementedShaderTransforms"] = json::array({0});
+                status["supportedShaderTransforms"] = json::array({0});
+                status["failedShaderTransforms"] = json::array();
+                status["targetShaderTransforms"] = json::array({0});
+                status["sourceMappingEvidence"] = "fluid-glass uses shared display-to-capture source quads; transformed descriptors are shader-backed only when their selected quad is valid";
+                status["transformPolicy"] = "fluid-glass supports capture-backed shader sampling per descriptor when a selected shared source quad is valid, with glass-v1 fallback otherwise";
+            }
+            status["blurEnabled"] = false;
+            status["refractionEnabled"] = materialModeUsesSdfRefraction(snapshot.materialMode);
         }
         return status.dump();
     }
@@ -2284,6 +4519,17 @@ std::string setMaterialMode(const std::string& mode) {
         std::lock_guard guard(g_stateMutex);
         g_materialMode = mode;
         g_lastMaterialRenderStatus = mode == "off" ? "disabled" : "pending";
+        if (materialModeUsesBackdropCapture(mode)) {
+            g_backdropCaptureRecords.clear();
+            g_backdropMonitorCaptureRecords.clear();
+            g_lastBackdropCaptureStatus = "pending";
+            g_lastBackdropCaptureError.clear();
+        } else if (mode == "off") {
+            g_backdropCaptureRecords.clear();
+            g_backdropMonitorCaptureRecords.clear();
+            g_lastBackdropCaptureStatus = "disabled";
+            g_lastBackdropCaptureError.clear();
+        }
     }
     damageAllMonitors();
     return std::string("material: ") + mode + "\n";
@@ -2328,7 +4574,9 @@ std::string hyprglassMaterialRequest(eHyprCtlOutputFormat format, std::string re
         return setMaterialMode("blur-native");
     if (mode == "glass-v1")
         return setMaterialMode("glass-v1");
-    return "error: expected off, flat, blur-native, glass-v1, or status\n";
+    if (mode == "fluid-glass")
+        return setMaterialMode("fluid-glass");
+    return "error: expected off, flat, blur-native, glass-v1, fluid-glass, or status\n";
 }
 
 }
@@ -2377,15 +4625,23 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 }
 
 APICALL EXPORT void PLUGIN_EXIT() {
+    g_renderStageListener.reset();
     {
         std::lock_guard guard(g_stateMutex);
         g_debugOverlayEnabled = false;
         g_materialMode = "off";
         g_lastDebugOverlayRenderStatus = "disabled";
         g_lastMaterialRenderStatus = "disabled";
+        g_backdropCaptureRecords.clear();
+        g_backdropMonitorCaptureRecords.clear();
+        g_lastBackdropCaptureStatus = "disabled";
+        g_lastBackdropCaptureError.clear();
     }
-    damageAllMonitors();
-    g_renderStageListener.reset();
+    g_backdropCaptureFramebuffers.clear();
+    g_fluidGlassShader.reset();
+    g_fluidGlassShaderCompileAttempted = false;
+    g_fluidGlassShaderCompiled = false;
+    g_fluidGlassShaderError.clear();
     if (g_materialCommand)
         HyprlandAPI::unregisterHyprCtlCommand(g_handle, g_materialCommand);
     if (g_debugOverlayCommand)

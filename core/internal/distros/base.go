@@ -528,7 +528,10 @@ TERMINAL=%s
 
 func (b *BaseDistribution) EnableHGSService(ctx context.Context, wm deps.WindowManager) error {
 	if wm == deps.WindowManagerHyprland {
-		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "hgs").Run(); err != nil {
+		if err := exec.CommandContext(ctx, "systemctl", "--user", "daemon-reload").Run(); err != nil {
+			b.log("Warning: failed to reload user systemd units before enabling hgs service")
+		}
+		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "hgs.service").Run(); err != nil {
 			b.log("Warning: failed to add hgs as a want for hyprland-session.target")
 		}
 	}
@@ -561,6 +564,7 @@ func (b *BaseDistribution) WriteHyprlandSessionTarget() error {
 Description=Hyprland Session Target
 Requires=graphical-session.target
 After=graphical-session.target
+Wants=hgs.service
 `
 
 	if err := os.WriteFile(targetPath, []byte(content), 0o644); err != nil {

@@ -62,7 +62,7 @@ var hyprglassDebugOverlayCmd = &cobra.Command{
 }
 
 var hyprglassMaterialCmd = &cobra.Command{
-	Use:   "material <off|flat|blur-native|glass-v1|status>",
+	Use:   "material <off|flat|blur-native|glass-v1|fluid-glass|status>",
 	Short: "Control hgs-hyprglass compositor material mode",
 	Args:  cobra.ExactArgs(1),
 	Run:   runHyprglassMaterial,
@@ -139,9 +139,9 @@ func runHyprglassDebugOverlay(cmd *cobra.Command, args []string) {
 func runHyprglassMaterial(cmd *cobra.Command, args []string) {
 	mode := strings.ToLower(strings.TrimSpace(args[0]))
 	switch mode {
-	case "off", "flat", "blur-native", "glass-v1", "status":
+	case "off", "flat", "blur-native", "glass-v1", "fluid-glass", "status":
 	default:
-		fmt.Fprintln(os.Stderr, "material mode must be off, flat, blur-native, glass-v1, or status")
+		fmt.Fprintln(os.Stderr, "material mode must be off, flat, blur-native, glass-v1, fluid-glass, or status")
 		os.Exit(1)
 	}
 

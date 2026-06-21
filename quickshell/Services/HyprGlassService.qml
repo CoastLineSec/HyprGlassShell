@@ -108,6 +108,7 @@ Singleton {
         case "flat":
         case "blur-native":
         case "glass-v1":
+        case "fluid-glass":
             return mode;
         default:
             return "";
@@ -214,7 +215,7 @@ Singleton {
 
         const material = lastStatus?.material ?? {};
         const mode = material.mode ?? "off";
-        if (material.enabled !== true || (mode !== "flat" && mode !== "blur-native" && mode !== "glass-v1"))
+        if (material.enabled !== true || (mode !== "flat" && mode !== "blur-native" && mode !== "glass-v1" && mode !== "fluid-glass"))
             return { ready: false, reason: "compositor material disabled" };
         if (material.lastRenderStatus !== "ok")
             return { ready: false, reason: `material render status ${material.lastRenderStatus ?? "unknown"}` };
@@ -236,6 +237,12 @@ Singleton {
             return { ready: false, reason: compositorMaterial.reason ?? "compositor material not drawable" };
         if (compositorMaterial.mode !== mode)
             return { ready: false, reason: "descriptor material mode mismatch" };
+        const backendUsed = compositorMaterial.backendUsed ?? "";
+        const fluidGlassFallback = mode === "fluid-glass" && backendUsed === "glass-v1-fallback";
+        if (mode === "fluid-glass" && !fluidGlassFallback && (compositorMaterial.captureReady !== true || compositorMaterial.textureReady !== true))
+            return { ready: false, reason: `backdrop capture ${compositorMaterial.captureStatus ?? "not ready"}` };
+        if (mode === "fluid-glass" && !fluidGlassFallback && compositorMaterial.shaderReady !== true)
+            return { ready: false, reason: `sdf shader ${compositorMaterial.shaderError ?? "not ready"}` };
 
         return { ready: true, reason: "compositor material drawable" };
     }
