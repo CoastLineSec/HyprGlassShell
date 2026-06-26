@@ -86,7 +86,9 @@ FloatingWindow {
     }
 
     objectName: "settingsModal"
-    title: I18n.tr("Settings", "settings window title")
+    // Unique title so the compositor glass plugin can anchor the Fluid Glass Labs
+    // preview to this window (a Wayland floating window can't self-report its position).
+    title: I18n.tr("HyprGlass Settings", "settings window title")
     minimumSize: Qt.size(500, 400)
     implicitWidth: 900
     implicitHeight: screen ? Math.min(940, screen.height - 100) : 940
@@ -106,11 +108,9 @@ FloatingWindow {
     onVisibleChanged: {
         if (!visible) {
             closingModal();
-        } else {
-            Qt.callLater(() => {
-                sidebar.focusSearch();
-            });
         }
+        // Note: the search field no longer auto-focuses on open — it only activates
+        // when clicked, and shows the "Search..." placeholder otherwise.
     }
 
     Loader {
@@ -218,20 +218,7 @@ FloatingWindow {
                         }
                     }
 
-                    HGSIcon {
-                        name: "settings"
-                        size: Theme.iconSize
-                        color: Theme.primary
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    StyledText {
-                        text: I18n.tr("Settings")
-                        font.pixelSize: Theme.fontSizeXLarge
-                        color: Theme.surfaceText
-                        font.weight: Font.Medium
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                    // "Settings" icon + title removed for a clean macOS-style header.
                 }
 
                 Row {
@@ -347,6 +334,17 @@ FloatingWindow {
                 height: parent.height - 48 - readOnlyBanner.height
                 clip: true
 
+                // Click anywhere in the settings body that isn't an interactive
+                // control to deactivate the search field (back to "Search...").
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.AllButtons
+                    onPressed: mouse => {
+                        sidebar.clearSearchFocus();
+                        mouse.accepted = false;
+                    }
+                }
+
                 SettingsSidebar {
                     id: sidebar
 
@@ -373,7 +371,11 @@ FloatingWindow {
                     SettingsContent {
                         id: content
 
+                        // 5px top/bottom inset so the page scrollbar doesn't cross the
+                        // window border.
                         anchors.fill: parent
+                        anchors.topMargin: 5
+                        anchors.bottomMargin: 5
                         parentModal: settingsModal
                         currentIndex: settingsModal.currentTabIndex
                     }

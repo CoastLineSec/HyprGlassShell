@@ -9,6 +9,9 @@ import qs.Widgets
 Item {
     id: networkStatusTab
 
+    // Lets this tab be stacked at its content height inside the combined Network page.
+    implicitHeight: mainColumn.height + Theme.spacingXL
+
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 

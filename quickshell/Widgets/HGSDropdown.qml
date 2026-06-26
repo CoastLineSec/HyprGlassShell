@@ -28,6 +28,9 @@ Item {
     property var optionIcons: []
     property bool enableFuzzySearch: false
     property var optionIconMap: ({})
+    // When true, each option (and the selected value) renders in its own font
+    // family — used by the font pickers so users preview the actual typeface.
+    property bool previewOptionFont: false
 
     function rebuildIconMap() {
         const map = {};
@@ -172,6 +175,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.currentValue !== "" ? root.currentValue : root.emptyText
                 font.pixelSize: Theme.fontSizeMedium
+                font.family: (root.previewOptionFont && root.currentValue && root.currentValue !== "Default") ? root.currentValue : Theme.fontFamily
                 color: root.currentValue !== "" ? Theme.surfaceText : Theme.outline
                 width: contentRow.width - (contentRow.children[0].visible ? contentRow.children[0].width + contentRow.spacing : 0)
                 elide: Text.ElideRight
@@ -431,6 +435,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: delegateRoot.modelData
                                 font.pixelSize: Theme.fontSizeMedium
+                                font.family: (root.previewOptionFont && delegateRoot.modelData && delegateRoot.modelData !== "Default") ? delegateRoot.modelData : Theme.fontFamily
                                 color: delegateRoot.isCurrentValue ? Theme.primary : Theme.surfaceText
                                 font.weight: delegateRoot.isCurrentValue ? Font.Medium : Font.Normal
                                 width: root.popupWidth > 0 ? undefined : (delegateRoot.width - parent.x - Theme.spacingS * 2)

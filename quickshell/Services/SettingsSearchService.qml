@@ -15,6 +15,9 @@ Singleton {
     property var results: []
     property string targetSection: ""
     property string highlightSection: ""
+    // Drill-in sub-page to auto-open on the destination tab (e.g. "vision" for
+    // Accessibility) when deep-linking to a card inside a sub-page.
+    property string targetTabSub: ""
     property var registeredCards: ({})
     property var settingsIndex: []
     property bool indexLoaded: false

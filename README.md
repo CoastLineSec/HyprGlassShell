@@ -21,7 +21,7 @@ HyprGlassShell is in early development. The current foundation includes:
 
 - `hgs hyprglass` CLI commands for descriptor validation, apply, clear, status, debug overlay, and material mode control.
 - A formal HyprGlass descriptor model shared between the shell, Go CLI, and Hyprland plugin.
-- A repo-local `hgs-hyprglass` Hyprland plugin build workflow.
+- Integration with the standalone [`fluidglass`](https://github.com/CoastLineSec/fluidglass) Hyprland plugin.
 - Plugin status for absent, loaded, empty, valid, invalid, and cleared descriptor states.
 - Layer-shell surface discovery and descriptor-to-surface matching.
 - Coordinate diagnostics for monitor-local logical, global logical, framebuffer, scale, and transform state.
@@ -64,8 +64,6 @@ HyprGlassShell/
 ├── core/                    # Go backend and hgs CLI
 │   ├── cmd/hgs/             # hgs command line interface
 │   └── internal/hyprglass/  # HyprGlass descriptor/status model
-├── plugins/
-│   └── hgs-hyprglass/       # Hyprland plugin for compositor material work
 ├── distro/                  # Distribution packaging inherited from the fork
 └── assets/                  # Desktop/service/icon assets
 ```
@@ -99,33 +97,22 @@ systemctl --user daemon-reload
 systemctl --user start hgs.service
 ```
 
-## HyprGlass Plugin
+## Fluid Glass Plugin
 
-Build the Hyprland plugin:
+The compositor glass material is provided by the **fluidglass** Hyprland plugin,
+which lives in its own repository:
+[CoastLineSec/fluidglass](https://github.com/CoastLineSec/fluidglass).
 
-```sh
-make -C plugins/hgs-hyprglass build
-```
-
-The plugin artifact is written to:
-
-```text
-plugins/hgs-hyprglass/build/hgs-hyprglass.so
-```
-
-Load it manually only when testing against the live Hyprland session:
+Install it with hyprpm (which rebuilds it against your Hyprland on each update):
 
 ```sh
-hyprctl plugin load "$PWD/plugins/hgs-hyprglass/build/hgs-hyprglass.so"
+hyprpm add https://github.com/CoastLineSec/fluidglass
+hyprpm enable fluidglass
 ```
 
-Unload it:
-
-```sh
-hyprctl plugin unload "$PWD/plugins/hgs-hyprglass/build/hgs-hyprglass.so"
-```
-
-Detailed plugin notes live in [plugins/hgs-hyprglass/README.md](plugins/hgs-hyprglass/README.md).
+The shell drives it over `hyprctl` — `fluidglass-apply-json`, `fluidglass-status`,
+`fluidglass-clear`, `fluidglass-material`. See the plugin repo for the descriptor
+contract and manual build instructions.
 
 ## HyprGlass CLI
 
@@ -152,11 +139,11 @@ hgs hyprglass material status
 The plugin exposes matching Hyprland commands:
 
 ```sh
-hyprctl -j hyprglass-status
-hyprctl hyprglass-apply-json '<descriptor-json>'
-hyprctl hyprglass-clear
-hyprctl hyprglass-debug-overlay on|off|toggle|status
-hyprctl hyprglass-material off|flat|blur-native|status
+hyprctl -j fluidglass-status
+hyprctl fluidglass-apply-json '<descriptor-json>'
+hyprctl fluidglass-clear
+hyprctl fluidglass-debug-overlay on|off|toggle|status
+hyprctl fluidglass-material off|flat|blur-native|status
 ```
 
 ## Shell Appearance Contract
@@ -203,7 +190,6 @@ go test ./internal/hyprglass ./cmd/hgs
 
 cd ..
 make -C core build
-make -C plugins/hgs-hyprglass build
 make lint-qml
 ```
 

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes
 import qs.Common
 import qs.Services
+import qs.Widgets
 
 Item {
     id: root
@@ -12,6 +13,21 @@ Item {
 
     readonly property bool frameShapesBar: SettingsData.frameEnabled && barWindow.usesFrameBarChrome
     readonly property bool fallbackMaterialVisible: barWindow.qmlGlassFallbackVisible
+
+    // Native QML "fluid glass" bar background (refracts the wallpaper behind the bar).
+    // Driven directly by the Fluid Glass toggle.
+    // QML FluidGlass is superseded by the compositor plugin: keep the QML path off, and when
+    // fluid glass is enabled go transparent so the compositor draws the glass behind the bar.
+    readonly property bool useFluidGlassQml: false
+    readonly property bool useCompositorGlass: SettingsData.fluidGlassEnabled ?? false
+    // Bar body's top-left on the monitor (logical px), for wallpaper-crop alignment.
+    property point screenPos: {
+        root.width;
+        root.height;
+        barWindow.width;
+        barWindow.height;
+        return root.mapToItem(null, 0, 0);
+    }
 
     visible: !frameShapesBar
 
@@ -189,7 +205,7 @@ Item {
 
     ElevationShadow {
         id: barShadow
-        visible: root.fallbackMaterialVisible && root.shadowEnabled && root.width > 0 && root.height > 0
+        visible: root.fallbackMaterialVisible && !root.useCompositorGlass && root.shadowEnabled && root.width > 0 && root.height > 0
 
         // Size to the bar's rectangular body, excluding gothic wing extensions
         x: root.isRight ? root.wing : 0
@@ -211,9 +227,26 @@ Item {
     }
 
     Loader {
+        id: fluidGlassLayer
+        anchors.fill: parent
+        active: root.useFluidGlassQml
+        sourceComponent: FluidGlass {
+            screenName: root.barWindow.screenName
+            screenW: root.barWindow.screen ? root.barWindow.screen.width : 0
+            screenH: root.barWindow.screen ? root.barWindow.screen.height : 0
+            surfaceX: root.screenPos.x
+            surfaceY: root.screenPos.y
+            cornerRadius: root.rt
+            level: FluidGlassStyle.level
+            tintHue: FluidGlassStyle.tintHue
+            noTint: FluidGlassStyle.noTint
+        }
+    }
+
+    Loader {
         id: barShape
         anchors.fill: parent
-        active: root.fallbackMaterialVisible && mainPathCorrectShape
+        active: root.fallbackMaterialVisible && mainPathCorrectShape && !root.useFluidGlassQml && !root.useCompositorGlass
         sourceComponent: Shape {
             anchors.fill: parent
             preferredRendererType: Shape.CurveRenderer

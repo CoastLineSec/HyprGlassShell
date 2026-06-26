@@ -159,10 +159,14 @@ Singleton {
     property var registryThemeVariants: ({})
     property string matugenScheme: "scheme-tonal-spot"
     property real matugenContrast: 0
+    // 0 = fully neutral (macOS-like gray) surfaces, 1 = full matugen hue tint.
+    property real surfaceTintStrength: 0
     property bool runUserMatugenTemplates: true
     property string matugenTargetMonitor: ""
     property real popupTransparency: 1.0
     property real dockTransparency: 1
+    // Master toggle for the HyprGlass fluid-glass compositor material (plugin).
+    property bool fluidGlassEnabled: false
     property bool hyprGlassColorGlassEnabled: false
     onHyprGlassColorGlassEnabledChanged: saveSettings()
     property string hyprGlassColorSource: "custom"
@@ -171,6 +175,28 @@ Singleton {
     onHyprGlassCustomColorChanged: saveSettings()
     property real hyprGlassFrostAmount: 0.08
     onHyprGlassFrostAmountChanged: saveSettings()
+    // Fluid Glass v2 (compositor plugin) — drives the live hgs-hyprglass material.
+    property bool fluidGlassDynamicLight: true     // mouse-tracking "dynamic light"
+    property bool fluidGlassStained: false          // color tint on/off
+    property string fluidGlassTintSource: "system"  // "system" | "theme"
+    property real fluidGlassLevel: 0.5              // Frosted Glass: 0=Low, .5=Med, 1=High
+    property bool fluidGlassFrosted: true           // preset (coupled blur+tint) vs custom Labs values
+    property real fluidGlassBlurCustom: 0.5         // custom blur level when not frosted
+    property real fluidGlassTintCustom: 0.16        // custom tint level when not frosted
+    // Fluid Glass Labs — advanced shader params (design-px at the 200px reference;
+    // the plugin scales per-surface). Defaults = the locked calibration.
+    property real fluidGlassRefraction: 45
+    property real fluidGlassRimBand: 40
+    property real fluidGlassBevel: 46
+    property real fluidGlassRimWidth: 3
+    property real fluidGlassHighlight: 0.10
+    property real fluidGlassShadow: 0.10
+    property real fluidGlassLightAngle: 90
+    property real fluidGlassSpecular: 0.21
+    property real fluidGlassRimWrap: 0.45
+    // Labs preview backdrop: selected path + user-added custom backdrops.
+    property string fluidGlassLabsBackdrop: ""
+    property var fluidGlassLabsBackdrops: []
     property string widgetBackgroundColor: "sch"
     property string widgetColorMode: "default"
     property string controlCenterTileColorMode: "primary"
@@ -2370,6 +2396,12 @@ Singleton {
         if (matugenContrast === value)
             return;
         set("matugenContrast", value);
+    }
+
+    function setSurfaceTintStrength(value) {
+        if (surfaceTintStrength === value)
+            return;
+        set("surfaceTintStrength", value);
     }
 
     function setRunUserMatugenTemplates(enabled) {

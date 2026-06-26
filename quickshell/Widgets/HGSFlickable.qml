@@ -12,6 +12,9 @@ Flickable {
     property bool isMomentumActive: false
     property real friction: Scroll.friction
     property bool _scrollBarActive: false
+    // When true, the vertical scrollbar never auto-hides (stays visible whenever
+    // there is content to scroll). Default on — auto-hiding scrollbars tested poorly.
+    property bool persistentScrollBar: true
 
     flickDeceleration: Scroll.flickDeceleration
     maximumFlickVelocity: Scroll.maximumFlickVelocity
@@ -19,6 +22,10 @@ Flickable {
     boundsMovement: Flickable.FollowBoundsBehavior
     pressDelay: 0
     flickableDirection: Flickable.VerticalFlick
+    // Only interactive (drag + native wheel) when there is actually something to
+    // scroll. When content fits, going non-interactive lets the wheel pass through to
+    // a parent flickable — fixing nested/stacked scroll (e.g. the Network page).
+    interactive: flickable.contentHeight > flickable.height + 0.5
 
     WheelHandler {
         id: wheelHandler
@@ -36,6 +43,9 @@ Flickable {
         }
 
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        // Disabled when there's nothing to scroll, so the wheel reaches the parent
+        // flickable instead of being trapped here.
+        enabled: flickable.contentHeight > flickable.height + 0.5
 
         onWheel: event => {
             vbar._scrollBarActive = true;
@@ -175,5 +185,6 @@ Flickable {
 
     ScrollBar.vertical: HGSScrollbar {
         id: vbar
+        alwaysVisible: flickable.persistentScrollBar
     }
 }

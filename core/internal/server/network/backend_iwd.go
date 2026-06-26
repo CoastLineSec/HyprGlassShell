@@ -19,6 +19,7 @@ const (
 	iwdKnownNetworkInterface = "net.connman.iwd.KnownNetwork"
 	dbusObjectManager        = "org.freedesktop.DBus.ObjectManager"
 	dbusPropertiesInterface  = "org.freedesktop.DBus.Properties"
+	login1ManagerInterface   = "org.freedesktop.login1.Manager"
 )
 
 type connectAttempt struct {

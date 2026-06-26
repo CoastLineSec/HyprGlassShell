@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/CoastLineSec/HyprGlassShell/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -67,6 +68,16 @@ func (b *IWDBackend) StartMonitoring(onStateChange func()) error {
 		return fmt.Errorf("failed to add iwd interfaces-removed signal match: %w", err)
 	}
 
+	// Watch systemd-logind for resume from suspend/hibernate. iwd usually stops
+	// scanning while asleep, leaving our cached network list stale, so we re-scan
+	// and refresh on wake. Best-effort: a failure here only means no resume refresh.
+	if err := b.conn.AddMatchSignal(
+		dbus.WithMatchInterface(login1ManagerInterface),
+		dbus.WithMatchMember("PrepareForSleep"),
+	); err != nil {
+		log.Warnf("failed to add logind PrepareForSleep match (no Wi-Fi refresh on resume): %v", err)
+	}
+
 	b.sigWG.Add(1)
 	go b.signalHandler(sigChan)
 
@@ -79,6 +90,39 @@ func (b *IWDBackend) refreshWiFiNetworkState() bool {
 		return true
 	}
 	return b.updateSavedWiFiNetworks() == nil
+}
+
+// handleResume re-scans and refreshes Wi-Fi state after the system wakes from
+// suspend/hibernate. iwd typically stops scanning while asleep, so without this the
+// network list stays frozen until the user manually triggers a scan. Only the
+// device/station paths are read here (no mutation), so this stays race-free.
+func (b *IWDBackend) handleResume() {
+	b.sigWG.Add(1)
+	go func() {
+		defer b.sigWG.Done()
+
+		// The Wi-Fi device can take a moment to come back after wake; retry the
+		// scan with a short backoff until it succeeds or we give up.
+		for i := 0; i < 6; i++ {
+			select {
+			case <-b.stopChan:
+				return
+			case <-time.After(time.Duration(500*(i+1)) * time.Millisecond):
+			}
+			if err := b.ScanWiFi(); err == nil {
+				break
+			}
+		}
+
+		b.refreshWiFiNetworkState()
+		if err := b.updateState(); err != nil {
+			log.Warnf("failed to refresh Wi-Fi state after resume: %v", err)
+			return
+		}
+		if b.onStateChange != nil {
+			b.onStateChange()
+		}
+	}()
 }
 
 func (b *IWDBackend) signalHandler(sigChan chan *dbus.Signal) {
@@ -94,6 +138,16 @@ func (b *IWDBackend) signalHandler(sigChan chan *dbus.Signal) {
 		case sig := <-sigChan:
 			if sig == nil {
 				return
+			}
+
+			if sig.Name == login1ManagerInterface+".PrepareForSleep" {
+				// Body is a single bool: true = about to sleep, false = resumed.
+				if len(sig.Body) >= 1 {
+					if sleeping, ok := sig.Body[0].(bool); ok && !sleeping {
+						b.handleResume()
+					}
+				}
+				continue
 			}
 
 			if sig.Name == dbusObjectManager+".InterfacesAdded" {

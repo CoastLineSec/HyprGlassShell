@@ -173,6 +173,9 @@ Singleton {
                         setDesiredTheme("image", rawWallpaperPath, isLight, iconTheme, selectedMatugenType);
                     }
                 }
+            } else if (currentTheme && typeof currentTheme === "string" && currentTheme.startsWith("#")) {
+                const customMatugenType2 = (typeof SettingsData !== "undefined" && SettingsData.matugenScheme) ? SettingsData.matugenScheme : "scheme-tonal-spot";
+                setDesiredTheme("hex", currentTheme, isLight, iconTheme, customMatugenType2, null);
             } else if (currentTheme !== "custom") {
                 const darkTheme = StockThemes.getThemeByName(currentTheme, false);
                 const lightTheme = StockThemes.getThemeByName(currentTheme, true);
@@ -444,7 +447,7 @@ Singleton {
     readonly property var currentThemeData: {
         if (currentTheme === "custom") {
             return customThemeData || StockThemes.getThemeByName("purple", isLightMode);
-        } else if (currentTheme === dynamic) {
+        } else if (currentTheme === dynamic || (currentTheme && typeof currentTheme === "string" && currentTheme.startsWith("#"))) {
             return {
                 "primary": getMatugenColor("primary", "#42a5f5"),
                 "primaryText": getMatugenColor("on_primary", "#ffffff"),
@@ -519,23 +522,40 @@ Singleton {
         return schemes[0];
     }
 
+    // Strips most of the hue from a surface color so backgrounds stay neutral
+    // (macOS/Win11-style elevated grays) while accent roles stay vibrant. Keeps
+    // the lightness ramp, floors it so nothing ever hits pure black. At full
+    // strength (1) it's a no-op = original matugen behavior.
+    function neutralizeSurface(c) {
+        if (c === undefined || c === null || c === "")
+            return c;
+        var k = (typeof SettingsData !== "undefined" && SettingsData.surfaceTintStrength !== undefined) ? SettingsData.surfaceTintStrength : 0.15;
+        if (k >= 1)
+            return c;
+        var col = Qt.darker(c, 1.0);
+        if (col === undefined || col.hslSaturation === undefined)
+            return c;
+        var lum = col.hslLightness < 0.1 ? 0.1 : col.hslLightness;
+        return Qt.hsla(col.hslHue, col.hslSaturation * k, lum, col.a);
+    }
+
     property color primary: currentThemeData.primary
     property color primaryText: currentThemeData.primaryText
     property color primaryContainer: currentThemeData.primaryContainer
     property color secondary: currentThemeData.secondary
     property color tertiary: currentThemeData.tertiary || currentThemeData.secondary
-    property color surface: currentThemeData.surface
+    property color surface: neutralizeSurface(currentThemeData.surface)
     property color surfaceText: currentThemeData.surfaceText
-    property color surfaceVariant: currentThemeData.surfaceVariant
+    property color surfaceVariant: neutralizeSurface(currentThemeData.surfaceVariant)
     property color surfaceVariantText: currentThemeData.surfaceVariantText
     property color surfaceTint: currentThemeData.surfaceTint
-    property color background: currentThemeData.background
+    property color background: neutralizeSurface(currentThemeData.background)
     property color backgroundText: currentThemeData.backgroundText
-    property color outline: currentThemeData.outline
-    property color outlineVariant: currentThemeData.outlineVariant || Qt.rgba(outline.r, outline.g, outline.b, 0.6)
-    property color surfaceContainer: currentThemeData.surfaceContainer
-    property color surfaceContainerHigh: currentThemeData.surfaceContainerHigh
-    property color surfaceContainerHighest: currentThemeData.surfaceContainerHighest || surfaceContainerHigh
+    property color outline: neutralizeSurface(currentThemeData.outline)
+    property color outlineVariant: currentThemeData.outlineVariant ? neutralizeSurface(currentThemeData.outlineVariant) : Qt.rgba(outline.r, outline.g, outline.b, 0.6)
+    property color surfaceContainer: neutralizeSurface(currentThemeData.surfaceContainer)
+    property color surfaceContainerHigh: neutralizeSurface(currentThemeData.surfaceContainerHigh)
+    property color surfaceContainerHighest: currentThemeData.surfaceContainerHighest ? neutralizeSurface(currentThemeData.surfaceContainerHighest) : surfaceContainerHigh
 
     property color onSurface: surfaceText
     property color onSurfaceVariant: surfaceVariantText
@@ -1306,6 +1326,11 @@ Singleton {
         if (themeName === "custom" && customThemeData) {
             return customThemeData;
         }
+        if (themeName && typeof themeName === "string" && themeName.startsWith("#")) {
+            return Object.assign({
+                "name": themeName.toUpperCase()
+            }, currentThemeData || {});
+        }
         return StockThemes.getThemeByName(themeName, isLightMode);
     }
 
@@ -1763,6 +1788,10 @@ Singleton {
                 darkTheme = customThemeData;
                 lightTheme = customThemeData;
             }
+        } else if (currentTheme && typeof currentTheme === "string" && currentTheme.startsWith("#")) {
+            const customMatugenType = (typeof SettingsData !== "undefined" && SettingsData.matugenScheme) ? SettingsData.matugenScheme : "scheme-tonal-spot";
+            setDesiredTheme("hex", currentTheme, isLight, iconTheme, customMatugenType, null);
+            return;
         } else {
             darkTheme = StockThemes.getThemeByName(currentTheme, false);
             lightTheme = StockThemes.getThemeByName(currentTheme, true);

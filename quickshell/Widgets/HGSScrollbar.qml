@@ -9,9 +9,12 @@ ScrollBar {
     readonly property var _target: targetFlickable ?? parent
 
     property bool _scrollBarActive: false
+    // When true the scrollbar stays visible whenever there is anything to scroll,
+    // instead of auto-hiding — used to signal a clearly-bounded scroll area.
+    property bool alwaysVisible: false
     property alias hideTimer: hideScrollBarTimer
     property bool _isParentMoving: _target && (_target.moving || _target.flicking || _target.isMomentumActive)
-    property bool _shouldShow: pressed || hovered || active || _isParentMoving || _scrollBarActive
+    property bool _shouldShow: alwaysVisible || pressed || hovered || active || _isParentMoving || _scrollBarActive
 
     policy: (_target && _target.contentHeight > _target.height) ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
     minimumSize: 0.08

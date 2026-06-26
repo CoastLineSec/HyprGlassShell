@@ -13,7 +13,7 @@ import (
 const (
 	DescriptorSchemaVersion = 1
 
-	PluginName = "hgs-hyprglass"
+	PluginName = "fluidglass"
 )
 
 type DescriptorSet struct {

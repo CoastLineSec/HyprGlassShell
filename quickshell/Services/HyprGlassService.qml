@@ -26,6 +26,9 @@ Singleton {
     property int statusRevision: 0
 
     property var descriptors: ({})
+    // Fluid Glass Labs preview element (window-anchored); null when the Labs is closed.
+    property var labsPreview: null
+    onLabsPreviewChanged: scheduleApply()
     property int generation: 0
     property int sequence: 0
     property int appearanceRevision: 0
@@ -168,13 +171,58 @@ Singleton {
     readonly property int statusFreshnessMs: 5000
     readonly property int resyncCooldownMs: 2000
     readonly property int materialModeReconcileCooldownMs: 2000
-    readonly property string desiredMaterialMode: normalizeMaterialMode(Quickshell.env("HGS_HYPRGLASS_MATERIAL_MODE"))
+    readonly property string desiredMaterialMode: {
+        var envMode = normalizeMaterialMode(Quickshell.env("HGS_HYPRGLASS_MATERIAL_MODE"));
+        if (envMode !== "")
+            return envMode;
+        return (typeof SettingsData !== "undefined" && SettingsData.fluidGlassEnabled) ? "fluid-glass" : "";
+    }
     readonly property bool desiredMaterialModeEnabled: desiredMaterialMode !== ""
     readonly property var resolvedMaterial: resolveDescriptorMaterial({})
 
     function themeTone() {
         const light = (typeof Theme !== "undefined" && Theme.isLightMode) || (typeof SessionData !== "undefined" && SessionData.isLightMode);
         return light ? "light" : "dark";
+    }
+
+    // Neutral glass tint that follows the system light/dark appearance.
+    function neutralGlassTint() {
+        return themeTone() === "light" ? neutralLightTintColor : neutralDarkTintColor;
+    }
+
+    function _glassHexOf(c) {
+        function h(x) {
+            return Math.max(0, Math.min(255, Math.round(x * 255))).toString(16).padStart(2, "0");
+        }
+        return "#" + h(c.r) + h(c.g) + h(c.b);
+    }
+
+    // Stained-Glass tint color from the chosen source:
+    //   "theme"  -> the active Theme color (matugen / manual seed)
+    //   "system" -> a neutral that follows light/dark appearance
+    function resolveGlassTintColor() {
+        const source = String((typeof SettingsData !== "undefined" ? SettingsData.fluidGlassTintSource : "system") || "system").toLowerCase();
+        if (source === "theme" && typeof Theme !== "undefined" && Theme.primary)
+            return normalizeHexColor(_glassHexOf(Theme.primary), neutralGlassTint());
+        return neutralGlassTint();
+    }
+
+    // Advanced Fluid Glass material params (design-px reference; plugin scales).
+    // Defaults mirror the plugin's locked GlassElement calibration, so sending
+    // them is a no-op until the user tunes them in the Labs.
+    function resolveGlassAdvanced() {
+        const S = (typeof SettingsData !== "undefined") ? SettingsData : null;
+        return {
+            refraction: S ? (S.fluidGlassRefraction ?? 45) : 45,
+            rimBand:    S ? (S.fluidGlassRimBand ?? 40) : 40,
+            bevel:      S ? (S.fluidGlassBevel ?? 46) : 46,
+            rimWidth:   S ? (S.fluidGlassRimWidth ?? 3) : 3,
+            highlight:  S ? (S.fluidGlassHighlight ?? 0.10) : 0.10,
+            shadow:     S ? (S.fluidGlassShadow ?? 0.10) : 0.10,
+            lightAngle: S ? (S.fluidGlassLightAngle ?? 90) : 90,
+            specular:   S ? (S.fluidGlassSpecular ?? 0.21) : 0.21,
+            rimWrap:    S ? (S.fluidGlassRimWrap ?? 0.45) : 0.45
+        };
     }
 
     function markAppearanceChanged() {
@@ -368,6 +416,72 @@ Singleton {
         target: SessionData
         function onIsLightModeChanged() {
             root.markAppearanceChanged();
+            root.scheduleApply();
+        }
+    }
+
+    // Re-push the v2 compositor payload whenever a Fluid Glass setting (or the theme
+    // color used by the "Theme Color" tint source) changes, so the live glass tracks
+    // the settings UI without waiting for a bar-geometry change.
+    Connections {
+        target: SettingsData
+        function onFluidGlassEnabledChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassLevelChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassDynamicLightChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassStainedChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassTintSourceChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassRefractionChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassRimBandChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassBevelChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassRimWidthChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassHighlightChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassShadowChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassLightAngleChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassSpecularChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassRimWrapChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassFrostedChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassBlurCustomChanged() {
+            root.scheduleApply();
+        }
+        function onFluidGlassTintCustomChanged() {
+            root.scheduleApply();
+        }
+    }
+
+    Connections {
+        target: Theme
+        function onPrimaryChanged() {
+            root.scheduleApply();
         }
     }
 
@@ -514,7 +628,7 @@ Singleton {
         if (applyAfterProbe)
             _applyPendingAfterProbe = true;
 
-        Proc.runCommand("hyprglass-status", ["hgs", "hyprglass", "status"], (output, exitCode) => {
+        Proc.runCommand("hyprglass-status", ["hyprctl", "-j", "fluidglass-status"], (output, exitCode) => {
             probeComplete = true;
             const wasLoaded = pluginLoaded;
             if (exitCode !== 0 || !output) {
@@ -584,22 +698,81 @@ Singleton {
             return;
 
         const list = _descriptorList();
-        if (list.length === 0) {
-            Proc.runCommand("hyprglass-clear", ["hgs", "hyprglass", "clear"], (_output, exitCode) => {
+
+        // Material shared by every glass element (bars + the Labs preview).
+        const dynamicLight = (typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassDynamicLight ?? true) : true;
+        const glassLevel = clamp((typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassLevel ?? 0.5) : 0.5, 0, 1);
+        const stained = (typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassStained ?? false) : false;
+        // Frosted Glass preset couples blur+tint to glassLevel; custom mode sends them
+        // independently (blurLevel/tintLevel; -1 = let the plugin derive from glassLevel).
+        const frosted = (typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassFrosted ?? true) : true;
+        const blurLevel = frosted ? -1 : clamp((typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassBlurCustom ?? 0.5) : 0.5, 0, 1);
+        const tintLevel = frosted ? -1 : clamp((typeof SettingsData !== "undefined") ? (SettingsData.fluidGlassTintCustom ?? 0.16) : 0.16, 0, 1);
+        const tintColor = resolveGlassTintColor();
+        const adv = resolveGlassAdvanced();
+        const mat = {
+            glassLevel: glassLevel,
+            tintEnabled: stained,
+            tintColor: tintColor,
+            blurLevel: blurLevel,
+            tintLevel: tintLevel,
+            refraction: adv.refraction,
+            rimBand: adv.rimBand,
+            bevel: adv.bevel,
+            rimWidth: adv.rimWidth,
+            highlight: adv.highlight,
+            shadow: adv.shadow,
+            lightAngle: adv.lightAngle,
+            specular: adv.specular,
+            rimWrap: adv.rimWrap,
+            lightFollowsMouse: dynamicLight
+        };
+
+        // v2 plugin schema: {enabled, elements:[{id, monitor, x, y, w, h, radius, …material}]}.
+        // The bar descriptors carry monitor-local logical geometry; the plugin scales to physical.
+        const elements = list.map(d => Object.assign({
+            id: d.id,
+            monitor: d.surface?.monitor?.name ?? "",
+            x: d.geometry?.logical?.x ?? 0,
+            y: d.geometry?.logical?.y ?? 0,
+            w: d.geometry?.logical?.width ?? 0,
+            h: d.geometry?.logical?.height ?? 0,
+            radius: d.shape?.radius?.topLeft ?? 0
+        }, mat));
+
+        // Fluid Glass Labs preview — a window-anchored element; the plugin places it over the
+        // (floating) Settings window each frame from the window's live server-side position.
+        if (labsPreview && labsPreview.anchorWindow && labsPreview.w > 0 && labsPreview.h > 0) {
+            elements.push(Object.assign({
+                id: "hgs:labs-preview",
+                monitor: "",
+                anchorWindow: labsPreview.anchorWindow,
+                offsetX: labsPreview.offsetX,
+                offsetY: labsPreview.offsetY,
+                x: 0,
+                y: 0,
+                w: labsPreview.w,
+                h: labsPreview.h,
+                radius: labsPreview.radius
+            }, mat));
+        }
+
+        if (elements.length === 0) {
+            Proc.runCommand("hyprglass-clear", ["hyprctl", "fluidglass-clear"], (_output, exitCode) => {
                 if (exitCode !== 0)
                     refreshStatus(false);
             }, 0, 2500);
             return;
         }
 
+        ++generation;
         const payload = {
-            version: 1,
-            generation: ++generation,
-            descriptors: list
+            enabled: (typeof SettingsData !== "undefined" && SettingsData.fluidGlassEnabled) === true,
+            elements: elements
         };
-        Proc.runCommand("hyprglass-apply", ["hgs", "hyprglass", "apply-json", JSON.stringify(payload)], (_output, exitCode) => {
+        Proc.runCommand("hyprglass-apply", ["hyprctl", "fluidglass-apply-json", JSON.stringify(payload)], (_output, exitCode) => {
             if (exitCode !== 0) {
-                log.warn("hgs-hyprglass descriptor apply failed");
+                log.warn("fluidglass apply failed");
                 refreshStatus(false);
                 return;
             }

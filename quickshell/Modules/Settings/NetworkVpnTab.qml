@@ -8,15 +8,50 @@ import qs.Modals.Common
 import qs.Modals.FileBrowser
 import qs.Services
 import qs.Widgets
+import "VpnProviders.js" as VpnProviders
 
 Item {
     id: networkVpnTab
 
+    // Lets this tab be stacked at its content height inside the combined Network page.
+    implicitHeight: mainColumn.height + Theme.spacingXL
+
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 
+    // --- Detected VPN (universal; works on any backend incl. iwd/networkd) ---
+    // vpnInterfaces: tunnel interfaces from networkd (every provider). vpnProvider:
+    // optional rich detail { provider, connected, status, rows[] } from a provider CLI.
+    property var vpnInterfaces: []
+    property var vpnProvider: null
+
+    function refreshDetectedVpn() {
+        Proc.runCommand("networkctl-vpn", ["networkctl", "--json=short", "list"], (output, code) => {
+            if (code !== 0 || !output)
+                return;
+            try {
+                const d = JSON.parse(output);
+                const ifs = (d && d.Interfaces) ? d.Interfaces : [];
+                networkVpnTab.vpnInterfaces = ifs.filter(i => i && (i.Type === "wireguard" || i.Type === "tun" || i.Type === "tap" || i.Type === "ppp"));
+            } catch (e) {
+                networkVpnTab.vpnInterfaces = [];
+            }
+        });
+        Proc.runCommand("vpn-provider-status", ["sh", "-c", VpnProviders.probeScript()], (output, code) => {
+            networkVpnTab.vpnProvider = (code === 0 && output) ? VpnProviders.parse(output) : null;
+        });
+    }
+
+    Timer {
+        interval: 10000
+        running: networkVpnTab.visible
+        repeat: true
+        onTriggered: networkVpnTab.refreshDetectedVpn()
+    }
+
     Component.onCompleted: {
         NetworkService.addRef();
+        refreshDetectedVpn();
     }
 
     Component.onDestruction: {
@@ -39,6 +74,10 @@ Item {
 
             SettingsCard {
                 id: root
+
+                // NetworkManager-only management card. Hidden on backends without daemon
+                // VPN support (iwd/networkd) — the detected-VPN card above covers those.
+                visible: HGSNetworkService.vpnAvailable
 
                 property string expandedVpnUuid: ""
 
@@ -505,6 +544,114 @@ Item {
                                             height: Theme.spacingXS
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Detected VPN — works for ANY provider. The interface list is the universal
+            // view (every VPN, WireGuard/OpenVPN/etc., shows up as a tunnel interface);
+            // a provider CLI (e.g. NordVPN) adds richer detail when it's installed.
+            SettingsCard {
+                width: parent.width
+                title: I18n.tr("VPN Connection")
+                iconName: "shield"
+                visible: networkVpnTab.vpnInterfaces.length > 0 || (networkVpnTab.vpnProvider && networkVpnTab.vpnProvider.connected)
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingM
+
+                    // Universal: every active VPN tunnel interface, any provider.
+                    Repeater {
+                        model: networkVpnTab.vpnInterfaces
+
+                        delegate: Row {
+                            id: vifRow
+                            required property var modelData
+                            width: parent.width
+                            spacing: Theme.spacingS
+
+                            Rectangle {
+                                width: 10
+                                height: 10
+                                radius: 5
+                                color: vifRow.modelData.OperationalState === "routable" ? Theme.success : Theme.warning
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            StyledText {
+                                text: (vifRow.modelData.Name || "") + "  ·  " + (vifRow.modelData.Type || "") + "  ·  " + (vifRow.modelData.OperationalState || "")
+                                color: Theme.surfaceText
+                                font.pixelSize: Theme.fontSizeSmall
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
+
+                    // Divider before optional provider-specific detail.
+                    Rectangle {
+                        width: parent.width
+                        height: 1
+                        color: Theme.outline
+                        opacity: 0.15
+                        visible: networkVpnTab.vpnProvider && networkVpnTab.vpnProvider.connected && networkVpnTab.vpnInterfaces.length > 0
+                    }
+
+                    // Provider enrichment (shown when a detected provider CLI reports connected).
+                    Column {
+                        width: parent.width
+                        spacing: 3
+                        visible: networkVpnTab.vpnProvider && networkVpnTab.vpnProvider.connected
+
+                        Row {
+                            spacing: Theme.spacingS
+
+                            Rectangle {
+                                width: 10
+                                height: 10
+                                radius: 5
+                                color: Theme.success
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            StyledText {
+                                text: (networkVpnTab.vpnProvider ? networkVpnTab.vpnProvider.provider : "") + "  ·  " + (networkVpnTab.vpnProvider ? networkVpnTab.vpnProvider.status : "")
+                                color: Theme.surfaceText
+                                font.pixelSize: Theme.fontSizeMedium
+                                font.weight: Font.Medium
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Repeater {
+                            model: networkVpnTab.vpnProvider ? networkVpnTab.vpnProvider.rows : []
+
+                            delegate: Row {
+                                id: provRow
+                                required property var modelData
+                                width: parent.width
+                                visible: (provRow.modelData.value || "").length > 0
+                                spacing: Theme.spacingM
+
+                                StyledText {
+                                    text: provRow.modelData.label
+                                    color: Theme.surfaceVariantText
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    width: 110
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                StyledText {
+                                    text: provRow.modelData.value
+                                    color: Theme.surfaceText
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    width: parent.width - 110 - Theme.spacingM
+                                    horizontalAlignment: Text.AlignRight
+                                    elide: Text.ElideRight
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
                         }

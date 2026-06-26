@@ -147,45 +147,7 @@ Item {
                         SettingsData.set("fadeToDpmsGracePeriod", periodValues[index]);
                     }
                 }
-                SettingsDropdownRow {
-                    id: powerProfileDropdown
-                    settingKey: "powerProfile"
-                    tags: ["power", "profile", "performance", "balanced", "saver", "battery"]
-                    property var profileOptions: [I18n.tr("Don't Change"), Theme.getPowerProfileLabel(0), Theme.getPowerProfileLabel(1), Theme.getPowerProfileLabel(2)]
-                    property var profileValues: ["", "0", "1", "2"]
-
-                    width: parent.width
-                    addHorizontalPadding: true
-                    text: I18n.tr("Switch to power profile")
-                    options: profileOptions
-
-                    Connections {
-                        target: powerCategory
-                        function onCurrentIndexChanged() {
-                            const currentProfile = powerCategory.currentIndex === 0 ? SettingsData.acProfileName : SettingsData.batteryProfileName;
-                            const index = powerProfileDropdown.profileValues.indexOf(currentProfile);
-                            powerProfileDropdown.currentValue = powerProfileDropdown.profileOptions[index];
-                        }
-                    }
-
-                    Component.onCompleted: {
-                        const currentProfile = powerCategory.currentIndex === 0 ? SettingsData.acProfileName : SettingsData.batteryProfileName;
-                        const index = profileValues.indexOf(currentProfile);
-                        currentValue = profileOptions[index];
-                    }
-
-                    onValueChanged: value => {
-                        const index = profileOptions.indexOf(value);
-                        if (index >= 0) {
-                            const profileValue = profileValues[index];
-                            if (powerCategory.currentIndex === 0) {
-                                SettingsData.set("acProfileName", profileValue);
-                            } else {
-                                SettingsData.set("batteryProfileName", profileValue);
-                            }
-                        }
-                    }
-                }
+                // (Per-source power profile moved to the Battery settings page.)
 
                 Rectangle {
                     width: parent.width
@@ -603,26 +565,7 @@ Item {
                 }
             }
 
-            SettingsCard {
-                width: parent.width
-                iconName: "tune"
-                title: I18n.tr("Advanced")
-                settingKey: "powerAdvanced"
-                collapsible: true
-                expanded: false
-
-                SettingsSliderRow {
-                    settingKey: "batteryChargeLimit"
-                    tags: ["battery", "charge", "limit", "percentage", "power"]
-                    text: I18n.tr("Battery Charge Limit")
-                    description: I18n.tr("Note: this only changes the percentage, it does not actually limit charging.")
-                    value: SettingsData.batteryChargeLimit
-                    minimum: 50
-                    maximum: 100
-                    defaultValue: 100
-                    onSliderValueChanged: newValue => SettingsData.set("batteryChargeLimit", newValue)
-                }
-            }
+            // (Battery Charge Limit moved to the Battery settings page.)
         }
     }
 }

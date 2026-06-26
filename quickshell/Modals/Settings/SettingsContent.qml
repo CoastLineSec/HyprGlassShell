@@ -287,6 +287,115 @@ FocusScope {
         }
 
         Loader {
+            id: bluetoothLoader
+            anchors.fill: parent
+            active: root.currentIndex === 42
+            visible: active
+            focus: active
+
+            sourceComponent: BluetoothTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: networkCombinedLoader
+            anchors.fill: parent
+            active: root.currentIndex === 43
+            visible: active
+            focus: active
+
+            sourceComponent: NetworkTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: batteryLoader
+            anchors.fill: parent
+            active: root.currentIndex === 44
+            visible: active
+            focus: active
+
+            sourceComponent: BatteryTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: generalLoader
+            anchors.fill: parent
+            active: root.currentIndex === 45
+            visible: active
+            focus: active
+
+            sourceComponent: GeneralTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: accessibilityLoader
+            anchors.fill: parent
+            active: root.currentIndex === 46
+            visible: active
+            focus: active
+
+            sourceComponent: AccessibilityTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: appearanceLoader
+            anchors.fill: parent
+            active: root.currentIndex === 47
+            visible: active
+            focus: active
+
+            sourceComponent: AppearanceTab {
+                parentModal: root.parentModal
+            }
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: hyprGlassLoader
+            anchors.fill: parent
+            active: root.currentIndex === 48
+            visible: active
+            focus: active
+
+            sourceComponent: HyprGlassTab {
+                parentModal: root.parentModal
+            }
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
             id: printerLoader
             anchors.fill: parent
             active: root.currentIndex === 8

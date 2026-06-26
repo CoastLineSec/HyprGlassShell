@@ -14,7 +14,7 @@ import (
 var hyprglassCmd = &cobra.Command{
 	Use:   "hyprglass",
 	Short: "HyprGlass compositor effect utilities",
-	Long:  "Inspect and validate the descriptor contract used between HyprGlassShell and the hgs-hyprglass Hyprland plugin.",
+	Long:  "Inspect and validate the descriptor contract used between HyprGlassShell and the fluidglass Hyprland plugin.",
 }
 
 var hyprglassValidateCmd = &cobra.Command{
@@ -26,44 +26,44 @@ var hyprglassValidateCmd = &cobra.Command{
 
 var hyprglassStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Query hgs-hyprglass plugin status",
+	Short: "Query fluidglass plugin status",
 	Args:  cobra.NoArgs,
 	Run:   runHyprglassStatus,
 }
 
 var hyprglassApplyCmd = &cobra.Command{
 	Use:   "apply <descriptor.json>",
-	Short: "Send a validated descriptor payload to hgs-hyprglass",
-	Long:  "Validate a descriptor payload and send it to the hgs-hyprglass Hyprland plugin through hyprctl. This requires a plugin build that exposes the hyprglass apply-json command.",
+	Short: "Send a validated descriptor payload to fluidglass",
+	Long:  "Validate a descriptor payload and send it to the fluidglass Hyprland plugin through hyprctl. This requires a plugin build that exposes the fluidglass apply-json command.",
 	Args:  cobra.ExactArgs(1),
 	Run:   runHyprglassApply,
 }
 
 var hyprglassApplyJSONCmd = &cobra.Command{
 	Use:   "apply-json <descriptor-json>",
-	Short: "Send a validated descriptor JSON string to hgs-hyprglass",
-	Long:  "Validate a descriptor payload supplied as a command argument and send it to the hgs-hyprglass Hyprland plugin through hyprctl.",
+	Short: "Send a validated descriptor JSON string to fluidglass",
+	Long:  "Validate a descriptor payload supplied as a command argument and send it to the fluidglass Hyprland plugin through hyprctl.",
 	Args:  cobra.ExactArgs(1),
 	Run:   runHyprglassApplyJSON,
 }
 
 var hyprglassClearCmd = &cobra.Command{
 	Use:   "clear",
-	Short: "Clear active hgs-hyprglass descriptors",
+	Short: "Clear active fluidglass descriptors",
 	Args:  cobra.NoArgs,
 	Run:   runHyprglassClear,
 }
 
 var hyprglassDebugOverlayCmd = &cobra.Command{
 	Use:   "debug-overlay <on|off|toggle|status>",
-	Short: "Control hgs-hyprglass diagnostic bounds overlay",
+	Short: "Control fluidglass diagnostic bounds overlay",
 	Args:  cobra.ExactArgs(1),
 	Run:   runHyprglassDebugOverlay,
 }
 
 var hyprglassMaterialCmd = &cobra.Command{
 	Use:   "material <off|flat|blur-native|glass-v1|fluid-glass|status>",
-	Short: "Control hgs-hyprglass compositor material mode",
+	Short: "Control fluidglass compositor material mode",
 	Args:  cobra.ExactArgs(1),
 	Run:   runHyprglassMaterial,
 }
@@ -83,7 +83,7 @@ func runHyprglassValidate(cmd *cobra.Command, args []string) {
 }
 
 func runHyprglassStatus(cmd *cobra.Command, args []string) {
-	output, err := exec.Command("hyprctl", "-j", "hyprglass-status").CombinedOutput()
+	output, err := exec.Command("hyprctl", "-j", "fluidglass-status").CombinedOutput()
 	if err == nil && hyprglassStatusRegistered(output) {
 		fmt.Fprintln(os.Stdout, string(output))
 		return
@@ -111,9 +111,9 @@ func runHyprglassApplyJSON(cmd *cobra.Command, args []string) {
 }
 
 func runHyprglassClear(cmd *cobra.Command, args []string) {
-	output, err := exec.Command("hyprctl", "hyprglass-clear").CombinedOutput()
+	output, err := exec.Command("hyprctl", "fluidglass-clear").CombinedOutput()
 	if err != nil || hyprctlUnknownRequest(output) {
-		fmt.Fprintf(os.Stderr, "hgs-hyprglass clear failed: %v\n%s\n", err, output)
+		fmt.Fprintf(os.Stderr, "fluidglass clear failed: %v\n%s\n", err, output)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stdout, string(output))
@@ -128,9 +128,9 @@ func runHyprglassDebugOverlay(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	output, err := exec.Command("hyprctl", "hyprglass-debug-overlay", mode).CombinedOutput()
+	output, err := exec.Command("hyprctl", "fluidglass-debug-overlay", mode).CombinedOutput()
 	if err != nil || hyprctlUnknownRequest(output) {
-		fmt.Fprintf(os.Stderr, "hgs-hyprglass debug-overlay failed: %v\n%s\n", err, output)
+		fmt.Fprintf(os.Stderr, "fluidglass debug-overlay failed: %v\n%s\n", err, output)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stdout, string(output))
@@ -145,9 +145,9 @@ func runHyprglassMaterial(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	output, err := exec.Command("hyprctl", "hyprglass-material", mode).CombinedOutput()
+	output, err := exec.Command("hyprctl", "fluidglass-material", mode).CombinedOutput()
 	if err != nil || hyprctlUnknownRequest(output) {
-		fmt.Fprintf(os.Stderr, "hgs-hyprglass material failed: %v\n%s\n", err, output)
+		fmt.Fprintf(os.Stderr, "fluidglass material failed: %v\n%s\n", err, output)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stdout, string(output))
@@ -171,9 +171,9 @@ func applyHyprglassDescriptorSet(set hyprglass.DescriptorSet) {
 		os.Exit(1)
 	}
 
-	output, err := exec.Command("hyprctl", "hyprglass-apply-json", string(payload)).CombinedOutput()
+	output, err := exec.Command("hyprctl", "fluidglass-apply-json", string(payload)).CombinedOutput()
 	if err != nil || hyprctlUnknownRequest(output) {
-		fmt.Fprintf(os.Stderr, "hgs-hyprglass apply failed: %v\n%s\n", err, output)
+		fmt.Fprintf(os.Stderr, "fluidglass apply failed: %v\n%s\n", err, output)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stdout, string(output))

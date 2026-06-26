@@ -29,6 +29,18 @@ Rectangle {
         searchField.forceActiveFocus();
     }
 
+    function clearSearchFocus() {
+        // Drop the field's focus directly (and park focus on the sink) so it returns
+        // to the inactive "Search..." placeholder state.
+        searchField.setFocus(false);
+        searchFocusSink.forceActiveFocus();
+    }
+
+    // Monitor geometry for fluid-glass wallpaper sampling on the glass boxes.
+    readonly property string _glassScreenName: parentModal && parentModal.screen ? parentModal.screen.name : ""
+    readonly property real _glassScreenW: parentModal && parentModal.screen ? parentModal.screen.width : 0
+    readonly property real _glassScreenH: parentModal && parentModal.screen ? parentModal.screen.height : 0
+
     function highlightNext() {
         var flatItems = getFlatNavigableItems();
         if (flatItems.length === 0)
@@ -67,6 +79,61 @@ Rectangle {
     }
 
     readonly property var categoryStructure: [
+        {
+            "id": "wifi",
+            "text": I18n.tr("WiFi"),
+            "icon": "wifi",
+            "hgsOnly": true,
+            "tabIndex": 40
+        },
+        {
+            "id": "bluetooth",
+            "text": I18n.tr("Bluetooth"),
+            "icon": "bluetooth",
+            "tabIndex": 42
+        },
+        {
+            "id": "network",
+            "text": I18n.tr("Network"),
+            "icon": "public",
+            "hgsOnly": true,
+            "tabIndex": 43
+        },
+        {
+            "id": "battery",
+            "text": I18n.tr("Battery"),
+            "icon": "battery_full",
+            "batteryOnly": true,
+            "tabIndex": 44
+        },
+        {
+            "id": "general_separator",
+            "separator": true
+        },
+        {
+            "id": "general",
+            "text": I18n.tr("General"),
+            "icon": "settings",
+            "tabIndex": 45
+        },
+        {
+            "id": "accessibility",
+            "text": I18n.tr("Accessibility"),
+            "icon": "accessibility_new",
+            "tabIndex": 46
+        },
+        {
+            "id": "appearance",
+            "text": I18n.tr("Appearance"),
+            "icon": "brightness_6",
+            "tabIndex": 47
+        },
+        {
+            "id": "hyprglass",
+            "text": I18n.tr("HyprGlass"),
+            "icon": "blur_on",
+            "tabIndex": 48
+        },
         {
             "id": "personalization",
             "text": I18n.tr("Personalization"),
@@ -233,38 +300,8 @@ Rectangle {
                 }
             ]
         },
-        {
-            "id": "network",
-            "text": I18n.tr("Network"),
-            "icon": "wifi",
-            "hgsOnly": true,
-            "children": [
-                {
-                    "id": "network_status",
-                    "text": I18n.tr("Status"),
-                    "icon": "lan",
-                    "tabIndex": 7
-                },
-                {
-                    "id": "network_ethernet",
-                    "text": I18n.tr("Ethernet"),
-                    "icon": "settings_ethernet",
-                    "tabIndex": 39
-                },
-                {
-                    "id": "network_wifi",
-                    "text": I18n.tr("WiFi"),
-                    "icon": "wifi",
-                    "tabIndex": 40
-                },
-                {
-                    "id": "network_vpn",
-                    "text": I18n.tr("VPN"),
-                    "icon": "vpn_key",
-                    "tabIndex": 41
-                }
-            ]
-        },
+        // (Network is now a top-level selectable field — WiFi / Bluetooth / Network —
+        //  with Status/Ethernet/VPN living inside the Network page.)
         {
             "id": "applications",
             "text": I18n.tr("Applications"),
@@ -311,12 +348,6 @@ Rectangle {
                     "tabIndex": 29
                 },
                 {
-                    "id": "locale",
-                    "text": I18n.tr("Locale"),
-                    "icon": "language",
-                    "tabIndex": 30
-                },
-                {
                     "id": "clipboard",
                     "text": I18n.tr("Clipboard"),
                     "icon": "content_paste",
@@ -335,13 +366,6 @@ Rectangle {
                     "text": I18n.tr("Multiplexers"),
                     "icon": "terminal",
                     "tabIndex": 32
-                },
-                {
-                    "id": "updater",
-                    "text": I18n.tr("System Updater"),
-                    "icon": "refresh",
-                    "tabIndex": 20,
-                    "updaterOnly": true
                 },
                 {
                     "id": "users",
@@ -364,28 +388,12 @@ Rectangle {
                     "tabIndex": 11
                 },
                 {
-                    "id": "greeter",
-                    "text": I18n.tr("Greeter"),
-                    "icon": "login",
-                    "tabIndex": 31
-                },
-                {
                     "id": "power_sleep",
                     "text": I18n.tr("Power & Sleep"),
                     "icon": "power_settings_new",
                     "tabIndex": 21
                 }
             ]
-        },
-        {
-            "id": "separator",
-            "separator": true
-        },
-        {
-            "id": "about",
-            "text": I18n.tr("About"),
-            "icon": "info",
-            "tabIndex": 13
         }
     ]
 
@@ -403,6 +411,8 @@ Rectangle {
         if (item.updaterOnly && !SystemUpdateService.sysupdateAvailable)
             return false;
         if (item.autostartOnly && !DesktopService.autostartAvailable)
+            return false;
+        if (item.batteryOnly && !BatteryService.batteryAvailable)
             return false;
         return true;
     }
@@ -597,7 +607,8 @@ Rectangle {
     }
 
     property real __maxTextWidth: Math.max(__m1.advanceWidth, __m2.advanceWidth, __m3.advanceWidth, __m4.advanceWidth, __m5.advanceWidth, __m6.advanceWidth)
-    property real __calculatedWidth: Math.max(270, __maxTextWidth + Theme.iconSize * 2 + Theme.spacingM * 4 + Theme.spacingS * 2)
+    // +7px over the text-fit width to host the scrollbar lane (5px left + 2px right).
+    property real __calculatedWidth: Math.max(270, __maxTextWidth + Theme.iconSize * 2 + Theme.spacingM * 4 + Theme.spacingS * 2) + 7
 
     implicitWidth: __calculatedWidth
     width: __calculatedWidth
@@ -670,107 +681,179 @@ Rectangle {
         searchSelectedIndex = Math.max(0, Math.min(searchSelectedIndex + delta, SettingsSearchService.results.length - 1));
     }
 
-    HGSFlickable {
-        anchors.fill: parent
-        clip: true
-        contentHeight: sidebarColumn.height
+    // Focus sink: clicking anywhere outside the search field hands focus here,
+    // deactivating the search (back to the "Search..." placeholder).
+    Item {
+        id: searchFocusSink
+    }
 
-        Column {
-            id: sidebarColumn
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        acceptedButtons: Qt.AllButtons
+        onPressed: mouse => {
+            root.clearSearchFocus();
+            mouse.accepted = false;
+        }
+    }
+
+    Column {
+        id: layoutColumn
+        anchors.fill: parent
+        anchors.margins: Theme.spacingS
+        spacing: Theme.spacingS
+
+        // Static box: search field + user info, with fluid glass behind them.
+        Rectangle {
+            id: staticBox
+            width: parent.width
+            radius: Theme.cornerRadius
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.withAlpha(Theme.outline, 0.18)
+            clip: true
+            height: staticInner.height + Theme.spacingS * 2
+
+            FluidGlass {
+                anchors.fill: parent
+                cornerRadius: staticBox.radius
+                backdropColor: Theme.surfaceContainer
+                level: FluidGlassStyle.level
+                tintHue: FluidGlassStyle.tintHue
+                noTint: FluidGlassStyle.noTint
+            }
+
+            Column {
+                id: staticInner
+                x: Theme.spacingS
+                y: Theme.spacingS
+                width: parent.width - Theme.spacingS * 2
+                spacing: Theme.spacingS
+
+                // Pinned search field — stays above the ribbon and never scrolls.
+                HGSTextField {
+                    id: searchField
+                    width: parent.width
+            placeholderText: I18n.tr("Search...")
+            normalBorderColor: Theme.outlineMedium
+            focusedBorderColor: Theme.primary
+            leftIconName: "search"
+            leftIconSize: Theme.iconSize - 4
+            showClearButton: text.length > 0
+            usePopupTransparency: false
+            onTextChanged: {
+                SettingsSearchService.search(text);
+                root.searchSelectedIndex = 0;
+            }
+            keyForwardTargets: [keyHandler]
+
+            Item {
+                id: keyHandler
+                function navNext() {
+                    if (root.searchActive) {
+                        root.navigateSearchResults(1);
+                    } else {
+                        root.highlightNext();
+                    }
+                }
+                function navPrev() {
+                    if (root.searchActive) {
+                        root.navigateSearchResults(-1);
+                    } else {
+                        root.highlightPrevious();
+                    }
+                }
+                function navSelect() {
+                    if (root.searchActive && SettingsSearchService.results.length > 0) {
+                        root.selectSearchResult(SettingsSearchService.results[root.searchSelectedIndex]);
+                    } else if (root.keyboardHighlightIndex >= 0) {
+                        root.selectHighlighted();
+                    }
+                }
+                Keys.onDownPressed: event => {
+                    navNext();
+                    event.accepted = true;
+                }
+                Keys.onUpPressed: event => {
+                    navPrev();
+                    event.accepted = true;
+                }
+                Keys.onTabPressed: event => {
+                    navNext();
+                    event.accepted = true;
+                }
+                Keys.onBacktabPressed: event => {
+                    navPrev();
+                    event.accepted = true;
+                }
+                Keys.onReturnPressed: event => {
+                    navSelect();
+                    event.accepted = true;
+                }
+                Keys.onEscapePressed: event => {
+                    if (root.searchActive) {
+                        searchField.text = "";
+                        SettingsSearchService.clear();
+                    } else {
+                        root.keyboardHighlightIndex = -1;
+                    }
+                    event.accepted = true;
+                }
+            }
+        }
+
+                // User info (photo / username / system name) — static, below the search.
+                ProfileSection {
+                    id: profileSection
+                    width: parent.width
+                    parentModal: root.parentModal
+                }
+            }
+        }
+
+        // Clearly-bounded, rounded scroll area with a persistent scrollbar (glass behind).
+        Rectangle {
+            id: scrollBox
+            width: parent.width
+            height: parent.height - staticBox.height - layoutColumn.spacing
+            radius: Theme.cornerRadius
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.withAlpha(Theme.outline, 0.18)
+            clip: true
+
+            FluidGlass {
+                anchors.fill: parent
+                cornerRadius: scrollBox.radius
+                backdropColor: Theme.surfaceContainer
+                level: FluidGlassStyle.level
+                tintHue: FluidGlassStyle.tintHue
+                noTint: FluidGlassStyle.noTint
+            }
+
+            HGSFlickable {
+                anchors.fill: parent
+                anchors.topMargin: Theme.spacingS
+                anchors.bottomMargin: Theme.spacingS
+                anchors.leftMargin: 2
+                // 5px gap between the scrollbar and the glass box's right edge.
+                anchors.rightMargin: 5
+                clip: true
+                contentHeight: sidebarColumn.height
+                persistentScrollBar: true
+
+                Column {
+                    id: sidebarColumn
             width: parent.width
             leftPadding: Theme.spacingS
-            rightPadding: Theme.spacingS
+            // Extra right padding reserves the scrollbar lane: ~5px clear space between
+            // the selected-item highlight and the scrollbar.
+            rightPadding: Theme.spacingS + 11
             bottomPadding: Theme.spacingL
             topPadding: Theme.spacingM + 2
             spacing: 2
 
-            ProfileSection {
-                width: parent.width - parent.leftPadding - parent.rightPadding
-                parentModal: root.parentModal
-            }
-
-            Rectangle {
-                width: parent.width - parent.leftPadding - parent.rightPadding
-                height: 1
-                color: Theme.outline
-                opacity: 0.2
-            }
-
-            Item {
-                width: parent.width - parent.leftPadding - parent.rightPadding
-                height: Theme.spacingXS
-            }
-
-            HGSTextField {
-                id: searchField
-                width: parent.width - parent.leftPadding - parent.rightPadding
-                placeholderText: I18n.tr("Search...")
-                normalBorderColor: Theme.outlineMedium
-                focusedBorderColor: Theme.primary
-                leftIconName: "search"
-                leftIconSize: Theme.iconSize - 4
-                showClearButton: text.length > 0
-                usePopupTransparency: false
-                onTextChanged: {
-                    SettingsSearchService.search(text);
-                    root.searchSelectedIndex = 0;
-                }
-                keyForwardTargets: [keyHandler]
-
-                Item {
-                    id: keyHandler
-                    function navNext() {
-                        if (root.searchActive) {
-                            root.navigateSearchResults(1);
-                        } else {
-                            root.highlightNext();
-                        }
-                    }
-                    function navPrev() {
-                        if (root.searchActive) {
-                            root.navigateSearchResults(-1);
-                        } else {
-                            root.highlightPrevious();
-                        }
-                    }
-                    function navSelect() {
-                        if (root.searchActive && SettingsSearchService.results.length > 0) {
-                            root.selectSearchResult(SettingsSearchService.results[root.searchSelectedIndex]);
-                        } else if (root.keyboardHighlightIndex >= 0) {
-                            root.selectHighlighted();
-                        }
-                    }
-                    Keys.onDownPressed: event => {
-                        navNext();
-                        event.accepted = true;
-                    }
-                    Keys.onUpPressed: event => {
-                        navPrev();
-                        event.accepted = true;
-                    }
-                    Keys.onTabPressed: event => {
-                        navNext();
-                        event.accepted = true;
-                    }
-                    Keys.onBacktabPressed: event => {
-                        navPrev();
-                        event.accepted = true;
-                    }
-                    Keys.onReturnPressed: event => {
-                        navSelect();
-                        event.accepted = true;
-                    }
-                    Keys.onEscapePressed: event => {
-                        if (root.searchActive) {
-                            searchField.text = "";
-                            SettingsSearchService.clear();
-                        } else {
-                            root.keyboardHighlightIndex = -1;
-                        }
-                        event.accepted = true;
-                    }
-                }
-            }
+            // Profile (user info) + search are now pinned above this scroll area.
 
             Column {
                 id: searchResultsColumn
@@ -990,7 +1073,7 @@ Rectangle {
                                 } else if (categoryDelegate.modelData.tabIndex !== undefined) {
                                     root.tabChangeRequested(categoryDelegate.modelData.tabIndex);
                                 }
-                                Qt.callLater(searchField.forceActiveFocus);
+                                root.clearSearchFocus();
                             }
                         }
 
@@ -1074,7 +1157,7 @@ Rectangle {
                                     onClicked: {
                                         root.keyboardHighlightIndex = -1;
                                         root.tabChangeRequested(childDelegate.modelData.tabIndex);
-                                        Qt.callLater(searchField.forceActiveFocus);
+                                        root.clearSearchFocus();
                                     }
                                 }
 
@@ -1090,6 +1173,8 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
         }
     }
 }
