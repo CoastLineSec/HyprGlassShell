@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/hyprshelld/Config1">
+  <interface name="org.hyprshelld.Config1">
+    <property name="BarHeight" type="u" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="Revision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of normal, recovered, or defaulted for this service lifetime. -->
+    <property name="RecoveryState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="const"/>
+    </property>
+
+    <!--
+      Valid height: 32 through 96 logical pixels.
+      Errors:
+        org.hyprshelld.Config1.Error.InvalidBarHeight
+        org.hyprshelld.Config1.Error.PersistenceFailed
+    -->
+    <method name="SetBarHeight">
+      <arg name="height" type="u" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <method name="ResetBarHeight">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+  </interface>
+</node>
