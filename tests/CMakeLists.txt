@@ -95,6 +95,24 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-coordinator-policy-test
+    coordinator_policy_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-coordinator-policy-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-coordinator-core
+)
+
+add_test(
+    NAME coordinator-policy
+    COMMAND hyprshelld-coordinator-policy-test
+)
+
+qt_add_executable(
     hyprshelld-config-store-test
     config_store_test.cpp
 )
@@ -116,6 +134,45 @@ find_program(
     HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE
     NAMES dbus-run-session
     REQUIRED
+)
+
+qt_add_executable(
+    hyprshelld-coordinator-dbus-test
+    coordinator_dbus_test.cpp
+    ${HYPRSHELLD_COORDINATOR_PROXY_SOURCES}
+)
+
+target_include_directories(
+    hyprshelld-coordinator-dbus-test
+    PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+target_link_libraries(
+    hyprshelld-coordinator-dbus-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+)
+
+add_test(
+    NAME coordinator-dbus
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "${CMAKE_COMMAND}"
+        -E
+        env
+        "HYPRSHELLD_COORDINATOR_EXECUTABLE=$<TARGET_FILE:hyprshelld>"
+        "HYPRSHELLD_COORDINATOR1_XML=${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Coordinator1.xml"
+        "$<TARGET_FILE:hyprshelld-coordinator-dbus-test>"
+)
+
+set_tests_properties(
+    coordinator-dbus
+    PROPERTIES
+        TIMEOUT 30
 )
 
 qt_add_executable(
