@@ -1,18 +1,23 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 
 PanelWindow {
     id: root
 
     property var modelData
+    required property var controller
     property bool popoutOpen: false
 
     screen: modelData
     color: "transparent"
     aboveWindows: true
-    focusable: popoutOpen
     exclusionMode: ExclusionMode.Ignore
     implicitHeight: bar.height + 12 + popout.expandedHeight
+
+    WlrLayershell.keyboardFocus: popoutOpen
+        ? WlrKeyboardFocus.OnDemand
+        : WlrKeyboardFocus.None
 
     anchors {
         top: true
@@ -27,6 +32,16 @@ PanelWindow {
     }
 
     surfaceFormat.opaque: false
+
+    Connections {
+        target: root.controller
+
+        function onSetPopoutState(screenName, opened) {
+            if (screenName === root.modelData.name) {
+                root.popoutOpen = opened;
+            }
+        }
+    }
 
     mask: Region {
         Region {

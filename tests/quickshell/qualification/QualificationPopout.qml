@@ -10,11 +10,9 @@ FocusScope {
 
     height: expanded ? expandedHeight : 0
     opacity: expanded ? 1 : 0
-    scale: expanded ? 1 : 0.97
     visible: height > 0
     clip: true
     focus: expanded
-    transformOrigin: Item.Top
 
     onExpandedChanged: {
         if (expanded) {
@@ -37,13 +35,6 @@ FocusScope {
     Behavior on opacity {
         NumberAnimation {
             duration: 140
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on scale {
-        NumberAnimation {
-            duration: 180
             easing.type: Easing.OutCubic
         }
     }
