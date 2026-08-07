@@ -42,6 +42,12 @@ atomically before publishing it and return the resulting revision. An
 idempotent request returns the existing revision without writing or emitting a
 change.
 
+The active snapshot follows the XDG base directories at
+`$XDG_CONFIG_HOME/hyprshelld/settings.json`, normally
+`~/.config/hyprshelld/settings.json`. Its last-known-good recovery snapshot is
+internal state at `$XDG_STATE_HOME/hyprshelld/settings.last-good.json`, normally
+`~/.local/state/hyprshelld/settings.last-good.json`.
+
 `RecoveryState` describes startup loading for the current service lifetime:
 
 - `normal`: valid state loaded, or no state existed on an ordinary first run;
