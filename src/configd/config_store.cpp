@@ -114,7 +114,8 @@ ReadResult readSnapshot(const QString &path)
     }
 
     const auto height = heightValue.toInteger(-1);
-    if (height < 32 || height > 96) {
+    if (height < ConfigValues::minimumBarHeight
+        || height > ConfigValues::maximumBarHeight) {
         return {
             .status = FileStatus::Damaged,
             .error = QStringLiteral("Invalid bar height in %1").arg(path),

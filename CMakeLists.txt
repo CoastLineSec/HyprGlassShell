@@ -25,6 +25,8 @@ find_package(
 
 qt_standard_project_setup(REQUIRES 6.8)
 
+set(QT_QML_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/src/qml")
+
 find_program(
     QUICKSHELL_EXECUTABLE
     NAMES quickshell qs

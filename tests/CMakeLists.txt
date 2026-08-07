@@ -27,12 +27,6 @@ set_tests_properties(
             "^Quickshell 0\\.3\\.0 \\(revision .*, distributed by Arch Linux\\)"
 )
 
-find_program(
-    HYPRSHELLD_QMLLINT_EXECUTABLE
-    NAMES qmllint
-    REQUIRED
-)
-
 set(
     HYPRSHELLD_QUALIFICATION_QML
     "${CMAKE_CURRENT_SOURCE_DIR}/quickshell/qualification/shell.qml"
@@ -44,8 +38,17 @@ set(
 add_test(
     NAME quickshell-qml-lint
     COMMAND
-        "${HYPRSHELLD_QMLLINT_EXECUTABLE}"
+        "$<TARGET_FILE:Qt6::qmllint>"
         ${HYPRSHELLD_QUALIFICATION_QML}
+)
+
+add_test(
+    NAME shared-qml-lint
+    COMMAND
+        "$<TARGET_FILE:Qt6::qmllint>"
+        -I
+        "${QT_QML_OUTPUT_DIRECTORY}"
+        "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/BarHeightControl.qml"
 )
 
 set(HYPRSHELLD_COORDINATOR_PROXY_SOURCES)
@@ -150,6 +153,60 @@ add_test(
 
 set_tests_properties(
     configd-dbus
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_executable(
+    hyprshelld-config-client-test
+    config_client_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-config-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME config-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "${CMAKE_COMMAND}"
+        -E
+        env
+        "HYPRSHELLD_CONFIGD_EXECUTABLE=$<TARGET_FILE:hyprshelld-configd>"
+        "$<TARGET_FILE:hyprshelld-config-client-test>"
+)
+
+set_tests_properties(
+    config-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_test(
+    NAME qml-modules
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "${CMAKE_COMMAND}"
+        -E
+        env
+        "QT_QPA_PLATFORM=offscreen"
+        "$<TARGET_FILE:Qt6::qmltestrunner>"
+        -import
+        "${QT_QML_OUTPUT_DIRECTORY}"
+        -input
+        "${CMAKE_CURRENT_SOURCE_DIR}/qml"
+)
+
+set_tests_properties(
+    qml-modules
     PROPERTIES
         TIMEOUT 30
 )

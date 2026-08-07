@@ -1,5 +1,7 @@
 #include "config_service.h"
 
+#include "config/config_values.h"
+
 #include <QDBusMessage>
 #include <QDebug>
 #include <QVariantMap>
@@ -9,10 +11,6 @@
 
 namespace HyprShelld {
 namespace {
-
-constexpr auto defaultBarHeight = 48U;
-constexpr auto minimumBarHeight = 32U;
-constexpr auto maximumBarHeight = 96U;
 
 const QString configInterface = QStringLiteral("org.hyprshelld.Config1");
 const QString configPath = QStringLiteral("/org/hyprshelld/Config1");
@@ -75,12 +73,13 @@ qulonglong ConfigService::SetBarHeight(uint height)
 
 qulonglong ConfigService::ResetBarHeight()
 {
-    return setBarHeight(defaultBarHeight);
+    return setBarHeight(ConfigValues::defaultBarHeight);
 }
 
 qulonglong ConfigService::setBarHeight(uint height)
 {
-    if (height < minimumBarHeight || height > maximumBarHeight) {
+    if (height < ConfigValues::minimumBarHeight
+        || height > ConfigValues::maximumBarHeight) {
         reportError(
             invalidBarHeightError,
             QStringLiteral("Bar height must be between 32 and 96 logical pixels")

@@ -1,12 +1,14 @@
 #pragma once
 
+#include "config/config_values.h"
+
 #include <QString>
 #include <QtTypes>
 
 namespace HyprShelld {
 
 struct ConfigState final {
-    quint32 barHeight = 48;
+    quint32 barHeight = ConfigValues::defaultBarHeight;
     quint64 revision = 0;
 
     friend bool operator==(const ConfigState &, const ConfigState &) = default;
