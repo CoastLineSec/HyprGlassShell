@@ -1,7 +1,15 @@
 # Settings
 
-HyprShelld Settings currently provides one place to adjust the bar. Open the
-**Bar** page from the left sidebar to see a desktop preview and change the bar
+HyprShelld Settings currently provides one place to adjust the bar.
+
+## Open Settings
+
+Open **HyprShelld Settings** from your application launcher. You can also run
+`hyprshelld-settings` from a terminal. Settings remains available when the shell
+services are stopped, so you can inspect their state and reach recovery
+information without the bar running.
+
+Select **Bar** in the left sidebar to see a desktop preview and change the bar
 height.
 
 ## Change the bar height

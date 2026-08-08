@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=HyprShelld Settings
+Comment=Configure HyprShelld
+Exec=hyprshelld-settings
+TryExec=hyprshelld-settings
+Icon=preferences-system
+Terminal=false
+Categories=Settings;DesktopSettings;Qt;
+Keywords=Hyprland;desktop;shell;configuration;
+StartupNotify=true
+StartupWMClass=@HYPRSHELLD_SETTINGS_DESKTOP_ID@

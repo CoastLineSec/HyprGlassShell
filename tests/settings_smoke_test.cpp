@@ -31,6 +31,9 @@ void SettingsSmokeTest::startsWithoutConfigService()
     );
     environment.remove(QStringLiteral("QML_IMPORT_PATH"));
     environment.remove(QStringLiteral("QML2_IMPORT_PATH"));
+    environment.remove(QStringLiteral("LD_LIBRARY_PATH"));
+    environment.remove(QStringLiteral("QT_PLUGIN_PATH"));
+    environment.remove(QStringLiteral("QT_QPA_PLATFORM_PLUGIN_PATH"));
 
     QProcess process;
     process.setProcessChannelMode(QProcess::MergedChannels);

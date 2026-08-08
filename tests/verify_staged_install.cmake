@@ -12,6 +12,11 @@ foreach(required IN ITEMS
     DBUS_RUN_SESSION
     DBUS_CONFIG
     MODULE_PROBE
+    DESKTOP_FILE_VALIDATE
+    SETTINGS_SMOKE_EXECUTABLE
+    SETTINGS_DESKTOP_ID
+    PROJECT_SOURCE_DIRECTORY
+    PROJECT_BINARY_DIRECTORY
 )
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
         message(FATAL_ERROR "Missing required argument: ${required}")
@@ -53,6 +58,7 @@ set(systemd_root "${STAGE_DIRECTORY}${INSTALL_SYSTEMD_UNIT_DIR}")
 set(required_files
     "${bin_root}/hyprshelld"
     "${bin_root}/hyprshelld-configd"
+    "${bin_root}/hyprshelld-settings"
     "${lib_root}/libhyprshelld-client.so"
     "${lib_root}/libhyprshelld-ui.so"
     "${systemd_root}/hyprshelld.target"
@@ -61,6 +67,7 @@ set(required_files
     "${systemd_root}/hyprshelld-configd.service"
     "${systemd_root}/hyprshelld-surfaced.service"
     "${data_root}/dbus-1/services/org.hyprshelld.Config1.service"
+    "${data_root}/applications/${SETTINGS_DESKTOP_ID}.desktop"
     "${data_root}/hyprshelld/surfaced/shell.qml"
     "${data_root}/hyprshelld/surfaced/BarSurface.qml"
     "${qml_root}/HyprShelld/Client/qmldir"
@@ -79,9 +86,119 @@ foreach(path IN LISTS required_files)
     endif()
 endforeach()
 
-if(EXISTS "${bin_root}/hyprshelld-settings")
-    message(FATAL_ERROR "Staged runtime unexpectedly includes hyprshelld-settings")
+set(
+    settings_desktop_file
+    "${data_root}/applications/${SETTINGS_DESKTOP_ID}.desktop"
+)
+
+execute_process(
+    COMMAND "${DESKTOP_FILE_VALIDATE}" "${settings_desktop_file}"
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE error
+    TIMEOUT 10
+)
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR
+        "The staged Settings desktop entry is invalid\n"
+        "stdout:\n${output}\n"
+        "stderr:\n${error}"
+    )
 endif()
+
+file(READ "${settings_desktop_file}" settings_desktop_contents)
+set(settings_desktop_contents "\n${settings_desktop_contents}")
+
+foreach(required_line IN ITEMS
+    "[Desktop Entry]"
+    "Type=Application"
+    "Name=HyprShelld Settings"
+    "Exec=hyprshelld-settings"
+    "TryExec=hyprshelld-settings"
+    "Icon=preferences-system"
+    "Terminal=false"
+    "Categories=Settings;DesktopSettings;Qt;"
+    "StartupNotify=true"
+    "StartupWMClass=${SETTINGS_DESKTOP_ID}"
+)
+    string(FIND "${settings_desktop_contents}" "\n${required_line}\n" line_index)
+    if(line_index EQUAL -1)
+        message(FATAL_ERROR
+            "The staged Settings desktop entry is missing: ${required_line}"
+        )
+    endif()
+endforeach()
+
+file(
+    GET_RUNTIME_DEPENDENCIES
+    EXECUTABLES "${bin_root}/hyprshelld-settings"
+    RESOLVED_DEPENDENCIES_VAR settings_resolved_dependencies
+    UNRESOLVED_DEPENDENCIES_VAR settings_unresolved_dependencies
+)
+
+if(settings_unresolved_dependencies)
+    message(FATAL_ERROR
+        "The staged Settings application has unresolved dependencies: "
+        "${settings_unresolved_dependencies}"
+    )
+endif()
+
+set(settings_expected_product_dependencies
+    "${lib_root}/libhyprshelld-client.so"
+    "${lib_root}/libhyprshelld-ui.so"
+)
+
+cmake_path(NORMAL_PATH STAGE_DIRECTORY OUTPUT_VARIABLE normalized_stage_directory)
+set(settings_normalized_dependencies)
+
+foreach(dependency IN LISTS settings_resolved_dependencies)
+    cmake_path(NORMAL_PATH dependency OUTPUT_VARIABLE normalized_dependency)
+    list(APPEND settings_normalized_dependencies "${normalized_dependency}")
+
+    string(FIND
+        "${normalized_dependency}"
+        "${normalized_stage_directory}/"
+        stage_index
+    )
+    string(FIND
+        "${normalized_dependency}"
+        "${PROJECT_SOURCE_DIRECTORY}/"
+        source_index
+    )
+    string(FIND
+        "${normalized_dependency}"
+        "${PROJECT_BINARY_DIRECTORY}/"
+        binary_index
+    )
+    if(
+        NOT stage_index EQUAL 0
+        AND (NOT source_index EQUAL -1 OR NOT binary_index EQUAL -1)
+    )
+        message(FATAL_ERROR
+            "The staged Settings application resolves a development dependency: "
+            "${normalized_dependency}"
+        )
+    endif()
+endforeach()
+
+foreach(expected_dependency IN LISTS settings_expected_product_dependencies)
+    cmake_path(
+        NORMAL_PATH expected_dependency
+        OUTPUT_VARIABLE normalized_expected_dependency
+    )
+    list(
+        FIND
+        settings_normalized_dependencies
+        "${normalized_expected_dependency}"
+        dependency_index
+    )
+    if(dependency_index EQUAL -1)
+        message(FATAL_ERROR
+            "The staged Settings application did not resolve its staged library: "
+            "${normalized_expected_dependency}"
+        )
+    endif()
+endforeach()
 
 set(probe_config "${STAGE_DIRECTORY}/probe-config")
 set(probe_state "${STAGE_DIRECTORY}/probe-state")
@@ -123,6 +240,36 @@ execute_process(
 if(NOT result EQUAL 0)
     message(FATAL_ERROR
         "Staged QML modules could not be loaded externally\n"
+        "stdout:\n${output}\n"
+        "stderr:\n${error}"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "${CMAKE_EXECUTABLE}"
+        -E
+        env
+        --unset=LD_LIBRARY_PATH
+        --unset=QML_IMPORT_PATH
+        --unset=QML2_IMPORT_PATH
+        --unset=QT_PLUGIN_PATH
+        --unset=QT_QPA_PLATFORM_PLUGIN_PATH
+        "HYPRSHELLD_SETTINGS_EXECUTABLE=${bin_root}/hyprshelld-settings"
+        "XDG_DATA_HOME=${probe_data}"
+        "XDG_DATA_DIRS=${probe_system_data}"
+        "${DBUS_RUN_SESSION}"
+        "--config-file=${DBUS_CONFIG}"
+        --
+        "${SETTINGS_SMOKE_EXECUTABLE}"
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE error
+    TIMEOUT 15
+)
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR
+        "The staged Settings application could not be launched\n"
         "stdout:\n${output}\n"
         "stderr:\n${error}"
     )

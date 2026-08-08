@@ -23,3 +23,26 @@ target_link_libraries(
         hyprshelld-client
         hyprshelld-ui
 )
+
+target_compile_definitions(
+    hyprshelld-settings
+    PRIVATE
+        HYPRSHELLD_SETTINGS_DESKTOP_ID="${HYPRSHELLD_SETTINGS_DESKTOP_ID}"
+)
+
+file(
+    RELATIVE_PATH settings_library_path
+    "${CMAKE_INSTALL_FULL_BINDIR}"
+    "${CMAKE_INSTALL_FULL_LIBDIR}"
+)
+
+set_target_properties(
+    hyprshelld-settings
+    PROPERTIES
+        INSTALL_RPATH "\$ORIGIN/${settings_library_path}"
+)
+
+install(
+    TARGETS hyprshelld-settings
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)

@@ -6,11 +6,11 @@ configurable for experienced users.
 
 ## Current status
 
-HyprShelld is in early development. There is not yet an installable desktop or
-a supported daily-use build. The current development build includes a floating
-bar on each display and an independent Settings page for changing its height.
-It also reports a component that cannot recover automatically and offers
-bounded recovery from Settings.
+HyprShelld is in early development. There is not yet a supported complete
+desktop package or daily-use release. The current development installation
+includes a floating bar on each display and an independent Settings application
+for changing its height. It also reports a component that cannot recover
+automatically and offers bounded recovery from Settings.
 
 The guides below describe behavior available in the current development build.
 

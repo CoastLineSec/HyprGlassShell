@@ -7,8 +7,13 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication application(argc, argv);
-    QGuiApplication::setApplicationName(QStringLiteral("hyprshelld-settings"));
+    QGuiApplication::setApplicationName(
+        QStringLiteral(HYPRSHELLD_SETTINGS_DESKTOP_ID)
+    );
     QGuiApplication::setApplicationDisplayName(QStringLiteral("HyprShelld Settings"));
+    QGuiApplication::setDesktopFileName(
+        QStringLiteral(HYPRSHELLD_SETTINGS_DESKTOP_ID)
+    );
     QGuiApplication::setOrganizationName(QStringLiteral("CoastLineSec"));
 
     QQuickStyle::setStyle(QStringLiteral("Basic"));

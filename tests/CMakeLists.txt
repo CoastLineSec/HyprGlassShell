@@ -470,6 +470,12 @@ find_program(
     REQUIRED
 )
 
+find_program(
+    HYPRSHELLD_DESKTOP_FILE_VALIDATE_EXECUTABLE
+    NAMES desktop-file-validate
+    REQUIRED
+)
+
 add_test(
     NAME configd-activation
     COMMAND
@@ -510,6 +516,11 @@ add_test(
         "-DDBUS_RUN_SESSION=${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
         "-DDBUS_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
         "-DMODULE_PROBE=${CMAKE_CURRENT_SOURCE_DIR}/staged_module_probe.qml"
+        "-DDESKTOP_FILE_VALIDATE=${HYPRSHELLD_DESKTOP_FILE_VALIDATE_EXECUTABLE}"
+        "-DSETTINGS_SMOKE_EXECUTABLE=$<TARGET_FILE:hyprshelld-settings-smoke-test>"
+        "-DSETTINGS_DESKTOP_ID=${HYPRSHELLD_SETTINGS_DESKTOP_ID}"
+        "-DPROJECT_SOURCE_DIRECTORY=${PROJECT_SOURCE_DIR}"
+        "-DPROJECT_BINARY_DIRECTORY=${PROJECT_BINARY_DIR}"
         -P
         "${CMAKE_CURRENT_SOURCE_DIR}/verify_staged_install.cmake"
 )

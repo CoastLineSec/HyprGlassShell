@@ -5,9 +5,9 @@ project combines shell surfaces, configuration, system integration, and
 essential desktop experiences so users do not have to assemble a complete
 desktop from unrelated components.
 
-HyprShelld is in early development and does not yet provide an installable
-desktop. The current source includes a development preview of the floating bar,
-its Settings page, and the supporting services.
+HyprShelld is in early development and does not yet provide a supported complete
+desktop package. The current source includes an installable development runtime,
+a floating bar, its Settings application, and the supporting services.
 
 User documentation begins in [docs/index.md](docs/index.md).
 
@@ -15,7 +15,8 @@ User documentation begins in [docs/index.md](docs/index.md).
 
 The current Arch Linux build checks require CMake 3.24 or newer, Ninja, a C++23
 compiler, Qt 6.8 or newer, Quickshell 0.3.0, `dbus-run-session`, and systemd 254
-or newer with `busctl` and `systemd-analyze`.
+or newer with `busctl` and `systemd-analyze`. The build checks also use
+`desktop-file-validate` from `desktop-file-utils`.
 
 ```sh
 cmake --preset dev

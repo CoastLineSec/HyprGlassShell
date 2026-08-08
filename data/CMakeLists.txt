@@ -68,3 +68,22 @@ install(
     FILES "${hyprshelld_dbus_binary_dir}/org.hyprshelld.Config1.service"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/dbus-1/services"
 )
+
+set(hyprshelld_applications_binary_dir "${CMAKE_CURRENT_BINARY_DIR}/applications")
+file(MAKE_DIRECTORY "${hyprshelld_applications_binary_dir}")
+
+set(
+    hyprshelld_settings_desktop_file
+    "${hyprshelld_applications_binary_dir}/${HYPRSHELLD_SETTINGS_DESKTOP_ID}.desktop"
+)
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/applications/hyprshelld-settings.desktop.in"
+    "${hyprshelld_settings_desktop_file}"
+    @ONLY
+)
+
+install(
+    FILES "${hyprshelld_settings_desktop_file}"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+)
