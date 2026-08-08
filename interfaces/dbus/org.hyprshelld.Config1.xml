@@ -24,7 +24,7 @@
     </property>
 
     <!--
-      Valid height: 32 through 96 logical pixels.
+      Valid height: 24 through 96 logical pixels.
       Errors:
         org.hyprshelld.Config1.Error.InvalidBarHeight
         org.hyprshelld.Config1.Error.PersistenceFailed

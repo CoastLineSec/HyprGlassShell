@@ -42,14 +42,14 @@ private slots:
         HyprShelld::ConfigClient client(bus_, nullptr);
         QCOMPARE(client.available(), false);
         QCOMPARE(client.busy(), false);
-        QCOMPARE(client.barHeight(), 48U);
-        QCOMPARE(client.minimumBarHeight(), 32U);
+        QCOMPARE(client.barHeight(), 40U);
+        QCOMPARE(client.minimumBarHeight(), 24U);
         QCOMPARE(client.maximumBarHeight(), 96U);
-        QCOMPARE(client.defaultBarHeight(), 48U);
+        QCOMPARE(client.defaultBarHeight(), 40U);
 
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
-        QCOMPARE(client.barHeight(), 48U);
+        QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 0ULL);
         QCOMPARE(client.recoveryState(), QStringLiteral("normal"));
 
@@ -60,7 +60,7 @@ private slots:
         QCOMPARE(client.revision(), 1ULL);
         QVERIFY(client.lastErrorName().isEmpty());
 
-        client.setBarHeight(31);
+        client.setBarHeight(23);
         QVERIFY(client.busy());
         QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
         QCOMPARE(
@@ -77,17 +77,17 @@ private slots:
 
         client.resetBarHeight();
         QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
-        QTRY_COMPARE_WITH_TIMEOUT(client.barHeight(), 48U, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.barHeight(), 40U, 3000);
         QCOMPARE(client.revision(), 2ULL);
 
         stopService();
         QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
-        QCOMPARE(client.barHeight(), 48U);
+        QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 2ULL);
 
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
-        QCOMPARE(client.barHeight(), 48U);
+        QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 2ULL);
 
         QDBusInterface external(busName, objectPath, interfaceName, bus_);

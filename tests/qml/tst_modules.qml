@@ -10,7 +10,7 @@ TestCase {
         id: controlComponent
 
         BarHeightControl {
-            value: 48
+            value: 40
             minimumValue: ConfigClient.minimumBarHeight
             maximumValue: ConfigClient.maximumBarHeight
             defaultValue: ConfigClient.defaultBarHeight
@@ -18,18 +18,18 @@ TestCase {
     }
 
     function test_clientConstants() {
-        compare(ConfigClient.minimumBarHeight, 32);
+        compare(ConfigClient.minimumBarHeight, 24);
         compare(ConfigClient.maximumBarHeight, 96);
-        compare(ConfigClient.defaultBarHeight, 48);
+        compare(ConfigClient.defaultBarHeight, 40);
     }
 
     function test_controlInstantiation() {
         const control = createTemporaryObject(controlComponent, this);
         verify(control !== null);
-        compare(control.value, 48);
-        compare(control.minimumValue, 32);
+        compare(control.value, 40);
+        compare(control.minimumValue, 24);
         compare(control.maximumValue, 96);
-        compare(control.defaultValue, 48);
+        compare(control.defaultValue, 40);
         compare(control.busy, false);
         compare(control.errorText, "");
     }

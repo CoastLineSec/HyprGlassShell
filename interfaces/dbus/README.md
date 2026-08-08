@@ -36,8 +36,8 @@ Restart errors have these meanings:
 
 ## Configuration
 
-`BarHeight` is measured in logical pixels, defaults to 48, and accepts values
-from 32 through 96. `SetBarHeight` and `ResetBarHeight` persist a real change
+`BarHeight` is measured in logical pixels, defaults to 40, and accepts values
+from 24 through 96. `SetBarHeight` and `ResetBarHeight` persist a real change
 atomically before publishing it and return the resulting revision. An
 idempotent request returns the existing revision without writing or emitting a
 change.
@@ -72,7 +72,11 @@ Changing properties are published together through the standard
 succeeds. The project interfaces do not redeclare that standard interface or
 duplicate it with interface-specific change signals.
 
-The numeric suffix is the contract's major version. Compatible additions may
-extend version 1. Removing or renaming members, changing signatures or accepted
-input, or changing existing error meaning requires a new bus name, object path,
-interface, and XML filename with the next major version.
+The numeric suffix is the contract's major version. Before the first public
+release, an accepted design decision may revise version 1 while its source,
+generated bindings, tests, and documentation change together; compatibility
+with older pre-release builds is not promised. After version 1 ships,
+compatible additions may extend it. Removing or renaming members, changing
+signatures or accepted input, changing default or reset behavior, or changing
+existing error meaning requires a new bus name, object path, interface, and XML
+filename with the next major version.

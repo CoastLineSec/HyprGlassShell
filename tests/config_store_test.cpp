@@ -80,6 +80,34 @@ private slots:
         QCOMPARE(readFile(paths.activeFile), readFile(paths.recoveryFile));
     }
 
+    void loadsExistingFormatOneHeights_data()
+    {
+        QTest::addColumn<quint32>("height");
+
+        QTest::newRow("previous-minimum") << quint32(32);
+        QTest::newRow("previous-default") << quint32(48);
+    }
+
+    void loadsExistingFormatOneHeights()
+    {
+        QFETCH(quint32, height);
+
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = pathsFor(directory.path());
+        const auto snapshot = QByteArrayLiteral(
+            "{\"formatVersion\":1,\"revision\":\"7\",\"barHeight\":"
+        ) + QByteArray::number(height) + QByteArrayLiteral("}\n");
+        QVERIFY(writeFile(paths.activeFile, snapshot));
+
+        const auto loaded = ConfigStore(paths).load();
+        QVERIFY2(loaded.success, qPrintable(loaded.error));
+        QCOMPARE(loaded.state.barHeight, height);
+        QCOMPARE(loaded.state.revision, quint64(7));
+        QCOMPARE(loaded.recoveryState, ConfigRecoveryState::Normal);
+        QCOMPARE(readFile(paths.activeFile), snapshot);
+    }
+
     void recoversFromDamagedActiveState()
     {
         QTemporaryDir directory;
@@ -186,7 +214,7 @@ private slots:
                );
         QTest::newRow("height-out-of-range")
             << QByteArray(
-                   "{\"formatVersion\":1,\"revision\":\"0\",\"barHeight\":31}\n"
+                   "{\"formatVersion\":1,\"revision\":\"0\",\"barHeight\":23}\n"
                );
     }
 

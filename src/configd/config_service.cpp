@@ -82,7 +82,9 @@ qulonglong ConfigService::setBarHeight(uint height)
         || height > ConfigValues::maximumBarHeight) {
         reportError(
             invalidBarHeightError,
-            QStringLiteral("Bar height must be between 32 and 96 logical pixels")
+            QStringLiteral("Bar height must be between %1 and %2 logical pixels")
+                .arg(ConfigValues::minimumBarHeight)
+                .arg(ConfigValues::maximumBarHeight)
         );
         return state_.revision;
     }

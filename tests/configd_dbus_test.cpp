@@ -191,7 +191,7 @@ private slots:
 
         OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
         QVERIFY(proxy.isValid());
-        QCOMPARE(proxy.barHeight(), 48U);
+        QCOMPARE(proxy.barHeight(), 40U);
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(proxy.recoveryState(), QStringLiteral("normal"));
 
@@ -221,7 +221,7 @@ private slots:
         const auto originalBytes = readFile(activeFile_);
         QVERIFY(!originalBytes.isEmpty());
 
-        for (const auto invalidHeight : {31U, 97U}) {
+        for (const auto invalidHeight : {23U, 97U}) {
             auto invalid = proxy.SetBarHeight(invalidHeight);
             invalid.waitForFinished();
             QVERIFY(invalid.isError());
@@ -232,7 +232,7 @@ private slots:
         }
         QTest::qWait(50);
         QCOMPARE(signalCount_, 0);
-        QCOMPARE(proxy.barHeight(), 48U);
+        QCOMPARE(proxy.barHeight(), 40U);
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(readFile(activeFile_), originalBytes);
 
@@ -274,7 +274,7 @@ private slots:
         QVERIFY2(!reset.isError(), qPrintable(reset.error().message()));
         QCOMPARE(reset.value(), 2ULL);
         QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 2, 1000);
-        QCOMPARE(proxy.barHeight(), 48U);
+        QCOMPARE(proxy.barHeight(), 40U);
         QCOMPARE(proxy.revision(), 2ULL);
 
         const auto resetBytes = readFile(activeFile_);
@@ -319,7 +319,7 @@ private slots:
         );
         QTest::qWait(50);
         QCOMPARE(signalCount_, 0);
-        QCOMPARE(proxy.barHeight(), 48U);
+        QCOMPARE(proxy.barHeight(), 40U);
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(readFile(activeFile_), originalBytes);
     }
@@ -331,11 +331,11 @@ private slots:
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
 
         OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
-        auto minimum = proxy.SetBarHeight(32);
+        auto minimum = proxy.SetBarHeight(24);
         minimum.waitForFinished();
         QVERIFY2(!minimum.isError(), qPrintable(minimum.error().message()));
         QCOMPARE(minimum.value(), 1ULL);
-        QCOMPARE(proxy.barHeight(), 32U);
+        QCOMPARE(proxy.barHeight(), 24U);
 
         auto maximum = proxy.SetBarHeight(96);
         maximum.waitForFinished();
@@ -388,7 +388,7 @@ private slots:
 
         OrgHyprshelldConfig1Interface defaulted(busName, objectPath, bus_);
         QCOMPARE(defaulted.recoveryState(), QStringLiteral("defaulted"));
-        QCOMPARE(defaulted.barHeight(), 48U);
+        QCOMPARE(defaulted.barHeight(), 40U);
         QCOMPARE(defaulted.revision(), 0ULL);
     }
 
