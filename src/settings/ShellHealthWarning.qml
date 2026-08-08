@@ -215,6 +215,8 @@ Frame {
                     }
 
                     Button {
+                        id: restartButton
+
                         objectName: "restartButton-" + componentRow.modelData
                         visible: root.coordinatorAvailable
                         enabled: !root.restartBusy
@@ -226,6 +228,16 @@ Frame {
                             root.friendlyName(componentRow.modelData)
                         )
                         onClicked: root.restartRequested(componentRow.modelData)
+                        Keys.onReturnPressed: event => {
+                            if (restartButton.enabled)
+                                restartButton.clicked();
+                            event.accepted = true;
+                        }
+                        Keys.onEnterPressed: event => {
+                            if (restartButton.enabled)
+                                restartButton.clicked();
+                            event.accepted = true;
+                        }
                     }
 
                     Label {

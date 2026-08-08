@@ -204,6 +204,40 @@ TestCase {
         compare(error.visible, false);
     }
 
+    function test_coordinatorRestartAcceptsEnterKeys() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorHealthy = false;
+        warning.coordinatorFailedUnits = ["hyprshelld-configd.service"];
+        waitForRendering(warning);
+
+        const restartButton = findChild(
+            warning,
+            "restartButton-hyprshelld-configd.service"
+        );
+        verify(restartButton !== null);
+
+        let requestedUnit = "";
+        let requestCount = 0;
+        warning.restartRequested.connect(function(unitName) {
+            requestedUnit = unitName;
+            ++requestCount;
+        });
+
+        testWindow.requestActivate();
+        restartButton.forceActiveFocus();
+        tryCompare(restartButton, "activeFocus", true);
+
+        keyClick(Qt.Key_Return);
+        compare(requestedUnit, "hyprshelld-configd.service");
+        compare(requestCount, 1);
+
+        keyClick(Qt.Key_Enter);
+        compare(requestCount, 2);
+    }
+
     function test_systemdFallbackIsReadOnly() {
         const testWindow = createTemporaryObject(healthWarningComponent, this);
         verify(testWindow !== null);
