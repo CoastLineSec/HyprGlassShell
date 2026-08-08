@@ -15,6 +15,7 @@ Page {
     property string errorText: ""
     property string recoveryState: ""
     property bool previewAnimationsEnabled: true
+    property real contentTopMargin: 28
 
     readonly property string recoveryMessage: {
         if (recoveryState === "recovered")
@@ -43,7 +44,7 @@ Page {
 
         ColumnLayout {
             x: Math.max(24, (root.width - width) / 2)
-            y: 28
+            y: root.contentTopMargin
             width: Math.max(0, Math.min(root.width - 48, 980))
             spacing: 20
 

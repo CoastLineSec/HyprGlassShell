@@ -257,7 +257,7 @@ ApplicationWindow {
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: shellHealthWarning.warningVisible
-                    ? shellHealthWarning.implicitHeight + 20
+                    ? shellHealthWarning.implicitHeight + 48
                     : 0
                 visible: shellHealthWarning.warningVisible
 
@@ -266,6 +266,7 @@ ApplicationWindow {
 
                     anchors {
                         top: parent.top
+                        topMargin: 28
                         horizontalCenter: parent.horizontalCenter
                     }
                     width: Math.max(0, Math.min(parent.width - 48, 980))
@@ -301,6 +302,7 @@ ApplicationWindow {
                 busy: ConfigClient.busy
                 errorText: ConfigClient.lastErrorMessage
                 recoveryState: ConfigClient.recoveryState
+                contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
 
                 onBarHeightRequested: height => ConfigClient.setBarHeight(height)
                 onResetBarHeightRequested: ConfigClient.resetBarHeight()
