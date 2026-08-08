@@ -51,3 +51,8 @@ target_link_libraries(
         Qt6::DBus
         hyprshelld-configd-core
 )
+
+install(
+    TARGETS hyprshelld-configd
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)

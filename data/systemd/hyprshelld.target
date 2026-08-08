@@ -1,0 +1,8 @@
+[Unit]
+Description=HyprShelld desktop shell
+Wants=hyprshelld.service hyprshelld-configd.service hyprshelld-surfaced.service
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Install]
+WantedBy=graphical-session.target

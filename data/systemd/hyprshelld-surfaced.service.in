@@ -1,0 +1,17 @@
+[Unit]
+Description=HyprShelld shell surfaces
+PartOf=hyprshelld.target graphical-session.target
+After=graphical-session.target
+StartLimitIntervalSec=30s
+StartLimitBurst=5
+
+[Service]
+Type=exec
+ExecStart=@QUICKSHELL_EXECUTABLE@ --path @CMAKE_INSTALL_FULL_DATADIR@/hyprshelld/surfaced
+Environment="QML_IMPORT_PATH=@HYPRSHELLD_QML_INSTALL_DIR@"
+Environment=QS_DISABLE_CRASH_HANDLER=1
+Slice=session-hyprshelld.slice
+Restart=always
+RestartMode=direct
+RestartSec=1s
+TimeoutStopSec=5s

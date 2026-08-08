@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.hyprshelld.Config1
+Exec=@CMAKE_INSTALL_FULL_BINDIR@/hyprshelld-configd
+SystemdService=hyprshelld-configd.service

@@ -317,3 +317,145 @@ set_tests_properties(
     PROPERTIES
         TIMEOUT 30
 )
+
+set(
+    HYPRSHELLD_GENERATED_SYSTEMD_DIRECTORY
+    "${PROJECT_BINARY_DIR}/data/systemd"
+)
+set(
+    HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE
+    "${PROJECT_BINARY_DIR}/data/dbus/org.hyprshelld.Config1.service"
+)
+
+if(IS_ABSOLUTE "${QT6_INSTALL_QML}")
+    set(HYPRSHELLD_INSTALL_QML_DIRECTORY "${QT6_INSTALL_QML}")
+else()
+    set(
+        HYPRSHELLD_INSTALL_QML_DIRECTORY
+        "${CMAKE_INSTALL_PREFIX}/${QT6_INSTALL_QML}"
+    )
+endif()
+
+if(IS_ABSOLUTE "${HYPRSHELLD_SYSTEMD_USER_UNIT_DIR}")
+    set(
+        HYPRSHELLD_INSTALL_SYSTEMD_UNIT_DIRECTORY
+        "${HYPRSHELLD_SYSTEMD_USER_UNIT_DIR}"
+    )
+else()
+    set(
+        HYPRSHELLD_INSTALL_SYSTEMD_UNIT_DIRECTORY
+        "${CMAKE_INSTALL_PREFIX}/${HYPRSHELLD_SYSTEMD_USER_UNIT_DIR}"
+    )
+endif()
+
+qt_add_executable(
+    hyprshelld-systemd-unit-contract-test
+    systemd_unit_contract_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-systemd-unit-contract-test
+    PRIVATE
+        HYPRSHELLD_SYSTEMD_UNIT_DIR="${HYPRSHELLD_GENERATED_SYSTEMD_DIRECTORY}"
+        HYPRSHELLD_CONFIG1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE}"
+        HYPRSHELLD_INSTALL_COORDINATOR="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld"
+        HYPRSHELLD_INSTALL_CONFIGD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-configd"
+        HYPRSHELLD_INSTALL_SURFACED="${CMAKE_INSTALL_FULL_DATADIR}/hyprshelld/surfaced"
+        HYPRSHELLD_INSTALL_QML="${HYPRSHELLD_INSTALL_QML_DIRECTORY}"
+        HYPRSHELLD_QUICKSHELL_EXECUTABLE="${QUICKSHELL_EXECUTABLE}"
+)
+
+target_link_libraries(
+    hyprshelld-systemd-unit-contract-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+)
+
+add_test(
+    NAME systemd-unit-contract
+    COMMAND hyprshelld-systemd-unit-contract-test
+)
+
+find_program(
+    HYPRSHELLD_SYSTEMD_ANALYZE_EXECUTABLE
+    NAMES systemd-analyze
+    REQUIRED
+)
+
+add_test(
+    NAME systemd-unit-syntax
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DSYSTEMD_ANALYZE=${HYPRSHELLD_SYSTEMD_ANALYZE_EXECUTABLE}"
+        "-DSOURCE_UNIT_DIRECTORY=${HYPRSHELLD_GENERATED_SYSTEMD_DIRECTORY}"
+        "-DVERIFY_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/systemd-verify"
+        "-DCOORDINATOR_EXECUTABLE=$<TARGET_FILE:hyprshelld>"
+        "-DCONFIGD_EXECUTABLE=$<TARGET_FILE:hyprshelld-configd>"
+        "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
+        "-DSURFACED_DIRECTORY=${PROJECT_SOURCE_DIR}/src/surfaced"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/verify_systemd_units.cmake"
+)
+
+set_tests_properties(
+    systemd-unit-syntax
+    PROPERTIES
+        TIMEOUT 30
+)
+
+find_program(
+    HYPRSHELLD_BUSCTL_EXECUTABLE
+    NAMES busctl
+    REQUIRED
+)
+
+add_test(
+    NAME configd-activation
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+        "-DDBUS_RUN_SESSION=${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "-DBUSCTL=${HYPRSHELLD_BUSCTL_EXECUTABLE}"
+        "-DSOURCE_ACTIVATION_FILE=${HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE}"
+        "-DFIXTURE_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/configd-activation"
+        "-DINSTALL_CONFIGD_EXECUTABLE=${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-configd"
+        "-DBUILD_CONFIGD_EXECUTABLE=$<TARGET_FILE:hyprshelld-configd>"
+        "-DACTIVATION_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/configd_activation_driver.sh"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/verify_configd_activation.cmake"
+)
+
+set_tests_properties(
+    configd-activation
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_test(
+    NAME staged-install
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+        "-DBUILD_DIRECTORY=${PROJECT_BINARY_DIR}"
+        "-DBUILD_CONFIG=$<CONFIG>"
+        "-DSTAGE_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/install-stage"
+        "-DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
+        "-DINSTALL_BINDIR=${CMAKE_INSTALL_FULL_BINDIR}"
+        "-DINSTALL_LIBDIR=${CMAKE_INSTALL_FULL_LIBDIR}"
+        "-DINSTALL_DATADIR=${CMAKE_INSTALL_FULL_DATADIR}"
+        "-DINSTALL_QMLDIR=${HYPRSHELLD_INSTALL_QML_DIRECTORY}"
+        "-DINSTALL_SYSTEMD_UNIT_DIR=${HYPRSHELLD_INSTALL_SYSTEMD_UNIT_DIRECTORY}"
+        "-DQML_EXECUTABLE=$<TARGET_FILE:Qt6::qmltestrunner>"
+        "-DDBUS_RUN_SESSION=${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "-DMODULE_PROBE=${CMAKE_CURRENT_SOURCE_DIR}/staged_module_probe.qml"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/verify_staged_install.cmake"
+)
+
+set_tests_properties(
+    staged-install
+    PROPERTIES
+        TIMEOUT 45
+        RUN_SERIAL TRUE
+)

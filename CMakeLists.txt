@@ -6,6 +6,8 @@ project(
     LANGUAGES CXX
 )
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -36,6 +38,7 @@ find_program(
 include(CTest)
 
 add_subdirectory(src)
+add_subdirectory(data)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

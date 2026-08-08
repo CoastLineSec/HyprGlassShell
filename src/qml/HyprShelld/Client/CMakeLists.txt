@@ -32,3 +32,58 @@ target_link_libraries(
         Qt6::DBus
         Qt6::Qml
 )
+
+qt_query_qml_module(
+    hyprshelld-client
+    PLUGIN_TARGET module_plugin
+    TARGET_PATH module_target_path
+    QMLDIR module_qmldir
+    TYPEINFO module_typeinfo
+)
+
+set(module_install_dir "${QT6_INSTALL_QML}/${module_target_path}")
+
+if(IS_ABSOLUTE "${module_install_dir}")
+    set(module_install_absolute "${module_install_dir}")
+else()
+    set(module_install_absolute "${CMAKE_INSTALL_PREFIX}/${module_install_dir}")
+endif()
+
+if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+    set(library_install_absolute "${CMAKE_INSTALL_LIBDIR}")
+else()
+    set(library_install_absolute "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+file(
+    RELATIVE_PATH module_library_path
+    "${module_install_absolute}"
+    "${library_install_absolute}"
+)
+
+set_target_properties(
+    "${module_plugin}"
+    PROPERTIES
+        INSTALL_RPATH "\$ORIGIN/${module_library_path}"
+)
+
+install(
+    TARGETS hyprshelld-client
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+install(
+    TARGETS "${module_plugin}"
+    ARCHIVE DESTINATION "${module_install_dir}"
+    LIBRARY DESTINATION "${module_install_dir}"
+    RUNTIME DESTINATION "${module_install_dir}"
+)
+
+install(
+    FILES
+        "${module_qmldir}"
+        "${module_typeinfo}"
+    DESTINATION "${module_install_dir}"
+)

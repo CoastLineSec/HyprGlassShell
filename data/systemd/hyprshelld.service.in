@@ -1,0 +1,16 @@
+[Unit]
+Description=HyprShelld service coordinator
+PartOf=hyprshelld.target graphical-session.target
+After=graphical-session.target
+StartLimitIntervalSec=30s
+StartLimitBurst=5
+
+[Service]
+Type=dbus
+BusName=org.hyprshelld.Coordinator1
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/hyprshelld
+Slice=session-hyprshelld.slice
+Restart=always
+RestartMode=direct
+RestartSec=1s
+TimeoutStopSec=5s
