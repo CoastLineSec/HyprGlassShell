@@ -15,6 +15,35 @@ ApplicationWindow {
     color: "#101319"
 
     readonly property real sidebarWidth: Math.min(232, Math.max(196, width * 0.22))
+    readonly property int failedComponentCount: shellHealthWarning.failedComponentCount
+    readonly property string desktopStatusText: {
+        if (CoordinatorClient.available) {
+            if (CoordinatorClient.healthy)
+                return qsTr("Desktop ready");
+            return failedComponentCount === 1
+                ? qsTr("1 component failed")
+                : qsTr("%1 components failed").arg(failedComponentCount);
+        }
+        if (shellRuntimeStatus.busy && !shellRuntimeStatus.available)
+            return qsTr("Checking services…");
+        if (shellRuntimeStatus.available) {
+            if (failedComponentCount === 1)
+                return qsTr("1 component failed");
+            if (failedComponentCount > 1)
+                return qsTr("%1 components failed").arg(failedComponentCount);
+            return shellRuntimeStatus.targetState === "inactive"
+                ? qsTr("Desktop services stopped")
+                : qsTr("Health service unavailable");
+        }
+        return qsTr("Status unavailable");
+    }
+    readonly property color desktopStatusColor: {
+        if (failedComponentCount > 0)
+            return "#fb7185";
+        if (CoordinatorClient.available && CoordinatorClient.healthy)
+            return "#68d391";
+        return "#f6ad55";
+    }
 
     palette.window: "#101319"
     palette.windowText: "#f4f6fa"
@@ -26,6 +55,12 @@ ApplicationWindow {
     palette.highlightedText: "#ffffff"
     palette.placeholderText: "#aeb8c6"
     palette.mid: "#3a424f"
+
+    ShellRuntimeStatus {
+        id: shellRuntimeStatus
+
+        active: !CoordinatorClient.available
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -193,14 +228,12 @@ ApplicationWindow {
                             Layout.preferredWidth: 9
                             Layout.preferredHeight: 9
                             radius: width / 2
-                            color: ConfigClient.available ? "#68d391" : "#f6ad55"
+                            color: root.desktopStatusColor
                         }
 
                         Label {
                             Layout.fillWidth: true
-                            text: ConfigClient.available
-                                ? qsTr("Services available")
-                                : qsTr("Unavailable")
+                            text: root.desktopStatusText
                             color: root.palette.placeholderText
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -216,20 +249,62 @@ ApplicationWindow {
             color: root.palette.mid
         }
 
-        BarSettingsPage {
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            barHeight: ConfigClient.barHeight
-            minimumBarHeight: ConfigClient.minimumBarHeight
-            maximumBarHeight: ConfigClient.maximumBarHeight
-            defaultBarHeight: ConfigClient.defaultBarHeight
-            serviceAvailable: ConfigClient.available
-            busy: ConfigClient.busy
-            errorText: ConfigClient.lastErrorMessage
-            recoveryState: ConfigClient.recoveryState
+            spacing: 0
 
-            onBarHeightRequested: height => ConfigClient.setBarHeight(height)
-            onResetBarHeightRequested: ConfigClient.resetBarHeight()
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: shellHealthWarning.warningVisible
+                    ? shellHealthWarning.implicitHeight + 20
+                    : 0
+                visible: shellHealthWarning.warningVisible
+
+                ShellHealthWarning {
+                    id: shellHealthWarning
+
+                    anchors {
+                        top: parent.top
+                        horizontalCenter: parent.horizontalCenter
+                    }
+                    width: Math.max(0, Math.min(parent.width - 48, 980))
+                    coordinatorAvailable: CoordinatorClient.available
+                    coordinatorHealthy: CoordinatorClient.healthy
+                    coordinatorFailedUnits: CoordinatorClient.failedUnits
+                    restartBusy: CoordinatorClient.busy
+                    restartingUnit: CoordinatorClient.restartingUnit
+                    restartErrorUnit: CoordinatorClient.lastErrorUnit
+                    restartError: CoordinatorClient.lastErrorMessage
+                    fallbackActive: shellRuntimeStatus.active
+                    fallbackAvailable: shellRuntimeStatus.available
+                    fallbackBusy: shellRuntimeStatus.busy
+                    targetState: shellRuntimeStatus.targetState
+                    coordinatorState: shellRuntimeStatus.coordinatorState
+                    configurationState: shellRuntimeStatus.configurationState
+                    surfaceState: shellRuntimeStatus.surfaceState
+
+                    onRestartRequested: unitName => {
+                        CoordinatorClient.restartComponent(unitName);
+                    }
+                }
+            }
+
+            BarSettingsPage {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                barHeight: ConfigClient.barHeight
+                minimumBarHeight: ConfigClient.minimumBarHeight
+                maximumBarHeight: ConfigClient.maximumBarHeight
+                defaultBarHeight: ConfigClient.defaultBarHeight
+                serviceAvailable: ConfigClient.available
+                busy: ConfigClient.busy
+                errorText: ConfigClient.lastErrorMessage
+                recoveryState: ConfigClient.recoveryState
+
+                onBarHeightRequested: height => ConfigClient.setBarHeight(height)
+                onResetBarHeightRequested: ConfigClient.resetBarHeight()
+            }
         }
     }
 }

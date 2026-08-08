@@ -10,6 +10,7 @@ qt_add_qml_module(
         Main.qml
         BarPreview.qml
         BarSettingsPage.qml
+        ShellHealthWarning.qml
 )
 
 target_link_libraries(

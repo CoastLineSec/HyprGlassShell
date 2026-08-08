@@ -1,5 +1,13 @@
 set(HYPRSHELLD_CONFIG_CLIENT_PROXY_SOURCES)
 
+set(HYPRSHELLD_COORDINATOR_CLIENT_PROXY_SOURCES)
+
+qt_add_dbus_interface(
+    HYPRSHELLD_COORDINATOR_CLIENT_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Coordinator1.xml"
+    coordinator1_interface
+)
+
 qt_add_dbus_interface(
     HYPRSHELLD_CONFIG_CLIENT_PROXY_SOURCES
     "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Config1.xml"
@@ -11,8 +19,13 @@ qt_add_qml_module(
     SHARED
     URI HyprShelld.Client
     SOURCES
+        coordinator_client.cpp
+        coordinator_client.h
         config_client.cpp
         config_client.h
+        shell_runtime_status.cpp
+        shell_runtime_status.h
+        ${HYPRSHELLD_COORDINATOR_CLIENT_PROXY_SOURCES}
         ${HYPRSHELLD_CONFIG_CLIENT_PROXY_SOURCES}
 )
 

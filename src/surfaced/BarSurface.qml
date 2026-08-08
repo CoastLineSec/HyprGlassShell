@@ -10,6 +10,11 @@ PanelWindow { // qmllint disable uncreatable-type
 
     property var modelData
     required property date currentTime
+    required property bool shellDegraded
+    required property string healthSummary
+    required property bool failureNoticeActive
+    required property string failureNoticeScreenName
+    required property string failureNoticeText
     readonly property int outerMargin: 12
     readonly property int sideMargin: 12
     readonly property int inwardSpacing: 8
@@ -56,5 +61,11 @@ PanelWindow { // qmllint disable uncreatable-type
         currentTime: root.currentTime
         screenName: root.modelData ? root.modelData.name : ""
         configurationAvailable: ConfigClient.available
+        shellDegraded: root.shellDegraded
+        healthSummary: root.healthSummary
+        failureNoticeVisible: root.failureNoticeActive
+            && root.modelData
+            && root.modelData.name === root.failureNoticeScreenName
+        failureNoticeText: root.failureNoticeText
     }
 }

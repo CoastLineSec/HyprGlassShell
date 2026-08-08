@@ -19,11 +19,28 @@ TestCase {
         }
     }
 
+    Component {
+        id: runtimeStatusComponent
+
+        ShellRuntimeStatus {
+        }
+    }
+
     function test_pluginsLoadFromStagedTree() {
         const control = createTemporaryObject(controlComponent, this);
         verify(control !== null);
         compare(control.value, 40);
         compare(control.minimumValue, 24);
         compare(control.maximumValue, 96);
+        compare(CoordinatorClient.healthy, true);
+
+        const runtimeStatus = createTemporaryObject(
+            runtimeStatusComponent,
+            this
+        );
+        verify(runtimeStatus !== null);
+        compare(runtimeStatus.active, false);
+        compare(runtimeStatus.available, false);
+        compare(runtimeStatus.targetState, "unknown");
     }
 }

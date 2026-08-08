@@ -57,6 +57,7 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/Main.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
 )
 
 add_test(
@@ -262,6 +263,62 @@ add_test(
 
 set_tests_properties(
     config-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_executable(
+    hyprshelld-coordinator-client-test
+    coordinator_client_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-coordinator-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME coordinator-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-coordinator-client-test>"
+)
+
+set_tests_properties(
+    coordinator-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_executable(
+    hyprshelld-shell-runtime-status-test
+    shell_runtime_status_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-shell-runtime-status-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME shell-runtime-status
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-shell-runtime-status-test>"
+)
+
+set_tests_properties(
+    shell-runtime-status
     PROPERTIES
         TIMEOUT 30
 )

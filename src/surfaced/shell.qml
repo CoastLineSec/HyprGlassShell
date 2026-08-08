@@ -7,11 +7,179 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import HyprShelld.Client
 
 ShellRoot {
     id: root
 
     property date currentTime: new Date()
+    property bool failureNoticeVisible: false
+    property string failureNoticeScreenName: ""
+    property string failureNoticeText: ""
+    property bool coordinatorFailureLatched: false
+    readonly property bool shellDegraded: coordinatorFailureLatched
+        || !CoordinatorClient.healthy
+    readonly property string healthSummary: {
+        if (coordinatorFailureLatched && !CoordinatorClient.healthy)
+            return qsTr("Multiple HyprShelld components need attention.");
+        if (coordinatorFailureLatched)
+            return qsTr("Shell health needs attention.");
+        if (CoordinatorClient.failureSummary.length > 0)
+            return CoordinatorClient.failureSummary;
+        return CoordinatorClient.healthy
+            ? ""
+            : qsTr("A HyprShelld component needs attention.");
+    }
+    readonly property string surfacedUnitName: "hyprshelld-surfaced.service"
+    readonly property string coordinatorUnitName: "hyprshelld.service"
+
+    function containsDisplayableFailure(unitNames) {
+        for (let index = 0; index < unitNames.length; ++index) {
+            if (unitNames[index] !== root.surfacedUnitName)
+                return true;
+        }
+
+        return false;
+    }
+
+    function firstScreenName() {
+        return Quickshell.screens.length > 0
+            ? Quickshell.screens[0].name
+            : "";
+    }
+
+    function hasDisplayableFailure() {
+        return root.coordinatorFailureLatched
+            || root.containsDisplayableFailure(CoordinatorClient.failedUnits);
+    }
+
+    function setCoordinatorFailureLatched(failed) {
+        if (root.coordinatorFailureLatched === failed)
+            return;
+
+        root.coordinatorFailureLatched = failed;
+        if (failed) {
+            root.showFailureNotice(
+                root.healthSummary,
+                [root.coordinatorUnitName]
+            );
+        } else {
+            root.reconcileFailureNotice();
+        }
+    }
+
+    function reconcileCoordinatorFailure() {
+        if (CoordinatorClient.available) {
+            root.setCoordinatorFailureLatched(false);
+            return;
+        }
+
+        if (!shellRuntimeStatus.available)
+            return;
+
+        if (shellRuntimeStatus.coordinatorState === "failed")
+            root.setCoordinatorFailureLatched(true);
+        else if (shellRuntimeStatus.coordinatorState === "active")
+            root.setCoordinatorFailureLatched(false);
+    }
+
+    function dismissFailureNotice() {
+        failureNoticeTimer.stop();
+        root.failureNoticeVisible = false;
+        root.failureNoticeScreenName = "";
+        root.failureNoticeText = "";
+    }
+
+    function showFailureNotice(summary, newlyFailedUnits) {
+        if (!root.containsDisplayableFailure(newlyFailedUnits))
+            return;
+
+        const screenName = root.firstScreenName();
+        if (screenName.length === 0)
+            return;
+
+        root.failureNoticeScreenName = screenName;
+        root.failureNoticeText = summary.length > 0
+            ? summary
+            : qsTr("A HyprShelld component needs attention.");
+        root.failureNoticeVisible = true;
+        failureNoticeTimer.restart();
+    }
+
+    function reconcileFailureNotice() {
+        if (!root.hasDisplayableFailure()) {
+            root.dismissFailureNotice();
+        } else if (root.failureNoticeVisible) {
+            root.failureNoticeText = root.healthSummary.length > 0
+                ? root.healthSummary
+                : qsTr("A HyprShelld component needs attention.");
+        }
+    }
+
+    function reconcileFailureNoticeScreen() {
+        if (!root.failureNoticeVisible)
+            return;
+
+        for (let index = 0; index < Quickshell.screens.length; ++index) {
+            if (Quickshell.screens[index].name
+                    === root.failureNoticeScreenName) {
+                return;
+            }
+        }
+
+        const screenName = root.firstScreenName();
+        if (screenName.length === 0) {
+            root.dismissFailureNotice();
+        } else {
+            root.failureNoticeScreenName = screenName;
+        }
+    }
+
+    ShellRuntimeStatus {
+        id: shellRuntimeStatus
+
+        active: !CoordinatorClient.available
+        onAvailableChanged: root.reconcileCoordinatorFailure()
+        onStatesChanged: root.reconcileCoordinatorFailure()
+    }
+
+    Connections {
+        target: CoordinatorClient
+
+        function onPersistentFailureAdded(summary, unitNames) {
+            root.showFailureNotice(
+                root.healthSummary.length > 0
+                    ? root.healthSummary
+                    : summary,
+                unitNames
+            );
+        }
+
+        function onHealthChanged() {
+            root.reconcileCoordinatorFailure();
+            root.reconcileFailureNotice();
+        }
+
+        function onAvailableChanged() {
+            root.reconcileCoordinatorFailure();
+        }
+    }
+
+    Connections {
+        target: Quickshell
+
+        function onScreensChanged() {
+            root.reconcileFailureNoticeScreen();
+        }
+    }
+
+    Timer {
+        id: failureNoticeTimer
+
+        interval: 6000
+        repeat: false
+        onTriggered: root.dismissFailureNotice()
+    }
 
     Timer {
         interval: 30000
@@ -25,6 +193,11 @@ ShellRoot {
 
         BarSurface {
             currentTime: root.currentTime
+            shellDegraded: root.shellDegraded
+            healthSummary: root.healthSummary
+            failureNoticeActive: root.failureNoticeVisible
+            failureNoticeScreenName: root.failureNoticeScreenName
+            failureNoticeText: root.failureNoticeText
         }
     }
 }

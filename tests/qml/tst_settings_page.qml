@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtTest
 import "../../src/settings" as Settings
 
@@ -16,6 +17,27 @@ TestCase {
             minimumBarHeight: 24
             maximumBarHeight: 96
             defaultBarHeight: 40
+        }
+    }
+
+    Component {
+        id: healthWarningComponent
+
+        Window {
+            width: 375
+            height: 480
+            visible: true
+
+            property alias warning: healthWarning
+
+            Settings.ShellHealthWarning {
+                id: healthWarning
+
+                width: parent.width
+                coordinatorAvailable: true
+                coordinatorHealthy: true
+                coordinatorFailedUnits: []
+            }
         }
     }
 
@@ -125,4 +147,107 @@ TestCase {
         verify(reservedLabel.y >= frame.y + bar.height * frame.scale);
     }
 
+    function test_healthWarningIsQuietWhenHealthy() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        compare(warning.warningVisible, false);
+        compare(warning.failedComponentCount, 0);
+        compare(warning.visible, false);
+    }
+
+    function test_coordinatorFailureOffersOneRestart() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorHealthy = false;
+        warning.coordinatorFailedUnits = ["hyprshelld-configd.service"];
+        waitForRendering(warning);
+        compare(warning.warningVisible, true);
+        compare(warning.failedComponentCount, 1);
+        compare(warning.friendlyName("hyprshelld-configd.service"), "Settings service");
+        verify(!warning.friendlyName("hyprshelld-configd.service").includes(".service"));
+
+        const restartButton = findChild(
+            warning,
+            "restartButton-hyprshelld-configd.service"
+        );
+        verify(restartButton !== null);
+        compare(restartButton.visible, true);
+        compare(restartButton.enabled, true);
+
+        let requestedUnit = "";
+        let requestCount = 0;
+        warning.restartRequested.connect(function(unitName) {
+            requestedUnit = unitName;
+            ++requestCount;
+        });
+        restartButton.clicked();
+        compare(requestedUnit, "hyprshelld-configd.service");
+        compare(requestCount, 1);
+
+        warning.restartBusy = true;
+        warning.restartingUnit = "hyprshelld-configd.service";
+        compare(restartButton.enabled, false);
+        compare(restartButton.text, "Restarting…");
+
+        warning.restartErrorUnit = "hyprshelld-configd.service";
+        warning.restartError = "The restart request was rejected.";
+        const error = findChild(warning, "restartError");
+        verify(error !== null);
+        compare(error.visible, true);
+        verify(error.text.includes("Settings service"));
+
+        warning.coordinatorFailedUnits = ["hyprshelld-surfaced.service"];
+        compare(error.visible, false);
+    }
+
+    function test_systemdFallbackIsReadOnly() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorAvailable = false;
+        warning.fallbackActive = true;
+        warning.fallbackAvailable = true;
+        warning.targetState = "active";
+        warning.coordinatorState = "failed";
+        warning.configurationState = "active";
+        warning.surfaceState = "active";
+        waitForRendering(warning);
+        compare(warning.warningVisible, true);
+        compare(warning.failedComponentCount, 1);
+        compare(warning.friendlyName("hyprshelld.service"), "Shell health");
+
+        const restartButton = findChild(
+            warning,
+            "restartButton-hyprshelld.service"
+        );
+        verify(restartButton !== null);
+        compare(restartButton.visible, false);
+        verify(warning.warningDescription.includes("directly from systemd"));
+    }
+
+    function test_unavailableFallbackRemainsVisible() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorAvailable = false;
+        warning.fallbackActive = true;
+        warning.fallbackAvailable = false;
+        warning.fallbackBusy = false;
+        waitForRendering(warning);
+        compare(warning.warningVisible, true);
+        compare(warning.warningTitle, "Service status unavailable");
+        compare(warning.failedComponentCount, 0);
+
+        warning.restartError = "The restart request was rejected.";
+        const error = findChild(warning, "restartError");
+        verify(error !== null);
+        compare(error.visible, true);
+        verify(error.text.includes("rejected"));
+    }
 }
