@@ -10,6 +10,7 @@ foreach(required IN ITEMS
     INSTALL_SYSTEMD_UNIT_DIR
     QML_EXECUTABLE
     DBUS_RUN_SESSION
+    DBUS_CONFIG
     MODULE_PROBE
 )
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
@@ -107,6 +108,7 @@ execute_process(
         "XDG_DATA_HOME=${probe_data}"
         "XDG_DATA_DIRS=${probe_system_data}"
         "${DBUS_RUN_SESSION}"
+        "--config-file=${DBUS_CONFIG}"
         --
         "${QML_EXECUTABLE}"
         -import

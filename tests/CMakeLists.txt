@@ -253,6 +253,7 @@ add_test(
     NAME config-client
     COMMAND
         "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
         --
         "${CMAKE_COMMAND}"
         -E
@@ -327,6 +328,7 @@ add_test(
     NAME qml-modules
     COMMAND
         "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
         --
         "${CMAKE_COMMAND}"
         -E
@@ -361,6 +363,7 @@ add_test(
     NAME settings-smoke
     COMMAND
         "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
         --
         "${CMAKE_COMMAND}"
         -E
@@ -505,6 +508,7 @@ add_test(
         "-DINSTALL_SYSTEMD_UNIT_DIR=${HYPRSHELLD_INSTALL_SYSTEMD_UNIT_DIRECTORY}"
         "-DQML_EXECUTABLE=$<TARGET_FILE:Qt6::qmltestrunner>"
         "-DDBUS_RUN_SESSION=${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "-DDBUS_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
         "-DMODULE_PROBE=${CMAKE_CURRENT_SOURCE_DIR}/staged_module_probe.qml"
         -P
         "${CMAKE_CURRENT_SOURCE_DIR}/verify_staged_install.cmake"
