@@ -85,10 +85,16 @@ private slots:
         QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 2ULL);
 
+        client.setBarHeight(64);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QVERIFY(!client.lastErrorName().isEmpty());
+
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
         QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 2ULL);
+        QVERIFY(client.lastErrorName().isEmpty());
+        QVERIFY(client.lastErrorMessage().isEmpty());
 
         QDBusInterface external(busName, objectPath, interfaceName, bus_);
         QDBusPendingReply<qulonglong> changed = external.asyncCall(

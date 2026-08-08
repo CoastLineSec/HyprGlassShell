@@ -39,6 +39,8 @@ add_test(
     NAME quickshell-qml-lint
     COMMAND
         "$<TARGET_FILE:Qt6::qmllint>"
+        -W
+        0
         ${HYPRSHELLD_QUALIFICATION_QML}
 )
 
@@ -46,9 +48,27 @@ add_test(
     NAME shared-qml-lint
     COMMAND
         "$<TARGET_FILE:Qt6::qmllint>"
+        -W
+        0
         -I
         "${QT_QML_OUTPUT_DIRECTORY}"
+        "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/Bar.qml"
         "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/BarHeightControl.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/Main.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
+)
+
+add_test(
+    NAME surfaced-qml-lint
+    COMMAND
+        "$<TARGET_FILE:Qt6::qmllint>"
+        -W
+        0
+        -I
+        "${QT_QML_OUTPUT_DIRECTORY}"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/shell.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/BarSurface.qml"
 )
 
 set(HYPRSHELLD_COORDINATOR_PROXY_SOURCES)
@@ -264,6 +284,36 @@ add_test(
 
 set_tests_properties(
     qml-modules
+    PROPERTIES
+        TIMEOUT 30
+)
+
+qt_add_executable(
+    hyprshelld-settings-smoke-test
+    settings_smoke_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-settings-smoke-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+)
+
+add_test(
+    NAME settings-smoke
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "${CMAKE_COMMAND}"
+        -E
+        env
+        "HYPRSHELLD_SETTINGS_EXECUTABLE=$<TARGET_FILE:hyprshelld-settings>"
+        "$<TARGET_FILE:hyprshelld-settings-smoke-test>"
+)
+
+set_tests_properties(
+    settings-smoke
     PROPERTIES
         TIMEOUT 30
 )

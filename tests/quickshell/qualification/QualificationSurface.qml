@@ -2,7 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 
-PanelWindow {
+// PanelWindow and margins are supplied by Quickshell's runtime backend.
+PanelWindow { // qmllint disable uncreatable-type
     id: root
 
     property var modelData
@@ -25,11 +26,15 @@ PanelWindow {
         right: true
     }
 
+    // qmllint disable unqualified
+    // qmllint disable unresolved-type
     margins {
         top: 12
         left: 12
         right: 12
     }
+    // qmllint enable unresolved-type
+    // qmllint enable unqualified
 
     surfaceFormat.opaque: false
 

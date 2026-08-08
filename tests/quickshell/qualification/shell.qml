@@ -3,6 +3,8 @@
 //@ pragma CacheDir $BASE/hyprshelld/qualification
 //@ pragma DataDir $BASE/hyprshelld/qualification
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Io

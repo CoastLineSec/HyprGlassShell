@@ -305,6 +305,10 @@ void ConfigClient::setAvailable(bool available)
 
     available_ = available;
     emit availableChanged();
+
+    if (available_) {
+        clearError();
+    }
 }
 
 void ConfigClient::setError(const QString &name, const QString &message)

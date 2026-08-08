@@ -3,6 +3,7 @@ qt_add_qml_module(
     SHARED
     URI HyprShelld.UI
     QML_FILES
+        Bar.qml
         BarHeightControl.qml
 )
 

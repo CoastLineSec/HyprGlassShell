@@ -11,6 +11,8 @@ Control {
     required property int defaultValue
     property bool busy: false
     property string errorText: ""
+    readonly property int previewValue: Math.round(slider.value)
+    readonly property bool adjusting: slider.pressed
 
     signal valueRequested(int value)
     signal resetRequested()
@@ -57,6 +59,7 @@ Control {
         Slider {
             id: slider
 
+            objectName: "barHeightSlider"
             Layout.fillWidth: true
             from: root.minimumValue
             to: root.maximumValue
@@ -85,6 +88,8 @@ Control {
                 visible: root.errorText.length > 0
                 text: root.errorText
                 wrapMode: Text.Wrap
+                Accessible.role: Accessible.AlertMessage
+                Accessible.name: text
             }
 
             Button {
