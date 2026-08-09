@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/hyprland/v1/catalog.schema.json",
+  "title": "HyprShelld Hyprland option catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "hyprland",
+    "options",
+    "complexSurfaces",
+    "compatibility"
+  ],
+  "properties": {
+    "contractVersion": {"const": 1},
+    "hyprland": {"$ref": "#/$defs/hyprlandRange"},
+    "options": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {"$ref": "#/$defs/option"}
+    },
+    "complexSurfaces": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/complexSurface"}
+    },
+    "compatibility": {"$ref": "#/$defs/compatibility"}
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "webUrl": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "$comment": "Runtime additionally requires Unicode NFC and an absolute URL without user information.",
+      "pattern": "^https://wiki\\.hypr\\.land/0\\.56\\.0/"
+    },
+    "hyprlandRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["major", "minor", "reviewedVersion", "reviewedTag", "reviewedCommit", "repository", "minimumPatch", "maximumPatch"],
+      "properties": {
+        "major": {"const": 0},
+        "minor": {"const": 56},
+        "reviewedVersion": {"const": "0.56.1"},
+        "reviewedTag": {"const": "v0.56.1"},
+        "reviewedCommit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"},
+        "repository": {"const": "https://github.com/hyprwm/Hyprland"},
+        "minimumPatch": {"const": 0},
+        "maximumPatch": {"const": null}
+      }
+    },
+    "choiceValue": {
+      "type": ["integer", "string"]
+    },
+    "hyprlandPath": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 255,
+      "pattern": "^[a-z][a-z0-9_-]*(?::[a-z][a-z0-9_-]*(?:\\.[a-z][a-z0-9_-]*)*)+$"
+    },
+    "inheritedDefault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "from"],
+      "properties": {
+        "kind": {"const": "inherit"},
+        "from": {"$ref": "#/$defs/hyprlandPath"}
+      }
+    },
+    "choice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "value"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1, "maxLength": 128},
+        "value": {"$ref": "#/$defs/choiceValue"}
+      }
+    },
+    "bound": {
+      "anyOf": [
+        {"type": "number"},
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"type": "number"}
+        }
+      ]
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {"$ref": "#/$defs/bound"},
+        "max": {"$ref": "#/$defs/bound"},
+        "step": {"type": "number", "exclusiveMinimum": 0},
+        "choices": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/choice"}
+        },
+        "maxLength": {"type": "integer", "minimum": 0, "maximum": 65536},
+        "pattern": {"type": "string", "minLength": 1, "maxLength": 1024}
+      }
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^0x[0-9A-F]{8}$"
+    },
+    "gradient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["colors", "angle"],
+      "properties": {
+        "colors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {"$ref": "#/$defs/color"}
+        },
+        "angle": {"type": "number", "minimum": -3600, "maximum": 3600}
+      }
+    },
+    "defaultValue": {
+      "anyOf": [
+        {"type": "boolean"},
+        {"type": "number"},
+        {"type": "string", "maxLength": 4096},
+        {"$ref": "#/$defs/inheritedDefault"},
+        {"$ref": "#/$defs/gradient"},
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {"type": "number"}
+        }
+      ]
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "module",
+        "luaPath",
+        "type",
+        "defaultPolicy",
+        "writable",
+        "default",
+        "uiTier",
+        "control",
+        "constraints",
+        "applyMode",
+        "risk",
+        "since",
+        "description",
+        "documentation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^hyprland\\.[a-z][a-z0-9_-]*(?:\\.[a-z][a-z0-9_-]*)+$"
+        },
+        "path": {"$ref": "#/$defs/hyprlandPath"},
+        "module": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "luaPath": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "type": {
+          "enum": [
+            "boolean",
+            "integer",
+            "number",
+            "string",
+            "color",
+            "gradient",
+            "vector2",
+            "cssGap",
+            "fontWeight",
+            "enum"
+          ]
+        },
+        "defaultPolicy": {"enum": ["hyprland", "hyprshelld"]},
+        "writable": {"type": "boolean"},
+        "default": {"$ref": "#/$defs/defaultValue"},
+        "uiTier": {"enum": ["common", "advanced", "expert", "external"]},
+        "control": {
+          "enum": [
+            "toggle",
+            "spinBox",
+            "slider",
+            "text",
+            "color",
+            "gradient",
+            "vector2",
+            "select"
+          ]
+        },
+        "constraints": {"$ref": "#/$defs/constraints"},
+        "applyMode": {"enum": ["reload", "restart", "session"]},
+        "risk": {"enum": ["safe", "caution", "dangerous"]},
+        "since": {"$ref": "#/$defs/semver"},
+        "until": {"$ref": "#/$defs/semver"},
+        "description": {
+          "type": "string", "minLength": 1, "maxLength": 4096,
+          "$comment": "Runtime additionally requires Unicode NFC and rejects Unicode control/format characters."
+        },
+        "documentation": {"$ref": "#/$defs/webUrl"}
+      }
+    },
+    "complexSurface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "module",
+        "luaPath",
+        "ordered",
+        "identityField",
+        "applyMode",
+        "risk",
+        "description",
+        "schemaRef",
+        "documentation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][A-Za-z0-9]{0,63}$"
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z][A-Za-z0-9]{0,63}$"
+        },
+        "module": {
+          "type": "string", "minLength": 1, "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "luaPath": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "items": {
+            "type": "string", "minLength": 1, "maxLength": 64,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "ordered": {"const": true},
+        "identityField": {"const": "id"},
+        "applyMode": {"enum": ["reload", "restart", "session"]},
+        "risk": {"enum": ["safe", "caution", "dangerous"]},
+        "description": {
+          "type": "string", "minLength": 1, "maxLength": 4096,
+          "$comment": "Runtime additionally requires Unicode NFC and rejects Unicode control/format characters."
+        },
+        "schemaRef": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^config\\.schema\\.json#/\\$defs/[A-Za-z][A-Za-z0-9]*$"
+        },
+        "documentation": {"$ref": "#/$defs/webUrl"}
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimumSupported",
+        "fullyQualified",
+        "olderMinor",
+        "newerMinor",
+        "unknownMajor"
+      ],
+      "properties": {
+        "minimumSupported": {"const": "0.55.0"},
+        "fullyQualified": {"const": ["0.56.x"]},
+        "olderMinor": {"const": "migration"},
+        "newerMinor": {"const": "read-only"},
+        "unknownMajor": {"const": "unsupported"}
+      }
+    }
+  }
+}

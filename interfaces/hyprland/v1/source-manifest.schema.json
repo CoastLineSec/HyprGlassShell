@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/hyprland/v1/source-manifest.schema.json",
+  "title": "HyprShelld qualified Hyprland source manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "repository", "reviewedOn", "versionFiles", "sources", "complexSources", "documentation"],
+  "properties": {
+    "formatVersion": {"const": 1},
+    "repository": {"const": "https://github.com/hyprwm/Hyprland"},
+    "reviewedOn": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "versionFiles": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/versionSource"}
+    },
+    "sources": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/scalarSource"}
+    },
+    "complexSources": {
+      "type": "array", "minItems": 45, "maxItems": 45,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/complexSource"}
+    },
+    "documentation": {
+      "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+      "items": {"type": "string", "maxLength": 2048, "pattern": "^https://wiki\\.hypr\\.land/0\\.56\\.0/"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "relativeSourcePath": {
+      "type": "string", "minLength": 1, "maxLength": 512,
+      "pattern": "^src/[A-Za-z0-9._/-]+$"
+    },
+    "versionSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "tag", "commit", "path", "sha256"],
+      "properties": {
+        "version": {"enum": ["0.55.0", "0.56.1"]},
+        "tag": {"enum": ["v0.55.0", "v0.56.1"]},
+        "commit": {"$ref": "#/$defs/commit"},
+        "path": {"const": "VERSION"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "oneOf": [
+        {"properties": {"version": {"const": "0.55.0"}, "tag": {"const": "v0.55.0"}, "commit": {"const": "af923e30d1d24f1f4a4f5cb8308065173c1d9539"}, "sha256": {"const": "ac6c7168f4989720dc4505c85ea89d7cfdbd57f14f903bb8689cd23c992ed19e"}}},
+        {"properties": {"version": {"const": "0.56.1"}, "tag": {"const": "v0.56.1"}, "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"}, "sha256": {"const": "2aaeb543208a766598b45262f3eabb0600c2a6055350ab8be22b5bf944a484e9"}}}
+      ]
+    },
+    "scalarSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "tag", "commit", "path", "sha256", "optionCount"],
+      "properties": {
+        "version": {"enum": ["0.55.0", "0.56.1"]},
+        "tag": {"enum": ["v0.55.0", "v0.56.1"]},
+        "commit": {"$ref": "#/$defs/commit"},
+        "path": {"const": "src/config/values/ConfigValues.cpp"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "optionCount": {"enum": [341, 353]}
+      },
+      "oneOf": [
+        {"properties": {"version": {"const": "0.55.0"}, "tag": {"const": "v0.55.0"}, "commit": {"const": "af923e30d1d24f1f4a4f5cb8308065173c1d9539"}, "sha256": {"const": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"}, "optionCount": {"const": 341}}},
+        {"properties": {"version": {"const": "0.56.1"}, "tag": {"const": "v0.56.1"}, "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"}, "sha256": {"const": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"}, "optionCount": {"const": 353}}}
+      ]
+    },
+    "complexSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "tag", "commit", "path", "sha256"],
+      "properties": {
+        "version": {"const": "0.56.1"},
+        "tag": {"const": "v0.56.1"},
+        "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"},
+        "path": {"$ref": "#/$defs/relativeSourcePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "oneOf": [
+        {"properties": {"path": {"const": "src/animation/AnimationManager.cpp"}, "sha256": {"const": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985"}}},
+        {"properties": {"path": {"const": "src/animation/WorkspaceAnimationController.cpp"}, "sha256": {"const": "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b"}}},
+        {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsConfigRules.cpp"}, "sha256": {"const": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"}}},
+        {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsDispatchers.cpp"}, "sha256": {"const": "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223"}}},
+        {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsInternal.cpp"}, "sha256": {"const": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"}}},
+        {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsInternal.hpp"}, "sha256": {"const": "83630401a5b3d2cd99ec42705a7b70b0fdd73ddb3989c561a4316d15d72f0edd"}}},
+        {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsToplevel.cpp"}, "sha256": {"const": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5"}}},
+        {"properties": {"path": {"const": "src/config/shared/Types.hpp"}, "sha256": {"const": "337556a3fbedda3e34f31f600f4a44d4e85f53a04220f3c90d8394f98d1eb638"}}},
+        {"properties": {"path": {"const": "src/config/shared/actions/ConfigActions.cpp"}, "sha256": {"const": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"}}},
+        {"properties": {"path": {"const": "src/config/shared/animation/AnimationTree.cpp"}, "sha256": {"const": "313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae"}}},
+        {"properties": {"path": {"const": "src/config/shared/monitor/Parser.cpp"}, "sha256": {"const": "616468fd0576d8b201ef00cd69289234f0ffb1c3137ae2a0ac954fabe37dd589"}}},
+        {"properties": {"path": {"const": "src/desktop/rule/Rule.cpp"}, "sha256": {"const": "257687efd814cb714024c14e2952adb26e1e7a1f5907d20aa6aaea1e4c098e2e"}}},
+        {"properties": {"path": {"const": "src/desktop/rule/windowRule/WindowRule.cpp"}, "sha256": {"const": "7034c3325fee476cb501266af67999534ca36cf2841d83c9940db96d116d1f78"}}},
+        {"properties": {"path": {"const": "src/desktop/rule/windowRule/WindowRule.hpp"}, "sha256": {"const": "12cf28cc2aab0126a52ed61b7dcabd77ec6aebb643846883cd4d439e1603853a"}}},
+        {"properties": {"path": {"const": "src/desktop/rule/windowRule/WindowRuleApplicator.cpp"}, "sha256": {"const": "fec33f9a0bc279ffc94ca27a6e9843964840d6269bc28d330d566e05fed3307b"}}},
+        {"properties": {"path": {"const": "src/desktop/state/ViewQuery.cpp"}, "sha256": {"const": "10acb6240350d3fcb07544ab34279bd050984f02b1087d2d4a1febe4d2cbf1cc"}}},
+        {"properties": {"path": {"const": "src/desktop/state/ViewQuery.hpp"}, "sha256": {"const": "e7037e695a48e3b856f2c42285225db03f62aa41b4f694539db4b65be5736a7e"}}},
+        {"properties": {"path": {"const": "src/desktop/types/OverridableVar.hpp"}, "sha256": {"const": "4d111c95b15133ca8f6f8a579fe36f9652a7298d031c45d84d83576670c06501"}}},
+        {"properties": {"path": {"const": "src/desktop/view/Window.cpp"}, "sha256": {"const": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"}}},
+        {"properties": {"path": {"const": "src/desktop/view/animationControllers/LayerSurfaceAnimationController.cpp"}, "sha256": {"const": "22b223f086b454c54f475e7f16b2d499d92cfd071f2083ea58a9f6a4412f0b1d"}}},
+        {"properties": {"path": {"const": "src/desktop/view/animationControllers/WindowAnimationController.cpp"}, "sha256": {"const": "9a8c3c2961a1a55fca7b8783e1c3b808b424291e832bf4cdf88ed7a73e5bab08"}}},
+        {"properties": {"path": {"const": "src/devices/IPointer.hpp"}, "sha256": {"const": "bf4b2309526ca44ac30d2c3d3ad6a66cc7bf8d7a398b22a8fdde58c0f0ab1310"}}},
+        {"properties": {"path": {"const": "src/helpers/CMType.cpp"}, "sha256": {"const": "b3df474366f4c2e4dae85beae34eef900c5390faaf2683db2e14c919abdd8e00"}}},
+        {"properties": {"path": {"const": "src/helpers/MiscFunctions.cpp"}, "sha256": {"const": "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9"}}},
+        {"properties": {"path": {"const": "src/helpers/MiscFunctions.hpp"}, "sha256": {"const": "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79"}}},
+        {"properties": {"path": {"const": "src/helpers/TransferFunction.cpp"}, "sha256": {"const": "503eafd06a295b1ecbf0506d552db337f79498180f183c0bbc7a12f8855baeaf"}}},
+        {"properties": {"path": {"const": "src/managers/KeybindManager.cpp"}, "sha256": {"const": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"}}},
+        {"properties": {"path": {"const": "src/managers/fullscreen/FullscreenController.hpp"}, "sha256": {"const": "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378"}}},
+        {"properties": {"path": {"const": "src/managers/input/InputManager.cpp"}, "sha256": {"const": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/TrackpadGestures.cpp"}, "sha256": {"const": "5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp"}, "sha256": {"const": "5967e293ccdc7e99b6f6201a1d2e0aeff95b1d763ce5ad3d7fb50fabd76c6753"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/CursorZoomGesture.hpp"}, "sha256": {"const": "9861e8cf3c6d26632731f164da5a4a016553d4f8ea6f71d68855cc7a682a6962"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/FloatGesture.cpp"}, "sha256": {"const": "d10abdf34e7e966777c91e225ed63038da72511e5eb73f81ee3acfd93859934e"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/FloatGesture.hpp"}, "sha256": {"const": "dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp"}, "sha256": {"const": "b72fb2976e43899884afd9f8d9f6c6b3c6da04c9797482ef6df614e1bdc483e5"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/FullscreenGesture.hpp"}, "sha256": {"const": "576dd48493e13dc26c56b7fb028084debe2080ac02f7ef644b38675f1217889e"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp"}, "sha256": {"const": "10e6bdece28c998bfbf574d6f455ba53f7286b61a243d13122cb2086ab81bbae"}}},
+        {"properties": {"path": {"const": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.hpp"}, "sha256": {"const": "d1d2be5027b63050fa5ef7f71a964c95ae9bdceae47d08765298977e6cf63c22"}}},
+        {"properties": {"path": {"const": "src/protocols/types/ContentType.cpp"}, "sha256": {"const": "54fad7c983134f5da812204e14a4e57280891b2d543b1eb3df225d6309cec1f6"}}},
+        {"properties": {"path": {"const": "src/protocols/types/ContentType.hpp"}, "sha256": {"const": "760baaa2d18559bc377df5fdc5a6bc8be2bd4dd5eb70ece5f7295c0c33216db3"}}},
+        {"properties": {"path": {"const": "src/render/decorations/CHyprGroupBarDecoration.cpp"}, "sha256": {"const": "39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6"}}},
+        {"properties": {"path": {"const": "src/state/MonitorQueryCore.cpp"}, "sha256": {"const": "19e76f03b679d151afa0d55a03c42071ef30578f889df1d15167126cc7c350bc"}}},
+        {"properties": {"path": {"const": "src/state/MonitorQueryCore.hpp"}, "sha256": {"const": "829581d4aeb084cdd30de9c8c8e310ead38d357061df4e82a8279d634870e0f4"}}},
+        {"properties": {"path": {"const": "src/state/WorkspaceQueryCore.cpp"}, "sha256": {"const": "b810515fb0720d1fe6b3e3e1e5d5ebfa57e5503e83840337a614b0862860b3d7"}}},
+        {"properties": {"path": {"const": "src/state/WorkspaceQueryCore.hpp"}, "sha256": {"const": "698a1814b9d47ef08fe8ed54e723a839d73b9191335f3ba879f2e8389b3025a2"}}}
+      ]
+    }
+  }
+}

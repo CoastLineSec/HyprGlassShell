@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "from": "0.55.0",
+  "to": "0.56.1",
+  "added": [
+    "decoration:motion_blur:enabled",
+    "decoration:motion_blur:samples",
+    "group:groupbar:disable_when_only",
+    "input-capture:capture_modifiers",
+    "input-capture:enforce_barriers",
+    "input:tablettool:eraser_button_mode",
+    "input:tablettool:eraser_button_override",
+    "input:tablettool:pressure_range_max",
+    "input:tablettool:pressure_range_min",
+    "master:focus_master_on_close",
+    "misc:initial_workspace_token_timeout",
+    "misc:session_lock_blur"
+  ],
+  "removed": [],
+  "changed": [
+    {
+      "path": "cursor:no_hardware_cursors",
+      "changes": {
+        "default": {
+          "from": 0,
+          "to": 2
+        }
+      }
+    },
+    {
+      "path": "decoration:glow:color",
+      "changes": {
+        "sourceType": {
+          "from": "Color",
+          "to": "Gradient"
+        },
+        "type": {
+          "from": "color",
+          "to": "gradient"
+        },
+        "default": {
+          "from": "0xEE33CCFF",
+          "to": {
+            "colors": [
+              "0xEE33CCFF"
+            ],
+            "angle": 0
+          }
+        }
+      }
+    },
+    {
+      "path": "decoration:glow:color_inactive",
+      "changes": {
+        "sourceType": {
+          "from": "Color",
+          "to": "Gradient"
+        },
+        "type": {
+          "from": "color",
+          "to": "gradient"
+        },
+        "default": {
+          "from": "0x0033CCFF",
+          "to": {
+            "kind": "inherit",
+            "from": "decoration:glow:color"
+          }
+        }
+      }
+    },
+    {
+      "path": "decoration:shadow:color",
+      "changes": {
+        "sourceType": {
+          "from": "Color",
+          "to": "Gradient"
+        },
+        "type": {
+          "from": "color",
+          "to": "gradient"
+        },
+        "default": {
+          "from": "0xEE1A1A1A",
+          "to": {
+            "colors": [
+              "0xEE1A1A1A"
+            ],
+            "angle": 0
+          }
+        }
+      }
+    },
+    {
+      "path": "decoration:shadow:color_inactive",
+      "changes": {
+        "sourceType": {
+          "from": "Color",
+          "to": "Gradient"
+        },
+        "type": {
+          "from": "color",
+          "to": "gradient"
+        }
+      }
+    },
+    {
+      "path": "experimental:wp_cm_1_2",
+      "changes": {
+        "default": {
+          "from": false,
+          "to": true
+        }
+      }
+    },
+    {
+      "path": "general:layout",
+      "changes": {
+        "description": {
+          "from": "which layout to use. [dwindle/master]",
+          "to": "which layout to use. [dwindle/master/scrolling/monocle/lua:<name>]"
+        }
+      }
+    }
+  ]
+}

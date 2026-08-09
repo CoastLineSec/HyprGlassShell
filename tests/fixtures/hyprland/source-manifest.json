@@ -1,0 +1,369 @@
+{
+  "formatVersion": 1,
+  "repository": "https://github.com/hyprwm/Hyprland",
+  "reviewedOn": "2026-08-09",
+  "versionFiles": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "VERSION",
+      "sha256": "ac6c7168f4989720dc4505c85ea89d7cfdbd57f14f903bb8689cd23c992ed19e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "VERSION",
+      "sha256": "2aaeb543208a766598b45262f3eabb0600c2a6055350ab8be22b5bf944a484e9"
+    }
+  ],
+  "sources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce",
+      "optionCount": 341
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754",
+      "optionCount": 353
+    }
+  ],
+  "complexSources": [
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/animation/AnimationManager.cpp",
+      "sha256": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/animation/WorkspaceAnimationController.cpp",
+      "sha256": "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsDispatchers.cpp",
+      "sha256": "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "sha256": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "sha256": "83630401a5b3d2cd99ec42705a7b70b0fdd73ddb3989c561a4316d15d72f0edd"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "sha256": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/Types.hpp",
+      "sha256": "337556a3fbedda3e34f31f600f4a44d4e85f53a04220f3c90d8394f98d1eb638"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/animation/AnimationTree.cpp",
+      "sha256": "313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/monitor/Parser.cpp",
+      "sha256": "616468fd0576d8b201ef00cd69289234f0ffb1c3137ae2a0ac954fabe37dd589"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/Rule.cpp",
+      "sha256": "257687efd814cb714024c14e2952adb26e1e7a1f5907d20aa6aaea1e4c098e2e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/windowRule/WindowRule.cpp",
+      "sha256": "7034c3325fee476cb501266af67999534ca36cf2841d83c9940db96d116d1f78"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/windowRule/WindowRule.hpp",
+      "sha256": "12cf28cc2aab0126a52ed61b7dcabd77ec6aebb643846883cd4d439e1603853a"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/windowRule/WindowRuleApplicator.cpp",
+      "sha256": "fec33f9a0bc279ffc94ca27a6e9843964840d6269bc28d330d566e05fed3307b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/ViewQuery.cpp",
+      "sha256": "10acb6240350d3fcb07544ab34279bd050984f02b1087d2d4a1febe4d2cbf1cc"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/ViewQuery.hpp",
+      "sha256": "e7037e695a48e3b856f2c42285225db03f62aa41b4f694539db4b65be5736a7e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/types/OverridableVar.hpp",
+      "sha256": "4d111c95b15133ca8f6f8a579fe36f9652a7298d031c45d84d83576670c06501"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/animationControllers/LayerSurfaceAnimationController.cpp",
+      "sha256": "22b223f086b454c54f475e7f16b2d499d92cfd071f2083ea58a9f6a4412f0b1d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/animationControllers/WindowAnimationController.cpp",
+      "sha256": "9a8c3c2961a1a55fca7b8783e1c3b808b424291e832bf4cdf88ed7a73e5bab08"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/IPointer.hpp",
+      "sha256": "bf4b2309526ca44ac30d2c3d3ad6a66cc7bf8d7a398b22a8fdde58c0f0ab1310"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/CMType.cpp",
+      "sha256": "b3df474366f4c2e4dae85beae34eef900c5390faaf2683db2e14c919abdd8e00"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/MiscFunctions.cpp",
+      "sha256": "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/MiscFunctions.hpp",
+      "sha256": "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/TransferFunction.cpp",
+      "sha256": "503eafd06a295b1ecbf0506d552db337f79498180f183c0bbc7a12f8855baeaf"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/KeybindManager.cpp",
+      "sha256": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/fullscreen/FullscreenController.hpp",
+      "sha256": "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/TrackpadGestures.cpp",
+      "sha256": "5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp",
+      "sha256": "5967e293ccdc7e99b6f6201a1d2e0aeff95b1d763ce5ad3d7fb50fabd76c6753"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.hpp",
+      "sha256": "9861e8cf3c6d26632731f164da5a4a016553d4f8ea6f71d68855cc7a682a6962"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.cpp",
+      "sha256": "d10abdf34e7e966777c91e225ed63038da72511e5eb73f81ee3acfd93859934e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.hpp",
+      "sha256": "dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp",
+      "sha256": "b72fb2976e43899884afd9f8d9f6c6b3c6da04c9797482ef6df614e1bdc483e5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.hpp",
+      "sha256": "576dd48493e13dc26c56b7fb028084debe2080ac02f7ef644b38675f1217889e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp",
+      "sha256": "10e6bdece28c998bfbf574d6f455ba53f7286b61a243d13122cb2086ab81bbae"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.hpp",
+      "sha256": "d1d2be5027b63050fa5ef7f71a964c95ae9bdceae47d08765298977e6cf63c22"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/types/ContentType.cpp",
+      "sha256": "54fad7c983134f5da812204e14a4e57280891b2d543b1eb3df225d6309cec1f6"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/types/ContentType.hpp",
+      "sha256": "760baaa2d18559bc377df5fdc5a6bc8be2bd4dd5eb70ece5f7295c0c33216db3"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprGroupBarDecoration.cpp",
+      "sha256": "39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/state/MonitorQueryCore.cpp",
+      "sha256": "19e76f03b679d151afa0d55a03c42071ef30578f889df1d15167126cc7c350bc"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/state/MonitorQueryCore.hpp",
+      "sha256": "829581d4aeb084cdd30de9c8c8e310ead38d357061df4e82a8279d634870e0f4"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/state/WorkspaceQueryCore.cpp",
+      "sha256": "b810515fb0720d1fe6b3e3e1e5d5ebfa57e5503e83840337a614b0862860b3d7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/state/WorkspaceQueryCore.hpp",
+      "sha256": "698a1814b9d47ef08fe8ed54e723a839d73b9191335f3ba879f2e8389b3025a2"
+    }
+  ],
+  "documentation": [
+    "https://wiki.hypr.land/0.56.0/Configuring/Start/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Basics/Variables/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Using-hyprctl/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Basics/Monitors/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Animations/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Basics/Workspace-Rules/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Basics/Window-Rules/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Permissions/",
+    "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Environment-variables/"
+  ]
+}

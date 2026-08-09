@@ -1,0 +1,1440 @@
+{
+  "contractVersion": 1,
+  "hyprland": {
+    "reviewedVersion": "0.56.1",
+    "reviewedTag": "v0.56.1",
+    "reviewedCommit": "5c9377c15f85c50648f35ca5a213754f95b93ca0"
+  },
+  "configSchemaDigest": "85bc06011e93563217742c0bddb67d84da232404cb32e73e3a3e663a0ffaadd5",
+  "source": {
+    "repository": "https://github.com/hyprwm/Hyprland",
+    "tag": "v0.56.1",
+    "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+    "path": "src/config/lua/bindings/LuaBindingsDispatchers.cpp",
+    "sha256": "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223"
+  },
+  "dispatcherActions": [
+    {
+      "id": "cursor.move",
+      "label": "Cursor Move",
+      "description": "Move the pointer to exact compositor coordinates.",
+      "luaPath": [
+        "dsp",
+        "cursor",
+        "move"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/cursorMoveArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "cursor.move_to_corner",
+      "label": "Cursor Move To Corner",
+      "description": "Move the pointer to a selected corner of the focused window.",
+      "luaPath": [
+        "dsp",
+        "cursor",
+        "move_to_corner"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/cursorCornerArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "dpms",
+      "label": "DPMS",
+      "description": "Toggle, enable, or disable display power management.",
+      "luaPath": [
+        "dsp",
+        "dpms"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/dpmsArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "event",
+      "label": "Event",
+      "description": "Emit a custom Hyprland IPC event.",
+      "luaPath": [
+        "dsp",
+        "event"
+      ],
+      "invocation": {
+        "kind": "scalar",
+        "field": "event"
+      },
+      "uiTier": "expert",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/eventArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "exit",
+      "label": "Exit",
+      "description": "Exit the running Hyprland session.",
+      "luaPath": [
+        "dsp",
+        "exit"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "dangerous",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "focus",
+      "label": "Focus",
+      "description": "Focus a window, workspace, monitor, direction, urgent target, or prior target.",
+      "luaPath": [
+        "dsp",
+        "focus"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/focusArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "force_idle",
+      "label": "Force Idle",
+      "description": "Advance idle timers by a specified number of seconds.",
+      "luaPath": [
+        "dsp",
+        "force_idle"
+      ],
+      "invocation": {
+        "kind": "scalar",
+        "field": "seconds"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/forceIdleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "force_renderer_reload",
+      "label": "Force Renderer Reload",
+      "description": "Force Hyprland to reload renderer resources.",
+      "luaPath": [
+        "dsp",
+        "force_renderer_reload"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "expert",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "global",
+      "label": "Global",
+      "description": "Invoke a registered global shortcut.",
+      "luaPath": [
+        "dsp",
+        "global"
+      ],
+      "invocation": {
+        "kind": "scalar",
+        "field": "name"
+      },
+      "uiTier": "expert",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/globalArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.active",
+      "label": "Group Active",
+      "description": "Activate a window at a specific index in the current group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "active"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/groupActiveArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.lock",
+      "label": "Group Lock",
+      "description": "Toggle, enable, or disable global window-group locking.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "lock"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.lock_active",
+      "label": "Group Lock Active",
+      "description": "Toggle, enable, or disable locking for the active window group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "lock_active"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.move_window",
+      "label": "Group Move Window",
+      "description": "Reorder the active window forward or backward within its group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "move_window"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/groupMoveWindowArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.next",
+      "label": "Group Next",
+      "description": "Activate the next window in the current group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "next"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.prev",
+      "label": "Group Prev",
+      "description": "Activate the previous window in the current group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "prev"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "group.toggle",
+      "label": "Group Toggle",
+      "description": "Toggle the active window's membership in a window group.",
+      "luaPath": [
+        "dsp",
+        "group",
+        "toggle"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "no_op",
+      "label": "No Op",
+      "description": "Perform no compositor action.",
+      "luaPath": [
+        "dsp",
+        "no_op"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "pass",
+      "label": "Pass",
+      "description": "Pass the current key event to a selected window.",
+      "luaPath": [
+        "dsp",
+        "pass"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/passArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "release_input_capture",
+      "label": "Release Input Capture",
+      "description": "Release the active input-capture session.",
+      "luaPath": [
+        "dsp",
+        "release_input_capture"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "expert",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "send_key_state",
+      "label": "Send Key State",
+      "description": "Send an explicit key press, release, or repeat state to a selected window.",
+      "luaPath": [
+        "dsp",
+        "send_key_state"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/sendKeyStateArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "send_shortcut",
+      "label": "Send Shortcut",
+      "description": "Send a modifier and key shortcut to a selected window.",
+      "luaPath": [
+        "dsp",
+        "send_shortcut"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "caution",
+      "argumentsSchemaRef": "config.schema.json#/$defs/sendShortcutArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "submap",
+      "label": "Submap",
+      "description": "Switch to a named keybinding submap.",
+      "luaPath": [
+        "dsp",
+        "submap"
+      ],
+      "invocation": {
+        "kind": "scalar",
+        "field": "name"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/submapArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.alter_zorder",
+      "label": "Window Alter Zorder",
+      "description": "Raise or lower the focused window in the compositor stack.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "alter_zorder"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowAlterZOrderArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.bring_to_top",
+      "label": "Window Bring To Top",
+      "description": "Raise the active window to the top of the compositor stack.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "bring_to_top"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.center",
+      "label": "Window Center",
+      "description": "Center the focused window in its monitor work area.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "center"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.clear_tags",
+      "label": "Window Clear Tags",
+      "description": "Remove all tags from the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "clear_tags"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.close",
+      "label": "Window Close",
+      "description": "Ask the focused window to close.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "close"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.cycle_next",
+      "label": "Window Cycle Next",
+      "description": "Cycle window focus with optional tiled or floating filters.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "cycle_next"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowCycleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.deny_from_group",
+      "label": "Window Deny From Group",
+      "description": "Toggle whether the active window may join a group.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "deny_from_group"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.drag",
+      "label": "Window Drag",
+      "description": "Begin an interactive move operation for the active window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "drag"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.float",
+      "label": "Window Float",
+      "description": "Toggle, enable, or disable floating for the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "float"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.fullscreen",
+      "label": "Window Fullscreen",
+      "description": "Change fullscreen or maximized state for the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "fullscreen"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowFullscreenArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.fullscreen_state",
+      "label": "Window Fullscreen State",
+      "description": "Set the internal and client fullscreen states explicitly.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "fullscreen_state"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowFullscreenStateArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.kill",
+      "label": "Window Kill",
+      "description": "Forcefully terminate the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "kill"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "dangerous",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.move",
+      "label": "Window Move",
+      "description": "Move a window by direction, coordinates, workspace, monitor, or group relation.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "move"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowMoveArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.pin",
+      "label": "Window Pin",
+      "description": "Toggle, enable, or disable pinning for the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "pin"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.pseudo",
+      "label": "Window Pseudo",
+      "description": "Toggle, enable, or disable pseudotiling for the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "pseudo"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/toggleArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.resize",
+      "label": "Window Resize",
+      "description": "Begin interactive resizing or resize the focused window explicitly.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "resize"
+      ],
+      "invocation": {
+        "kind": "empty-object-none-otherwise-table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowResizeArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.signal",
+      "label": "Window Signal",
+      "description": "Send a numeric process signal to the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "signal"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "expert",
+      "risk": "dangerous",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowSignalArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.swap",
+      "label": "Window Swap",
+      "description": "Swap the active window with a directional, selected, next, or previous window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "swap"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowSwapArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.tag",
+      "label": "Window Tag",
+      "description": "Apply a declarative tag to the focused window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "tag"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/windowTagArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "window.toggle_swallow",
+      "label": "Window Toggle Swallow",
+      "description": "Toggle swallowing state for the active window.",
+      "luaPath": [
+        "dsp",
+        "window",
+        "toggle_swallow"
+      ],
+      "invocation": {
+        "kind": "none"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "workspace.change_id",
+      "label": "Workspace Change ID",
+      "description": "Assign a new positive numeric ID to a selected workspace.",
+      "luaPath": [
+        "dsp",
+        "workspace",
+        "change_id"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/workspaceChangeIdArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "workspace.move",
+      "label": "Workspace Move",
+      "description": "Move the current or selected workspace to a monitor.",
+      "luaPath": [
+        "dsp",
+        "workspace",
+        "move"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/workspaceMoveArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "workspace.rename",
+      "label": "Workspace Rename",
+      "description": "Rename a selected workspace.",
+      "luaPath": [
+        "dsp",
+        "workspace",
+        "rename"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/workspaceRenameArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "workspace.swap_monitors",
+      "label": "Workspace Swap Monitors",
+      "description": "Swap the active workspaces between two monitors.",
+      "luaPath": [
+        "dsp",
+        "workspace",
+        "swap_monitors"
+      ],
+      "invocation": {
+        "kind": "table"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/workspaceSwapMonitorsArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "workspace.toggle_special",
+      "label": "Workspace Toggle Special",
+      "description": "Show or hide a named special workspace.",
+      "luaPath": [
+        "dsp",
+        "workspace",
+        "toggle_special"
+      ],
+      "invocation": {
+        "kind": "scalar",
+        "field": "name"
+      },
+      "uiTier": "advanced",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/workspaceToggleSpecialArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    }
+  ],
+  "semanticActions": [
+    {
+      "id": "defaultApp.browser",
+      "label": "Browser",
+      "description": "Launch the configured default web browser.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.calendar",
+      "label": "Calendar",
+      "description": "Launch the configured default calendar application.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.codeEditor",
+      "label": "Code Editor",
+      "description": "Launch the configured default code editor.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.fileManager",
+      "label": "File Manager",
+      "description": "Launch the configured default file manager.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.imageViewer",
+      "label": "Image Viewer",
+      "description": "Launch the configured default image viewer.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.mail",
+      "label": "Mail",
+      "description": "Launch the configured default mail application.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.music",
+      "label": "Music",
+      "description": "Launch the configured default music application.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.pdfViewer",
+      "label": "PDF Viewer",
+      "description": "Launch the configured default PDF viewer.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.systemMonitor",
+      "label": "System Monitor",
+      "description": "Launch the configured default system monitor.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.terminal",
+      "label": "Terminal",
+      "description": "Launch the configured default terminal, with xdg-terminal-exec as the fallback.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.textEditor",
+      "label": "Text Editor",
+      "description": "Launch the configured default text editor.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "defaultApp.video",
+      "label": "Video",
+      "description": "Launch the configured default video application.",
+      "actionType": "defaultApp",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "defaultApp"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.display.brightnessDown",
+      "label": "Display Brightness Down",
+      "description": "Decrease display brightness.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.display.brightnessUp",
+      "label": "Display Brightness Up",
+      "description": "Increase display brightness.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.launcher",
+      "label": "Launcher",
+      "description": "Open the HyprShelld application launcher.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.lock",
+      "label": "Lock",
+      "description": "Lock the current session through the HyprShelld service.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.next",
+      "label": "Media Next",
+      "description": "Skip to the next item in the active media player.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.playPause",
+      "label": "Media Play Pause",
+      "description": "Toggle playback for the active media player.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.previous",
+      "label": "Media Previous",
+      "description": "Return to the previous item in the active media player.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.toggleMicMute",
+      "label": "Media Toggle Mic Mute",
+      "description": "Toggle mute for the default microphone.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.toggleMute",
+      "label": "Media Toggle Mute",
+      "description": "Toggle mute for the default audio output.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.volumeDown",
+      "label": "Media Volume Down",
+      "description": "Decrease the default audio output volume.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.media.volumeUp",
+      "label": "Media Volume Up",
+      "description": "Increase the default audio output volume.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.screenshot.full",
+      "label": "Screenshot Full",
+      "description": "Capture all displays through the HyprShelld screenshot service.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.screenshot.region",
+      "label": "Screenshot Region",
+      "description": "Interactively capture a selected screen region.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.screenshot.window",
+      "label": "Screenshot Window",
+      "description": "Interactively capture a selected window.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.sessionMenu",
+      "label": "Session Menu",
+      "description": "Open the HyprShelld session menu.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.settings",
+      "label": "Settings",
+      "description": "Open HyprShelld Settings.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    },
+    {
+      "id": "hyprshelld.shortcutGuide",
+      "label": "Shortcut Guide",
+      "description": "Open the searchable HyprShelld shortcut guide.",
+      "actionType": "hyprshelld",
+      "invocation": {
+        "kind": "broker",
+        "namespace": "hyprshelld"
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "argumentsSchemaRef": "config.schema.json#/$defs/emptyArguments",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Basics/Binds/"
+    }
+  ],
+  "gestureActions": [
+    {
+      "id": "close",
+      "label": "Close",
+      "description": "Close the active window when the gesture completes.",
+      "luaAction": "close",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "cursorZoom",
+      "label": "Cursor Zoom",
+      "description": "Control compositor cursor zoom with the gesture.",
+      "luaAction": "cursorZoom",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": [
+          {
+            "argument": "zoomLevel",
+            "field": "zoom_level"
+          },
+          {
+            "argument": "mode",
+            "field": "mode"
+          }
+        ]
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "float",
+      "label": "Float",
+      "description": "Change floating state for the active window with the gesture.",
+      "luaAction": "float",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": [
+          {
+            "argument": "mode",
+            "field": "mode"
+          }
+        ]
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "fullscreen",
+      "label": "Fullscreen",
+      "description": "Change fullscreen state for the active window with the gesture.",
+      "luaAction": "fullscreen",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": [
+          {
+            "argument": "mode",
+            "field": "mode"
+          }
+        ]
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "move",
+      "label": "Move",
+      "description": "Move the active window continuously with the gesture.",
+      "luaAction": "move",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "resize",
+      "label": "Resize",
+      "description": "Resize the active window continuously with the gesture.",
+      "luaAction": "resize",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "scrollMove",
+      "label": "Scroll Move",
+      "description": "Move the active scrolling-layout window with the gesture.",
+      "luaAction": "scroll_move",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "special",
+      "label": "Special",
+      "description": "Show or hide a named special workspace with the gesture.",
+      "luaAction": "special",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": [
+          {
+            "argument": "workspace",
+            "field": "workspace_name"
+          }
+        ]
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "unset",
+      "label": "Unset",
+      "description": "Remove the gesture matching these fingers, direction, and modifiers.",
+      "luaAction": "unset",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    },
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "description": "Navigate workspaces along the gesture direction.",
+      "luaAction": "workspace",
+      "invocation": {
+        "kind": "gesture-table",
+        "actionField": "action",
+        "parameters": []
+      },
+      "uiTier": "common",
+      "risk": "safe",
+      "actionSchemaRef": "config.schema.json#/$defs/gestureAction",
+      "documentation": "https://wiki.hypr.land/0.56.0/Configuring/Advanced-and-Cool/Gestures/"
+    }
+  ],
+  "excluded": [
+    {
+      "id": "switch:*",
+      "surface": "bindingKey",
+      "reason": "Tagged switch selectors are not representable as one stable, portable managed key token in v1."
+    },
+    {
+      "id": "mouse",
+      "surface": "bindingOption",
+      "reason": "The tagged Lua parser documents this option but never assigns it; mouse buttons are represented by key symbols."
+    },
+    {
+      "id": "exec_cmd",
+      "surface": "dispatcher",
+      "reason": "Arbitrary process commands are outside managed desired state."
+    },
+    {
+      "id": "exec_raw",
+      "surface": "dispatcher",
+      "reason": "Raw process commands are outside managed desired state."
+    },
+    {
+      "id": "layout",
+      "surface": "dispatcher",
+      "reason": "layout-dependent-message: tagged layout messages use active-layout and plugin-specific mini-languages outside managed v1."
+    },
+    {
+      "id": "window.set_prop",
+      "surface": "dispatcher",
+      "reason": "untyped-prop-value: tagged property values use a property-specific mini-language that is not part of managed v1."
+    },
+    {
+      "id": "callback",
+      "surface": "gesture",
+      "reason": "Live Lua callbacks cannot be represented as declarative state."
+    },
+    {
+      "id": "group",
+      "surface": "windowRuleEffect",
+      "reason": "contextual-group-command: tagged group effects use an order- and window-context-dependent mini-language outside managed v1."
+    },
+    {
+      "id": "on_created_empty",
+      "surface": "workspaceRule",
+      "reason": "Arbitrary workspace creation commands belong in user-custom.lua."
+    }
+  ]
+}

@@ -15,9 +15,10 @@ User documentation begins in [docs/index.md](docs/index.md).
 
 The current Arch Linux build checks require CMake 3.24 or newer, Ninja, a C++23
 compiler, Qt 6.8 or newer, Quickshell 0.3.0, `dbus-run-session`, and systemd 257
-or newer with `busctl` and `systemd-analyze`, plus the libzip development
-package. The build checks also use
-`desktop-file-validate` from `desktop-file-utils`.
+or newer with `busctl` and `systemd-analyze`, plus the libzip, libxkbcommon,
+and RE2 development packages. The build checks also use
+`desktop-file-validate` from `desktop-file-utils` and the Python `jsonschema`
+package for Draft 2020-12 contract validation.
 
 ```sh
 cmake --preset dev

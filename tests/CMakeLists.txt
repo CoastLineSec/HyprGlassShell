@@ -465,6 +465,67 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-hyprland-configuration-test
+    hyprland_configuration_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-hyprland-configuration-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CATALOG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/catalog.schema.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/action-catalog.schema.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_GENERATION_MANIFEST_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/generation-manifest.schema.json"
+        HYPRSHELLD_HYPRLAND_SOURCE_MANIFEST_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/source-manifest.schema.json"
+        HYPRSHELLD_HYPRLAND_056_FIXTURE_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/v0.56.1.scalar-options.json"
+        HYPRSHELLD_HYPRLAND_055_FIXTURE_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/v0.55.0.scalar-options.json"
+        HYPRSHELLD_HYPRLAND_DELTA_FIXTURE_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/v0.55.0-to-v0.56.1.delta.json"
+        HYPRSHELLD_HYPRLAND_SOURCE_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/source-manifest.json"
+)
+
+target_link_libraries(
+    hyprshelld-hyprland-configuration-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-hyprland-core
+)
+
+add_test(
+    NAME hyprland-configuration
+    COMMAND hyprshelld-hyprland-configuration-test
+)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+execute_process(
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        -c
+        "from jsonschema import Draft202012Validator, FormatChecker"
+    RESULT_VARIABLE HYPRSHELLD_JSONSCHEMA_IMPORT_RESULT
+    OUTPUT_QUIET
+    ERROR_QUIET
+)
+if(NOT HYPRSHELLD_JSONSCHEMA_IMPORT_RESULT EQUAL 0)
+    message(
+        FATAL_ERROR
+        "The Python jsonschema package with Draft 2020-12 support is required when BUILD_TESTING is enabled"
+    )
+endif()
+
+add_test(
+    NAME hyprland-contract-schema
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tools/hyprland/validate_contract.py"
+        --root
+        "${PROJECT_SOURCE_DIR}"
+)
+
+qt_add_executable(
     hyprshelld-component-store-test
     component_store_test.cpp
 )
