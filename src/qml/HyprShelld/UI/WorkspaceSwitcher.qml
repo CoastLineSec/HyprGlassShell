@@ -9,7 +9,8 @@ Item {
     required property var workspaces
     required property bool available
     required property string outputName
-    property string labelMode: "numbers"
+    property bool showIdentifiers: true
+    property bool showNames: false
     property bool showApplications: false
     property int maximumApplications: 3
     property string scrollMode: "disabled"
@@ -53,7 +54,7 @@ Item {
     readonly property int transitionDuration: 150
 
     function workspaceIdentifier(entry) {
-        if (!entry || root.labelMode === "compact")
+        if (!entry || !root.showIdentifiers)
             return "";
 
         const raw = String(
@@ -61,21 +62,31 @@ Item {
         ).trim();
         if (raw.length === 0)
             return "";
+        const workspaceId = Number(entry.workspaceId);
+        if (Number.isFinite(workspaceId) && workspaceId < 0)
+            return raw.charAt(0).toUpperCase();
         if (/^-?\d+$/.test(raw))
             return raw;
         return raw.charAt(0).toUpperCase();
     }
 
     function workspaceNameLabel(entry) {
-        if (!entry || root.labelMode !== "names")
+        if (!entry || !root.showNames)
             return "";
 
         const name = String(entry.name || "").trim();
         const numberLabel = String(entry.numberLabel || "").trim();
         if (name.length === 0)
             return "";
-        if (name === numberLabel && /^-?\d+$/.test(numberLabel))
+        const workspaceId = Number(entry.workspaceId);
+        const numberedWorkspace = Number.isFinite(workspaceId)
+            ? workspaceId >= 0
+            : /^-?\d+$/.test(numberLabel);
+        if (numberedWorkspace
+                && name === numberLabel
+                && /^-?\d+$/.test(numberLabel)) {
             return "";
+        }
         return name;
     }
 

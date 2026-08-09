@@ -8,12 +8,21 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <limits>
+
 #include <sys/stat.h>
 #include <unistd.h>
 
 using namespace HyprShelld;
 
 namespace {
+
+const QString workspaceId = QString::fromLatin1(
+    Components::workspaceSwitcherId
+);
+const QString previousWorkspaceDigest = QStringLiteral(
+    "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7"
+);
 
 QString defaultsFile()
 {
@@ -26,6 +35,37 @@ Components::ConfigurationCatalog catalog()
         defaultsFile(),
         QStringLiteral(HYPRSHELLD_WORKSPACE_SCHEMA_FILE)
     );
+}
+
+QJsonObject previousWorkspaceSettings(
+    const QString &labelMode,
+    const bool showApplications = false,
+    const int maximumApplications = 3,
+    const bool occupiedOnly = false,
+    const QString &scrollMode = QStringLiteral("disabled")
+)
+{
+    return {
+        {QStringLiteral("labelMode"), labelMode},
+        {QStringLiteral("showApplications"), showApplications},
+        {QStringLiteral("maximumApplications"), maximumApplications},
+        {QStringLiteral("occupiedOnly"), occupiedOnly},
+        {QStringLiteral("scrollMode"), scrollMode},
+    };
+}
+
+Components::ComponentConfiguration previousWorkspaceConfiguration(
+    const QString &labelMode = QStringLiteral("numbers")
+)
+{
+    const auto parsed = Components::parseComponentConfiguration(
+        QByteArrayView(Tests::readBytes(defaultsFile())), catalog()
+    );
+    Q_ASSERT(parsed);
+    auto state = *parsed.value;
+    state.components[workspaceId].packageDigest = previousWorkspaceDigest;
+    state.instances.first().settings = previousWorkspaceSettings(labelMode);
+    return state;
 }
 
 bool createFifo(const QString &path)
@@ -317,6 +357,312 @@ private slots:
         QCOMPARE(loaded.loadState, ComponentLoadState::Unavailable);
     }
 
+    void migratesEveryKnownLabelModeAndPreservesComposition()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(), defaultsFile()
+        );
+        auto previous = previousWorkspaceConfiguration();
+        previous.revision = 41;
+        previous.components[workspaceId].enabled = false;
+
+        const auto numbersId = QString::fromLatin1(
+            Components::workspaceSwitcherDefaultInstanceId
+        );
+        previous.instances[numbersId].enabled = false;
+        previous.instances[numbersId].settings = previousWorkspaceSettings(
+            QStringLiteral("numbers"), true, 5, true,
+            QStringLiteral("reversed")
+        );
+        const auto compactId = QStringLiteral(
+            "11111111-1111-4111-8111-111111111111"
+        );
+        previous.instances.insert(compactId, {
+            .componentId = workspaceId,
+            .enabled = true,
+            .settings = previousWorkspaceSettings(
+                QStringLiteral("compact"), false, 2, false,
+                QStringLiteral("normal")
+            ),
+        });
+        const auto namesId = QStringLiteral(
+            "22222222-2222-4222-8222-222222222222"
+        );
+        previous.instances.insert(namesId, {
+            .componentId = workspaceId,
+            .enabled = true,
+            .settings = previousWorkspaceSettings(
+                QStringLiteral("names"), true, 4, true
+            ),
+        });
+
+        const auto dormantId = QStringLiteral("org.example.retained");
+        const auto dormantInstanceId = QStringLiteral(
+            "33333333-3333-4333-8333-333333333333"
+        );
+        previous.components.insert(dormantId, {
+            .packageDigest = QString(64, QLatin1Char('b')),
+            .enabled = true,
+            .grantedCapabilities = {QStringLiteral("org.example.read")},
+            .settings = {{QStringLiteral("retained"), true}},
+        });
+        previous.instances.insert(dormantInstanceId, {
+            .componentId = dormantId,
+            .enabled = false,
+            .settings = {{QStringLiteral("value"), QStringLiteral("kept")}},
+        });
+        previous.bars[QStringLiteral("main")].start = {numbersId};
+        previous.bars[QStringLiteral("main")].center = {compactId};
+        previous.bars[QStringLiteral("main")].end = {
+            namesId, dormantInstanceId,
+        };
+
+        const auto bytes = Components::serializeComponentConfiguration(
+            previous
+        );
+        QVERIFY(Tests::writeBytes(paths.activeFile, bytes));
+        QVERIFY(Tests::writeBytes(paths.recoveryFile, bytes));
+
+        const auto loaded = ComponentStore(paths).load(catalog());
+        QVERIFY2(loaded.available, qPrintable(loaded.error));
+        QVERIFY(loaded.writable);
+        QCOMPARE(loaded.loadState, ComponentLoadState::Normal);
+        QCOMPARE(loaded.state.revision, quint64(42));
+        QCOMPARE(
+            loaded.state.components.value(workspaceId).packageDigest,
+            catalog().entries.value(workspaceId).packageDigest
+        );
+        QCOMPARE(loaded.state.components.value(workspaceId).enabled, false);
+        QCOMPARE(loaded.state.instances.value(numbersId).enabled, false);
+        QCOMPARE(loaded.state.instances.value(numbersId).settings, QJsonObject({
+            {QStringLiteral("showIdentifiers"), true},
+            {QStringLiteral("showNames"), false},
+            {QStringLiteral("showApplications"), true},
+            {QStringLiteral("maximumApplications"), 5},
+            {QStringLiteral("occupiedOnly"), true},
+            {QStringLiteral("scrollMode"), QStringLiteral("reversed")},
+        }));
+        QCOMPARE(loaded.state.instances.value(compactId).settings, QJsonObject({
+            {QStringLiteral("showIdentifiers"), false},
+            {QStringLiteral("showNames"), false},
+            {QStringLiteral("showApplications"), false},
+            {QStringLiteral("maximumApplications"), 2},
+            {QStringLiteral("occupiedOnly"), false},
+            {QStringLiteral("scrollMode"), QStringLiteral("normal")},
+        }));
+        QCOMPARE(loaded.state.instances.value(namesId).settings, QJsonObject({
+            {QStringLiteral("showIdentifiers"), true},
+            {QStringLiteral("showNames"), true},
+            {QStringLiteral("showApplications"), true},
+            {QStringLiteral("maximumApplications"), 4},
+            {QStringLiteral("occupiedOnly"), true},
+            {QStringLiteral("scrollMode"), QStringLiteral("disabled")},
+        }));
+        QCOMPARE(
+            loaded.state.components.value(dormantId),
+            previous.components.value(dormantId)
+        );
+        QCOMPARE(
+            loaded.state.instances.value(dormantInstanceId),
+            previous.instances.value(dormantInstanceId)
+        );
+        QCOMPARE(loaded.state.bars, previous.bars);
+        QCOMPARE(
+            Tests::readBytes(paths.activeFile),
+            Tests::readBytes(paths.recoveryFile)
+        );
+
+        const auto restarted = ComponentStore(paths).load(catalog());
+        QVERIFY2(restarted.available, qPrintable(restarted.error));
+        QCOMPARE(restarted.state, loaded.state);
+        QCOMPARE(restarted.state.revision, quint64(42));
+    }
+
+    void migrationIsRecoveryFirstAndCompletesPartialCommit()
+    {
+        auto previous = previousWorkspaceConfiguration(
+            QStringLiteral("compact")
+        );
+        previous.revision = 8;
+        QStringList writes;
+        const ComponentPaths injectedPaths{
+            .activeFile = QStringLiteral("active"),
+            .recoveryFile = QStringLiteral("recovery"),
+            .defaultsFile = QStringLiteral("defaults"),
+        };
+        ComponentStore injected(
+            injectedPaths,
+            [&writes](
+                const QString &path,
+                const Components::ComponentConfiguration &,
+                QString &error
+            ) {
+                writes.append(path);
+                if (path == QStringLiteral("active")) {
+                    error = QStringLiteral("injected active failure");
+                    return false;
+                }
+                return true;
+            }
+        );
+        const auto interrupted = injected.migrate(previous, catalog());
+        QVERIFY(interrupted.changed);
+        QVERIFY(!interrupted.writable);
+        QCOMPARE(
+            writes,
+            QStringList({QStringLiteral("recovery"), QStringLiteral("active")})
+        );
+        QCOMPARE(interrupted.state.revision, quint64(9));
+
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(), defaultsFile()
+        );
+        QVERIFY(Tests::writeBytes(
+            paths.activeFile,
+            Components::serializeComponentConfiguration(previous)
+        ));
+        QVERIFY(Tests::writeBytes(
+            paths.recoveryFile,
+            Components::serializeComponentConfiguration(interrupted.state)
+        ));
+
+        const auto completed = ComponentStore(paths).load(catalog());
+        QVERIFY2(completed.available, qPrintable(completed.error));
+        QVERIFY(completed.writable);
+        QCOMPARE(completed.state, interrupted.state);
+        QCOMPARE(completed.state.revision, quint64(9));
+        QCOMPARE(
+            Tests::readBytes(paths.activeFile),
+            Tests::readBytes(paths.recoveryFile)
+        );
+        const auto restarted = ComponentStore(paths).load(catalog());
+        QCOMPARE(restarted.state, completed.state);
+        QCOMPARE(restarted.state.revision, quint64(9));
+
+        QVERIFY(Tests::writeBytes(
+            paths.activeFile,
+            Components::serializeComponentConfiguration(interrupted.state)
+        ));
+        QVERIFY(Tests::writeBytes(
+            paths.recoveryFile,
+            Components::serializeComponentConfiguration(previous)
+        ));
+        const auto inversePartial = ComponentStore(paths).load(catalog());
+        QVERIFY2(inversePartial.available, qPrintable(inversePartial.error));
+        QVERIFY(inversePartial.writable);
+        QCOMPARE(inversePartial.state, interrupted.state);
+        QCOMPARE(inversePartial.state.revision, quint64(9));
+        QCOMPARE(
+            Tests::readBytes(paths.activeFile),
+            Tests::readBytes(paths.recoveryFile)
+        );
+    }
+
+    void migrationRequiresDurableRecoveryBeforePublication()
+    {
+        auto previous = previousWorkspaceConfiguration(
+            QStringLiteral("names")
+        );
+        previous.revision = 3;
+        int writes = 0;
+        ComponentStore store(
+            {
+                .activeFile = QStringLiteral("active"),
+                .recoveryFile = QStringLiteral("recovery"),
+                .defaultsFile = QStringLiteral("defaults"),
+            },
+            [&writes](
+                const QString &,
+                const Components::ComponentConfiguration &,
+                QString &error
+            ) {
+                ++writes;
+                error = QStringLiteral("injected recovery failure");
+                return false;
+            }
+        );
+        const auto failed = store.migrate(previous, catalog());
+        QVERIFY(!failed.changed);
+        QVERIFY(!failed.writable);
+        QCOMPARE(failed.state, previous);
+        QCOMPARE(writes, 1);
+    }
+
+    void refusesUnknownMalformedAndExhaustedMigrationInputs()
+    {
+        QVector<Components::ComponentConfiguration> candidates;
+        auto unknown = previousWorkspaceConfiguration();
+        unknown.components[workspaceId].packageDigest = QString(
+            64, QLatin1Char('c')
+        );
+        candidates.append(unknown);
+
+        auto malformed = previousWorkspaceConfiguration();
+        malformed.instances.first().settings.insert(
+            QStringLiteral("labelMode"), QStringLiteral("icons")
+        );
+        candidates.append(malformed);
+
+        auto exhausted = previousWorkspaceConfiguration();
+        exhausted.revision = std::numeric_limits<quint64>::max();
+        candidates.append(exhausted);
+
+        for (const auto &candidate : candidates) {
+            int writes = 0;
+            ComponentStore store(
+                {
+                    .activeFile = QStringLiteral("active"),
+                    .recoveryFile = QStringLiteral("recovery"),
+                    .defaultsFile = QStringLiteral("defaults"),
+                },
+                [&writes](
+                    const QString &,
+                    const Components::ComponentConfiguration &,
+                    QString &
+                ) {
+                    ++writes;
+                    return true;
+                }
+            );
+            const auto ignored = store.migrate(candidate, catalog());
+            QVERIFY(!ignored.changed);
+            QVERIFY(ignored.writable);
+            QCOMPARE(ignored.state, candidate);
+            QCOMPARE(writes, 0);
+        }
+
+        int wrongTargetWrites = 0;
+        auto wrongTargetCatalog = catalog();
+        wrongTargetCatalog.entries[workspaceId].packageDigest = QString(
+            64, QLatin1Char('e')
+        );
+        ComponentStore wrongTargetStore(
+            {
+                .activeFile = QStringLiteral("active"),
+                .recoveryFile = QStringLiteral("recovery"),
+                .defaultsFile = QStringLiteral("defaults"),
+            },
+            [&wrongTargetWrites](
+                const QString &,
+                const Components::ComponentConfiguration &,
+                QString &
+            ) {
+                ++wrongTargetWrites;
+                return true;
+            }
+        );
+        const auto wrongTarget = wrongTargetStore.migrate(
+            previousWorkspaceConfiguration(), wrongTargetCatalog
+        );
+        QVERIFY(!wrongTarget.changed);
+        QVERIFY(wrongTarget.writable);
+        QCOMPARE(wrongTargetWrites, 0);
+    }
+
     void importsLegacyWorkspaceSettingsOnlyOnTrueFirstRun()
     {
         QTemporaryDir baselineDirectory;
@@ -353,7 +699,8 @@ private slots:
             Components::workspaceSwitcherDefaultInstanceId
         );
         expected.instances[instanceId].settings = {
-            {QStringLiteral("labelMode"), QStringLiteral("names")},
+            {QStringLiteral("showIdentifiers"), true},
+            {QStringLiteral("showNames"), true},
             {QStringLiteral("showApplications"), true},
             {QStringLiteral("maximumApplications"), 5},
             {QStringLiteral("occupiedOnly"), true},
@@ -380,6 +727,66 @@ private slots:
         QVERIFY2(reloaded.available, qPrintable(reloaded.error));
         QCOMPARE(reloaded.state, migrated.state);
         QCOMPARE(reloaded.loadState, ComponentLoadState::Normal);
+    }
+
+    void mapsEveryLegacyLabelModeOnFirstRun_data()
+    {
+        QTest::addColumn<QString>("labelMode");
+        QTest::addColumn<bool>("showIdentifiers");
+        QTest::addColumn<bool>("showNames");
+        QTest::newRow("numbers")
+            << QStringLiteral("numbers") << true << false;
+        QTest::newRow("compact")
+            << QStringLiteral("compact") << false << false;
+        QTest::newRow("names")
+            << QStringLiteral("names") << true << true;
+    }
+
+    void mapsEveryLegacyLabelModeOnFirstRun()
+    {
+        QFETCH(QString, labelMode);
+        QFETCH(bool, showIdentifiers);
+        QFETCH(bool, showNames);
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(), defaultsFile()
+        );
+        const LegacyWorkspaceSettings legacy{
+            .labelMode = labelMode,
+            .showApplications = true,
+            .maximumApplications = 4,
+            .occupiedOnly = true,
+            .scrollMode = QStringLiteral("normal"),
+        };
+        const auto loaded = ComponentStore(paths).load(catalog(), legacy);
+        QVERIFY2(loaded.available, qPrintable(loaded.error));
+        const auto settings = loaded.state.instances.first().settings;
+        QCOMPARE(
+            settings.value(QStringLiteral("showIdentifiers")).toBool(),
+            showIdentifiers
+        );
+        QCOMPARE(
+            settings.value(QStringLiteral("showNames")).toBool(),
+            showNames
+        );
+        QVERIFY(!settings.contains(QStringLiteral("labelMode")));
+        QCOMPARE(
+            settings.value(QStringLiteral("showApplications")).toBool(),
+            true
+        );
+        QCOMPARE(
+            settings.value(QStringLiteral("maximumApplications")).toInt(),
+            4
+        );
+        QCOMPARE(
+            settings.value(QStringLiteral("occupiedOnly")).toBool(),
+            true
+        );
+        QCOMPARE(
+            settings.value(QStringLiteral("scrollMode")).toString(),
+            QStringLiteral("normal")
+        );
     }
 
     void existingOrDamagedComponentFilesNeverImportLegacy()

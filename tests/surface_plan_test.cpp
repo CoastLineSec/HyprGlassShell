@@ -60,7 +60,7 @@ private slots:
 
         auto changed = plan;
         auto instance = changed.instances.value(QString::fromLatin1(instanceId));
-        instance.settings.insert(QStringLiteral("labelMode"), QStringLiteral("names"));
+        instance.settings.insert(QStringLiteral("showNames"), true);
         changed.instances.insert(QString::fromLatin1(instanceId), instance);
         const auto third = HyprShelld::Components::makeSurfacePlanArtifact(changed);
         QVERIFY(third);

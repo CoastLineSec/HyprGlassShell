@@ -47,7 +47,7 @@ private slots:
         const auto parsed = parseSettingsSchema(workspaceSettingsSchema());
         QVERIFY2(parsed.ok(), "The shipped workspace settings schema must validate");
         QCOMPARE(parsed.value->schemaVersion, 1U);
-        QCOMPARE(parsed.value->settings.size(), 5);
+        QCOMPARE(parsed.value->settings.size(), 6);
 
         const auto *maximum = parsed.value->find(
             QStringLiteral("maximumApplications")
@@ -66,10 +66,14 @@ private slots:
             {}
         );
         QVERIFY(normalized.ok());
-        QCOMPARE(normalized.value->size(), 5);
+        QCOMPARE(normalized.value->size(), 6);
         QCOMPARE(
-            normalized.value->value(QStringLiteral("labelMode")).toString(),
-            QStringLiteral("numbers")
+            normalized.value->value(QStringLiteral("showIdentifiers")).toBool(),
+            true
+        );
+        QCOMPARE(
+            normalized.value->value(QStringLiteral("showNames")).toBool(),
+            false
         );
         QCOMPARE(
             normalized.value->value(

@@ -128,7 +128,7 @@ private slots:
         QCOMPARE(fields.size(), 25);
         QCOMPARE(fields.at(0).toUInt(), 1U);
         QCOMPARE(fields.at(1).toString(), QStringLiteral("bar-widget"));
-        QCOMPARE(fields.at(2).toString(), QStringLiteral("0.1.0"));
+        QCOMPARE(fields.at(2).toString(), QStringLiteral("0.2.0"));
         QCOMPARE(fields.at(3).toString(), QStringLiteral("Workspace Switcher"));
         QCOMPARE(
             fields.at(4).toString(),

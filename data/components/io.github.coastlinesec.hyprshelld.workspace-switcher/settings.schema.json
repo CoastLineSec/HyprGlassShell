@@ -2,19 +2,24 @@
   "schemaVersion": 1,
   "settings": [
     {
-      "key": "labelMode",
+      "key": "showIdentifiers",
       "scope": "instance",
-      "type": "enum",
-      "label": "Label style",
-      "description": "Choose numbers, compact circles without identifiers, or workspace names.",
+      "type": "boolean",
+      "label": "Show workspace identifiers",
+      "description": "Show numbers for numbered workspaces and initials for named workspaces.",
       "group": "appearance",
       "order": 10,
-      "default": "numbers",
-      "options": [
-        {"value": "numbers", "label": "Numbers"},
-        {"value": "compact", "label": "Compact"},
-        {"value": "names", "label": "Names"}
-      ]
+      "default": true
+    },
+    {
+      "key": "showNames",
+      "scope": "instance",
+      "type": "boolean",
+      "label": "Show workspace names",
+      "description": "Show the full name of each named workspace.",
+      "group": "appearance",
+      "order": 20,
+      "default": false
     },
     {
       "key": "showApplications",
@@ -23,7 +28,7 @@
       "label": "Show application icons",
       "description": "Append the applications open on each workspace to its anchor.",
       "group": "appearance",
-      "order": 20,
+      "order": 30,
       "default": false
     },
     {
@@ -33,7 +38,7 @@
       "label": "Maximum icons",
       "description": "Summarize additional applications after this many icons.",
       "group": "appearance",
-      "order": 30,
+      "order": 40,
       "default": 3,
       "minimum": 1,
       "maximum": 5,
@@ -50,7 +55,7 @@
       "label": "Show occupied only",
       "description": "Show workspaces with open windows while keeping the current workspace visible.",
       "group": "behavior",
-      "order": 40,
+      "order": 50,
       "default": false
     },
     {
@@ -60,7 +65,7 @@
       "label": "Scroll action",
       "description": "Choose whether and in which direction scrolling changes workspaces.",
       "group": "behavior",
-      "order": 50,
+      "order": 60,
       "default": "disabled",
       "options": [
         {"value": "disabled", "label": "Disabled"},

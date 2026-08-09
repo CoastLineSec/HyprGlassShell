@@ -113,13 +113,43 @@ void ComponentConfigService::applyCatalog(
         }
     } else if (available_ && !writable_) {
         const auto retried = store_.load(catalog);
-        if (retried.available && retried.state == state_) {
+        if (retried.available
+            && (retried.state == state_
+                || store_.recognizesMigration(
+                    state_, retried.state, catalog
+                ))) {
+            if (retried.state != state_) {
+                state_ = retried.state;
+                changed.insert(
+                    QStringLiteral("Revision"),
+                    QVariant::fromValue<qulonglong>(state_.revision)
+                );
+            }
             writable_ = retried.writable;
             const auto nextLoadState = componentLoadStateName(
                 retried.loadState
             );
             if (loadState_ != nextLoadState) {
                 loadState_ = nextLoadState;
+                changed.insert(QStringLiteral("LoadState"), loadState_);
+            }
+        }
+    } else if (available_) {
+        const auto migrated = store_.migrate(state_, catalog);
+        if (migrated.changed) {
+            state_ = migrated.state;
+            changed.insert(
+                QStringLiteral("Revision"),
+                QVariant::fromValue<qulonglong>(state_.revision)
+            );
+        }
+        if (!migrated.writable) {
+            writable_ = false;
+            const auto unavailable = componentLoadStateName(
+                ComponentLoadState::Unavailable
+            );
+            if (loadState_ != unavailable) {
+                loadState_ = unavailable;
                 changed.insert(QStringLiteral("LoadState"), loadState_);
             }
         }

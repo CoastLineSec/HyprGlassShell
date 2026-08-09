@@ -10,7 +10,8 @@ Page {
     required property int minimumBarHeight
     required property int maximumBarHeight
     required property int defaultBarHeight
-    required property string workspaceLabelMode
+    required property bool workspaceShowIdentifiers
+    required property bool workspaceShowNames
     required property bool workspaceShowApplications
     required property int workspaceMaximumApplications
     required property bool workspaceOccupiedOnly
@@ -91,7 +92,8 @@ Page {
     signal barHeightRequested(int height)
     signal resetBarHeightRequested()
     signal workspaceSwitcherRequested(
-        string labelMode,
+        bool showIdentifiers,
+        bool showNames,
         bool showApplications,
         int maximumApplications,
         bool occupiedOnly,
@@ -380,7 +382,9 @@ Page {
                     adjusting: heightControl.adjusting
                     configurationAvailable: root.coreServiceAvailable
                     animationsEnabled: root.previewAnimationsEnabled
-                    workspaceLabelMode: root.workspaceLabelMode
+                    workspaceShowIdentifiers:
+                        root.workspaceShowIdentifiers
+                    workspaceShowNames: root.workspaceShowNames
                     workspaceShowApplications:
                         root.workspaceShowApplications
                     workspaceMaximumApplications:
@@ -457,7 +461,8 @@ Page {
             WorkspaceSwitcherSettings {
                 objectName: "workspaceSwitcherSettingsCard"
                 Layout.fillWidth: true
-                labelMode: root.workspaceLabelMode
+                showIdentifiers: root.workspaceShowIdentifiers
+                showNames: root.workspaceShowNames
                 showApplications: root.workspaceShowApplications
                 maximumApplications: root.workspaceMaximumApplications
                 occupiedOnly: root.workspaceOccupiedOnly
@@ -465,15 +470,19 @@ Page {
                 controlsEnabled: root.workspaceControlsEnabled
                 featureAvailable: root.workspaceFeatureAvailable
                 featureEnabled: root.workspaceFeatureEnabled
+                synchronizationBusy: root.componentBusy
+                synchronizationError: root.componentErrorText
 
                 onWorkspaceSwitcherRequested: (
-                    labelMode,
+                    showIdentifiers,
+                    showNames,
                     showApplications,
                     maximumApplications,
                     occupiedOnly,
                     scrollMode
                 ) => root.workspaceSwitcherRequested(
-                    labelMode,
+                    showIdentifiers,
+                    showNames,
                     showApplications,
                     maximumApplications,
                     occupiedOnly,

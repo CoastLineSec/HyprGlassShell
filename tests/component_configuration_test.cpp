@@ -263,7 +263,7 @@ private slots:
         desired.insert(QStringLiteral("callerSchema"), QJsonObject());
         desired.insert(
             QStringLiteral("settings"),
-            QJsonObject{{QStringLiteral("labelMode"), QStringLiteral("numbers")}}
+            QJsonObject{{QStringLiteral("showIdentifiers"), true}}
         );
         components.insert(componentId, desired);
         root.insert(QStringLiteral("components"), components);
@@ -479,11 +479,11 @@ private slots:
 
         auto bytes = defaultsBytes();
         const auto oldSettings = QByteArrayLiteral(
-            "\"settings\": {\n        \"labelMode\": \"numbers\","
+            "\"settings\": {\n        \"showIdentifiers\": true,"
         );
         const auto newSettings = QByteArrayLiteral(
             "\"settings\": {\n        \"futureValue\": "
-        ) + number + QByteArrayLiteral(",\n        \"labelMode\": \"numbers\",");
+        ) + number + QByteArrayLiteral(",\n        \"showIdentifiers\": true,");
         QVERIFY(bytes.contains(oldSettings));
         bytes.replace(oldSettings, newSettings);
         bytes.replace(

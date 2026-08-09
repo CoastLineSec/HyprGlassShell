@@ -5,7 +5,8 @@ import QtQuick.Layouts
 Frame {
     id: root
 
-    required property string labelMode
+    required property bool showIdentifiers
+    required property bool showNames
     required property bool showApplications
     required property int maximumApplications
     required property bool occupiedOnly
@@ -13,6 +14,8 @@ Frame {
     property bool controlsEnabled: false
     property bool featureAvailable: true
     property bool featureEnabled: true
+    property bool synchronizationBusy: false
+    property string synchronizationError: ""
 
     readonly property bool effectiveControlsEnabled:
         controlsEnabled && featureAvailable && featureEnabled
@@ -20,24 +23,14 @@ Frame {
         featureAvailable && !featureEnabled
 
     signal workspaceSwitcherRequested(
-        string labelMode,
+        bool showIdentifiers,
+        bool showNames,
         bool showApplications,
         int maximumApplications,
         bool occupiedOnly,
         string scrollMode
     )
     signal resetRequested()
-
-    function labelModeIndex(mode) {
-        switch (mode) {
-        case "compact":
-            return 1;
-        case "names":
-            return 2;
-        default:
-            return 0;
-        }
-    }
 
     function scrollModeIndex(mode) {
         switch (mode) {
@@ -51,7 +44,8 @@ Frame {
     }
 
     function requestSnapshot(
-        labelMode,
+        showIdentifiers,
+        showNames,
         showApplications,
         maximumApplications,
         occupiedOnly,
@@ -59,7 +53,8 @@ Frame {
     ) {
         if (!root.effectiveControlsEnabled)
             return;
-        if (labelMode === root.labelMode
+        if (showIdentifiers === root.showIdentifiers
+                && showNames === root.showNames
                 && showApplications === root.showApplications
                 && maximumApplications === root.maximumApplications
                 && occupiedOnly === root.occupiedOnly
@@ -67,7 +62,8 @@ Frame {
             return;
         }
         root.workspaceSwitcherRequested(
-            labelMode,
+            showIdentifiers,
+            showNames,
             showApplications,
             maximumApplications,
             occupiedOnly,
@@ -157,7 +153,7 @@ Frame {
                 spacing: 2
 
                 Label {
-                    text: qsTr("Label style")
+                    text: qsTr("Show workspace identifiers")
                     color: root.palette.text
                     font.pixelSize: 14
                     font.weight: Font.Medium
@@ -165,32 +161,91 @@ Frame {
 
                 Label {
                     Layout.fillWidth: true
-                    text: qsTr("Numbers fills the current circle and uses smaller hollow numbered circles for the rest. Compact hides identifiers, and Names extend from a circular anchor.")
+                    text: qsTr("Show numbers for numeric workspaces and initials for named workspaces inside their circles.")
                     color: root.palette.placeholderText
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                 }
             }
 
-            ComboBox {
-                id: labelModeControl
+            Switch {
+                id: showIdentifiersControl
 
-                objectName: "workspaceLabelMode"
-                Layout.preferredWidth: 148
+                objectName: "workspaceShowIdentifiers"
                 enabled: root.effectiveControlsEnabled
-                model: [qsTr("Numbers"), qsTr("Compact"), qsTr("Names")]
-                currentIndex: root.labelModeIndex(root.labelMode)
-                Accessible.name: qsTr("Workspace label style")
+                Accessible.name: qsTr("Show workspace identifiers")
 
-                onActivated: index => {
-                    const modes = ["numbers", "compact", "names"];
-                    root.requestSnapshot(
-                        modes[index],
-                        root.showApplications,
-                        root.maximumApplications,
-                        root.occupiedOnly,
-                        root.scrollMode
-                    );
+                onToggled: root.requestSnapshot(
+                    checked,
+                    root.showNames,
+                    root.showApplications,
+                    root.maximumApplications,
+                    root.occupiedOnly,
+                    root.scrollMode
+                )
+
+                Binding {
+                    target: showIdentifiersControl
+                    property: "checked"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.showIdentifiers;
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 16
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Label {
+                    text: qsTr("Show workspace names")
+                    color: root.palette.text
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Append the full name of each custom or named workspace to its circle.")
+                    color: root.palette.placeholderText
+                    font.pixelSize: 12
+                    wrapMode: Text.Wrap
+                }
+            }
+
+            Switch {
+                id: showNamesControl
+
+                objectName: "workspaceShowNames"
+                enabled: root.effectiveControlsEnabled
+                Accessible.name: qsTr("Show workspace names")
+
+                onToggled: root.requestSnapshot(
+                    root.showIdentifiers,
+                    checked,
+                    root.showApplications,
+                    root.maximumApplications,
+                    root.occupiedOnly,
+                    root.scrollMode
+                )
+
+                Binding {
+                    target: showNamesControl
+                    property: "checked"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.showNames;
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
                 }
             }
         }
@@ -223,17 +278,28 @@ Frame {
                 id: showApplicationsControl
 
                 objectName: "workspaceShowApplications"
-                checked: root.showApplications
                 enabled: root.effectiveControlsEnabled
                 Accessible.name: qsTr("Show application icons")
 
                 onToggled: root.requestSnapshot(
-                    root.labelMode,
+                    root.showIdentifiers,
+                    root.showNames,
                     checked,
                     root.maximumApplications,
                     root.occupiedOnly,
                     root.scrollMode
                 )
+
+                Binding {
+                    target: showApplicationsControl
+                    property: "checked"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.showApplications;
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
+                }
             }
         }
 
@@ -269,18 +335,29 @@ Frame {
                 objectName: "workspaceMaximumApplications"
                 from: 1
                 to: 5
-                value: root.maximumApplications
                 editable: false
                 enabled: root.effectiveControlsEnabled
                 Accessible.name: qsTr("Maximum workspace application icons")
 
                 onValueModified: root.requestSnapshot(
-                    root.labelMode,
+                    root.showIdentifiers,
+                    root.showNames,
                     root.showApplications,
                     value,
                     root.occupiedOnly,
                     root.scrollMode
                 )
+
+                Binding {
+                    target: maximumApplicationsControl
+                    property: "value"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.maximumApplications;
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
+                }
             }
         }
 
@@ -312,17 +389,28 @@ Frame {
                 id: occupiedOnlyControl
 
                 objectName: "workspaceOccupiedOnly"
-                checked: root.occupiedOnly
                 enabled: root.effectiveControlsEnabled
                 Accessible.name: qsTr("Show occupied workspaces only")
 
                 onToggled: root.requestSnapshot(
-                    root.labelMode,
+                    root.showIdentifiers,
+                    root.showNames,
                     root.showApplications,
                     root.maximumApplications,
                     checked,
                     root.scrollMode
                 )
+
+                Binding {
+                    target: occupiedOnlyControl
+                    property: "checked"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.occupiedOnly;
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
+                }
             }
         }
 
@@ -357,18 +445,29 @@ Frame {
                 Layout.preferredWidth: 148
                 enabled: root.effectiveControlsEnabled
                 model: [qsTr("Off"), qsTr("Normal"), qsTr("Reversed")]
-                currentIndex: root.scrollModeIndex(root.scrollMode)
                 Accessible.name: qsTr("Workspace scroll direction")
 
                 onActivated: index => {
                     const modes = ["disabled", "normal", "reversed"];
                     root.requestSnapshot(
-                        root.labelMode,
+                        root.showIdentifiers,
+                        root.showNames,
                         root.showApplications,
                         root.maximumApplications,
                         root.occupiedOnly,
                         modes[index]
                     );
+                }
+
+                Binding {
+                    target: scrollModeControl
+                    property: "currentIndex"
+                    value: {
+                        const operationError = root.synchronizationError;
+                        return root.scrollModeIndex(root.scrollMode);
+                    }
+                    when: !root.synchronizationBusy
+                    restoreMode: Binding.RestoreNone
                 }
             }
         }

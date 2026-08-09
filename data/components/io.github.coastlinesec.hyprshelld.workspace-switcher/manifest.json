@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "io.github.coastlinesec.hyprshelld.workspace-switcher",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "bar-widget",
   "name": "Workspace Switcher",
   "description": "Shows the workspaces on each monitor and lets the user activate them.",

@@ -8,7 +8,8 @@ Control {
     id: root
 
     required property int barHeight
-    required property string workspaceLabelMode
+    required property bool workspaceShowIdentifiers
+    required property bool workspaceShowNames
     required property bool workspaceShowApplications
     required property int workspaceMaximumApplications
     required property bool workspaceOccupiedOnly
@@ -26,7 +27,8 @@ Control {
             workspaces: root.previewWorkspaces
             available: true
             outputName: qsTr("Preview")
-            labelMode: root.workspaceLabelMode
+            showIdentifiers: root.workspaceShowIdentifiers
+            showNames: root.workspaceShowNames
             showApplications: root.workspaceShowApplications
             maximumApplications: root.workspaceMaximumApplications
             scrollMode: root.workspaceScrollMode

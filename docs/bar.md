@@ -24,12 +24,12 @@ workspaces in alphabetical order. This includes empty workspaces that Hyprland
 is configured to keep persistent. Special workspaces are not included, and the
 bar does not add unused workspace places of its own.
 
-The default **Numbers** style shows the current workspace as a filled circle.
-Numbered workspaces place their number inside the circle; named workspaces use
-their initial. Other workspaces use smaller hollow circles. A workspace that
-needs attention receives a separate attention marker. Select an inactive
-workspace to switch to it. The live bar does not take keyboard focus, so use
-the pointer or your normal Hyprland shortcuts to change workspaces.
+By default, the current workspace appears as a filled circle and the others as
+smaller hollow circles. Numbered workspaces place their number inside the
+circle; named workspaces use their initial. A workspace that needs attention
+receives a separate attention marker. Select an inactive workspace to switch to
+it. The live bar does not take keyboard focus, so use the pointer or your normal
+Hyprland shortcuts to change workspaces.
 
 The switcher follows workspaces as they are created, removed, renamed, or moved
 between displays. When an ordinary empty workspace disappears from Hyprland,
@@ -43,11 +43,10 @@ unavailable and leaves it inactive until the connection returns.
 Open **HyprShelld Settings**, select **Bar**, and use the **Workspaces** card to
 choose how the switcher behaves:
 
-- **Numbers** uses the filled current circle and smaller hollow circles with
-  numbers or named-workspace initials. This is the default.
-- **Compact** keeps the circle design but removes the identifiers.
-- **Names** keeps the circle identifier and appends the full custom or named
-  workspace label.
+- **Show workspace identifiers** places numbers or named-workspace initials
+  inside the circles. This is on by default.
+- **Show workspace names** appends the full name of each custom or named
+  workspace. Numeric workspaces do not repeat their number as a name.
 - **Show application icons** appends the applications open on each workspace to
   that workspace's anchor.
   Repeated applications on an inactive workspace are grouped with a count. On
@@ -62,6 +61,10 @@ choose how the switcher behaves:
 - **Scroll to switch** can be off, normal, or reversed. Scrolling moves only
   among the real workspaces currently shown on that display and stops at the
   first or last one instead of wrapping around.
+
+The identifier and name choices are independent. You can show identifiers,
+names, both, or neither without changing the filled-current and hollow-inactive
+circle design.
 
 Changes are saved automatically as one workspace-switcher update and apply to
 every bar. The Settings preview uses illustrative workspaces and applications;

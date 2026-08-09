@@ -39,17 +39,23 @@ of a bar-size save or error.
 
 Use the **Workspaces** card on the Bar page to choose:
 
-- **Numbers**, the default, with a filled circle for the current workspace and
-  smaller hollow circles for the others; numbered workspaces show their number
-  and named workspaces show an initial;
-- **Compact**, which keeps the circles but removes their identifiers;
-- **Names**, which keeps the circle identifier and appends the full custom or
-  named workspace label;
+- whether workspace numbers or named-workspace initials appear inside the
+  circles, which is enabled by default;
+- whether full custom or named workspace names appear beside the circles,
+  without repeating a numeric workspace's number;
 - whether application icons are appended to each workspace anchor;
 - a limit of one to five visible application icons before a `+N` summary;
 - whether empty workspaces are hidden while the current workspace remains
   visible; and
 - whether scrolling over the switcher is off, normal, or reversed.
+
+The identifier and name switches are independent, so the preview can show
+identifiers, names, both, or neither. The filled current circle and smaller
+hollow inactive circles remain in every combination.
+
+An existing Numbers, Compact, or Names selection from an earlier development
+build is converted to the equivalent pair of switches without changing the
+other workspace choices.
 
 When application icons are enabled, repeated applications on an inactive
 workspace are grouped and show their window count. The current workspace keeps
@@ -65,9 +71,10 @@ workspaces configured to remain persistent; it does not add unused places.
 
 Workspace switcher changes are saved automatically as one atomic set and
 applied to every bar. While that set is being saved, only the **Workspaces**
-card is briefly unavailable. Select **Reset** in the card to restore numbered
-circles, hide application icons, show empty persistent workspaces, and turn
-scrolling off. The maximum icon setting returns to three.
+card is briefly unavailable. Select **Reset** in the card to show workspace
+identifiers, hide full workspace names and application icons, show empty
+persistent workspaces, and turn scrolling off. The maximum icon setting returns
+to three.
 
 To remove the switcher from the bar, open **Components**, find **Workspace
 Switcher** under **Bar Widgets**, and turn it off. Its saved choices are

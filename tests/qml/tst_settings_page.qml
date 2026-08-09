@@ -17,7 +17,8 @@ TestCase {
             minimumBarHeight: 24
             maximumBarHeight: 96
             defaultBarHeight: 40
-            workspaceLabelMode: "numbers"
+            workspaceShowIdentifiers: true
+            workspaceShowNames: false
             workspaceShowApplications: false
             workspaceMaximumApplications: 3
             workspaceOccupiedOnly: false
@@ -85,7 +86,8 @@ TestCase {
                     top: parent.top
                     margins: 12
                 }
-                labelMode: "numbers"
+                showIdentifiers: true
+                showNames: false
                 showApplications: false
                 maximumApplications: 3
                 occupiedOnly: false
@@ -117,13 +119,13 @@ TestCase {
         return {
             id: "io.github.coastlinesec.hyprshelld.workspace-switcher",
             type: "bar-widget",
-            version: "0.1.0",
+            version: "0.2.0",
             name: "Workspace Switcher",
             description: "Shows and activates workspaces on each display.",
             authors: [{ name: "CoastLineSec", email: "", homepage: "" }],
             license: "LicenseRef-HyprShelld",
             packageDigest:
-                "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7",
+                "4887e8c9e981ce892d39382e696de83d5b2dee4236e83db6da84780064aeaf54",
             origin: "system",
             removable: false,
             hasSettings: true,
@@ -493,7 +495,11 @@ TestCase {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
 
-        const labelMode = findChild(page, "workspaceLabelMode");
+        const showIdentifiers = findChild(
+            page,
+            "workspaceShowIdentifiers"
+        );
+        const showNames = findChild(page, "workspaceShowNames");
         const showApplications = findChild(
             page,
             "workspaceShowApplications"
@@ -509,7 +515,8 @@ TestCase {
         const occupiedOnly = findChild(page, "workspaceOccupiedOnly");
         const scrollMode = findChild(page, "workspaceScrollMode");
         const reset = findChild(page, "resetWorkspaceSwitcher");
-        verify(labelMode !== null);
+        verify(showIdentifiers !== null);
+        verify(showNames !== null);
         verify(showApplications !== null);
         verify(maximumRow !== null);
         verify(maximumApplications !== null);
@@ -517,7 +524,17 @@ TestCase {
         verify(scrollMode !== null);
         verify(reset !== null);
 
-        compare(labelMode.currentText, "Numbers");
+        compare(showIdentifiers.checked, true);
+        compare(showNames.checked, false);
+        compare(
+            showIdentifiers.Accessible.name,
+            "Show workspace identifiers"
+        );
+        compare(showNames.Accessible.name, "Show workspace names");
+        verify(showIdentifiers.mapToItem(page, 0, 0).y
+            < showNames.mapToItem(page, 0, 0).y);
+        verify(showNames.mapToItem(page, 0, 0).y
+            < showApplications.mapToItem(page, 0, 0).y);
         compare(showApplications.checked, false);
         compare(maximumRow.visible, false);
         compare(maximumApplications.from, 1);
@@ -528,7 +545,8 @@ TestCase {
         compare(reset.enabled, false);
 
         enableWorkspaceSettings(page);
-        page.workspaceLabelMode = "names";
+        page.workspaceShowIdentifiers = false;
+        page.workspaceShowNames = true;
         page.workspaceShowApplications = true;
         page.workspaceMaximumApplications = 5;
         page.workspaceOccupiedOnly = true;
@@ -538,7 +556,8 @@ TestCase {
         scrollView.contentItem.contentY = scrollView.contentItem.contentHeight
             - scrollView.contentItem.height;
         wait(0);
-        compare(labelMode.currentText, "Names");
+        compare(showIdentifiers.checked, false);
+        compare(showNames.checked, true);
         compare(showApplications.checked, true);
         compare(maximumApplications.value, 5);
         compare(occupiedOnly.checked, true);
@@ -546,7 +565,8 @@ TestCase {
         compare(reset.enabled, true);
 
         page.componentBusy = true;
-        compare(labelMode.enabled, false);
+        compare(showIdentifiers.enabled, false);
+        compare(showNames.enabled, false);
         compare(showApplications.enabled, false);
         compare(maximumApplications.enabled, false);
         compare(occupiedOnly.enabled, false);
@@ -566,13 +586,18 @@ TestCase {
             "workspaceFeatureDisabledMessageLabel"
         );
         const controls = findChild(page, "workspaceSettingsControls");
-        const labelMode = findChild(page, "workspaceLabelMode");
+        const showIdentifiers = findChild(
+            page,
+            "workspaceShowIdentifiers"
+        );
+        const showNames = findChild(page, "workspaceShowNames");
         const reset = findChild(page, "resetWorkspaceSwitcher");
         const heightControl = findChild(page, "barHeightControl");
         verify(message !== null);
         verify(messageLabel !== null);
         verify(controls !== null);
-        verify(labelMode !== null);
+        verify(showIdentifiers !== null);
+        verify(showNames !== null);
         verify(reset !== null);
         verify(heightControl !== null);
 
@@ -596,12 +621,14 @@ TestCase {
         );
         compare(messageLabel.opacity, 1);
         compare(controls.opacity, 0.42);
-        compare(labelMode.enabled, false);
+        compare(showIdentifiers.enabled, false);
+        compare(showNames.enabled, false);
         compare(reset.enabled, false);
         compare(heightControl.enabled, true);
         compare(findChild(page, "workspaceSwitcher"), null);
 
-        page.workspaceLabelMode = "names";
+        page.workspaceShowIdentifiers = false;
+        page.workspaceShowNames = true;
         page.workspaceShowApplications = true;
         page.workspaceMaximumApplications = 5;
         page.workspaceOccupiedOnly = true;
@@ -613,8 +640,10 @@ TestCase {
         verify(switcher !== null);
         compare(settingsCard.disabledMessageVisible, false);
         compare(controls.opacity, 1);
-        compare(labelMode.currentText, "Names");
-        compare(switcher.labelMode, "names");
+        compare(showIdentifiers.checked, false);
+        compare(showNames.checked, true);
+        compare(switcher.showIdentifiers, false);
+        compare(switcher.showNames, true);
         compare(switcher.showApplications, true);
         compare(switcher.maximumApplications, 5);
         compare(switcher.scrollMode, "reversed");
@@ -638,7 +667,8 @@ TestCase {
         compare(page.componentServiceWarningVisible, true);
         verify(page.componentWarningMessage.includes("placement"));
         compare(page.workspaceControlsEnabled, false);
-        compare(switcher.labelMode, "numbers");
+        compare(switcher.showIdentifiers, true);
+        compare(switcher.showNames, false);
     }
 
     function test_workspaceAuthorityDistinguishesGlobalAndInstanceState() {
@@ -653,7 +683,8 @@ TestCase {
             componentId: definition.id,
             enabled: true,
             settings: {
-                labelMode: "numbers",
+                showIdentifiers: true,
+                showNames: false,
                 showApplications: false,
                 maximumApplications: 3,
                 occupiedOnly: false,
@@ -772,7 +803,8 @@ TestCase {
         let request = [];
         let resetCount = 0;
         page.workspaceSwitcherRequested.connect(function(
-            labelMode,
+            showIdentifiers,
+            showNames,
             showApplications,
             maximumApplications,
             occupiedOnly,
@@ -780,7 +812,8 @@ TestCase {
         ) {
             ++requestCount;
             request = [
-                labelMode,
+                showIdentifiers,
+                showNames,
                 showApplications,
                 maximumApplications,
                 occupiedOnly,
@@ -792,33 +825,101 @@ TestCase {
         });
 
         settings.requestSnapshot(
-            "numbers", false, 3, false, "disabled"
+            true, false, false, 3, false, "disabled"
         );
         compare(requestCount, 0);
 
         settings.requestSnapshot(
-            "compact", false, 5, false, "disabled"
+            false, false, false, 5, false, "disabled"
         );
         compare(requestCount, 1);
-        compare(request, ["compact", false, 5, false, "disabled"]);
+        compare(request, [
+            false, false, false, 5, false, "disabled"
+        ]);
 
+        page.workspaceShowIdentifiers = false;
         page.workspaceMaximumApplications = 5;
         page.workspaceOccupiedOnly = true;
         settings.requestSnapshot(
-            "compact", false, 5, true, "reversed"
+            false, true, false, 5, true, "reversed"
         );
         compare(requestCount, 2);
-        compare(request, ["compact", false, 5, true, "reversed"]);
+        compare(request, [
+            false, true, false, 5, true, "reversed"
+        ]);
 
         page.componentBusy = true;
         settings.requestSnapshot(
-            "names", false, 5, true, "reversed"
+            true, true, false, 5, true, "reversed"
         );
         compare(requestCount, 2);
 
         page.componentBusy = false;
         reset.clicked();
         compare(resetCount, 1);
+    }
+
+    function test_workspaceControlsReconcileAfterRejectedAsyncSave() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        enableWorkspaceSettings(page);
+
+        const showIdentifiers = findChild(
+            page,
+            "workspaceShowIdentifiers"
+        );
+        const maximumApplications = findChild(
+            page,
+            "workspaceMaximumApplications"
+        );
+        const scrollMode = findChild(page, "workspaceScrollMode");
+        verify(showIdentifiers !== null);
+        verify(maximumApplications !== null);
+        verify(scrollMode !== null);
+
+        let requestCount = 0;
+        page.workspaceSwitcherRequested.connect(function() {
+            ++requestCount;
+            page.componentBusy = true;
+        });
+
+        showIdentifiers.checked = false;
+        showIdentifiers.toggled();
+        compare(requestCount, 1);
+        compare(page.componentBusy, true);
+        compare(showIdentifiers.checked, false);
+
+        page.componentErrorText = "The change could not be saved.";
+        page.componentBusy = false;
+        wait(0);
+        compare(showIdentifiers.checked, true);
+
+        page.componentErrorText = "";
+        page.workspaceShowApplications = true;
+        wait(0);
+        maximumApplications.value = 5;
+        maximumApplications.valueModified();
+        compare(requestCount, 2);
+        compare(page.componentBusy, true);
+        compare(maximumApplications.value, 5);
+
+        page.componentErrorText = "The change could not be saved.";
+        page.componentBusy = false;
+        wait(0);
+        compare(maximumApplications.value, 3);
+
+        page.componentErrorText = "";
+        scrollMode.currentIndex = 2;
+        scrollMode.activated(2);
+        compare(requestCount, 3);
+        compare(page.componentBusy, true);
+        compare(scrollMode.currentIndex, 2);
+
+        page.componentErrorText = "The change could not be saved.";
+        page.componentBusy = false;
+        wait(0);
+        compare(scrollMode.currentIndex, 0);
+        compare(scrollMode.currentText, "Off");
     }
 
     function test_workspaceSnapshotReplacementIsWholeAndAtomic() {
@@ -833,7 +934,8 @@ TestCase {
             componentId: workspaceComponentId,
             enabled: true,
             settings: {
-                labelMode: "numbers",
+                showIdentifiers: true,
+                showNames: false,
                 showApplications: false,
                 maximumApplications: 3,
                 occupiedOnly: false,
@@ -877,11 +979,13 @@ TestCase {
             snapshot
         );
         compare(extracted.valid, true);
-        compare(extracted.labelMode, "numbers");
+        compare(extracted.showIdentifiers, true);
+        compare(extracted.showNames, false);
 
         const replacement = application.workspaceSnapshotWithSettings(
             snapshot,
-            "names",
+            false,
+            true,
             true,
             5,
             true,
@@ -889,9 +993,14 @@ TestCase {
         );
         verify(replacement !== null);
         verify(replacement !== snapshot);
-        compare(snapshot.instances[workspaceId].settings.labelMode, "numbers");
+        compare(
+            snapshot.instances[workspaceId].settings.showIdentifiers,
+            true
+        );
+        compare(snapshot.instances[workspaceId].settings.showNames, false);
         compare(replacement.instances[workspaceId].settings, {
-            labelMode: "names",
+            showIdentifiers: false,
+            showNames: true,
             showApplications: true,
             maximumApplications: 5,
             occupiedOnly: true,
@@ -907,7 +1016,8 @@ TestCase {
 
         const reset = application.workspaceSnapshotWithSettings(
             replacement,
-            "numbers",
+            true,
+            false,
             false,
             3,
             false,
@@ -920,7 +1030,8 @@ TestCase {
 
         compare(application.workspaceSnapshotWithSettings(
             snapshot,
-            "numbers",
+            true,
+            false,
             false,
             6,
             false,
@@ -934,7 +1045,8 @@ TestCase {
         );
         compare(application.workspaceSnapshotWithSettings(
             snapshot,
-            "numbers",
+            true,
+            false,
             false,
             3,
             false,
@@ -962,7 +1074,8 @@ TestCase {
         compare(bar.currentTime.getMinutes(), 42);
 
         compare(preview.previewWorkspaces.length, 3);
-        compare(switcher.labelMode, "numbers");
+        compare(switcher.showIdentifiers, true);
+        compare(switcher.showNames, false);
         compare(Boolean(preview.previewWorkspaces[0].placeholder), false);
         compare(preview.previewWorkspaces[0].occupied, false);
         compare(preview.previewWorkspaces[0].active, false);
@@ -983,6 +1096,35 @@ TestCase {
         compare(preview.previewWorkspaces[2].applications[0].activatable, false);
         compare(findChild(page, "workspacePlaceholder-0"), null);
 
+        const numericIndicator = findChild(page, "workspaceIndicator-1");
+        const namedIndicator = findChild(page, "workspaceIndicator-2");
+        verify(numericIndicator !== null);
+        verify(namedIndicator !== null);
+        compare(numericIndicator.circleIdentifier, "1");
+        compare(numericIndicator.nameLabel, "");
+        compare(namedIndicator.circleIdentifier, "2");
+        compare(namedIndicator.nameLabel, "");
+
+        page.workspaceShowIdentifiers = false;
+        wait(0);
+        compare(namedIndicator.circleIdentifier, "");
+        compare(namedIndicator.nameLabel, "");
+
+        page.workspaceShowIdentifiers = true;
+        page.workspaceShowNames = true;
+        wait(0);
+        compare(numericIndicator.circleIdentifier, "1");
+        compare(numericIndicator.nameLabel, "");
+        compare(namedIndicator.circleIdentifier, "2");
+        compare(namedIndicator.nameLabel, "writing");
+
+        page.workspaceShowIdentifiers = false;
+        wait(0);
+        compare(numericIndicator.circleIdentifier, "");
+        compare(numericIndicator.nameLabel, "");
+        compare(namedIndicator.circleIdentifier, "");
+        compare(namedIndicator.nameLabel, "writing");
+
         page.workspaceShowApplications = true;
         page.workspaceMaximumApplications = 1;
         wait(0);
@@ -992,10 +1134,10 @@ TestCase {
         compare(currentIndicator.visibleApplications[0].active, true);
         compare(currentIndicator.applicationOverflow, 4);
 
-        page.workspaceLabelMode = "names";
         page.workspaceMaximumApplications = 3;
         page.workspaceScrollMode = "normal";
-        compare(switcher.labelMode, "names");
+        compare(switcher.showIdentifiers, false);
+        compare(switcher.showNames, true);
         compare(switcher.showApplications, true);
         compare(switcher.maximumApplications, 3);
         compare(switcher.scrollMode, "normal");

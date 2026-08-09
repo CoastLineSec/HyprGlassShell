@@ -335,6 +335,42 @@ TestCase {
         compare(WorkspaceProjection.project(source, "missing").length, 0);
     }
 
+    function test_numericLookingNamedWorkspaceKeepsNamedSemantics() {
+        const testWindow = createTemporaryObject(
+            switcherWindowComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const switcher = testWindow.switcher;
+        switcher.showIdentifiers = true;
+        switcher.showNames = true;
+        switcher.showApplications = false;
+        switcher.workspaces = [{
+            key: "workspace:-44",
+            workspaceId: -44,
+            name: "123",
+            numberLabel: "123",
+            active: true,
+            urgent: false,
+            occupied: false,
+            applications: []
+        }];
+        waitForRendering(switcher);
+
+        const indicator = findChild(switcher, "workspaceIndicator--44");
+        const identifier = findChild(switcher, "workspaceIdentifier--44");
+        const nameLabel = findChild(switcher, "workspaceLabel--44");
+        verify(indicator !== null);
+        verify(identifier !== null);
+        verify(nameLabel !== null);
+        compare(indicator.circleIdentifier, "1");
+        compare(indicator.nameLabel, "123");
+        compare(identifier.text, "1");
+        compare(identifier.visible, true);
+        compare(nameLabel.text, "123");
+        compare(nameLabel.visible, true);
+    }
+
     function test_projectionGroupsInactiveAppsButKeepsActiveWindows() {
         const clients = [
             rawClient("0xa", 2, "browser", false),
@@ -563,6 +599,8 @@ TestCase {
             switcher,
             "workspaceIdentifier--44"
         );
+        const currentLabel = findChild(switcher, "workspaceLabel-2");
+        const firstLabel = findChild(switcher, "workspaceLabel-1");
         const current = findChild(switcher, "workspaceButton-2");
         const urgent = findChild(switcher, "workspaceButton--44");
         const urgentMarker = findChild(
@@ -595,6 +633,8 @@ TestCase {
         verify(firstIdentifier !== null);
         verify(currentIdentifier !== null);
         verify(namedIdentifier !== null);
+        verify(currentLabel !== null);
+        verify(firstLabel !== null);
         verify(current !== null);
         verify(urgent !== null);
         verify(urgentMarker !== null);
@@ -603,7 +643,8 @@ TestCase {
         verify(overflow !== null);
         verify(groupedCount !== null);
         verify(activeApplicationMarker !== null);
-        compare(switcher.labelMode, "numbers");
+        compare(switcher.showIdentifiers, true);
+        compare(switcher.showNames, false);
         compare(switcher.transitionDuration, 150);
         switcher.height = 50;
         verify(findChild(switcher, "workspaceRail") === null);
@@ -632,6 +673,9 @@ TestCase {
         compare(currentIdentifier.text, "2");
         compare(namedIdentifier.text, "C");
         compare(firstIdentifier.visible, true);
+        compare(currentIndicator.nameLabel, "");
+        compare(currentLabel.visible, false);
+        compare(firstLabel.visible, false);
         compare(current.Accessible.selected, true);
         verify(current.Accessible.description.includes("Current"));
         compare(urgent.Accessible.selected, false);
@@ -646,6 +690,8 @@ TestCase {
         verify(overflow.Accessible.name.includes("2 more"));
         compare(groupedCount.visible, true);
         compare(currentIndicator.applicationOverflow, 2);
+        const currentAccessibleName = current.Accessible.name;
+        const urgentAccessibleName = urgent.Accessible.name;
 
         switcher.showApplications = false;
         compare(currentIndicator.applicationOverflow, 0);
@@ -653,22 +699,73 @@ TestCase {
         compare(firstIndicator.width, switcher.workspaceHitCellWidth);
         compare(currentCircle.width, switcher.activeCircleSize);
 
-        switcher.labelMode = "compact";
+        const firstIndicatorBefore = firstIndicator;
+        const currentIndicatorBefore = currentIndicator;
+        const firstCircleX = firstCircle.x;
+        const currentCircleX = currentCircle.x;
+
+        switcher.showIdentifiers = false;
         compare(firstIdentifier.visible, false);
         compare(currentIdentifier.visible, false);
+        compare(namedIdentifier.visible, false);
+        compare(currentIndicator.nameLabel, "");
         compare(firstCircle.width, switcher.inactiveCircleSize);
         compare(currentCircle.width, switcher.activeCircleSize);
+        compare(firstCircle.color, "#00000000");
+        compare(currentCircle.color, switcher.activeFillColor);
+        compare(firstCircle.x, firstCircleX);
+        compare(currentCircle.x, currentCircleX);
+        compare(
+            findChild(switcher, "workspaceIndicator-1"),
+            firstIndicatorBefore
+        );
+        compare(
+            findChild(switcher, "workspaceIndicator-2"),
+            currentIndicatorBefore
+        );
+        compare(current.Accessible.name, currentAccessibleName);
+        compare(urgent.Accessible.name, urgentAccessibleName);
 
-        switcher.labelMode = "names";
+        switcher.showNames = true;
         compare(currentIndicator.nameLabel, "writing");
-        const currentLabel = findChild(switcher, "workspaceLabel-2");
-        verify(currentLabel !== null);
         compare(currentLabel.visible, true);
-        compare(currentIdentifier.visible, true);
-        compare(currentIdentifier.text, "2");
+        compare(firstLabel.visible, false);
+        compare(currentIdentifier.visible, false);
+        compare(namedIdentifier.visible, false);
+        compare(currentIdentifier.text, "");
         verify(currentLabel.width <= 88);
         compare(urgent.parent.nameLabel, "chat");
+        compare(
+            findChild(switcher, "workspaceIndicator-2"),
+            currentIndicatorBefore
+        );
+
+        switcher.showIdentifiers = true;
+        compare(firstIdentifier.visible, true);
+        compare(currentIdentifier.visible, true);
+        compare(namedIdentifier.visible, true);
+        compare(currentIdentifier.text, "2");
         compare(namedIdentifier.text, "C");
+        compare(currentLabel.visible, true);
+        compare(firstCircle.x, firstCircleX);
+        compare(currentCircle.x, currentCircleX);
+
+        switcher.showApplications = true;
+        const restoredActiveApp = findChild(
+            switcher,
+            "workspaceApplication-2-0"
+        );
+        compare(currentLabel.visible, true);
+        verify(restoredActiveApp !== null);
+        compare(restoredActiveApp.visible, true);
+        tryVerify(function() {
+            return restoredActiveApp.x
+                >= currentLabel.x + currentLabel.width;
+        });
+        compare(
+            findChild(switcher, "workspaceIndicator-2"),
+            currentIndicatorBefore
+        );
     }
 
     function test_applicationIconRendering_data() {
@@ -989,7 +1086,7 @@ TestCase {
         const switcher = testWindow.switcher;
         switcher.width = 70;
         switcher.showApplications = false;
-        switcher.labelMode = "names";
+        switcher.showNames = true;
         waitForRendering(switcher);
         const flickable = findChild(switcher, "workspaceFlickable");
         const last = findChild(switcher, "workspaceIndicator--44");
@@ -1039,7 +1136,8 @@ TestCase {
         const switcher = testWindow.switcher;
         switcher.width = 74;
         switcher.showApplications = false;
-        switcher.labelMode = "compact";
+        switcher.showIdentifiers = false;
+        switcher.showNames = false;
         switcher.animationsEnabled = false;
         switcher.workspaces = testCase.sampleWorkspaces.map(entry => {
             const copy = Object.assign({}, entry);
@@ -1063,7 +1161,8 @@ TestCase {
         const compactWidth = active.width;
 
         switcher.animationsEnabled = true;
-        switcher.labelMode = "names";
+        switcher.showIdentifiers = true;
+        switcher.showNames = true;
         switcher.showApplications = true;
         wait(60);
         verify(active.width > compactWidth);
@@ -1116,7 +1215,8 @@ TestCase {
         const switcher = testWindow.switcher;
         switcher.width = 42;
         switcher.showApplications = false;
-        switcher.labelMode = "compact";
+        switcher.showIdentifiers = false;
+        switcher.showNames = false;
         switcher.animationsEnabled = false;
         switcher.workspaces = testCase.sampleWorkspaces.map(entry => {
             const copy = Object.assign({}, entry);
@@ -1132,7 +1232,8 @@ TestCase {
         const initialX = active.x;
 
         switcher.animationsEnabled = true;
-        switcher.labelMode = "names";
+        switcher.showIdentifiers = true;
+        switcher.showNames = true;
         switcher.showApplications = true;
         wait(240);
         verify(active.width > flickable.width);

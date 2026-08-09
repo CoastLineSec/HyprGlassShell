@@ -55,7 +55,8 @@ Item {
 
     function validWorkspaceSettings(settings) {
         if (!root.hasExactKeys(settings, [
-                "labelMode",
+                "showIdentifiers",
+                "showNames",
                 "showApplications",
                 "maximumApplications",
                 "occupiedOnly",
@@ -63,11 +64,9 @@ Item {
             ])) {
             return false;
         }
-        if (!["numbers", "compact", "names"].includes(
-                String(settings.labelMode))) {
-            return false;
-        }
-        if (typeof settings.showApplications !== "boolean"
+        if (typeof settings.showIdentifiers !== "boolean"
+                || typeof settings.showNames !== "boolean"
+                || typeof settings.showApplications !== "boolean"
                 || typeof settings.maximumApplications !== "number"
                 || !Number.isInteger(settings.maximumApplications)
                 || settings.maximumApplications < 1

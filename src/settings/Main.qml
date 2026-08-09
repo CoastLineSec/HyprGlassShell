@@ -23,7 +23,8 @@ ApplicationWindow {
     readonly property string workspaceInstanceId:
         "7b4e2329-4320-4e15-894d-218fa690d782"
     readonly property var workspaceDefaults: ({
-        labelMode: "numbers",
+        showIdentifiers: true,
+        showNames: false,
         showApplications: false,
         maximumApplications: 3,
         occupiedOnly: false,
@@ -76,11 +77,9 @@ ApplicationWindow {
                 || Array.isArray(settings)) {
             return false;
         }
-        if (!["numbers", "compact", "names"].includes(
-                settings.labelMode)) {
-            return false;
-        }
-        if (typeof settings.showApplications !== "boolean"
+        if (typeof settings.showIdentifiers !== "boolean"
+                || typeof settings.showNames !== "boolean"
+                || typeof settings.showApplications !== "boolean"
                 || typeof settings.occupiedOnly !== "boolean") {
             return false;
         }
@@ -100,7 +99,8 @@ ApplicationWindow {
         const fallback = {
             valid: false,
             enabled: false,
-            labelMode: root.workspaceDefaults.labelMode,
+            showIdentifiers: root.workspaceDefaults.showIdentifiers,
+            showNames: root.workspaceDefaults.showNames,
             showApplications: root.workspaceDefaults.showApplications,
             maximumApplications:
                 root.workspaceDefaults.maximumApplications,
@@ -125,7 +125,8 @@ ApplicationWindow {
         return {
             valid: true,
             enabled: instance.enabled,
-            labelMode: instance.settings.labelMode,
+            showIdentifiers: instance.settings.showIdentifiers,
+            showNames: instance.settings.showNames,
             showApplications: instance.settings.showApplications,
             maximumApplications: instance.settings.maximumApplications,
             occupiedOnly: instance.settings.occupiedOnly,
@@ -207,14 +208,16 @@ ApplicationWindow {
 
     function workspaceSnapshotWithSettings(
         snapshot,
-        labelMode,
+        showIdentifiers,
+        showNames,
         showApplications,
         maximumApplications,
         occupiedOnly,
         scrollMode
     ) {
         const settings = {
-            labelMode: labelMode,
+            showIdentifiers: showIdentifiers,
+            showNames: showNames,
             showApplications: showApplications,
             maximumApplications: maximumApplications,
             occupiedOnly: occupiedOnly,
@@ -248,7 +251,8 @@ ApplicationWindow {
     }
 
     function replaceWorkspaceSettings(
-        labelMode,
+        showIdentifiers,
+        showNames,
         showApplications,
         maximumApplications,
         occupiedOnly,
@@ -256,7 +260,8 @@ ApplicationWindow {
     ) {
         const replacement = root.workspaceSnapshotWithSettings(
             ComponentConfigClient.snapshot,
-            labelMode,
+            showIdentifiers,
+            showNames,
             showApplications,
             maximumApplications,
             occupiedOnly,
@@ -268,7 +273,8 @@ ApplicationWindow {
 
     function resetWorkspaceSettings() {
         root.replaceWorkspaceSettings(
-            root.workspaceDefaults.labelMode,
+            root.workspaceDefaults.showIdentifiers,
+            root.workspaceDefaults.showNames,
             root.workspaceDefaults.showApplications,
             root.workspaceDefaults.maximumApplications,
             root.workspaceDefaults.occupiedOnly,
@@ -618,7 +624,10 @@ ApplicationWindow {
                     minimumBarHeight: ConfigClient.minimumBarHeight
                     maximumBarHeight: ConfigClient.maximumBarHeight
                     defaultBarHeight: ConfigClient.defaultBarHeight
-                    workspaceLabelMode: root.workspaceInstanceState.labelMode
+                    workspaceShowIdentifiers:
+                        root.workspaceInstanceState.showIdentifiers
+                    workspaceShowNames:
+                        root.workspaceInstanceState.showNames
                     workspaceShowApplications:
                         root.workspaceInstanceState.showApplications
                     workspaceMaximumApplications:
@@ -664,13 +673,15 @@ ApplicationWindow {
                         ConfigClient.setBarHeight(height)
                     onResetBarHeightRequested: ConfigClient.resetBarHeight()
                     onWorkspaceSwitcherRequested: (
-                        labelMode,
+                        showIdentifiers,
+                        showNames,
                         showApplications,
                         maximumApplications,
                         occupiedOnly,
                         scrollMode
                     ) => root.replaceWorkspaceSettings(
-                        labelMode,
+                        showIdentifiers,
+                        showNames,
                         showApplications,
                         maximumApplications,
                         occupiedOnly,

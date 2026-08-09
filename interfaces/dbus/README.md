@@ -98,8 +98,12 @@ revision. Caller-supplied digests are equality assertions and never establish
 package or schema authority.
 Missing packages and package-digest mismatches remain inert, structurally
 bounded desired-state records. ReplaceSnapshot cannot edit, delete, advance,
-or relocate those dormant records and their instances; package lifecycle code
-must perform any future digest transition under its own catalog-joined policy.
+or relocate those dormant records and their instances. Configd may advance a
+protected built-in record only through a narrowly pinned, catalog-joined data
+migration. Such a migration validates every old instance shape, preserves
+unrelated state, increments the configuration revision once, and commits the
+migrated snapshot to recovery before active storage. Unrecognized packages
+remain dormant for future package-lifecycle handling.
 Dormant numeric values remain canonical JSON numbers and must be finite with a
 magnitude no greater than 9007199254740991, so parsing and persistence cannot
 silently round an unknown component's retained values.

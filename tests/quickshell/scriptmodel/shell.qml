@@ -250,7 +250,8 @@ ShellRoot {
                         + ", cell=" + first.width)) {
                 return;
             }
-            switcher.labelMode = "names";
+            switcher.showIdentifiers = true;
+            switcher.showNames = true;
             switcher.showApplications = true;
             ++root.stage;
             root.schedule(180);
@@ -263,9 +264,21 @@ ShellRoot {
                 switcher,
                 "workspaceApplication-2-0"
             );
+            const identifier = root.findNamed(
+                switcher,
+                "workspaceIdentifier-2"
+            );
+            const nameLabel = root.findNamed(
+                switcher,
+                "workspaceLabel-2"
+            );
             if (!root.check(second === root.secondBefore
-                    && second["nameLabel"] === "renamed",
-                    "same-key rename replaced or failed to update delegate")) {
+                    && second["nameLabel"] === "renamed"
+                    && identifier && identifier.visible
+                    && identifier.text === "2"
+                    && nameLabel && nameLabel.visible
+                    && nameLabel.text === "renamed",
+                    "identifier/name update replaced or missed a delegate")) {
                 return;
             }
             if (!root.check(application
@@ -440,7 +453,8 @@ ShellRoot {
             workspaces: workspaceModel
             available: true
             outputName: "Test"
-            labelMode: "compact"
+            showIdentifiers: false
+            showNames: false
             showApplications: false
             maximumApplications: 2
             scrollMode: "disabled"

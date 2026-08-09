@@ -32,6 +32,12 @@ const QString interfaceName = QStringLiteral("org.hyprshelld.ComponentConfig1");
 const QString propertiesInterface = QStringLiteral(
     "org.freedesktop.DBus.Properties"
 );
+const QString workspaceId = QString::fromLatin1(
+    Components::workspaceSwitcherId
+);
+const QString previousWorkspaceDigest = QStringLiteral(
+    "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7"
+);
 
 Components::ConfigurationCatalog catalog()
 {
@@ -39,6 +45,31 @@ Components::ConfigurationCatalog catalog()
         QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE),
         QStringLiteral(HYPRSHELLD_WORKSPACE_SCHEMA_FILE)
     );
+}
+
+Components::ComponentConfiguration previousWorkspaceConfiguration()
+{
+    const auto liveCatalog = catalog();
+    const auto parsed = Components::parseComponentConfiguration(
+        QByteArrayView(Tests::readBytes(QStringLiteral(
+            HYPRSHELLD_COMPONENT_DEFAULTS_FILE
+        ))),
+        liveCatalog
+    );
+    Q_ASSERT(parsed);
+    auto state = *parsed.value;
+    state.revision = 12;
+    state.components[workspaceId].packageDigest = previousWorkspaceDigest;
+    state.components[workspaceId].enabled = false;
+    state.instances.first().enabled = false;
+    state.instances.first().settings = {
+        {QStringLiteral("labelMode"), QStringLiteral("names")},
+        {QStringLiteral("showApplications"), true},
+        {QStringLiteral("maximumApplications"), 5},
+        {QStringLiteral("occupiedOnly"), true},
+        {QStringLiteral("scrollMode"), QStringLiteral("reversed")},
+    };
+    return state;
 }
 
 QByteArray withInstanceSetting(
@@ -517,6 +548,306 @@ private slots:
         bus.unregisterObject(objectPath);
     }
 
+    void hotCatalogMigrationPublishesOneDurableRevision()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(),
+            QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
+        );
+        const auto previous = previousWorkspaceConfiguration();
+        const auto previousBytes = Components::serializeComponentConfiguration(
+            previous
+        );
+        QVERIFY(Tests::writeBytes(paths.activeFile, previousBytes));
+        QVERIFY(Tests::writeBytes(paths.recoveryFile, previousBytes));
+
+        auto bus = QDBusConnection::sessionBus();
+        QVERIFY(bus.isConnected());
+        ComponentConfigService service(ComponentStore(paths), bus);
+        const ComponentConfig1Adaptor adaptor(&service);
+        QVERIFY(bus.registerObject(
+            objectPath,
+            &service,
+            QDBusConnection::ExportAdaptors
+        ));
+        QVERIFY(bus.registerService(serviceName));
+
+        Components::ConfigurationCatalog dormantCatalog;
+        dormantCatalog.digest = QString(64, QLatin1Char('d'));
+        service.applyCatalog(dormantCatalog);
+        QCOMPARE(service.revision(), 12ULL);
+
+        ComponentPropertyRecorder recorder(paths.activeFile);
+        QSignalSpy published(
+            &recorder, &ComponentPropertyRecorder::revisionPublished
+        );
+        QVERIFY(bus.connect(
+            serviceName,
+            objectPath,
+            propertiesInterface,
+            QStringLiteral("PropertiesChanged"),
+            &recorder,
+            SLOT(propertiesChanged(QString,QVariantMap,QStringList))
+        ));
+
+        const auto liveCatalog = catalog();
+        service.applyCatalog(liveCatalog);
+        QTRY_COMPARE_WITH_TIMEOUT(published.count(), 1, 3000);
+        QCOMPARE(recorder.revisionSignals, 1);
+        QCOMPARE(recorder.persistedRevisions, QVector<quint64>{13});
+        QCOMPARE(service.revision(), 13ULL);
+        QCOMPARE(service.catalogDigest(), liveCatalog.digest);
+        QCOMPARE(service.loadState(), QStringLiteral("normal"));
+
+        qulonglong revision = 0;
+        QString snapshotCatalogDigest;
+        const auto snapshot = QJsonDocument::fromJson(
+            service.GetSnapshot(revision, snapshotCatalogDigest)
+        ).object();
+        QCOMPARE(revision, 13ULL);
+        QCOMPARE(snapshotCatalogDigest, liveCatalog.digest);
+        const auto desired = snapshot.value(QStringLiteral("components"))
+                                 .toObject()
+                                 .value(workspaceId)
+                                 .toObject();
+        QCOMPARE(
+            desired.value(QStringLiteral("packageDigest")).toString(),
+            liveCatalog.entries.value(workspaceId).packageDigest
+        );
+        QCOMPARE(desired.value(QStringLiteral("enabled")).toBool(), false);
+        const auto instances = snapshot.value(
+            QStringLiteral("instances")
+        ).toObject();
+        const auto settings = instances.begin()
+                                  .value()
+                                  .toObject()
+                                  .value(QStringLiteral("settings"))
+                                  .toObject();
+        QCOMPARE(settings.size(), 6);
+        QVERIFY(!settings.contains(QStringLiteral("labelMode")));
+        QCOMPARE(settings.value(QStringLiteral("showIdentifiers")).toBool(), true);
+        QCOMPARE(settings.value(QStringLiteral("showNames")).toBool(), true);
+        QCOMPARE(settings.value(QStringLiteral("showApplications")).toBool(), true);
+        QCOMPARE(settings.value(QStringLiteral("maximumApplications")).toInt(), 5);
+        QCOMPARE(settings.value(QStringLiteral("occupiedOnly")).toBool(), true);
+        QCOMPARE(
+            settings.value(QStringLiteral("scrollMode")).toString(),
+            QStringLiteral("reversed")
+        );
+        QCOMPARE(
+            Tests::readBytes(paths.activeFile),
+            Tests::readBytes(paths.recoveryFile)
+        );
+
+        service.applyCatalog(liveCatalog);
+        QTest::qWait(20);
+        QCOMPARE(recorder.revisionSignals, 1);
+        QCOMPARE(service.revision(), 13ULL);
+
+        bus.unregisterService(serviceName);
+        bus.unregisterObject(objectPath);
+    }
+
+    void hotCatalogMigrationFailureKeepsOldSnapshotDormantAndReadOnly()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(),
+            QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
+        );
+        const auto previous = previousWorkspaceConfiguration();
+        const auto previousBytes = Components::serializeComponentConfiguration(
+            previous
+        );
+        QVERIFY(Tests::writeBytes(paths.activeFile, previousBytes));
+        QVERIFY(Tests::writeBytes(paths.recoveryFile, previousBytes));
+
+        int writes = 0;
+        ComponentConfigService service(
+            ComponentStore(
+                paths,
+                [&writes](
+                    const QString &path,
+                    const Components::ComponentConfiguration &state,
+                    QString &error
+                ) {
+                    ++writes;
+                    if (writes == 1) {
+                        error = QStringLiteral("injected recovery failure");
+                        return false;
+                    }
+                    return Tests::writeBytes(
+                        path,
+                        Components::serializeComponentConfiguration(state)
+                    );
+                }
+            ),
+            QDBusConnection::sessionBus()
+        );
+        Components::ConfigurationCatalog dormantCatalog;
+        dormantCatalog.digest = QString(64, QLatin1Char('d'));
+        service.applyCatalog(dormantCatalog);
+        QCOMPARE(service.revision(), 12ULL);
+
+        const auto liveCatalog = catalog();
+        service.applyCatalog(liveCatalog);
+        QCOMPARE(writes, 1);
+        QCOMPARE(service.revision(), 12ULL);
+        QCOMPARE(service.catalogDigest(), liveCatalog.digest);
+        QCOMPARE(service.loadState(), QStringLiteral("unavailable"));
+        QVERIFY(service.catalogAvailable());
+        QCOMPARE(Tests::readBytes(paths.activeFile), previousBytes);
+        QCOMPARE(Tests::readBytes(paths.recoveryFile), previousBytes);
+
+        qulonglong revision = 0;
+        QString snapshotCatalogDigest;
+        const auto snapshot = QJsonDocument::fromJson(
+            service.GetSnapshot(revision, snapshotCatalogDigest)
+        ).object();
+        QCOMPARE(revision, 12ULL);
+        QCOMPARE(snapshotCatalogDigest, liveCatalog.digest);
+        const auto desired = snapshot.value(QStringLiteral("components"))
+                                 .toObject()
+                                 .value(workspaceId)
+                                 .toObject();
+        QCOMPARE(
+            desired.value(QStringLiteral("packageDigest")).toString(),
+            previousWorkspaceDigest
+        );
+        const auto instances = snapshot.value(
+            QStringLiteral("instances")
+        ).toObject();
+        const auto settings = instances.begin()
+                                  .value()
+                                  .toObject()
+                                  .value(QStringLiteral("settings"))
+                                  .toObject();
+        QCOMPARE(
+            settings.value(QStringLiteral("labelMode")).toString(),
+            QStringLiteral("names")
+        );
+
+        service.applyCatalog(liveCatalog);
+        QCOMPARE(writes, 3);
+        QCOMPARE(service.revision(), 13ULL);
+        QCOMPARE(service.catalogDigest(), liveCatalog.digest);
+        QCOMPARE(service.loadState(), QStringLiteral("normal"));
+        QCOMPARE(
+            Tests::readBytes(paths.activeFile),
+            Tests::readBytes(paths.recoveryFile)
+        );
+        const auto migrated = QJsonDocument::fromJson(
+            Tests::readBytes(paths.activeFile)
+        ).object();
+        const auto migratedInstances = migrated.value(
+            QStringLiteral("instances")
+        ).toObject();
+        const auto migratedSettings = migratedInstances.begin()
+                                          .value()
+                                          .toObject()
+                                          .value(QStringLiteral("settings"))
+                                          .toObject();
+        QVERIFY(!migratedSettings.contains(QStringLiteral("labelMode")));
+        QCOMPARE(
+            migratedSettings.value(QStringLiteral("showIdentifiers")).toBool(),
+            true
+        );
+        QCOMPARE(
+            migratedSettings.value(QStringLiteral("showNames")).toBool(),
+            true
+        );
+    }
+
+    void readonlyRecoveryBlocksRepeatedHotMigration_data()
+    {
+        QTest::addColumn<QString>("scenario");
+        QTest::addColumn<QString>("loadState");
+        QTest::newRow("future-format")
+            << QStringLiteral("future") << QStringLiteral("unsupported");
+        QTest::newRow("unreadable-symlink")
+            << QStringLiteral("symlink") << QStringLiteral("unavailable");
+    }
+
+    void readonlyRecoveryBlocksRepeatedHotMigration()
+    {
+        QFETCH(QString, scenario);
+        QFETCH(QString, loadState);
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = Tests::componentPathsFor(
+            directory.path(),
+            QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
+        );
+        const auto previous = previousWorkspaceConfiguration();
+        const auto previousBytes = Components::serializeComponentConfiguration(
+            previous
+        );
+        QVERIFY(Tests::writeBytes(paths.activeFile, previousBytes));
+
+        const QByteArray protectedBytes(
+            "{\"formatVersion\":2,\"revision\":\"99\","
+            "\"components\":{},\"instances\":{},"
+            "\"layouts\":{\"bars\":{},\"desktops\":{}}}\n"
+        );
+        QString protectedTarget;
+        if (scenario == QStringLiteral("future")) {
+            QVERIFY(Tests::writeBytes(paths.recoveryFile, protectedBytes));
+        } else {
+            protectedTarget = directory.path()
+                + QStringLiteral("/protected-recovery.json");
+            QVERIFY(Tests::writeBytes(protectedTarget, protectedBytes));
+            QVERIFY(QDir().mkpath(QFileInfo(paths.recoveryFile).absolutePath()));
+            QVERIFY(QFile::link(protectedTarget, paths.recoveryFile));
+            QVERIFY(QFileInfo(paths.recoveryFile).isSymLink());
+        }
+
+        ComponentConfigService service(
+            ComponentStore(paths), QDBusConnection::sessionBus()
+        );
+        Components::ConfigurationCatalog dormantCatalog;
+        dormantCatalog.digest = QString(64, QLatin1Char('d'));
+        service.applyCatalog(dormantCatalog);
+        QVERIFY(service.available());
+        QCOMPARE(service.revision(), 12ULL);
+        QCOMPARE(service.loadState(), loadState);
+
+        const auto liveCatalog = catalog();
+        service.applyCatalog(liveCatalog);
+        service.applyCatalog(liveCatalog);
+        QCOMPARE(service.revision(), 12ULL);
+        QCOMPARE(service.catalogDigest(), liveCatalog.digest);
+        QCOMPARE(service.loadState(), loadState);
+        QCOMPARE(Tests::readBytes(paths.activeFile), previousBytes);
+        if (scenario == QStringLiteral("future")) {
+            QCOMPARE(Tests::readBytes(paths.recoveryFile), protectedBytes);
+        } else {
+            const QFileInfo link(paths.recoveryFile);
+            QVERIFY(link.isSymLink());
+            QCOMPARE(link.symLinkTarget(), protectedTarget);
+            QCOMPARE(Tests::readBytes(protectedTarget), protectedBytes);
+        }
+
+        qulonglong revision = 0;
+        QString snapshotCatalogDigest;
+        const auto snapshot = QJsonDocument::fromJson(
+            service.GetSnapshot(revision, snapshotCatalogDigest)
+        ).object();
+        QCOMPARE(revision, 12ULL);
+        QCOMPARE(snapshotCatalogDigest, liveCatalog.digest);
+        QCOMPARE(
+            snapshot.value(QStringLiteral("components"))
+                .toObject()
+                .value(workspaceId)
+                .toObject()
+                .value(QStringLiteral("packageDigest"))
+                .toString(),
+            previousWorkspaceDigest
+        );
+    }
+
     void componentEnableMutationIsDigestBoundAndPreservesSnapshot()
     {
         QTemporaryDir directory;
@@ -968,10 +1299,14 @@ private slots:
                                   .toObject()
                                   .value(QStringLiteral("settings"))
                                   .toObject();
-        QCOMPARE(settings.size(), 5);
+        QCOMPARE(settings.size(), 6);
         QCOMPARE(
-            settings.value(QStringLiteral("labelMode")).toString(),
-            QStringLiteral("names")
+            settings.value(QStringLiteral("showIdentifiers")).toBool(),
+            true
+        );
+        QCOMPARE(
+            settings.value(QStringLiteral("showNames")).toBool(),
+            true
         );
         QCOMPARE(
             settings.value(QStringLiteral("showApplications")).toBool(),
@@ -1298,7 +1633,7 @@ private slots:
             current, QStringLiteral("occupiedOnly"), true
         );
         const auto candidateB = withInstanceSetting(
-            current, QStringLiteral("labelMode"), QStringLiteral("compact")
+            current, QStringLiteral("showIdentifiers"), false
         );
 
         auto clientA = QDBusConnection::connectToBus(

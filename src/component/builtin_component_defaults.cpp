@@ -32,7 +32,8 @@ bool isExactInteger(const QJsonValue &value, const qint64 minimum, const qint64 
 QJsonObject workspaceSwitcherDefaultSettings()
 {
     return {
-        {QStringLiteral("labelMode"), QStringLiteral("numbers")},
+        {QStringLiteral("showIdentifiers"), true},
+        {QStringLiteral("showNames"), false},
         {QStringLiteral("showApplications"), false},
         {QStringLiteral("maximumApplications"), 3},
         {QStringLiteral("occupiedOnly"), false},
@@ -45,7 +46,8 @@ bool isValidWorkspaceSwitcherSettings(const QJsonObject &settings)
     if (!hasExactKeys(
             settings,
             {
-                QStringLiteral("labelMode"),
+                QStringLiteral("showIdentifiers"),
+                QStringLiteral("showNames"),
                 QStringLiteral("showApplications"),
                 QStringLiteral("maximumApplications"),
                 QStringLiteral("occupiedOnly"),
@@ -55,7 +57,10 @@ bool isValidWorkspaceSwitcherSettings(const QJsonObject &settings)
         return false;
     }
 
-    const auto labelMode = settings.value(QStringLiteral("labelMode"));
+    const auto showIdentifiers = settings.value(
+        QStringLiteral("showIdentifiers")
+    );
+    const auto showNames = settings.value(QStringLiteral("showNames"));
     const auto showApplications = settings.value(
         QStringLiteral("showApplications")
     );
@@ -65,10 +70,7 @@ bool isValidWorkspaceSwitcherSettings(const QJsonObject &settings)
     const auto occupiedOnly = settings.value(QStringLiteral("occupiedOnly"));
     const auto scrollMode = settings.value(QStringLiteral("scrollMode"));
 
-    if (!labelMode.isString()
-        || (labelMode.toString() != QStringLiteral("numbers")
-            && labelMode.toString() != QStringLiteral("compact")
-            && labelMode.toString() != QStringLiteral("names"))) {
+    if (!showIdentifiers.isBool() || !showNames.isBool()) {
         return false;
     }
     if (!showApplications.isBool()

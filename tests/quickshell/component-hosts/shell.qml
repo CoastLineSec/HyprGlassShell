@@ -21,7 +21,8 @@ ShellRoot {
     readonly property string secondInstanceId:
         "d520f90e-1521-4e0d-9ddc-ae20a4e948da"
     readonly property var validSettings: ({
-        labelMode: "numbers",
+        showIdentifiers: true,
+        showNames: false,
         showApplications: false,
         maximumApplications: 3,
         occupiedOnly: false,
@@ -93,16 +94,29 @@ ShellRoot {
                 invalidSettingsFactory,
                 "builtinComponentLoader"
             );
+            const legacySettingsLoader = root.findNamed(
+                legacySettingsFactory,
+                "builtinComponentLoader"
+            );
+            const validSwitcher = root.findNamed(
+                validFactory,
+                "workspaceSwitcher"
+            );
             if (!root.check(validLoader && validLoader.active
                     && root.findNamed(
                         validFactory,
                         "workspaceSwitcherComponent"
-                    ), "compiled fallback did not load the builtin")) {
+                    ) && validSwitcher
+                    && validSwitcher["showIdentifiers"]
+                    && !validSwitcher["showNames"],
+                    "compiled fallback did not load identifier settings")) {
                 return;
             }
             if (!root.check(unknownLoader && !unknownLoader.active
                     && invalidSettingsLoader
-                    && !invalidSettingsLoader.active,
+                    && !invalidSettingsLoader.active
+                    && legacySettingsLoader
+                    && !legacySettingsLoader.active,
                     "closed factory accepted an unknown or invalid tuple")) {
                 return;
             }
@@ -234,8 +248,32 @@ ShellRoot {
             root.fallbackActivation(root.firstInstanceId),
             {
                 settings: Object.assign({}, root.validSettings, {
-                    maximumApplications: "3"
+                    showIdentifiers: "true"
                 })
+            }
+        )
+    }
+
+    SurfaceComponents.BuiltinComponentFactory {
+        id: legacySettingsFactory
+
+        width: implicitWidth
+        height: 40
+        outputName: "DP-4"
+        workspaceSource: workspaceSource
+        interactive: false
+        animationsEnabled: false
+        activation: Object.assign(
+            {},
+            root.fallbackActivation(root.firstInstanceId),
+            {
+                settings: {
+                    labelMode: "numbers",
+                    showApplications: false,
+                    maximumApplications: 3,
+                    occupiedOnly: false,
+                    scrollMode: "disabled"
+                }
             }
         )
     }

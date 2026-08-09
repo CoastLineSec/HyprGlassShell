@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include <limits>
 #include <utility>
 
 #include <fcntl.h>
@@ -20,6 +21,11 @@
 
 namespace HyprShelld {
 namespace {
+
+constexpr auto workspaceSwitcherLabelModePackageDigest =
+    "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7";
+constexpr auto workspaceSwitcherIdentifierFlagsPackageDigest =
+    "4887e8c9e981ce892d39382e696de83d5b2dee4236e83db6da84780064aeaf54";
 
 enum class FileStatus {
     Missing,
@@ -85,6 +91,143 @@ bool hasUnsupportedFormat(const Components::ValidationErrors &errors)
     return std::ranges::any_of(errors, [](const auto &error) {
         return error.code == QStringLiteral("component-config.unsupported-format");
     });
+}
+
+bool hasExactKeys(const QJsonObject &object, QStringList keys)
+{
+    auto actual = object.keys();
+    actual.sort();
+    keys.sort();
+    return actual == keys;
+}
+
+bool isExactInteger(
+    const QJsonValue &value,
+    const qint64 minimum,
+    const qint64 maximum
+)
+{
+    if (!value.isDouble()) {
+        return false;
+    }
+    const auto integer = value.toInteger(minimum - 1);
+    return integer >= minimum
+        && integer <= maximum
+        && value.toDouble() == static_cast<double>(integer);
+}
+
+std::optional<QJsonObject> migrateWorkspaceSwitcherLabelMode(
+    const QJsonObject &settings
+)
+{
+    if (!hasExactKeys(
+            settings,
+            {
+                QStringLiteral("labelMode"),
+                QStringLiteral("showApplications"),
+                QStringLiteral("maximumApplications"),
+                QStringLiteral("occupiedOnly"),
+                QStringLiteral("scrollMode"),
+            }
+        )) {
+        return std::nullopt;
+    }
+
+    const auto labelMode = settings.value(QStringLiteral("labelMode"));
+    const auto showApplications = settings.value(
+        QStringLiteral("showApplications")
+    );
+    const auto maximumApplications = settings.value(
+        QStringLiteral("maximumApplications")
+    );
+    const auto occupiedOnly = settings.value(QStringLiteral("occupiedOnly"));
+    const auto scrollMode = settings.value(QStringLiteral("scrollMode"));
+    if (!labelMode.isString() || !showApplications.isBool()
+        || !isExactInteger(maximumApplications, 1, 5)
+        || !occupiedOnly.isBool() || !scrollMode.isString()) {
+        return std::nullopt;
+    }
+
+    bool showIdentifiers = false;
+    bool showNames = false;
+    const auto mode = labelMode.toString();
+    if (mode == QStringLiteral("numbers")) {
+        showIdentifiers = true;
+    } else if (mode == QStringLiteral("names")) {
+        showIdentifiers = true;
+        showNames = true;
+    } else if (mode != QStringLiteral("compact")) {
+        return std::nullopt;
+    }
+
+    const auto scroll = scrollMode.toString();
+    if (scroll != QStringLiteral("disabled")
+        && scroll != QStringLiteral("normal")
+        && scroll != QStringLiteral("reversed")) {
+        return std::nullopt;
+    }
+
+    return QJsonObject{
+        {QStringLiteral("showIdentifiers"), showIdentifiers},
+        {QStringLiteral("showNames"), showNames},
+        {QStringLiteral("showApplications"), showApplications},
+        {QStringLiteral("maximumApplications"), maximumApplications},
+        {QStringLiteral("occupiedOnly"), occupiedOnly},
+        {QStringLiteral("scrollMode"), scrollMode},
+    };
+}
+
+std::optional<Components::ComponentConfiguration> migrationCandidate(
+    const Components::ComponentConfiguration &current,
+    const Components::ConfigurationCatalog &catalog
+)
+{
+    const auto componentId = QString::fromLatin1(
+        Components::workspaceSwitcherId
+    );
+    const auto desired = current.components.constFind(componentId);
+    const auto live = catalog.entries.constFind(componentId);
+    if (desired == current.components.cend()
+        || live == catalog.entries.cend()
+        || desired->packageDigest
+            != QString::fromLatin1(workspaceSwitcherLabelModePackageDigest)
+        || live->packageDigest
+            != QString::fromLatin1(
+                workspaceSwitcherIdentifierFlagsPackageDigest
+            )
+        || live->origin != Components::ComponentOrigin::System
+        || live->type != Components::ComponentType::BarWidget
+        || !desired->grantedCapabilities.isEmpty()
+        || !desired->settings.isEmpty()
+        || current.revision == std::numeric_limits<quint64>::max()) {
+        return std::nullopt;
+    }
+
+    auto next = current;
+    for (auto instance = next.instances.begin();
+         instance != next.instances.end(); ++instance) {
+        if (instance->componentId != componentId) {
+            continue;
+        }
+        const auto migrated = migrateWorkspaceSwitcherLabelMode(
+            instance->settings
+        );
+        if (!migrated) {
+            return std::nullopt;
+        }
+        instance->settings = *migrated;
+    }
+    next.components[componentId].packageDigest = live->packageDigest;
+    ++next.revision;
+
+    const auto validated = Components::parseComponentConfiguration(
+        QByteArrayView(Components::serializeComponentConfiguration(next)),
+        catalog
+    );
+    if (!validated || *validated.value != next) {
+        return std::nullopt;
+    }
+    return next;
 }
 
 ReadResult readSnapshot(
@@ -268,7 +411,7 @@ std::optional<QJsonObject> componentSettingsFromLegacy(
     const LegacyWorkspaceSettings &legacy
 )
 {
-    QJsonObject settings{
+    const auto migrated = migrateWorkspaceSwitcherLabelMode({
         {QStringLiteral("labelMode"), legacy.labelMode},
         {QStringLiteral("showApplications"), legacy.showApplications},
         {
@@ -277,11 +420,12 @@ std::optional<QJsonObject> componentSettingsFromLegacy(
         },
         {QStringLiteral("occupiedOnly"), legacy.occupiedOnly},
         {QStringLiteral("scrollMode"), legacy.scrollMode},
-    };
-    if (!Components::isValidWorkspaceSwitcherSettings(settings)) {
+    });
+    if (!migrated
+        || !Components::isValidWorkspaceSwitcherSettings(*migrated)) {
         return std::nullopt;
     }
-    return settings;
+    return migrated;
 }
 
 } // namespace
@@ -365,6 +509,18 @@ ComponentLoadResult ComponentStore::load(
                 .error = recovery.error,
             };
         }
+        const auto migrated = migrate(active.state, catalog);
+        if (migrated.changed || !migrated.writable) {
+            return {
+                .available = true,
+                .writable = migrated.writable,
+                .state = migrated.state,
+                .loadState = migrated.writable
+                    ? ComponentLoadState::Normal
+                    : ComponentLoadState::Unavailable,
+                .error = migrated.error,
+            };
+        }
         if (recovery.status != FileStatus::Valid
             || recovery.state != active.state) {
             QString error;
@@ -413,6 +569,18 @@ ComponentLoadResult ComponentStore::load(
     }
 
     if (recovery.status == FileStatus::Valid) {
+        const auto migrated = migrate(recovery.state, catalog);
+        if (migrated.changed || !migrated.writable) {
+            return {
+                .available = true,
+                .writable = migrated.writable,
+                .state = migrated.state,
+                .loadState = migrated.writable
+                    ? ComponentLoadState::Recovered
+                    : ComponentLoadState::Unavailable,
+                .error = migrated.error,
+            };
+        }
         QString error;
         if (!write(paths_.activeFile, recovery.state, error)) {
             return {
@@ -478,6 +646,40 @@ ComponentLoadResult ComponentStore::load(
             ? ComponentLoadState::Normal
             : ComponentLoadState::Defaulted,
     };
+}
+
+ComponentMigrationResult ComponentStore::migrate(
+    const Components::ComponentConfiguration &current,
+    const Components::ConfigurationCatalog &catalog
+) const
+{
+    ComponentMigrationResult result{.state = current};
+    const auto next = migrationCandidate(current, catalog);
+    if (!next) {
+        return result;
+    }
+
+    if (!write(paths_.recoveryFile, *next, result.error)) {
+        result.writable = false;
+        return result;
+    }
+
+    result.changed = true;
+    result.state = *next;
+    if (!write(paths_.activeFile, *next, result.error)) {
+        result.writable = false;
+    }
+    return result;
+}
+
+bool ComponentStore::recognizesMigration(
+    const Components::ComponentConfiguration &current,
+    const Components::ComponentConfiguration &candidate,
+    const Components::ConfigurationCatalog &catalog
+) const
+{
+    const auto expected = migrationCandidate(current, catalog);
+    return expected && *expected == candidate;
 }
 
 bool ComponentStore::persist(

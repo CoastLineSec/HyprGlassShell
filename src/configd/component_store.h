@@ -34,6 +34,13 @@ struct ComponentLoadResult final {
     QString error;
 };
 
+struct ComponentMigrationResult final {
+    bool changed = false;
+    bool writable = true;
+    Components::ComponentConfiguration state;
+    QString error;
+};
+
 class ComponentStore final {
 public:
     using SnapshotWriter = std::function<bool(
@@ -52,6 +59,19 @@ public:
         const Components::ConfigurationCatalog &catalog,
         const std::optional<LegacyWorkspaceSettings> &legacyWorkspaceSettings =
             std::nullopt
+    ) const;
+    // Applies narrowly recognized built-in package migrations. A migrated
+    // snapshot is committed recovery-first so an interrupted update can be
+    // completed without reverting user state on the next load.
+    [[nodiscard]] ComponentMigrationResult migrate(
+        const Components::ComponentConfiguration &current,
+        const Components::ConfigurationCatalog &catalog
+    ) const;
+    // Confirms that candidate is exactly the pinned migration of current.
+    [[nodiscard]] bool recognizesMigration(
+        const Components::ComponentConfiguration &current,
+        const Components::ComponentConfiguration &candidate,
+        const Components::ConfigurationCatalog &catalog
     ) const;
     [[nodiscard]] bool persist(
         const Components::ComponentConfiguration &current,

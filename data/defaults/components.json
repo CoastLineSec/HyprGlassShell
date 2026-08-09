@@ -3,7 +3,7 @@
   "revision": "0",
   "components": {
     "io.github.coastlinesec.hyprshelld.workspace-switcher": {
-      "packageDigest": "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7",
+      "packageDigest": "4887e8c9e981ce892d39382e696de83d5b2dee4236e83db6da84780064aeaf54",
       "enabled": true,
       "grantedCapabilities": [],
       "settings": {}
@@ -14,7 +14,8 @@
       "componentId": "io.github.coastlinesec.hyprshelld.workspace-switcher",
       "enabled": true,
       "settings": {
-        "labelMode": "numbers",
+        "showIdentifiers": true,
+        "showNames": false,
         "showApplications": false,
         "maximumApplications": 3,
         "occupiedOnly": false,

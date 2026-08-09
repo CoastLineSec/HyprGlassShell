@@ -142,7 +142,8 @@ Item {
         workspaces: workspaceModel
         available: root.workspaceOutputAvailable
         outputName: root.outputName
-        labelMode: String(root.settings.labelMode)
+        showIdentifiers: Boolean(root.settings.showIdentifiers)
+        showNames: Boolean(root.settings.showNames)
         showApplications: Boolean(root.settings.showApplications)
         maximumApplications: Number(root.settings.maximumApplications)
         scrollMode: String(root.settings.scrollMode)
