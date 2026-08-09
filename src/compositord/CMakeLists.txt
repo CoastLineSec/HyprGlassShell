@@ -30,6 +30,8 @@ qt_add_library(
     STATIC
         activation_backend.cpp
         activation_backend.h
+        entrypoint_publisher.cpp
+        hyprland_ipc_runtime.cpp
         compositor_service.cpp
         compositor_service.h
         configuration_authority.h

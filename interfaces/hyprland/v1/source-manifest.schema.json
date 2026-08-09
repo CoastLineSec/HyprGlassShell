@@ -4,13 +4,13 @@
   "title": "HyprShelld qualified Hyprland source manifest v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["formatVersion", "repository", "reviewedOn", "versionFiles", "sources", "complexSources", "documentation"],
+  "required": ["formatVersion", "repository", "reviewedOn", "versionFiles", "sources", "complexSources", "startupSources", "documentation"],
   "properties": {
     "formatVersion": {"const": 1},
     "repository": {"const": "https://github.com/hyprwm/Hyprland"},
     "reviewedOn": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
     "versionFiles": {
-      "type": "array", "minItems": 2, "maxItems": 2,
+      "type": "array", "minItems": 3, "maxItems": 3,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/versionSource"}
     },
@@ -20,9 +20,14 @@
       "items": {"$ref": "#/$defs/scalarSource"}
     },
     "complexSources": {
-      "type": "array", "minItems": 45, "maxItems": 45,
+      "type": "array", "minItems": 48, "maxItems": 48,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/complexSource"}
+    },
+    "startupSources": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/startupSource"}
     },
     "documentation": {
       "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
@@ -40,14 +45,15 @@
       "type": "object", "additionalProperties": false,
       "required": ["version", "tag", "commit", "path", "sha256"],
       "properties": {
-        "version": {"enum": ["0.55.0", "0.56.1"]},
-        "tag": {"enum": ["v0.55.0", "v0.56.1"]},
+        "version": {"enum": ["0.55.0", "0.56.0", "0.56.1"]},
+        "tag": {"enum": ["v0.55.0", "v0.56.0", "v0.56.1"]},
         "commit": {"$ref": "#/$defs/commit"},
         "path": {"const": "VERSION"},
         "sha256": {"$ref": "#/$defs/sha256"}
       },
       "oneOf": [
         {"properties": {"version": {"const": "0.55.0"}, "tag": {"const": "v0.55.0"}, "commit": {"const": "af923e30d1d24f1f4a4f5cb8308065173c1d9539"}, "sha256": {"const": "ac6c7168f4989720dc4505c85ea89d7cfdbd57f14f903bb8689cd23c992ed19e"}}},
+        {"properties": {"version": {"const": "0.56.0"}, "tag": {"const": "v0.56.0"}, "commit": {"const": "36b2e0cfe0c6094dbc47bd42a437431315bb3087"}, "sha256": {"const": "3fea81d177087f5d3380893d95b86573a803b34ed45419ec381bdd776f526cee"}}},
         {"properties": {"version": {"const": "0.56.1"}, "tag": {"const": "v0.56.1"}, "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"}, "sha256": {"const": "2aaeb543208a766598b45262f3eabb0600c2a6055350ab8be22b5bf944a484e9"}}}
       ]
     },
@@ -78,8 +84,10 @@
         "sha256": {"$ref": "#/$defs/sha256"}
       },
       "oneOf": [
+        {"properties": {"path": {"const": "src/Compositor.cpp"}, "sha256": {"const": "74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0"}}},
         {"properties": {"path": {"const": "src/animation/AnimationManager.cpp"}, "sha256": {"const": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985"}}},
         {"properties": {"path": {"const": "src/animation/WorkspaceAnimationController.cpp"}, "sha256": {"const": "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b"}}},
+        {"properties": {"path": {"const": "src/config/lua/ConfigManager.cpp"}, "sha256": {"const": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"}}},
         {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsConfigRules.cpp"}, "sha256": {"const": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"}}},
         {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsDispatchers.cpp"}, "sha256": {"const": "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223"}}},
         {"properties": {"path": {"const": "src/config/lua/bindings/LuaBindingsInternal.cpp"}, "sha256": {"const": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"}}},
@@ -104,6 +112,7 @@
         {"properties": {"path": {"const": "src/helpers/MiscFunctions.cpp"}, "sha256": {"const": "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9"}}},
         {"properties": {"path": {"const": "src/helpers/MiscFunctions.hpp"}, "sha256": {"const": "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79"}}},
         {"properties": {"path": {"const": "src/helpers/TransferFunction.cpp"}, "sha256": {"const": "503eafd06a295b1ecbf0506d552db337f79498180f183c0bbc7a12f8855baeaf"}}},
+        {"properties": {"path": {"const": "src/main.cpp"}, "sha256": {"const": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"}}},
         {"properties": {"path": {"const": "src/managers/KeybindManager.cpp"}, "sha256": {"const": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"}}},
         {"properties": {"path": {"const": "src/managers/fullscreen/FullscreenController.hpp"}, "sha256": {"const": "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378"}}},
         {"properties": {"path": {"const": "src/managers/input/InputManager.cpp"}, "sha256": {"const": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"}}},
@@ -123,6 +132,23 @@
         {"properties": {"path": {"const": "src/state/MonitorQueryCore.hpp"}, "sha256": {"const": "829581d4aeb084cdd30de9c8c8e310ead38d357061df4e82a8279d634870e0f4"}}},
         {"properties": {"path": {"const": "src/state/WorkspaceQueryCore.cpp"}, "sha256": {"const": "b810515fb0720d1fe6b3e3e1e5d5ebfa57e5503e83840337a614b0862860b3d7"}}},
         {"properties": {"path": {"const": "src/state/WorkspaceQueryCore.hpp"}, "sha256": {"const": "698a1814b9d47ef08fe8ed54e723a839d73b9191335f3ba879f2e8389b3025a2"}}}
+      ]
+    },
+    "startupSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "tag", "commit", "path", "sha256"],
+      "properties": {
+        "version": {"const": "0.56.0"},
+        "tag": {"const": "v0.56.0"},
+        "commit": {"const": "36b2e0cfe0c6094dbc47bd42a437431315bb3087"},
+        "path": {"$ref": "#/$defs/relativeSourcePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "oneOf": [
+        {"properties": {"path": {"const": "src/Compositor.cpp"}, "sha256": {"const": "0c08837447683a23a62aefbfcc8332881e7f8e49d3a87f41aba856df29cca9fb"}}},
+        {"properties": {"path": {"const": "src/config/lua/ConfigManager.cpp"}, "sha256": {"const": "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed"}}},
+        {"properties": {"path": {"const": "src/config/shared/actions/ConfigActions.cpp"}, "sha256": {"const": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"}}},
+        {"properties": {"path": {"const": "src/main.cpp"}, "sha256": {"const": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"}}}
       ]
     }
   }

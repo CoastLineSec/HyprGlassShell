@@ -386,6 +386,17 @@ void GenerationStore::shutdown() noexcept
     generationsDirectoryFd_ = -1;
 }
 
+bool GenerationStore::directoryStillNamed() const
+{
+    return generationsDirectoryFd_ >= 0 && store_.rootsStillNamed()
+        && privateDirectory(generationsDirectoryFd_, mutableDirectoryMode)
+        && descriptorStillNamed(
+            store_.managedDirectoryFd(),
+            QByteArrayLiteral("generations"),
+            generationsDirectoryFd_
+        );
+}
+
 GenerationResult GenerationStore::initialize()
 {
     if (!store_.initialized()) {

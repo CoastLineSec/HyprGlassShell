@@ -80,19 +80,32 @@ marshalling, and intentional exclusions.
 `generation-manifest.schema.json` binds one immutable generated Lua tree to the
 exact snapshot, scalar and action catalogs, renderer contract, activation nonce,
 and a map keyed by canonical relative file path. Schema validation alone never
-authorizes activation. The Slice-2 reader must require the entrypoint to be a
-file-map key, recompute every file size and SHA-256, recompute `generation` as
-SHA-256 of canonical manifest JSON with the `generation` member omitted, and
-cross-check the target against the pinned compatible range.
+authorizes activation. The compositor authority must require the entrypoint to
+be a file-map key, recompute every file size and SHA-256, recompute `generation`
+as SHA-256 of canonical manifest JSON with the `generation` member omitted, and
+cross-check the target against the pinned compatible range. Live Reload
+activation additionally requires the exact manifest activation nonce from the
+same Hyprland process, the following generic config-reloaded boundary, and an
+empty strict JSON config-error result.
+
+Live activation treats the compositor session's user ID as its local trust
+boundary. Retained authority directory descriptors and canonical-name checks
+fail closed when configuration roots move or are replaced, and production
+D-Bus name ownership prevents a second compositord instance. These mechanisms
+are not a privilege boundary against a malicious process running as the same
+user; such a process can interfere with that user's files and session IPC.
 
 The source inventories and provenance are under `tests/fixtures/hyprland/`.
-`source-manifest.schema.json` pins both `VERSION` files, the two scalar
-registries, and all tagged source files used to qualify the complex grammar.
+`source-manifest.schema.json` pins all three `VERSION` files, the two scalar
+registries, all tagged source files used to qualify the complex grammar, and
+the focused `0.56.0` startup sources needed to qualify the loader readiness
+guard across the full supported patch range.
 They can be reproduced without network access from official tagged source trees:
 
 ```sh
 python3 tools/hyprland/extract_contract.py \
   --source-055 /path/to/Hyprland-0.55.0 \
+  --source-0560 /path/to/Hyprland-0.56.0 \
   --source-056 /path/to/Hyprland-0.56.1 \
   --output-root .
 ```
@@ -100,9 +113,10 @@ python3 tools/hyprland/extract_contract.py \
 Use `--check` in qualification jobs to reject source drift, stale generated
 files, unexpected option additions/removals, or unversioned Hyprland wiki links.
 Before reading an inventory, the extractor verifies `VERSION`, both scalar
-registries, and every complex-surface source against immutable SHA-256 pins for
-the reviewed tags. A caller-supplied or locally modified tree is rejected before
-trusted tag and commit provenance can be emitted.
+registries, every complex-surface source, and the focused startup sources
+against immutable SHA-256 pins for the reviewed tags. A caller-supplied or
+locally modified tree is rejected before trusted tag and commit provenance can
+be emitted.
 
 After extraction, validate all five Draft 2020-12 schemas, their checked-in
 instances, cross-file references, and catalog digests with:

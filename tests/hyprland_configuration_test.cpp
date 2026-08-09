@@ -1145,38 +1145,79 @@ private slots:
 
     const auto versionFiles =
         manifest.value(QStringLiteral("versionFiles")).toArray();
-    QCOMPARE(versionFiles.size(), 2);
+    QCOMPARE(versionFiles.size(), 3);
     QSet<QString> pinnedVersions;
     for (const auto &value : versionFiles) {
       const auto versionFile = value.toObject();
       const auto version =
           versionFile.value(QStringLiteral("version")).toString();
-      QVERIFY2(fixturePaths.contains(version), qPrintable(version));
       QVERIFY2(!pinnedVersions.contains(version), qPrintable(version));
       pinnedVersions.insert(version);
       QCOMPARE(versionFile.value(QStringLiteral("path")),
                QJsonValue(QStringLiteral("VERSION")));
-      const auto source = std::ranges::find_if(
-          sources, [&version](const QJsonValue &candidate) {
-            return candidate.toObject().value(QStringLiteral("version")) ==
-                   QJsonValue(version);
-          });
-      QVERIFY(source != sources.end());
-      QCOMPARE(versionFile.value(QStringLiteral("tag")),
-               source->toObject().value(QStringLiteral("tag")));
-      QCOMPARE(versionFile.value(QStringLiteral("commit")),
-               source->toObject().value(QStringLiteral("commit")));
+      if (version == QStringLiteral("0.56.0")) {
+        QCOMPARE(versionFile.value(QStringLiteral("tag")),
+                 QJsonValue(QStringLiteral("v0.56.0")));
+        QCOMPARE(
+            versionFile.value(QStringLiteral("commit")),
+            QJsonValue(QStringLiteral(
+                "36b2e0cfe0c6094dbc47bd42a437431315bb3087")));
+      } else {
+        QVERIFY2(fixturePaths.contains(version), qPrintable(version));
+        const auto source = std::ranges::find_if(
+            sources, [&version](const QJsonValue &candidate) {
+              return candidate.toObject().value(QStringLiteral("version")) ==
+                     QJsonValue(version);
+            });
+        QVERIFY(source != sources.end());
+        QCOMPARE(versionFile.value(QStringLiteral("tag")),
+                 source->toObject().value(QStringLiteral("tag")));
+        QCOMPARE(versionFile.value(QStringLiteral("commit")),
+                 source->toObject().value(QStringLiteral("commit")));
+      }
       QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{64}$"))
                   .match(versionFile.value(QStringLiteral("sha256")).toString())
                   .hasMatch());
     }
     QCOMPARE(pinnedVersions,
              stringSet({QStringLiteral("0.55.0"),
+                        QStringLiteral("0.56.0"),
                         QStringLiteral("0.56.1")}));
+
+    const auto startupSources =
+        manifest.value(QStringLiteral("startupSources")).toArray();
+    QCOMPARE(startupSources.size(), 4);
+    QSet<QString> startupPaths;
+    for (const auto &value : startupSources) {
+      const auto source = value.toObject();
+      QCOMPARE(source.value(QStringLiteral("version")),
+               QJsonValue(QStringLiteral("0.56.0")));
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(QStringLiteral("v0.56.0")));
+      QCOMPARE(
+          source.value(QStringLiteral("commit")),
+          QJsonValue(QStringLiteral(
+              "36b2e0cfe0c6094dbc47bd42a437431315bb3087")));
+      const auto path = source.value(QStringLiteral("path")).toString();
+      QVERIFY2(!path.isEmpty(), "startup source path is empty");
+      QVERIFY2(!startupPaths.contains(path), qPrintable(path));
+      startupPaths.insert(path);
+      QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{64}$"))
+                  .match(source.value(QStringLiteral("sha256")).toString())
+                  .hasMatch());
+    }
+    QCOMPARE(
+        startupPaths,
+        stringSet({
+            QStringLiteral("src/Compositor.cpp"),
+            QStringLiteral("src/config/lua/ConfigManager.cpp"),
+            QStringLiteral("src/config/shared/actions/ConfigActions.cpp"),
+            QStringLiteral("src/main.cpp"),
+        }));
 
     const auto complexSources =
         manifest.value(QStringLiteral("complexSources")).toArray();
-    QCOMPARE(complexSources.size(), 45);
+    QCOMPARE(complexSources.size(), 48);
     QSet<QString> complexPaths;
     for (const auto &value : complexSources) {
       const auto source = value.toObject();
@@ -1198,8 +1239,10 @@ private slots:
     QCOMPARE(
         complexPaths,
         stringSet({
+            QStringLiteral("src/Compositor.cpp"),
             QStringLiteral("src/animation/AnimationManager.cpp"),
             QStringLiteral("src/animation/WorkspaceAnimationController.cpp"),
+            QStringLiteral("src/config/lua/ConfigManager.cpp"),
             QStringLiteral(
                 "src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
             QStringLiteral(
@@ -1229,6 +1272,7 @@ private slots:
             QStringLiteral("src/helpers/MiscFunctions.cpp"),
             QStringLiteral("src/helpers/MiscFunctions.hpp"),
             QStringLiteral("src/helpers/TransferFunction.cpp"),
+            QStringLiteral("src/main.cpp"),
             QStringLiteral("src/managers/KeybindManager.cpp"),
             QStringLiteral(
                 "src/managers/fullscreen/FullscreenController.hpp"),

@@ -124,6 +124,7 @@ struct EntrypointTree final {
         .state = ManagementState::Managed,
         .entrypointKind = EntrypointKind::Regular,
         .entrypointDigest = QStringLiteral("managed-entrypoint"),
+        .managedGeneration = QStringLiteral("old-generation"),
     };
 }
 
@@ -171,6 +172,10 @@ public:
     int prepareRecoveryCalls = 0;
     int commitCalls = 0;
     int abortCalls = 0;
+    mutable int filesystemContextCalls = 0;
+    bool filesystemContextSuccess = true;
+    QString filesystemContextError;
+    QStringList *startupTrace = nullptr;
     quint64 lastReplaceExpected = 0;
     QByteArray lastReplaceCandidate;
     QStringList calls;
@@ -179,10 +184,27 @@ public:
     {
         ++initializeCalls;
         calls.append(QStringLiteral("initialize"));
+        if (startupTrace) {
+            startupTrace->append(QStringLiteral("authority-initialize"));
+        }
         if (initializeResult.success) {
             current = initializeResult.snapshot;
         }
         return initializeResult;
+    }
+
+    FilesystemContextResult duplicateActivationFilesystemContext() const override
+    {
+        ++filesystemContextCalls;
+        if (startupTrace) {
+            startupTrace->append(QStringLiteral("authority-context"));
+        }
+        return {
+            .success = filesystemContextSuccess,
+            .errorCode = filesystemContextSuccess
+                ? QString{} : QStringLiteral("PersistenceFailed"),
+            .errorMessage = filesystemContextError,
+        };
     }
 
     AuthoritySnapshot snapshot() const override
@@ -256,13 +278,28 @@ public:
     ActivationResult adoptionResult;
     ActivationResult activationResult;
     ActivationResult rollbackResult;
+    BackendResult reconcileResult;
+    BackendResult bindResult;
+    BackendResult finalizeResult;
+    bool reconcileResultConfigured = false;
+    bool bindResultConfigured = false;
+    bool finalizeResultConfigured = false;
+    QString managementWatchPathValue;
     mutable int statusCalls = 0;
     mutable QVector<ActivationRequirement> capabilityChecks;
     int adoptCalls = 0;
     int activateCalls = 0;
     int rollbackCalls = 0;
+    int reconcileCalls = 0;
+    int bindCalls = 0;
+    int finalizeCalls = 0;
     QStringList calls;
     QByteArray lastRollbackToken;
+    QByteArray lastFinalizeToken;
+    QString lastReconcileGeneration;
+    QString lastFinalizeGeneration;
+    bool lastFilesystemContextComplete = false;
+    QStringList *startupTrace = nullptr;
 
     ManagementStatus status() const override
     {
@@ -276,22 +313,61 @@ public:
         return supported.contains(requirement);
     }
 
+    QString managementWatchPath() const override
+    {
+        return managementWatchPathValue;
+    }
+
+    BackendResult bindFilesystemContext(
+        ActivationFilesystemContext context
+    ) override
+    {
+        ++bindCalls;
+        lastFilesystemContextComplete = context.complete();
+        if (startupTrace) {
+            startupTrace->append(QStringLiteral("backend-bind"));
+        }
+        return bindResultConfigured
+            ? bindResult
+            : BackendResult{.success = true, .status = statusValue};
+    }
+
+    BackendResult reconcileStartup(QStringView committedGeneration) override
+    {
+        ++reconcileCalls;
+        if (startupTrace) {
+            startupTrace->append(QStringLiteral("backend-reconcile"));
+        }
+        lastReconcileGeneration = committedGeneration.toString();
+        return reconcileResultConfigured
+            ? reconcileResult
+            : BackendResult{.success = true, .status = statusValue};
+    }
+
     ActivationResult adopt(
-        const ActivationGeneration &,
+        const ActivationGeneration &prepared,
         QStringView
     ) override
     {
         ++adoptCalls;
         calls.append(QStringLiteral("adopt"));
         statusValue = adoptionResult.status;
+        if (statusValue.state == ManagementState::Managed) {
+            statusValue.managedGeneration = prepared.id;
+        }
+        adoptionResult.status = statusValue;
         return adoptionResult;
     }
 
-    ActivationResult activate(const ActivationGeneration &) override
+    ActivationResult activate(const ActivationGeneration &prepared) override
     {
         ++activateCalls;
         calls.append(QStringLiteral("activate"));
         statusValue = activationResult.status;
+        if (statusValue.state == ManagementState::Managed) {
+            statusValue.managedGeneration = prepared.id;
+        }
+        activationResult.status = statusValue;
         return activationResult;
     }
 
@@ -303,21 +379,40 @@ public:
         statusValue = rollbackResult.status;
         return rollbackResult;
     }
+
+    BackendResult finalizeCommitted(
+        const ActivationReceipt &receipt,
+        QStringView committedGeneration
+    ) override
+    {
+        ++finalizeCalls;
+        lastFinalizeToken = receipt.rollbackToken;
+        lastFinalizeGeneration = committedGeneration.toString();
+        if (finalizeResultConfigured) {
+            statusValue = finalizeResult.status;
+            return finalizeResult;
+        }
+        return {.success = true, .status = statusValue};
+    }
 };
 
 struct ServiceHarness final {
+    QStringList startupTrace;
     FakeAuthority *authority = nullptr;
     FakeActivationBackend *backend = nullptr;
     std::unique_ptr<CompositorService> service;
 
     explicit ServiceHarness(
         const AuthoritySnapshot &initial,
-        const ManagementStatus &management = managedStatus()
+        const ManagementStatus &management = managedStatus(),
+        const QString &managementWatchPath = {}
     )
     {
         auto ownedBackend = std::make_unique<FakeActivationBackend>();
         backend = ownedBackend.get();
+        backend->startupTrace = &startupTrace;
         backend->statusValue = management;
+        backend->managementWatchPathValue = managementWatchPath;
         service = std::make_unique<CompositorService>(
             std::move(ownedBackend),
             QDBusConnection(QStringLiteral("compositor-service-test"))
@@ -325,6 +420,7 @@ struct ServiceHarness final {
 
         auto ownedAuthority = std::make_unique<FakeAuthority>();
         authority = ownedAuthority.get();
+        authority->startupTrace = &startupTrace;
         authority->initializeResult = {
             .success = true,
             .snapshot = initial,
@@ -719,9 +815,75 @@ private slots:
         }
     }
 
-    void adoptionProofDistinguishesAbsenceFromExactRegularFile()
+    void managedStateMustMatchAuthorityCommittedGeneration()
     {
         const auto initial = dirtySnapshot();
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Managed,
+                .entrypointKind = EntrypointKind::Regular,
+                .entrypointDigest = QStringLiteral("canonical-loader-digest"),
+                .managedGeneration = QStringLiteral("different-generation"),
+                .managedNonce = QString::fromLatin1(activationNonce),
+            }
+        );
+
+        QCOMPARE(harness.service->entrypointDigest(),
+                 QStringLiteral("canonical-loader-digest"));
+        QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+        QString generation;
+        QCOMPARE(harness.service->Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+    }
+
+    void appliedAuthorityNeverSurfacesRawUnmanagedState()
+    {
+        const auto initial = dirtySnapshot();
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Unmanaged,
+                .entrypointKind = EntrypointKind::Absent,
+            }
+        );
+        QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+        QVERIFY(harness.service->entrypointDigest().isEmpty());
+    }
+
+    void inactiveAuthorityNeverAcceptsRawManagedOwnership()
+    {
+        auto initial = dirtySnapshot();
+        initial.appliedRevision = 0;
+        initial.generationDigest.clear();
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Managed,
+                .entrypointKind = EntrypointKind::Regular,
+                .entrypointDigest = QStringLiteral("managed-looking-loader"),
+                .managedGeneration = QString::fromLatin1(generationId),
+                .managedNonce = QString::fromLatin1(activationNonce),
+            }
+        );
+
+        QCOMPARE(harness.service->entrypointDigest(),
+                 QStringLiteral("managed-looking-loader"));
+        QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+    }
+
+    void adoptionProofDistinguishesAbsenceFromExactRegularFile()
+    {
+        auto initial = dirtySnapshot();
+        initial.appliedRevision = 0;
+        initial.generationDigest.clear();
         const auto runSuccessfulAdoption = [initial](
             const ManagementStatus &management,
             const QString &proof
@@ -930,6 +1092,343 @@ private slots:
         QCOMPARE(harness.service->applyState(), QStringLiteral("failed"));
         QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
         QVERIFY(harness.service->entrypointDigest().isEmpty());
+    }
+
+    void committedActivationFinalizeFailureIsOneWayAndObservable()
+    {
+        const auto initial = dirtySnapshot();
+        ServiceHarness harness(initial);
+        harness.authority->prepareApplyResult = {
+            .success = true,
+            .snapshot = initial,
+            .prepared = preparedGeneration(),
+        };
+        harness.authority->commitResult = {
+            .success = true,
+            .commitDecisionDurable = true,
+            .snapshot = committedSnapshot(),
+        };
+        harness.backend->activationResult = {
+            .success = true,
+            .activationMayHaveOccurred = true,
+            .generation = QString::fromLatin1(generationId),
+            .confirmedRequirement = ActivationRequirement::Reload,
+            .receipt = {QByteArrayLiteral("durable-bridge-token")},
+            .status = managedStatus(),
+        };
+        harness.backend->finalizeResultConfigured = true;
+        harness.backend->finalizeResult = {
+            .success = false,
+            .errorCode = QStringLiteral("PersistenceFailed"),
+            .errorMessage = QStringLiteral("bridge directory sync failed"),
+            .status = managedStatus(),
+        };
+
+        QString generation;
+        QCOMPARE(harness.service->Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.revision));
+        QCOMPARE(generation, initial.generationDigest);
+        QCOMPARE(harness.authority->commitCalls, 1);
+        QCOMPARE(harness.backend->finalizeCalls, 1);
+        QCOMPARE(harness.backend->lastFinalizeToken,
+                 QByteArrayLiteral("durable-bridge-token"));
+        QCOMPARE(harness.backend->lastFinalizeGeneration,
+                 QString::fromLatin1(generationId));
+        QCOMPARE(harness.backend->rollbackCalls, 0);
+        QCOMPARE(harness.authority->abortCalls, 0);
+
+        QVERIFY(!harness.service->available());
+        QVERIFY(!harness.service->writable());
+        QCOMPARE(harness.service->revision(), qulonglong(0));
+        QCOMPARE(harness.service->appliedRevision(), qulonglong(initial.revision));
+        QCOMPARE(harness.service->generationDigest(),
+                 QString::fromLatin1(generationId));
+        QCOMPARE(harness.service->loadState(), QStringLiteral("unavailable"));
+        QCOMPARE(harness.service->applyState(), QStringLiteral("failed"));
+        QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+    }
+
+    void startupReconciliationFailureKeepsFailClosedServiceAlive()
+    {
+        const auto initial = committedSnapshot();
+        auto ownedBackend = std::make_unique<FakeActivationBackend>();
+        auto *backend = ownedBackend.get();
+        backend->reconcileResultConfigured = true;
+        backend->reconcileResult = {
+            .success = false,
+            .errorCode = QStringLiteral("PersistenceFailed"),
+            .errorMessage = QStringLiteral("pending bridge is inconsistent"),
+            .status = {
+                .state = ManagementState::Conflict,
+                .entrypointKind = EntrypointKind::Unsafe,
+            },
+        };
+        CompositorService service(
+            std::move(ownedBackend),
+            QDBusConnection(QStringLiteral("startup-reconcile-failure-test"))
+        );
+
+        auto ownedAuthority = std::make_unique<FakeAuthority>();
+        auto *authority = ownedAuthority.get();
+        authority->initializeResult = {
+            .success = true,
+            .snapshot = initial,
+        };
+        QString error;
+        QVERIFY(service.initializeAuthority(std::move(ownedAuthority), error));
+        QCOMPARE(backend->reconcileCalls, 1);
+        QCOMPARE(backend->lastReconcileGeneration, initial.generationDigest);
+        QVERIFY(!service.available());
+        QVERIFY(!service.writable());
+        QCOMPARE(service.revision(), qulonglong(0));
+        QCOMPARE(service.appliedRevision(), qulonglong(initial.appliedRevision));
+        QCOMPARE(service.generationDigest(), initial.generationDigest);
+        QCOMPARE(service.loadState(), QStringLiteral("unavailable"));
+        QCOMPARE(service.applyState(), QStringLiteral("failed"));
+        QCOMPARE(service.managementState(), QStringLiteral("conflict"));
+
+        const auto statusCalls = backend->statusCalls;
+        QCOMPARE(service.ReplaceSnapshot(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     initial.desiredState
+                 ),
+                 qulonglong(0));
+        QString generation;
+        QCOMPARE(service.Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.appliedRevision));
+        qulonglong recoveredApplied = 0;
+        QCOMPARE(service.Recover(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     recoveredApplied,
+                     generation
+                 ),
+                 qulonglong(0));
+        QString entrypoint;
+        QCOMPARE(service.AdoptManagedConfiguration(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     QString{},
+                     generation,
+                     entrypoint
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(authority->replaceCalls, 0);
+        QCOMPARE(authority->prepareApplyCalls, 0);
+        QCOMPARE(authority->prepareRecoveryCalls, 0);
+        QCOMPARE(backend->activateCalls, 0);
+        QCOMPARE(backend->adoptCalls, 0);
+        QCOMPARE(backend->statusCalls, statusCalls);
+    }
+
+    void startupBindsAuthorityFilesystemBeforeReconciliation()
+    {
+        const auto initial = dirtySnapshot();
+        ServiceHarness harness(initial);
+        QCOMPARE(harness.startupTrace,
+                 QStringList({
+                     QStringLiteral("authority-initialize"),
+                     QStringLiteral("authority-context"),
+                     QStringLiteral("backend-bind"),
+                     QStringLiteral("backend-reconcile"),
+                 }));
+        QCOMPARE(harness.authority->filesystemContextCalls, 1);
+        QCOMPARE(harness.backend->bindCalls, 1);
+        QVERIFY(!harness.backend->lastFilesystemContextComplete);
+        QCOMPARE(harness.backend->reconcileCalls, 1);
+    }
+
+    void filesystemContextErrorKeepsServiceAliveWithoutBackendMutation()
+    {
+        const auto initial = dirtySnapshot();
+        auto ownedBackend = std::make_unique<FakeActivationBackend>();
+        auto *backend = ownedBackend.get();
+        CompositorService service(
+            std::move(ownedBackend),
+            QDBusConnection(QStringLiteral("filesystem-context-error-test"))
+        );
+        auto ownedAuthority = std::make_unique<FakeAuthority>();
+        auto *authority = ownedAuthority.get();
+        authority->initializeResult = {
+            .success = true,
+            .snapshot = initial,
+        };
+        authority->filesystemContextSuccess = false;
+        authority->filesystemContextError =
+            QStringLiteral("root descriptor duplication failed");
+
+        QString error;
+        QVERIFY(service.initializeAuthority(std::move(ownedAuthority), error));
+        QCOMPARE(authority->filesystemContextCalls, 1);
+        QCOMPARE(backend->bindCalls, 0);
+        QCOMPARE(backend->reconcileCalls, 0);
+        QVERIFY(!service.available());
+        QVERIFY(!service.writable());
+        QCOMPARE(service.appliedRevision(), qulonglong(initial.appliedRevision));
+        QCOMPARE(service.generationDigest(), initial.generationDigest);
+        QCOMPARE(service.applyState(), QStringLiteral("failed"));
+        QCOMPARE(service.managementState(), QStringLiteral("conflict"));
+    }
+
+    void liveBackendMayRejectAbsentFilesystemContextWithoutRestartLoop()
+    {
+        const auto initial = dirtySnapshot();
+        auto ownedBackend = std::make_unique<FakeActivationBackend>();
+        auto *backend = ownedBackend.get();
+        backend->bindResultConfigured = true;
+        backend->bindResult = {
+            .success = false,
+            .errorCode = QStringLiteral("PersistenceFailed"),
+            .errorMessage = QStringLiteral("authority context is absent"),
+            .status = {
+                .state = ManagementState::Conflict,
+                .entrypointKind = EntrypointKind::Unsafe,
+            },
+        };
+        CompositorService service(
+            std::move(ownedBackend),
+            QDBusConnection(QStringLiteral("filesystem-context-absent-test"))
+        );
+        auto ownedAuthority = std::make_unique<FakeAuthority>();
+        auto *authority = ownedAuthority.get();
+        authority->initializeResult = {
+            .success = true,
+            .snapshot = initial,
+        };
+
+        QString error;
+        QVERIFY(service.initializeAuthority(std::move(ownedAuthority), error));
+        QCOMPARE(authority->filesystemContextCalls, 1);
+        QCOMPARE(backend->bindCalls, 1);
+        QVERIFY(!backend->lastFilesystemContextComplete);
+        QCOMPARE(backend->reconcileCalls, 0);
+        QVERIFY(!service.available());
+        QCOMPARE(service.managementState(), QStringLiteral("conflict"));
+    }
+
+    void authorityInitializationFailureStillFailsStartupBeforeReconciliation()
+    {
+        auto ownedBackend = std::make_unique<FakeActivationBackend>();
+        auto *backend = ownedBackend.get();
+        CompositorService service(
+            std::move(ownedBackend),
+            QDBusConnection(QStringLiteral("authority-init-failure-test"))
+        );
+        auto ownedAuthority = std::make_unique<FakeAuthority>();
+        ownedAuthority->initializeResult = {
+            .success = false,
+            .errorCode = QStringLiteral("PersistenceFailed"),
+            .errorMessage = QStringLiteral("authority lease failed"),
+        };
+        QString error;
+        QVERIFY(!service.initializeAuthority(std::move(ownedAuthority), error));
+        QCOMPARE(error, QStringLiteral("authority lease failed"));
+        QCOMPARE(backend->bindCalls, 0);
+        QCOMPARE(backend->reconcileCalls, 0);
+        QVERIFY(!service.available());
+    }
+
+    void externalEntrypointChangesPublishIndependentManagementProperties()
+    {
+        EntrypointTree tree;
+        QVERIFY(tree.temporary.isValid());
+        auto initial = dirtySnapshot();
+        initial.appliedRevision = 0;
+        initial.generationDigest.clear();
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Unmanaged,
+                .entrypointKind = EntrypointKind::Absent,
+            },
+            tree.entrypoint
+        );
+        QSignalSpy published(
+            harness.service.get(),
+            &CompositorService::propertiesPublished
+        );
+        QVERIFY(published.isValid());
+
+        const QByteArray firstBytes{"-- first external entrypoint\n"};
+        const auto firstDigest = sha256(firstBytes);
+        harness.backend->statusValue = {
+            .state = ManagementState::Unmanaged,
+            .entrypointKind = EntrypointKind::Regular,
+            .entrypointDigest = firstDigest,
+        };
+        QVERIFY(writeFile(tree.entrypoint, firstBytes));
+        QTRY_COMPARE(harness.service->entrypointDigest(), firstDigest);
+        QTRY_VERIFY(!published.isEmpty());
+        auto changed = published.last().at(0).toMap();
+        QCOMPARE(changed.value(QStringLiteral("EntrypointDigest")).toString(),
+                 firstDigest);
+        QVERIFY(!changed.contains(QStringLiteral("ManagementState")));
+
+        published.clear();
+        harness.backend->statusValue = {
+            .state = ManagementState::Conflict,
+            .entrypointKind = EntrypointKind::Regular,
+            .entrypointDigest = firstDigest,
+        };
+        QVERIFY(::chmod(QFile::encodeName(tree.entrypoint).constData(), 0660) == 0);
+        QTRY_COMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+        QTRY_VERIFY(!published.isEmpty());
+        changed = published.last().at(0).toMap();
+        QCOMPARE(changed.value(QStringLiteral("ManagementState")).toString(),
+                 QStringLiteral("conflict"));
+        QVERIFY(!changed.contains(QStringLiteral("EntrypointDigest")));
+
+        const QByteArray replacementBytes{"-- replacement entrypoint\n"};
+        const auto replacementDigest = sha256(replacementBytes);
+        const auto replacement = QDir(tree.configRoot).filePath(
+            QStringLiteral("replacement.lua")
+        );
+        QVERIFY(writeFile(replacement, replacementBytes));
+        published.clear();
+        harness.backend->statusValue = {
+            .state = ManagementState::Unmanaged,
+            .entrypointKind = EntrypointKind::Regular,
+            .entrypointDigest = replacementDigest,
+        };
+        QVERIFY(::rename(
+            QFile::encodeName(replacement).constData(),
+            QFile::encodeName(tree.entrypoint).constData()
+        ) == 0);
+        QTRY_COMPARE(harness.service->managementState(), QStringLiteral("unmanaged"));
+        QTRY_COMPARE(harness.service->entrypointDigest(), replacementDigest);
+        QTRY_VERIFY(!published.isEmpty());
+        changed = published.last().at(0).toMap();
+        QCOMPARE(changed.value(QStringLiteral("ManagementState")).toString(),
+                 QStringLiteral("unmanaged"));
+        QCOMPARE(changed.value(QStringLiteral("EntrypointDigest")).toString(),
+                 replacementDigest);
+
+        published.clear();
+        harness.backend->statusValue = {
+            .state = ManagementState::Unmanaged,
+            .entrypointKind = EntrypointKind::Absent,
+        };
+        QVERIFY(QFile::remove(tree.entrypoint));
+        QTRY_VERIFY(harness.service->entrypointDigest().isEmpty());
+        QTRY_VERIFY(!published.isEmpty());
+        changed = published.last().at(0).toMap();
+        QCOMPARE(changed.value(QStringLiteral("EntrypointDigest")).toString(),
+                 QString{});
+        QVERIFY(!changed.contains(QStringLiteral("ManagementState")));
     }
 
     void uncertainCommitMarkerNeverRollsBackOrAborts()

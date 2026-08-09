@@ -46,6 +46,8 @@ public:
         const RenderedGeneration &rendered
     );
     [[nodiscard]] GenerationResult verify(const QString &nonce) const;
+    [[nodiscard]] int directoryFd() const { return generationsDirectoryFd_; }
+    [[nodiscard]] bool directoryStillNamed() const;
 
 private:
     PersistentStore &store_;

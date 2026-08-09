@@ -6,8 +6,10 @@
 #include <QByteArray>
 #include <QDBusConnection>
 #include <QDBusContext>
+#include <QFileSystemWatcher>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <QVariantMap>
 
 #include <memory>
@@ -91,6 +93,13 @@ public slots:
         QString &entrypointDigest
     );
 
+signals:
+    // Mirrors the exact changed map sent on
+    // org.freedesktop.DBus.Properties.PropertiesChanged. This also gives
+    // in-process observers a deterministic view of independently detected
+    // entrypoint changes.
+    void propertiesPublished(const QVariantMap &changed);
+
 private:
     struct Completion final {
         bool success = false;
@@ -119,7 +128,10 @@ private:
         const AuthoritySnapshot &snapshot,
         const ManagementStatus &management
     );
-    void publishProperties(const QVariantMap &changed) const;
+    void configureManagementMonitoring();
+    void rearmManagementWatch();
+    void refreshManagementStatus();
+    void publishProperties(const QVariantMap &changed);
     void reportError(const QString &code, const QString &message) const;
     [[nodiscard]] static QString boundedErrorCode(
         const QString &code,
@@ -131,6 +143,9 @@ private:
     QDBusConnection connection_;
     AuthoritySnapshot snapshot_;
     ManagementStatus management_;
+    QFileSystemWatcher managementWatcher_;
+    QTimer managementPollTimer_;
+    QString managementWatchPath_;
 };
 
 } // namespace HyprShelld::Compositor

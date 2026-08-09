@@ -464,17 +464,59 @@ StoreOperationResult PersistentStore::initialize()
 bool PersistentStore::managedDirectoryStillNamed() const
 {
     if (configDirectoryFd_ < 0 || managedDirectoryFd_ < 0) return false;
-    struct stat opened {};
+    struct stat configOpened {};
+    struct stat managedOpened {};
     struct stat named {};
-    return ::fstat(managedDirectoryFd_, &opened) == 0
-        && ::fstatat(configDirectoryFd_, "hyprshelld", &named,
-                     AT_SYMLINK_NOFOLLOW) == 0
-        && S_ISDIR(opened.st_mode) && S_ISDIR(named.st_mode)
-        && opened.st_dev == named.st_dev && opened.st_ino == named.st_ino
-        && opened.st_mode == named.st_mode && opened.st_uid == named.st_uid
-        && opened.st_nlink == named.st_nlink
-        && opened.st_uid == ::geteuid()
-        && (opened.st_mode & 0777) == privateDirectoryMode;
+    if (::fstat(configDirectoryFd_, &configOpened) != 0
+        || ::fstat(managedDirectoryFd_, &managedOpened) != 0
+        || ::fstatat(configDirectoryFd_, "hyprshelld", &named,
+                     AT_SYMLINK_NOFOLLOW) != 0
+        || !S_ISDIR(managedOpened.st_mode) || !S_ISDIR(named.st_mode)
+        || managedOpened.st_dev != named.st_dev
+        || managedOpened.st_ino != named.st_ino
+        || managedOpened.st_mode != named.st_mode
+        || managedOpened.st_uid != named.st_uid
+        || managedOpened.st_nlink != named.st_nlink
+        || managedOpened.st_uid != ::geteuid()
+        || (managedOpened.st_mode & 0777) != privateDirectoryMode) {
+        return false;
+    }
+
+    QString error;
+    const auto canonicalConfig = openDirectoryTree(
+        paths_.configRoot, false, false, error
+    );
+    if (canonicalConfig < 0) return false;
+    struct stat canonicalConfigInfo {};
+    const auto configMatches = ::fstat(
+        canonicalConfig, &canonicalConfigInfo
+    ) == 0
+        && configOpened.st_dev == canonicalConfigInfo.st_dev
+        && configOpened.st_ino == canonicalConfigInfo.st_ino
+        && configOpened.st_mode == canonicalConfigInfo.st_mode
+        && configOpened.st_uid == canonicalConfigInfo.st_uid;
+    ::close(canonicalConfig);
+    if (!configMatches) return false;
+
+    const auto canonicalManaged = openDirectoryTree(
+        paths_.managedConfigRoot, false, true, error
+    );
+    if (canonicalManaged < 0) return false;
+    struct stat canonicalManagedInfo {};
+    const auto managedMatches = ::fstat(
+        canonicalManaged, &canonicalManagedInfo
+    ) == 0
+        && managedOpened.st_dev == canonicalManagedInfo.st_dev
+        && managedOpened.st_ino == canonicalManagedInfo.st_ino
+        && managedOpened.st_mode == canonicalManagedInfo.st_mode
+        && managedOpened.st_uid == canonicalManagedInfo.st_uid;
+    ::close(canonicalManaged);
+    return managedMatches;
+}
+
+bool PersistentStore::rootsStillNamed() const
+{
+    return leaseStillNamed() && managedDirectoryStillNamed();
 }
 
 const char *PersistentStore::fileName(const StoreFile file) const

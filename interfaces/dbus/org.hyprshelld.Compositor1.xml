@@ -36,7 +36,13 @@
         value="true"/>
     </property>
 
-    <!-- One of unmanaged, managed, or conflict. Ownership is never implicit. -->
+    <!--
+      One of unmanaged, managed, or conflict. Ownership is never implicit.
+      The value is re-probed when the config root changes and before every
+      live activation, adoption, or recovery operation; managed requires the
+      entrypoint, ownership record, and authority GenerationDigest to identify
+      the same verified generation.
+    -->
     <property name="ManagementState" type="s" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -44,8 +50,10 @@
     </property>
 
     <!--
-      Exact SHA-256 of the current regular compositor entrypoint. Empty means
-      the entrypoint is absent or cannot safely be represented as regular bytes.
+      Exact SHA-256 of the most recently safely re-probed regular compositor
+      entrypoint. Empty means the entrypoint is absent or cannot safely be
+      represented as regular bytes. Config-root changes trigger another probe
+      and PropertiesChanged when this observation changes.
     -->
     <property name="EntrypointDigest" type="s" access="read">
       <annotation
@@ -82,7 +90,11 @@
         value="true"/>
     </property>
 
-    <!-- One of none, reload, restart, or session. -->
+    <!--
+      One of none, reload, restart, or session. The live executor can confirm
+      reload in this contract version. Restart and session remain explicit
+      pending requirements and fail activation with ActivationRequired.
+    -->
     <property name="RequiredActivation" type="s" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -138,9 +150,13 @@
     <!--
       Builds and atomically activates an immutable managed Lua generation for
       exactly expectedRevision. An idempotent apply returns the current
-      generation without rebuilding it. The installed Slice-2 executor is
-      intentionally fail-closed and returns ActivationRequired; a later live
-      backend must prove the exact reload event and empty config errors.
+      generation without rebuilding it. For a reload requirement, compositord
+      journals the prior and target entrypoints before atomic publication,
+      connects to the exact running Hyprland instance, and accepts convergence
+      only after the target's exact custom activation-nonce event, the following
+      configreloaded event, a successful reload reply, and an empty JSON
+      configerrors result. Restart and session requirements fail with
+      ActivationRequired before entrypoint publication.
 
       Errors:
         org.hyprshelld.Compositor1.Error.Unavailable
@@ -166,8 +182,10 @@
       Copies the last successfully applied snapshot into a new desired-state
       revision, then prepares, verifies, and activates that exact content. The
       new revision is expectedRevision + 1; an older revision is never restored
-      or reused. Recovery never adopts an unmanaged compositor entrypoint. The
-      installed Slice-2 executor returns ActivationRequired before publication.
+      or reused. Recovery never adopts an unmanaged compositor entrypoint. A
+      reload recovery uses the same durable entrypoint journal and exact live
+      proof as Apply. Restart and session requirements return
+      ActivationRequired before entrypoint publication.
 
       Errors:
         org.hyprshelld.Compositor1.Error.Unavailable
@@ -195,10 +213,13 @@
       Explicitly adopts the compositor entrypoint at one CAS-qualified desired
       state. An empty expectedEntrypointDigest is valid only when the entrypoint
       is absent. A non-empty value binds the exact existing regular-file bytes;
-      compositord preserves a recoverable original before it stages, verifies,
-      and atomically publishes its ownership marker and managed entrypoint.
-      This method is never invoked automatically during startup. The installed
-      Slice-2 executor defers this transition with ActivationRequired.
+      compositord durably preserves a recoverable original and activation
+      journal before it stages, verifies, and atomically publishes the managed
+      entrypoint. Ownership is finalized only after exact live Reload proof and
+      the authority commit. Startup reconciles an interrupted journal without
+      implicitly adopting unrelated bytes. This method is never invoked
+      automatically during startup. Restart and session requirements return
+      ActivationRequired before entrypoint publication.
 
       Errors:
         org.hyprshelld.Compositor1.Error.Unavailable

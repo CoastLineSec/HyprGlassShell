@@ -44,6 +44,24 @@ QString activationNonce() {
   return value;
 }
 
+ManagementStatus authorityBoundManagement(
+    const AuthoritySnapshot &authority, ManagementStatus management) {
+  const auto exactManagedAuthority =
+      authority.available && !authority.generationDigest.isEmpty() &&
+      management.state == ManagementState::Managed &&
+      management.managedGeneration == authority.generationDigest;
+  const auto inactiveUnmanagedAuthority =
+      authority.available && authority.generationDigest.isEmpty() &&
+      management.state == ManagementState::Unmanaged;
+  if (!exactManagedAuthority && !inactiveUnmanagedAuthority &&
+      management.state != ManagementState::Conflict) {
+    management.state = ManagementState::Conflict;
+    management.managedGeneration.clear();
+    management.managedNonce.clear();
+  }
+  return management;
+}
+
 } // namespace
 
 CompositorService::CompositorService(
@@ -52,6 +70,14 @@ CompositorService::CompositorService(
     : QObject(parent), activationBackend_(std::move(activationBackend)),
       connection_(std::move(connection)) {
   Q_ASSERT(activationBackend_);
+  managementPollTimer_.setInterval(1000);
+  managementPollTimer_.setSingleShot(false);
+  connect(&managementPollTimer_, &QTimer::timeout, this,
+          &CompositorService::refreshManagementStatus);
+  connect(&managementWatcher_, &QFileSystemWatcher::fileChanged, this,
+          [this] { refreshManagementStatus(); });
+  connect(&managementWatcher_, &QFileSystemWatcher::directoryChanged, this,
+          [this] { refreshManagementStatus(); });
 }
 
 bool CompositorService::initializeAuthority(
@@ -74,7 +100,39 @@ bool CompositorService::initializeAuthority(
     return false;
   }
 
-  acceptState(initialized.snapshot, activationBackend_->status());
+  BackendResult startup;
+  auto filesystem = authority_->duplicateActivationFilesystemContext();
+  if (!filesystem.success) {
+    startup = {
+        .success = false,
+        .errorCode = filesystem.errorCode,
+        .errorMessage = filesystem.errorMessage,
+        .status = activationBackend_->status(),
+    };
+  } else {
+    ActivationFilesystemContext context;
+    if (filesystem.context.has_value()) {
+      context = std::move(*filesystem.context);
+    }
+    startup = activationBackend_->bindFilesystemContext(std::move(context));
+    if (startup.success) {
+      startup = activationBackend_->reconcileStartup(
+          initialized.snapshot.generationDigest);
+    }
+  }
+  if (!startup.success) {
+    auto unavailable = initialized.snapshot;
+    unavailable.available = false;
+    unavailable.writable = false;
+    unavailable.loadState = QStringLiteral("unavailable");
+    unavailable.applyState = QStringLiteral("failed");
+    auto conflict = startup.status;
+    conflict.state = ManagementState::Conflict;
+    acceptState(unavailable, conflict);
+  } else {
+    acceptState(initialized.snapshot, startup.status);
+  }
+  configureManagementMonitoring();
   return true;
 }
 
@@ -597,14 +655,35 @@ CompositorService::Completion CompositorService::completePrepared(
     return completion;
   }
 
-  completion.success = true;
+  const auto finalized = activationBackend_->finalizeCommitted(
+      activated.receipt, generation.id);
   completion.snapshot = committed.snapshot;
-  completion.management = activationBackend_->status();
+  completion.management = finalized.status;
+  const auto finalizationMatchesAuthority =
+      finalized.success && finalized.status.state == ManagementState::Managed &&
+      finalized.status.managedGeneration == generation.id;
+  if (!finalizationMatchesAuthority) {
+    // The authority decision is already durable and therefore one-way. Keep
+    // the backend's bridge for startup finalization and never contradict the
+    // committed tuple by rolling live state back or aborting the transaction.
+    markUnreconciled();
+    completion.errorCode = QStringLiteral("ApplyFailed");
+    completion.errorMessage =
+        finalized.errorMessage.isEmpty()
+            ? QStringLiteral("The committed compositor generation could not be "
+                             "durably finalized")
+            : finalized.errorMessage;
+    return completion;
+  }
+
+  completion.success = true;
   return completion;
 }
 
 void CompositorService::acceptState(const AuthoritySnapshot &next,
                                     const ManagementStatus &nextManagement) {
+  const auto boundManagement =
+      authorityBoundManagement(next, nextManagement);
   QVariantMap changed;
   const auto insert = [&changed](const QString &name, const QVariant &value) {
     changed.insert(name, value);
@@ -650,20 +729,70 @@ void CompositorService::acceptState(const AuthoritySnapshot &next,
   if (next.generationDigest != snapshot_.generationDigest) {
     insert(QStringLiteral("GenerationDigest"), next.generationDigest);
   }
-  if (nextManagement.state != management_.state) {
+  if (boundManagement.state != management_.state) {
     insert(QStringLiteral("ManagementState"),
-           managementStateName(nextManagement.state));
+           managementStateName(boundManagement.state));
   }
-  if (nextManagement.entrypointDigest != management_.entrypointDigest) {
-    insert(QStringLiteral("EntrypointDigest"), nextManagement.entrypointDigest);
+  if (boundManagement.entrypointDigest != management_.entrypointDigest) {
+    insert(QStringLiteral("EntrypointDigest"), boundManagement.entrypointDigest);
   }
 
   snapshot_ = next;
-  management_ = nextManagement;
+  management_ = boundManagement;
   publishProperties(changed);
 }
 
-void CompositorService::publishProperties(const QVariantMap &changed) const {
+void CompositorService::configureManagementMonitoring() {
+  managementWatchPath_ = activationBackend_->managementWatchPath();
+  if (managementWatchPath_.isEmpty()) {
+    return;
+  }
+  managementWatchPath_ = QDir::cleanPath(managementWatchPath_);
+  if (!QDir::isAbsolutePath(managementWatchPath_)) {
+    managementWatchPath_.clear();
+    return;
+  }
+  rearmManagementWatch();
+  managementPollTimer_.start();
+}
+
+void CompositorService::rearmManagementWatch() {
+  if (managementWatchPath_.isEmpty()) {
+    return;
+  }
+  const auto addFile = [this](const QString &path) {
+    if (QFileInfo(path).isFile() &&
+        !managementWatcher_.files().contains(path)) {
+      managementWatcher_.addPath(path);
+    }
+  };
+  const auto addDirectory = [this](const QString &path) {
+    if (QFileInfo(path).isDir() &&
+        !managementWatcher_.directories().contains(path)) {
+      managementWatcher_.addPath(path);
+    }
+  };
+
+  addFile(managementWatchPath_);
+  const auto configRoot = QFileInfo(managementWatchPath_).dir().absolutePath();
+  addDirectory(configRoot);
+  // Keep a surviving watch across replacement of the config root itself.
+  addDirectory(QFileInfo(configRoot).dir().absolutePath());
+}
+
+void CompositorService::refreshManagementStatus() {
+  if (!authority_) {
+    return;
+  }
+  const auto live = authorityBoundManagement(
+      snapshot_, activationBackend_->status());
+  if (live != management_) {
+    acceptState(snapshot_, live);
+  }
+  rearmManagementWatch();
+}
+
+void CompositorService::publishProperties(const QVariantMap &changed) {
   if (changed.isEmpty()) {
     return;
   }
@@ -672,6 +801,7 @@ void CompositorService::publishProperties(const QVariantMap &changed) const {
       QStringLiteral("PropertiesChanged"));
   signal.setArguments({interfaceName, changed, QStringList()});
   connection_.send(signal);
+  emit propertiesPublished(changed);
 }
 
 void CompositorService::reportError(const QString &code,

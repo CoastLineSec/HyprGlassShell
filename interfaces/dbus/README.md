@@ -102,20 +102,44 @@ Hyprland configuration root.
 the exact committed ownership record and entrypoint digest, never from a
 comment in a Lua file. The stable entrypoint is
 `$XDG_CONFIG_HOME/hypr/hyprland.lua`; generated immutable trees live below
-`$XDG_CONFIG_HOME/hypr/hyprshelld`. Startup never claims an existing entrypoint.
+`$XDG_CONFIG_HOME/hypr/hyprshelld`. Compositord watches the config root and its
+parent for entrypoint creation, deletion, replacement, and path invalidation,
+and it independently re-probes before every live activation, adoption, or
+recovery operation. A `managed` observation therefore requires the ownership
+record, current regular-file digest, verified generation, and authority
+`GenerationDigest` to agree; any mismatch is `conflict`. Startup never claims
+an existing entrypoint.
 `AdoptManagedConfiguration` is the only ownership transition. The caller must
 bind the exact bytes of an existing regular file, or assert actual absence with
 an empty digest. Unsafe, unreadable, non-regular, or concurrently changed paths
-fail closed. Before publishing the managed entrypoint and ownership record,
-compositord preserves a recoverable original and stages and verifies the entire
-managed generation. `user-custom.lua` remains outside generated generations and
-is created only when absent.
+fail closed. Before changing the stable path, compositord durably preserves a
+recoverable original, writes a live-activation journal that binds the prior and
+target entrypoints, and stages and verifies the entire managed generation. It
+then publishes a regular managed entrypoint with an atomic no-replace or
+exchange operation and synchronizes the config directory. Ownership is not
+finalized until live proof and the authority commit both succeed.
+`user-custom.lua` remains outside generated generations and is created only
+when absent.
+
+The public `org.hyprshelld.Compositor1` D-Bus name is the production singleton:
+only after acquiring it does the authority take its store lease and duplicate
+retained descriptors for the state, config, managed, and generation roots into
+the publisher. Publisher operations remain descriptor-relative and revalidate
+that every canonical path still names the retained inode before and after each
+transition phase. If a canonical tree is renamed and recreated, the replacement
+tree is never selected for mutation and the old owner fails closed when it
+detects the mismatch. This does not claim atomic prevention of a hostile
+same-UID rename in the instant between a name check and an fd-relative syscall;
+that actor is inside the local-user trust boundary, and a detected post-phase
+mismatch remains an explicit conflict with its recovery journal retained.
 
 `Apply` compares the revision and both catalog digests before rendering. It
-verifies every generated file and manifest, then asks an injected activation
-executor to satisfy the strongest required mode across the snapshot: `reload`,
-`restart`, or `session`. An executor that can only confirm a reload cannot claim
-restart or session convergence. Only a confirmed activation is committed as
+verifies every generated file and manifest, then asks the activation executor
+to satisfy the strongest required mode across the snapshot: `reload`,
+`restart`, or `session`. The installed live executor confirms only `reload`;
+`restart` and `session` return `ActivationRequired` before the stable
+entrypoint is changed. They remain visible through `RequiredActivation` and
+are never weakened to a reload. Only a confirmed activation is committed as
 `AppliedRevision` and `GenerationDigest`; abort retains the prior managed
 entrypoint, generation, last-good snapshot, and applied tuple. Desired state
 remains saved, and `RequiredActivation` reports `none`, `reload`, `restart`, or
@@ -123,12 +147,54 @@ remains saved, and `RequiredActivation` reports `none`, `reload`, `restart`, or
 environment changes remain fail-closed in this slice rather than being rendered
 as invented shell commands.
 
+Reload activation is bound to one exact running Hyprland instance. Compositord
+resolves the current instance signature before each prepare from the bounded
+systemd user-manager environment lookup (with its startup environment only as
+an unavailable-provider fallback), then pins that signature for the whole
+proof. It validates the runtime tree, lock PID, socket peer credentials, Lua
+config provider, compatible `0.56.x` runtime, default config path, and absence
+of `--safe-mode`; it never enumerates instances or selects the newest one.
+Before publishing a target it connects to socket2, reloads the unchanged
+baseline, observes the exact
+`configreloaded` boundary, and requires an empty JSON `configerrors` array. This
+both proves that the event connection is accepted and establishes a clean
+rollback baseline without evaluating Lua or changing the entrypoint.
+
+After atomic publication, an ordinary managed update reloads Hyprland and must
+observe, in order, the generated exact
+`custom>>hyprshelld:<activation-nonce>` proof and the following
+`configreloaded` event. Adoption uses Hyprland's full config reset so a newly
+created Lua entrypoint can replace a previously selected legacy provider. In
+both cases the reload reply must succeed, the exact process identity and target
+entrypoint must remain unchanged, and a subsequent strict JSON `configerrors`
+query must be an empty array. A successful reload reply without the exact nonce,
+or a nonce followed by any config error, is not convergence.
+
+Rollback restores the exact journaled prior entrypoint before it aborts the
+authority transaction. A prior managed generation must emit its own exact
+nonce and finish with empty config errors. An unmanaged rollback instead must
+restore the exact prior bytes or absence, reselect the exact journaled baseline
+config provider, emit the generic reload boundary, and finish with empty config
+errors. Errors from the failed candidate are allowed while rollback is being
+prepared; the empty-error requirement applies again after the prior baseline
+has been restored.
+
 If the `committing` marker definitely was not published, compositord rolls live
 activation back before aborting the prepared transaction. Once its atomic
 publication may be visible, compositord never guesses that it is absent: a
 parent-directory sync failure remains unavailable/conflict for startup
 reconciliation, just like a fully durable one-way marker. This prevents a
 rollback from contradicting a commit record that may survive a crash.
+
+The durable live-activation journal bridges entrypoint publication and the
+authority transaction across service crashes. On startup, a journal whose
+target differs from the authority's applied generation is rolled back and
+proved before cleanup. A journal whose target equals the applied generation is
+never rolled back; compositord requires the exact target entrypoint, finalizes
+ownership durably, and then removes the journal. If the stable path matches
+neither journaled side, or ownership finalization fails after an authority
+commit, the service exposes unavailable/failed authority with management
+`conflict` and keeps the journal for deterministic reconciliation.
 
 `Recover` is an explicit rollback-as-new-state operation. At the caller's
 current revision it copies the last successfully applied content into exactly
@@ -138,15 +204,11 @@ unmanaged entrypoint, and never silently discards current bytes. Startup
 recovery only reconciles an interrupted transaction; it does not invoke this
 public rollback operation.
 
-This slice installs a deliberately deferred activation backend. The complete
-CAS, preparation, verification, commit, abort, recovery, and injectable
-activation hooks are present, but the installed executor returns
-`ActivationRequired` before live adoption or activation. Consequently `Apply`,
-`Recover`, and `AdoptManagedConfiguration` cannot advance the applied tuple or
-modify/reload the user's live Hyprland configuration in this slice. Tests use a
-positive injected backend only to qualify the transaction boundary; a later
-slice must observe the exact generated `config.reloaded` nonce and empty
-`configerrors` before enabling production activation.
+The installed backend performs the bounded live Reload protocol above for
+`Apply`, `Recover`, and `AdoptManagedConfiguration`. It never claims a stronger
+transition: snapshots requiring compositor restart or a new session remain
+saved but return `ActivationRequired` without changing the stable entrypoint or
+applied tuple.
 
 `LoadState` is one of `normal`, `recovered`, `defaulted`, `unsupported`, or
 `unavailable`. `ApplyState` is one of `unavailable`, `inactive`, `current`,
@@ -155,8 +217,9 @@ slice must observe the exact generated `config.reloaded` nonce and empty
 `GenerationDigest`, because revision zero may itself be active. Unknown future
 values are treated as unsafe.
 `EntrypointDigest` is the exact digest of a safely read regular entrypoint and is
-empty when absent or unsafe. Every adoption call re-probes the path, so an empty
-property value is never treated by itself as proof of absence.
+empty when absent or unsafe. Config-root changes and every mutating call
+re-probe the path, so an empty property value is never treated by itself as
+proof of absence.
 
 Compositor errors have these meanings:
 
@@ -172,7 +235,8 @@ Compositor errors have these meanings:
 - `ActivationRequired`: the executor cannot confirm the snapshot's required
   reload, restart, or session transition;
 - `VerificationFailed` or `ReloadFailed`: staged bytes failed verification or
-  the injected executor did not confirm convergence; and
+  the live executor did not confirm the exact reload, rollback, or empty-error
+  proof; and
 - `ApplyFailed`, `RecoveryUnavailable`, or `RecoveryFailed`: the corresponding
   bounded transaction could not complete without weakening its guarantees.
 

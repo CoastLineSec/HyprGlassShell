@@ -29,8 +29,10 @@ from typing import Any, Iterable
 REGISTRY_PATH = Path("src/config/values/ConfigValues.cpp")
 DISPATCHER_SOURCE_PATH = Path("src/config/lua/bindings/LuaBindingsDispatchers.cpp")
 COMPLEX_SOURCE_PATHS = (
+    Path("src/Compositor.cpp"),
     Path("src/animation/AnimationManager.cpp"),
     Path("src/animation/WorkspaceAnimationController.cpp"),
+    Path("src/config/lua/ConfigManager.cpp"),
     Path("src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
     DISPATCHER_SOURCE_PATH,
     Path("src/config/lua/bindings/LuaBindingsInternal.cpp"),
@@ -55,6 +57,7 @@ COMPLEX_SOURCE_PATHS = (
     Path("src/helpers/MiscFunctions.cpp"),
     Path("src/helpers/MiscFunctions.hpp"),
     Path("src/helpers/TransferFunction.cpp"),
+    Path("src/main.cpp"),
     Path("src/managers/fullscreen/FullscreenController.hpp"),
     Path("src/managers/KeybindManager.cpp"),
     Path("src/managers/input/InputManager.cpp"),
@@ -75,6 +78,12 @@ COMPLEX_SOURCE_PATHS = (
     Path("src/state/WorkspaceQueryCore.cpp"),
     Path("src/state/WorkspaceQueryCore.hpp"),
 )
+STARTUP_SOURCE_PATHS_0560 = (
+    Path("src/Compositor.cpp"),
+    Path("src/config/lua/ConfigManager.cpp"),
+    Path("src/config/shared/actions/ConfigActions.cpp"),
+    Path("src/main.cpp"),
+)
 REPOSITORY = "https://github.com/hyprwm/Hyprland"
 REVIEWED_ON = "2026-08-09"
 WIKI_ROOT = "https://wiki.hypr.land/0.56.0"
@@ -89,6 +98,10 @@ QUALIFIED_SOURCES = {
         "tag": "v0.56.1",
         "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
         "count": 353,
+    },
+    "0.56.0": {
+        "tag": "v0.56.0",
+        "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
     },
 }
 
@@ -106,8 +119,10 @@ QUALIFIED_SOURCE_HASHES: dict[str, dict[Path, str]] = {
     "0.56.1": {
         Path("VERSION"): "2aaeb543208a766598b45262f3eabb0600c2a6055350ab8be22b5bf944a484e9",
         REGISTRY_PATH: "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754",
+        Path("src/Compositor.cpp"): "74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0",
         Path("src/animation/AnimationManager.cpp"): "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985",
         Path("src/animation/WorkspaceAnimationController.cpp"): "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b",
+        Path("src/config/lua/ConfigManager.cpp"): "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502",
         Path("src/config/lua/bindings/LuaBindingsConfigRules.cpp"): "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9",
         DISPATCHER_SOURCE_PATH: "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223",
         Path("src/config/lua/bindings/LuaBindingsInternal.cpp"): "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9",
@@ -132,6 +147,7 @@ QUALIFIED_SOURCE_HASHES: dict[str, dict[Path, str]] = {
         Path("src/helpers/MiscFunctions.cpp"): "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9",
         Path("src/helpers/MiscFunctions.hpp"): "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79",
         Path("src/helpers/TransferFunction.cpp"): "503eafd06a295b1ecbf0506d552db337f79498180f183c0bbc7a12f8855baeaf",
+        Path("src/main.cpp"): "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645",
         Path("src/managers/fullscreen/FullscreenController.hpp"): "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378",
         Path("src/managers/KeybindManager.cpp"): "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40",
         Path("src/managers/input/InputManager.cpp"): "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e",
@@ -151,6 +167,13 @@ QUALIFIED_SOURCE_HASHES: dict[str, dict[Path, str]] = {
         Path("src/state/MonitorQueryCore.hpp"): "829581d4aeb084cdd30de9c8c8e310ead38d357061df4e82a8279d634870e0f4",
         Path("src/state/WorkspaceQueryCore.cpp"): "b810515fb0720d1fe6b3e3e1e5d5ebfa57e5503e83840337a614b0862860b3d7",
         Path("src/state/WorkspaceQueryCore.hpp"): "698a1814b9d47ef08fe8ed54e723a839d73b9191335f3ba879f2e8389b3025a2",
+    },
+    "0.56.0": {
+        Path("VERSION"): "3fea81d177087f5d3380893d95b86573a803b34ed45419ec381bdd776f526cee",
+        Path("src/Compositor.cpp"): "0c08837447683a23a62aefbfcc8332881e7f8e49d3a87f41aba856df29cca9fb",
+        Path("src/config/lua/ConfigManager.cpp"): "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed",
+        Path("src/config/shared/actions/ConfigActions.cpp"): "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab",
+        Path("src/main.cpp"): "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645",
     },
 }
 
@@ -2061,6 +2084,117 @@ def _assert_numeric_safety_contract(
         raise ValueError("tagged eraser-button override consumer changed")
 
 
+def _assert_reload_event_runtime_order(
+    startup_sources_0560: dict[Path, bytes],
+    complex_sources_0561: dict[Path, bytes],
+) -> None:
+    """Pin every supported 0.56.x startup boundary used by the nonce guard.
+
+    In 0.56.0 the initial normal config is loaded before EventManager exists;
+    0.56.1 moved EventManager before that load.  Both versions run config-only
+    verification without EventManager and publish hyprland.lock only later from
+    startCompositor().  Because the Lua config-reloaded callback can call the
+    unguarded Actions::event dispatcher, the generated loader may emit its nonce
+    only once that exact-PID lock is present.
+    """
+
+    def assert_version(
+        version: str,
+        sources: dict[Path, bytes],
+        *,
+        event_manager_before_config: bool,
+    ) -> None:
+        compositor = sources[Path("src/Compositor.cpp")].decode("utf-8")
+        main = sources[Path("src/main.cpp")].decode("utf-8")
+        lua_config = sources[Path("src/config/lua/ConfigManager.cpp")].decode(
+            "utf-8"
+        )
+        actions = sources[
+            Path("src/config/shared/actions/ConfigActions.cpp")
+        ].decode("utf-8")
+
+        verification = compositor.find("if (m_onlyConfigVerification) {")
+        verification_init = compositor.find("Config::mgr()->init();", verification)
+        verification_return = compositor.find("return;", verification_init)
+        if not 0 <= verification < verification_init < verification_return:
+            raise ValueError(
+                f"tagged {version} config-verification initialization ordering changed"
+            )
+
+        priority = compositor.find("case STAGE_PRIORITY: {")
+        event_manager = compositor.find(
+            "g_pEventManager = makeUnique<CEventManager>();", priority
+        )
+        normal_config_init = compositor.find("Config::mgr()->init();", priority)
+        priority_end = compositor.find("case STAGE_BASICINIT: {", priority)
+        if event_manager_before_config:
+            expected_order = (
+                0 <= priority < event_manager < normal_config_init < priority_end
+            )
+        else:
+            expected_order = (
+                0 <= priority < normal_config_init < event_manager < priority_end
+            )
+        if not expected_order:
+            raise ValueError(
+                f"tagged {version} EventManager/config initialization ordering changed"
+            )
+        if compositor.find("initManagers(STAGE_PRIORITY);") < 0:
+            raise ValueError(
+                f"tagged {version} initServer no longer initializes priority managers"
+            )
+
+        start = compositor.find("void CCompositor::startCompositor()")
+        lock = compositor.find("createLockFile();", start)
+        if start < 0 or lock < start or "createLockFile();" in compositor[:start]:
+            raise ValueError(
+                f"tagged {version} Hyprland lock publication ordering changed"
+            )
+        init_server_call = main.find(
+            "g_pCompositor->initServer(socketName, socketFd);"
+        )
+        start_call = main.find(
+            "g_pCompositor->startCompositor();", init_server_call
+        )
+        if not 0 <= init_server_call < start_call:
+            raise ValueError(
+                f"tagged {version} initServer/startCompositor ordering changed"
+            )
+
+        callback = lua_config.find("Event::bus()->m_events.config.reloaded.emit();")
+        guarded_native_event = lua_config.find("if (g_pEventManager)", callback)
+        native_event = lua_config.find(
+            'g_pEventManager->postEvent(SHyprIPCEvent{"configreloaded", ""});',
+            guarded_native_event,
+        )
+        if not 0 <= callback < guarded_native_event < native_event:
+            raise ValueError(
+                f"tagged {version} Lua config-reloaded event ordering changed"
+            )
+
+        action = actions.find("ActionResult Actions::event(const std::string& data)")
+        unguarded_dispatch = actions.find(
+            'g_pEventManager->postEvent(SHyprIPCEvent{.event = "custom", .data = data});',
+            action,
+        )
+        action_end = actions.find("return {};", unguarded_dispatch)
+        if not 0 <= action < unguarded_dispatch < action_end:
+            raise ValueError(
+                f"tagged {version} custom-event dispatcher contract changed"
+            )
+
+    assert_version(
+        "0.56.0",
+        startup_sources_0560,
+        event_manager_before_config=False,
+    )
+    assert_version(
+        "0.56.1",
+        complex_sources_0561,
+        event_manager_before_config=True,
+    )
+
+
 def _number(expression: str) -> int | float:
     value = expression.strip()
     constants: dict[str, int | float] = {
@@ -2358,6 +2492,7 @@ def _sha256(data: bytes) -> str:
 def _validate_qualified_source_hashes() -> None:
     expected_paths = {
         "0.55.0": {Path("VERSION"), REGISTRY_PATH},
+        "0.56.0": {Path("VERSION"), *STARTUP_SOURCE_PATHS_0560},
         "0.56.1": {Path("VERSION"), REGISTRY_PATH, *COMPLEX_SOURCE_PATHS},
     }
     if set(QUALIFIED_SOURCE_HASHES) != set(expected_paths):
@@ -2544,8 +2679,33 @@ def _assert_source_manifest_schema(source_schema: dict[str, Any]) -> None:
     if actual != expected:
         raise ValueError("source manifest complex source inventory/pins are stale")
 
+    startup_property = properties.get("startupSources", {})
+    startup_count = len(STARTUP_SOURCE_PATHS_0560)
+    if (
+        startup_property.get("minItems") != startup_count
+        or startup_property.get("maxItems") != startup_count
+    ):
+        raise ValueError("source manifest startup-source count is stale")
+    startup_branches = definitions.get("startupSource", {}).get("oneOf")
+    if not isinstance(startup_branches, list):
+        raise ValueError("source manifest has no closed startup source inventory")
+    actual_startup: list[tuple[str, str]] = []
+    for branch in startup_branches:
+        branch_properties = branch.get("properties", {})
+        path = branch_properties.get("path", {}).get("const")
+        digest = branch_properties.get("sha256", {}).get("const")
+        if not isinstance(path, str) or not isinstance(digest, str):
+            raise ValueError("source manifest startup source branch is malformed")
+        actual_startup.append((path, digest))
+    expected_startup = [
+        (path.as_posix(), QUALIFIED_SOURCE_HASHES["0.56.0"][path])
+        for path in sorted(STARTUP_SOURCE_PATHS_0560)
+    ]
+    if actual_startup != expected_startup:
+        raise ValueError("source manifest startup source inventory/pins are stale")
+
     version_branches = definitions.get("versionSource", {}).get("oneOf")
-    if not isinstance(version_branches, list) or len(version_branches) != 2:
+    if not isinstance(version_branches, list) or len(version_branches) != 3:
         raise ValueError("source manifest VERSION inventory is incomplete")
     actual_versions = []
     for branch in version_branches:
@@ -2556,7 +2716,7 @@ def _assert_source_manifest_schema(source_schema: dict[str, Any]) -> None:
         ))
     expected_versions = [
         (version, QUALIFIED_SOURCE_HASHES[version][Path("VERSION")])
-        for version in ("0.55.0", "0.56.1")
+        for version in ("0.55.0", "0.56.0", "0.56.1")
     ]
     if actual_versions != expected_versions:
         raise ValueError("source manifest VERSION pins are stale")
@@ -3005,6 +3165,7 @@ def _action_catalog(dispatcher_source: bytes, config_schema: bytes) -> dict[str,
 
 def build_documents(
     source_055: Path,
+    source_0560: Path,
     source_056: Path,
     output_root: Path = Path.cwd(),
 ) -> dict[Path, bytes]:
@@ -3037,9 +3198,13 @@ def build_documents(
         schema_documents["generation-manifest.schema.json"],
     )
 
-    sources: dict[str, tuple[bytes, list[RawOption]]] = {}
+    source_roots = {
+        "0.55.0": source_055,
+        "0.56.0": source_0560,
+        "0.56.1": source_056,
+    }
     version_file_bytes: dict[str, bytes] = {}
-    for version, source_root in (("0.55.0", source_055), ("0.56.1", source_056)):
+    for version, source_root in source_roots.items():
         version_bytes = _read_qualified_source(
             source_root,
             version,
@@ -3051,6 +3216,10 @@ def build_documents(
                 f"expected Hyprland {version} at {source_root}, found {actual_version!r}"
             )
         version_file_bytes[version] = version_bytes
+
+    sources: dict[str, tuple[bytes, list[RawOption]]] = {}
+    for version in ("0.55.0", "0.56.1"):
+        source_root = source_roots[version]
         registry_bytes = _read_qualified_source(
             source_root,
             version,
@@ -3069,6 +3238,14 @@ def build_documents(
         path: _read_qualified_source(source_056, "0.56.1", path)
         for path in COMPLEX_SOURCE_PATHS
     }
+    startup_source_bytes_0560 = {
+        path: _read_qualified_source(source_0560, "0.56.0", path)
+        for path in STARTUP_SOURCE_PATHS_0560
+    }
+    _assert_reload_event_runtime_order(
+        startup_source_bytes_0560,
+        complex_source_bytes,
+    )
     modifier_source = complex_source_bytes[
         Path("src/config/lua/bindings/LuaBindingsToplevel.cpp")
     ].decode("utf-8")
@@ -3258,7 +3435,7 @@ def build_documents(
                 "path": "VERSION",
                 "sha256": _sha256(version_file_bytes[version]),
             }
-            for version in ("0.55.0", "0.56.1")
+            for version in ("0.55.0", "0.56.0", "0.56.1")
         ],
         "sources": [
             {
@@ -3280,6 +3457,16 @@ def build_documents(
                 "sha256": _sha256(complex_source_bytes[path]),
             }
             for path in sorted(COMPLEX_SOURCE_PATHS)
+        ],
+        "startupSources": [
+            {
+                "version": "0.56.0",
+                "tag": QUALIFIED_SOURCES["0.56.0"]["tag"],
+                "commit": QUALIFIED_SOURCES["0.56.0"]["commit"],
+                "path": path.as_posix(),
+                "sha256": _sha256(startup_source_bytes_0560[path]),
+            }
+            for path in sorted(STARTUP_SOURCE_PATHS_0560)
         ],
         "documentation": [
             f"{WIKI_ROOT}/Configuring/Start/",
@@ -3368,6 +3555,7 @@ def build_documents(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-055", type=Path, required=True)
+    parser.add_argument("--source-0560", type=Path, required=True)
     parser.add_argument("--source-056", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, default=Path.cwd())
     parser.add_argument(
@@ -3380,6 +3568,7 @@ def main() -> int:
     try:
         documents = build_documents(
             arguments.source_055,
+            arguments.source_0560,
             arguments.source_056,
             arguments.output_root,
         )

@@ -98,6 +98,7 @@ public:
     [[nodiscard]] int configDirectoryFd() const { return configDirectoryFd_; }
     [[nodiscard]] int managedDirectoryFd() const { return managedDirectoryFd_; }
     [[nodiscard]] bool managedDirectoryStillNamed() const;
+    [[nodiscard]] bool rootsStillNamed() const;
 
 private:
     [[nodiscard]] const char *fileName(StoreFile file) const;

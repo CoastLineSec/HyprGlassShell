@@ -28,6 +28,8 @@ public:
         = delete;
 
     [[nodiscard]] AuthorityResult initialize() override;
+    [[nodiscard]] FilesystemContextResult
+    duplicateActivationFilesystemContext() const override;
     [[nodiscard]] AuthoritySnapshot snapshot() const override;
     [[nodiscard]] AuthorityResult replaceSnapshot(
         quint64 expectedRevision,

@@ -8,8 +8,85 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
+
+#include <unistd.h>
 
 namespace HyprShelld::Compositor {
+
+// Descriptor identity shared by the durable authority and the live
+// entrypoint publisher. The authority duplicates these descriptors only after
+// it owns its lifetime lease; the backend must operate through them and also
+// verify that the canonical paths still resolve to the same inodes.
+struct ActivationFilesystemContext final {
+    int stateDirectoryFd = -1;
+    int configDirectoryFd = -1;
+    int managedDirectoryFd = -1;
+    int generationsDirectoryFd = -1;
+    QString stateRoot;
+    QString configRoot;
+    QString managedConfigRoot;
+    QString stableEntrypoint;
+
+    ActivationFilesystemContext() = default;
+    ~ActivationFilesystemContext() { reset(); }
+
+    ActivationFilesystemContext(const ActivationFilesystemContext &) = delete;
+    ActivationFilesystemContext &operator=(
+        const ActivationFilesystemContext &
+    ) = delete;
+
+    ActivationFilesystemContext(ActivationFilesystemContext &&other) noexcept
+    {
+        *this = std::move(other);
+    }
+
+    ActivationFilesystemContext &operator=(
+        ActivationFilesystemContext &&other
+    ) noexcept
+    {
+        if (this == &other) return *this;
+        reset();
+        stateDirectoryFd = std::exchange(other.stateDirectoryFd, -1);
+        configDirectoryFd = std::exchange(other.configDirectoryFd, -1);
+        managedDirectoryFd = std::exchange(other.managedDirectoryFd, -1);
+        generationsDirectoryFd = std::exchange(
+            other.generationsDirectoryFd, -1
+        );
+        stateRoot = std::move(other.stateRoot);
+        configRoot = std::move(other.configRoot);
+        managedConfigRoot = std::move(other.managedConfigRoot);
+        stableEntrypoint = std::move(other.stableEntrypoint);
+        return *this;
+    }
+
+    [[nodiscard]] bool complete() const
+    {
+        return stateDirectoryFd >= 0 && configDirectoryFd >= 0
+            && managedDirectoryFd >= 0 && generationsDirectoryFd >= 0
+            && !stateRoot.isEmpty() && !configRoot.isEmpty()
+            && !managedConfigRoot.isEmpty() && !stableEntrypoint.isEmpty();
+    }
+
+    void reset() noexcept
+    {
+        if (generationsDirectoryFd >= 0) ::close(generationsDirectoryFd);
+        if (managedDirectoryFd >= 0) ::close(managedDirectoryFd);
+        if (configDirectoryFd >= 0) ::close(configDirectoryFd);
+        if (stateDirectoryFd >= 0) ::close(stateDirectoryFd);
+        generationsDirectoryFd = -1;
+        managedDirectoryFd = -1;
+        configDirectoryFd = -1;
+        stateDirectoryFd = -1;
+    }
+};
+
+struct FilesystemContextResult final {
+    bool success = false;
+    QString errorCode;
+    QString errorMessage;
+    std::optional<ActivationFilesystemContext> context;
+};
 
 struct AuthoritySnapshot final {
   bool available = false;
@@ -60,7 +137,16 @@ public:
 
   // This is the first call permitted to acquire a lease or touch persistent
   // state. main invokes it only after owning the public D-Bus name.
-  [[nodiscard]] virtual AuthorityResult initialize() = 0;
+    [[nodiscard]] virtual AuthorityResult initialize() = 0;
+    // Returns duplicated CLOEXEC descriptors for the exact roots retained by
+    // this initialized authority. Test authorities and non-filesystem
+    // implementations may return success with no context; a live backend will
+    // then fail closed during startup reconciliation.
+    [[nodiscard]] virtual FilesystemContextResult
+    duplicateActivationFilesystemContext() const
+    {
+        return {.success = true};
+    }
   [[nodiscard]] virtual AuthoritySnapshot snapshot() const = 0;
   [[nodiscard]] virtual AuthorityResult
   replaceSnapshot(quint64 expectedRevision, const QByteArray &candidate) = 0;

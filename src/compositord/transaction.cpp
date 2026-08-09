@@ -8,13 +8,26 @@
 #include <QSet>
 
 #include <algorithm>
+#include <cerrno>
+#include <cstring>
 #include <limits>
 #include <utility>
+
+#include <fcntl.h>
 
 namespace HyprShelld::Compositor {
 namespace {
 
 using Hyprland::DesiredState;
+
+[[nodiscard]] int duplicateDescriptor(const int descriptor)
+{
+  int duplicate = -1;
+  do {
+    duplicate = ::fcntl(descriptor, F_DUPFD_CLOEXEC, 3);
+  } while (duplicate < 0 && errno == EINTR);
+  return duplicate;
+}
 
 [[nodiscard]] QString hashBytes(const QByteArrayView bytes) {
   return QString::fromLatin1(
@@ -1000,6 +1013,47 @@ AuthorityResult ConfigurationTransaction::initialize() {
     return impl_->fail(QStringLiteral("Unavailable"), error);
   }
   return {.success = true, .snapshot = impl_->snapshot()};
+}
+
+FilesystemContextResult
+ConfigurationTransaction::duplicateActivationFilesystemContext() const {
+  if (!impl_->initialized || impl_->failed || !impl_->store.rootsStillNamed() ||
+      !impl_->generations.directoryStillNamed()) {
+    return {
+        .success = false,
+        .errorCode = QStringLiteral("PersistenceFailed"),
+        .errorMessage = QStringLiteral(
+            "The compositor authority filesystem roots are unavailable"),
+    };
+  }
+
+  ActivationFilesystemContext context;
+  context.stateRoot = impl_->paths.stateRoot;
+  context.configRoot = impl_->paths.configRoot;
+  context.managedConfigRoot = impl_->paths.managedConfigRoot;
+  context.stableEntrypoint = impl_->paths.stableEntrypointPath();
+  context.stateDirectoryFd = duplicateDescriptor(
+      impl_->store.stateDirectoryFd());
+  context.configDirectoryFd = duplicateDescriptor(
+      impl_->store.configDirectoryFd());
+  context.managedDirectoryFd = duplicateDescriptor(
+      impl_->store.managedDirectoryFd());
+  context.generationsDirectoryFd = duplicateDescriptor(
+      impl_->generations.directoryFd());
+  if (!context.complete() || !impl_->store.rootsStillNamed() ||
+      !impl_->generations.directoryStillNamed()) {
+    return {
+        .success = false,
+        .errorCode = QStringLiteral("PersistenceFailed"),
+        .errorMessage = QStringLiteral(
+            "The compositor authority filesystem identity changed while "
+            "being shared with the activation backend"),
+    };
+  }
+
+  FilesystemContextResult result{.success = true};
+  result.context.emplace(std::move(context));
+  return result;
 }
 
 AuthoritySnapshot ConfigurationTransaction::snapshot() const {

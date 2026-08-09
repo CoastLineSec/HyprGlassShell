@@ -9,8 +9,10 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <cerrno>
 #include <limits>
 
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -326,6 +328,78 @@ private slots:
         QVERIFY(!QFileInfo::exists(fixture.paths.activationPath()));
         QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
         QVERIFY(!QFileInfo::exists(fixture.paths.stableEntrypointPath()));
+    }
+
+    void activationFilesystemContextDuplicatesExactAuthorityRoots()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        auto authority = transaction(fixture.paths);
+        QVERIFY(authority->initialize().success);
+
+        auto duplicated = authority->duplicateActivationFilesystemContext();
+        QVERIFY2(duplicated.success, qPrintable(duplicated.errorMessage));
+        QVERIFY(duplicated.context.has_value());
+        auto context = std::move(*duplicated.context);
+        QVERIFY(context.complete());
+        QCOMPARE(context.stateRoot, fixture.paths.stateRoot);
+        QCOMPARE(context.configRoot, fixture.paths.configRoot);
+        QCOMPARE(context.managedConfigRoot, fixture.paths.managedConfigRoot);
+        QCOMPARE(context.stableEntrypoint,
+                 fixture.paths.stableEntrypointPath());
+
+        const auto requireExactDescriptor = [](const int descriptor,
+                                               const QString &path) {
+            struct stat opened {};
+            struct stat named {};
+            return ::fstat(descriptor, &opened) == 0
+                && ::lstat(QFile::encodeName(path).constData(), &named) == 0
+                && S_ISDIR(opened.st_mode) && S_ISDIR(named.st_mode)
+                && sameIdentity(opened, named)
+                && (::fcntl(descriptor, F_GETFD) & FD_CLOEXEC) != 0;
+        };
+        QVERIFY(requireExactDescriptor(
+            context.stateDirectoryFd, fixture.paths.stateRoot
+        ));
+        QVERIFY(requireExactDescriptor(
+            context.configDirectoryFd, fixture.paths.configRoot
+        ));
+        QVERIFY(requireExactDescriptor(
+            context.managedDirectoryFd, fixture.paths.managedConfigRoot
+        ));
+        QVERIFY(requireExactDescriptor(
+            context.generationsDirectoryFd, fixture.paths.generationsPath()
+        ));
+
+        const auto descriptor = context.stateDirectoryFd;
+        context.reset();
+        errno = 0;
+        QCOMPARE(::fcntl(descriptor, F_GETFD), -1);
+        QCOMPARE(errno, EBADF);
+    }
+
+    void activationFilesystemContextRejectsCanonicalRootReplacement()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        auto authority = transaction(fixture.paths);
+        QVERIFY(authority->initialize().success);
+        QVERIFY(authority->duplicateActivationFilesystemContext().success);
+
+        const auto detached = fixture.paths.configRoot
+            + QStringLiteral(".detached");
+        QVERIFY(::rename(
+            QFile::encodeName(fixture.paths.configRoot).constData(),
+            QFile::encodeName(detached).constData()
+        ) == 0);
+        QVERIFY(makeDirectory(fixture.paths.managedConfigRoot));
+        QVERIFY(makeDirectory(fixture.paths.generationsPath()));
+
+        const auto rejected =
+            authority->duplicateActivationFilesystemContext();
+        QVERIFY(!rejected.success);
+        QVERIFY(!rejected.context.has_value());
+        QCOMPARE(rejected.errorCode, QStringLiteral("PersistenceFailed"));
     }
 
     void replaceIsMonotonicCasWithLostResponseIdempotency()

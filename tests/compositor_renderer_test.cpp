@@ -867,7 +867,22 @@ private slots:
             "if argument == \"--verify-config\" then return true end"
         ));
         QVERIFY(exactEntrypoint.contains(
-            "if hyprshelld_is_verifier() then return end"
+            "if hyprshelld_is_verifier() or not hyprshelld_runtime_ready() then return end"
+        ));
+        QVERIFY(exactEntrypoint.contains(
+            "local function hyprshelld_read_bounded(path)"
+        ));
+        QVERIFY(exactEntrypoint.contains(
+            "local function hyprshelld_runtime_ready()"
+        ));
+        QVERIFY(exactEntrypoint.contains(
+            "runtime .. \"/hypr/\" .. signature .. \"/hyprland.lock\""
+        ));
+        QVERIFY(exactEntrypoint.contains(
+            "local pid = string.match(stat, \"^(%d+) %(\")"
+        ));
+        QVERIFY(exactEntrypoint.contains(
+            "local lock_pid = string.match(lock, \"^(%d+)\\n\")"
         ));
         QCOMPARE(
             occurrences(
@@ -1021,6 +1036,158 @@ private slots:
         );
         QVERIFY2(verifier.exitCode() == 0, output.constData());
         QVERIFY2(!output.contains("Config error"), output.constData());
+    }
+
+    void activationNonceWaitsForExactRuntimeLock()
+    {
+        const auto parsed = parseState(defaults);
+        QVERIFY2(parsed, qPrintable(describeErrors(parsed.errors)));
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        const auto rendered = render(
+            *parsed.value,
+            QDir(temporary.path()).filePath(QString::fromLatin1(nonceA)),
+            QDir(temporary.path()).filePath(QStringLiteral("user-custom.lua"))
+        );
+        QVERIFY2(rendered, qPrintable(describeErrors(rendered.errors)));
+        const auto loader = rendered.value->files
+                                .value(QStringLiteral("hyprland.lua"))
+                                .contents;
+        const auto helperStart = loader.indexOf(
+            "local function hyprshelld_is_verifier()"
+        );
+        const auto callbackEnd = loader.indexOf(
+            "\nend)\n\n", loader.indexOf("hl.on(\"config.reloaded\"")
+        );
+        QVERIFY(helperStart >= 0);
+        QVERIFY(callbackEnd > helperStart);
+        const auto guardedCallback = loader.mid(
+            helperStart, callbackEnd + qsizetype(7) - helperStart
+        );
+
+        const auto runGuard = [
+            &temporary,
+            &guardedCallback
+        ](
+            const QString &name,
+            const QString &runtime,
+            const QString &signature,
+            const QByteArray &statExpression,
+            const QByteArray &lockExpression
+        ) {
+            const auto script = QDir(temporary.path()).filePath(name);
+            auto source = QByteArrayLiteral("local fake_runtime = ")
+                + luaString(runtime)
+                + QByteArrayLiteral("\nlocal fake_signature = ")
+                + luaString(signature)
+                + QByteArrayLiteral("\nlocal fake_stat = ")
+                + statExpression
+                + QByteArrayLiteral("\nlocal fake_lock = ")
+                + lockExpression
+                + QByteArrayLiteral(
+                    "\nlocal fake_cmdline = \"lua\" .. string.char(0)\n"
+                    "os.getenv = function(name)\n"
+                    "    if name == \"XDG_RUNTIME_DIR\" then return fake_runtime end\n"
+                    "    if name == \"HYPRLAND_INSTANCE_SIGNATURE\" then return fake_signature end\n"
+                    "    return nil\n"
+                    "end\n"
+                    "io.open = function(path, mode)\n"
+                    "    local payload = nil\n"
+                    "    if path == \"/proc/self/cmdline\" then payload = fake_cmdline\n"
+                    "    elseif path == \"/proc/self/stat\" then payload = fake_stat\n"
+                    "    elseif path == fake_runtime .. \"/hypr/\" .. fake_signature .. \"/hyprland.lock\" then payload = fake_lock end\n"
+                    "    if payload == nil then return nil end\n"
+                    "    return {\n"
+                    "        read = function(_, limit)\n"
+                    "            if type(limit) == \"number\" then return string.sub(payload, 1, limit) end\n"
+                    "            return payload\n"
+                    "        end,\n"
+                    "        close = function() return true end,\n"
+                    "    }\n"
+                    "end\n"
+                    "local callback = nil\n"
+                    "local emitted = nil\n"
+                    "hl = {\n"
+                    "    on = function(name, value) if name == \"config.reloaded\" then callback = value end end,\n"
+                    "    dispatch = function(value) emitted = value end,\n"
+                    "    dsp = {event = function(value) return value end},\n"
+                    "}\n"
+                )
+                + guardedCallback
+                + QByteArrayLiteral(
+                    "callback()\n"
+                    "if emitted then print(emitted) end\n"
+                );
+            if (!writeFile(script, source)) return QByteArray{};
+            QProcess process;
+            process.start(QStringLiteral(HYPRSHELLD_LUA_EXECUTABLE), {script});
+            if (!process.waitForFinished(10000)
+                || process.exitStatus() != QProcess::NormalExit
+                || process.exitCode() != 0) {
+                return QByteArrayLiteral("process-failed:")
+                    + process.readAllStandardError();
+            }
+            return process.readAllStandardOutput().trimmed();
+        };
+
+        const auto stat = QByteArrayLiteral("\"4242 (Hyprland) S\"");
+        const auto exactLock = QByteArrayLiteral(
+            "\"4242\" .. string.char(10) .. \"wayland-1\" .. string.char(10)"
+        );
+        const auto expected = QByteArrayLiteral("hyprshelld:")
+            + QByteArray(nonceA);
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-ready.lua"),
+                QStringLiteral("/run/user/1000"),
+                QStringLiteral("instance_1"), stat, exactLock
+            ),
+            expected
+        );
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-no-lock.lua"),
+                QStringLiteral("/run/user/1000"),
+                QStringLiteral("instance_1"), stat, QByteArrayLiteral("nil")
+            ),
+            QByteArray{}
+        );
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-wrong-pid.lua"),
+                QStringLiteral("/run/user/1000"),
+                QStringLiteral("instance_1"), stat,
+                QByteArrayLiteral(
+                    "\"4243\" .. string.char(10) .. \"wayland-1\" .. string.char(10)"
+                )
+            ),
+            QByteArray{}
+        );
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-unsafe-root.lua"),
+                QStringLiteral("/run/user/../1000"),
+                QStringLiteral("instance_1"), stat, exactLock
+            ),
+            QByteArray{}
+        );
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-unsafe-signature.lua"),
+                QStringLiteral("/run/user/1000"),
+                QStringLiteral("../instance"), stat, exactLock
+            ),
+            QByteArray{}
+        );
+        QCOMPARE(
+            runGuard(
+                QStringLiteral("runtime-oversized-lock.lua"),
+                QStringLiteral("/run/user/1000"),
+                QStringLiteral("instance_1"), stat,
+                QByteArrayLiteral("string.rep(\"4\", 4097)")
+            ),
+            QByteArray{}
+        );
     }
 
     void declaresSubmapsBeforeTopLevelBindings()

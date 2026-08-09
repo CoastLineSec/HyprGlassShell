@@ -562,6 +562,69 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-compositor-activation-backend-test
+    compositor_activation_backend_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-activation-backend-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+        hyprshelld-compositord-service
+)
+
+add_test(
+    NAME compositor-activation-backend
+    COMMAND hyprshelld-compositor-activation-backend-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-entrypoint-publisher-test
+    compositor_entrypoint_publisher_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-entrypoint-publisher-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+        hyprshelld-compositord-service
+)
+
+add_test(
+    NAME compositor-entrypoint-publisher
+    COMMAND hyprshelld-compositor-entrypoint-publisher-test
+)
+
+qt_add_executable(
+    hyprshelld-hyprland-ipc-runtime-test
+    hyprland_ipc_runtime_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-hyprland-ipc-runtime-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+        hyprshelld-compositord-service
+)
+
+add_test(
+    NAME hyprland-ipc-runtime
+    COMMAND hyprshelld-hyprland-ipc-runtime-test
+)
+
+set_tests_properties(
+    hyprland-ipc-runtime
+    PROPERTIES
+        TIMEOUT 30
+)
+
+qt_add_executable(
     hyprshelld-compositor-store-test
     compositor_store_test.cpp
 )
@@ -586,6 +649,16 @@ target_link_libraries(
 add_test(
     NAME compositor-store
     COMMAND hyprshelld-compositor-store-test
+)
+
+# Both targets deliberately churn durable namespace state and inject failures
+# on the same temporary filesystem.  Serialize them so parallel CTest runs do
+# not turn host-level filesystem contention into unrelated fault-hook failures.
+set_tests_properties(
+    compositor-entrypoint-publisher
+    compositor-store
+    PROPERTIES
+        RESOURCE_LOCK compositor_filesystem_fault_tests
 )
 
 qt_add_executable(

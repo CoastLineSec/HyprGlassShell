@@ -11,6 +11,13 @@
       "sha256": "ac6c7168f4989720dc4505c85ea89d7cfdbd57f14f903bb8689cd23c992ed19e"
     },
     {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "VERSION",
+      "sha256": "3fea81d177087f5d3380893d95b86573a803b34ed45419ec381bdd776f526cee"
+    },
+    {
       "version": "0.56.1",
       "tag": "v0.56.1",
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
@@ -41,6 +48,13 @@
       "version": "0.56.1",
       "tag": "v0.56.1",
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/Compositor.cpp",
+      "sha256": "74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
       "path": "src/animation/AnimationManager.cpp",
       "sha256": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985"
     },
@@ -50,6 +64,13 @@
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
       "path": "src/animation/WorkspaceAnimationController.cpp",
       "sha256": "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
     },
     {
       "version": "0.56.1",
@@ -223,6 +244,13 @@
       "version": "0.56.1",
       "tag": "v0.56.1",
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/main.cpp",
+      "sha256": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
       "path": "src/managers/KeybindManager.cpp",
       "sha256": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"
     },
@@ -351,6 +379,36 @@
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
       "path": "src/state/WorkspaceQueryCore.hpp",
       "sha256": "698a1814b9d47ef08fe8ed54e723a839d73b9191335f3ba879f2e8389b3025a2"
+    }
+  ],
+  "startupSources": [
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/Compositor.cpp",
+      "sha256": "0c08837447683a23a62aefbfcc8332881e7f8e49d3a87f41aba856df29cca9fb"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/main.cpp",
+      "sha256": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"
     }
   ],
   "documentation": [

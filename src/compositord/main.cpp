@@ -6,6 +6,7 @@
 #include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 
 #include <cstdlib>
@@ -82,9 +83,28 @@ int main(int argc, char *argv[])
     }
 
     const auto paths = HyprShelld::Compositor::StorePaths::standard();
+    auto publisher = std::make_unique<
+        HyprShelld::Compositor::AtomicEntrypointPublisher
+    >(
+        paths.stateRoot,
+        paths.configRoot,
+        paths.managedConfigRoot,
+        paths.stableEntrypointPath(),
+        QDir(paths.managedConfigRoot).filePath(
+            QStringLiteral("entrypoint-ownership.json")
+        )
+    );
+    auto runtime = std::make_unique<
+        HyprShelld::Compositor::HyprlandIpcRuntime
+    >(
+        qEnvironmentVariable("XDG_RUNTIME_DIR"),
+        qEnvironmentVariable("HYPRLAND_INSTANCE_SIGNATURE"),
+        paths.stableEntrypointPath()
+    );
     auto activationBackend = std::make_unique<
-        HyprShelld::Compositor::DeferredActivationBackend
-    >(paths.configRoot, paths.stableEntrypointPath());
+        HyprShelld::Compositor::LiveActivationBackend
+    >(std::move(publisher), std::move(runtime));
+    auto *liveActivationBackend = activationBackend.get();
     HyprShelld::Compositor::CompositorService service(
         std::move(activationBackend),
         connection
@@ -145,6 +165,13 @@ int main(int argc, char *argv[])
         qCritical().noquote() << firstError(actionCatalog.errors);
         return EXIT_FAILURE;
     }
+
+    liveActivationBackend->setVersionPolicy({
+        .major = catalog.value->hyprland.major,
+        .minor = catalog.value->hyprland.minor,
+        .minimumPatch = catalog.value->hyprland.minimumPatch,
+        .maximumPatch = catalog.value->hyprland.maximumPatch,
+    });
 
     auto authority = std::make_unique<
         HyprShelld::Compositor::ConfigurationTransaction
