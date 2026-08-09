@@ -32,6 +32,36 @@ TestCase {
     }
 
     Component {
+        id: startSlotComponent
+
+        Item {
+            objectName: "testStartComponent"
+            implicitWidth: 48
+            implicitHeight: 40
+        }
+    }
+
+    Component {
+        id: centerSlotComponent
+
+        Item {
+            objectName: "testCenterComponent"
+            implicitWidth: 56
+            implicitHeight: 40
+        }
+    }
+
+    Component {
+        id: endSlotComponent
+
+        Item {
+            objectName: "testEndComponent"
+            implicitWidth: 600
+            implicitHeight: 40
+        }
+    }
+
+    Component {
         id: barWindowComponent
 
         Window {
@@ -53,6 +83,9 @@ TestCase {
                 currentTime: new Date(2026, 7, 7, 15, 42)
                 screenName: "DP-2"
                 configurationAvailable: true
+                startComponent: startSlotComponent
+                centerComponent: centerSlotComponent
+                endComponent: endSlotComponent
             }
         }
     }
@@ -128,6 +161,41 @@ TestCase {
         bar.shellDegraded = false;
         compare(indicator.visible, false);
         compare(bar.height, 40);
+    }
+
+    function test_barHostsGenericSlotsWithoutReplacingClock() {
+        const testWindow = createTemporaryObject(barWindowComponent, this);
+        verify(testWindow !== null);
+        const bar = testWindow.bar;
+        verify(bar !== null);
+        waitForRendering(bar);
+
+        const startSlot = findChild(bar, "barStartComponentSlot");
+        const centerSlot = findChild(bar, "barCenterComponentSlot");
+        const endSlot = findChild(bar, "barEndComponentSlot");
+        const clock = findChild(bar, "clockLabel");
+        verify(startSlot !== null);
+        verify(centerSlot !== null);
+        verify(endSlot !== null);
+        verify(clock !== null);
+        tryVerify(function() {
+            return findChild(bar, "testStartComponent") !== null
+                && findChild(bar, "testCenterComponent") !== null
+                && findChild(bar, "testEndComponent") !== null;
+        });
+        compare(startSlot.active, true);
+        compare(centerSlot.active, true);
+        compare(endSlot.active, true);
+        compare(clock.visible, true);
+        verify(centerSlot.x >= clock.x + clock.width);
+        verify(centerSlot.x + centerSlot.width <= endSlot.x);
+
+        testWindow.width = 320;
+        waitForRendering(bar);
+        verify(endSlot.x >= clock.x + clock.width + 9);
+        verify(centerSlot.x >= clock.x + clock.width);
+        verify(centerSlot.x + centerSlot.width <= endSlot.x);
+        compare(clock.visible, true);
     }
 
     function test_failureNoticeTemporarilyReplacesClock() {

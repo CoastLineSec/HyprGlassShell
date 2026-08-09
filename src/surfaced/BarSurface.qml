@@ -1,8 +1,11 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import HyprShelld.Client
 import HyprShelld.UI
+import "components" as Components
 
 // PanelWindow and margins are supplied by Quickshell's runtime backend.
 PanelWindow { // qmllint disable uncreatable-type
@@ -15,9 +18,43 @@ PanelWindow { // qmllint disable uncreatable-type
     required property bool failureNoticeActive
     required property string failureNoticeScreenName
     required property string failureNoticeText
+    required property var workspaceSource
     readonly property int outerMargin: 12
     readonly property int sideMargin: 12
     readonly property int inwardSpacing: 8
+    readonly property string outputName: root.modelData
+        ? root.modelData.name
+        : ""
+    readonly property var startComponentInstances: {
+        ComponentRuntimeClient.planRevision;
+        ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.usingFallback;
+        return ComponentRuntimeClient.barInstances(
+            "main",
+            root.outputName,
+            "start"
+        );
+    }
+    readonly property var centerComponentInstances: {
+        ComponentRuntimeClient.planRevision;
+        ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.usingFallback;
+        return ComponentRuntimeClient.barInstances(
+            "main",
+            root.outputName,
+            "center"
+        );
+    }
+    readonly property var endComponentInstances: {
+        ComponentRuntimeClient.planRevision;
+        ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.usingFallback;
+        return ComponentRuntimeClient.barInstances(
+            "main",
+            root.outputName,
+            "end"
+        );
+    }
 
     screen: modelData
     color: "transparent"
@@ -61,6 +98,42 @@ PanelWindow { // qmllint disable uncreatable-type
         currentTime: root.currentTime
         screenName: root.modelData ? root.modelData.name : ""
         configurationAvailable: ConfigClient.available
+        startComponent: Component {
+            Components.BarComponentHost {
+                instances: root.startComponentInstances
+                outputName: root.outputName
+                workspaceSource: root.workspaceSource
+                interactive: root.workspaceSource
+                    ? root.workspaceSource.actionsAvailable
+                    : false
+                keyboardNavigationEnabled: false
+                height: bar.height
+            }
+        }
+        centerComponent: Component {
+            Components.BarComponentHost {
+                instances: root.centerComponentInstances
+                outputName: root.outputName
+                workspaceSource: root.workspaceSource
+                interactive: root.workspaceSource
+                    ? root.workspaceSource.actionsAvailable
+                    : false
+                keyboardNavigationEnabled: false
+                height: bar.height
+            }
+        }
+        endComponent: Component {
+            Components.BarComponentHost {
+                instances: root.endComponentInstances
+                outputName: root.outputName
+                workspaceSource: root.workspaceSource
+                interactive: root.workspaceSource
+                    ? root.workspaceSource.actionsAvailable
+                    : false
+                keyboardNavigationEnabled: false
+                height: bar.height
+            }
+        }
         shellDegraded: root.shellDegraded
         healthSummary: root.healthSummary
         failureNoticeVisible: root.failureNoticeActive

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/components/v1/integrity.schema.json",
+  "title": "HyprShelld component integrity manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["integrityVersion", "algorithm", "files"],
+  "properties": {
+    "integrityVersion": {"const": 1},
+    "algorithm": {"const": "sha256"},
+    "files": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 511,
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "enum": ["integrity.json", "signature.json"]
+            }
+          },
+          {
+            "maxLength": 255,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)[^/]+(?:/[^/]+)*$"
+          }
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    }
+  }
+}

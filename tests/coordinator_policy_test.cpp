@@ -8,6 +8,7 @@ using HyprShelld::CoordinatorPolicy;
 namespace {
 
 const QString configUnit = QStringLiteral("hyprshelld-configd.service");
+const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
 const QString surfaceUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 } // namespace
@@ -20,9 +21,10 @@ private slots:
     {
         QCOMPARE(
             CoordinatorPolicy::allowedUnits(),
-            QStringList({configUnit, surfaceUnit})
+            QStringList({configUnit, componentUnit, surfaceUnit})
         );
         QVERIFY(CoordinatorPolicy::isKnown(configUnit));
+        QVERIFY(CoordinatorPolicy::isKnown(componentUnit));
         QVERIFY(CoordinatorPolicy::isKnown(surfaceUnit));
         QVERIFY(!CoordinatorPolicy::isKnown(QStringLiteral("hyprshelld.service")));
         QVERIFY(!CoordinatorPolicy::isKnown(configUnit + QLatin1Char(' ')));
@@ -52,6 +54,7 @@ private slots:
 
         QVERIFY(policy.applySnapshot({
             {configUnit, QStringLiteral("failed")},
+            {componentUnit, QStringLiteral("active")},
             {surfaceUnit, QStringLiteral("active")},
         }));
         QVERIFY(!policy.healthy());
@@ -72,14 +75,26 @@ private slots:
             QVERIFY(policy.isFailed(configUnit));
         }
 
-        QVERIFY(policy.applySnapshot({{surfaceUnit, QStringLiteral("failed")}}));
-        QCOMPARE(policy.failedUnits(), QStringList({configUnit, surfaceUnit}));
+        QVERIFY(policy.applySnapshot({{componentUnit, QStringLiteral("failed")}}));
+        QCOMPARE(policy.failedUnits(), QStringList({componentUnit, configUnit}));
         QCOMPARE(
             policy.failureSummary(),
             QStringLiteral("2 HyprShelld components need attention.")
         );
 
+        QVERIFY(policy.applySnapshot({{surfaceUnit, QStringLiteral("failed")}}));
+        QCOMPARE(
+            policy.failedUnits(),
+            QStringList({componentUnit, configUnit, surfaceUnit})
+        );
+        QCOMPARE(
+            policy.failureSummary(),
+            QStringLiteral("3 HyprShelld components need attention.")
+        );
+
         QVERIFY(policy.applySnapshot({{configUnit, QStringLiteral("active")}}));
+        QCOMPARE(policy.failedUnits(), QStringList({componentUnit, surfaceUnit}));
+        QVERIFY(policy.applySnapshot({{componentUnit, QStringLiteral("active")}}));
         QCOMPARE(policy.failedUnits(), QStringList({surfaceUnit}));
         QVERIFY(policy.applySnapshot({{surfaceUnit, QStringLiteral("active")}}));
         QVERIFY(policy.healthy());

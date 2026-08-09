@@ -141,11 +141,17 @@ private slots:
         configd_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/hyprshelld-configd.service")
         );
+        componentd_ = std::make_unique<IniFile>(
+            unitDirectory + QStringLiteral("/hyprshelld-componentd.service")
+        );
         surfaced_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/hyprshelld-surfaced.service")
         );
         activation_ = std::make_unique<IniFile>(
             QStringLiteral(HYPRSHELLD_CONFIG1_ACTIVATION_FILE)
+        );
+        componentActivation_ = std::make_unique<IniFile>(
+            QStringLiteral(HYPRSHELLD_COMPONENT_MANAGER1_ACTIVATION_FILE)
         );
 
         for (const auto *file : {
@@ -153,8 +159,10 @@ private slots:
                  slice_.get(),
                  coordinator_.get(),
                  configd_.get(),
+                 componentd_.get(),
                  surfaced_.get(),
                  activation_.get(),
+                 componentActivation_.get(),
              }) {
             QVERIFY2(file->error().isEmpty(), qPrintable(file->error()));
         }
@@ -167,6 +175,7 @@ private slots:
             sorted({
                 QStringLiteral("hyprshelld.service"),
                 QStringLiteral("hyprshelld-configd.service"),
+                QStringLiteral("hyprshelld-componentd.service"),
                 QStringLiteral("hyprshelld-surfaced.service"),
             })
         );
@@ -195,6 +204,7 @@ private slots:
         for (const auto *service : {
                  coordinator_.get(),
                  configd_.get(),
+                 componentd_.get(),
                  surfaced_.get(),
              }) {
             QCOMPARE(
@@ -294,6 +304,19 @@ private slots:
         );
 
         QCOMPARE(
+            componentd_->values(QStringLiteral("Service"), QStringLiteral("Type")),
+            QStringList{QStringLiteral("dbus")}
+        );
+        QCOMPARE(
+            componentd_->values(QStringLiteral("Service"), QStringLiteral("BusName")),
+            QStringList{QStringLiteral("org.hyprshelld.ComponentManager1")}
+        );
+        QCOMPARE(
+            componentd_->words(QStringLiteral("Service"), QStringLiteral("ExecStart")),
+            QStringList{QStringLiteral(HYPRSHELLD_INSTALL_COMPONENTD)}
+        );
+
+        QCOMPARE(
             surfaced_->values(QStringLiteral("Service"), QStringLiteral("Type")),
             QStringList{QStringLiteral("exec")}
         );
@@ -349,13 +372,45 @@ private slots:
         ).isEmpty());
     }
 
+    void componentActivationMatchesServiceUnit()
+    {
+        QVERIFY(componentActivation_->hasSection(QStringLiteral("D-BUS Service")));
+        QCOMPARE(
+            componentActivation_->values(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("Name")
+            ),
+            componentd_->values(QStringLiteral("Service"), QStringLiteral("BusName"))
+        );
+        QCOMPARE(
+            componentActivation_->values(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("SystemdService")
+            ),
+            QStringList{QStringLiteral("hyprshelld-componentd.service")}
+        );
+        QCOMPARE(
+            componentActivation_->words(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("Exec")
+            ),
+            componentd_->words(QStringLiteral("Service"), QStringLiteral("ExecStart"))
+        );
+        QVERIFY(componentActivation_->values(
+                                            QStringLiteral("D-BUS Service"),
+                                            QStringLiteral("User")
+        ).isEmpty());
+    }
+
 private:
     std::unique_ptr<IniFile> target_;
     std::unique_ptr<IniFile> slice_;
     std::unique_ptr<IniFile> coordinator_;
     std::unique_ptr<IniFile> configd_;
+    std::unique_ptr<IniFile> componentd_;
     std::unique_ptr<IniFile> surfaced_;
     std::unique_ptr<IniFile> activation_;
+    std::unique_ptr<IniFile> componentActivation_;
 };
 
 QTEST_GUILESS_MAIN(SystemdUnitContractTest)

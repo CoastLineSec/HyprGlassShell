@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/components/v1/settings.schema.json",
+  "title": "HyprShelld trusted settings schema v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "settings"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "settings": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {"$ref": "#/$defs/setting"}
+    }
+  },
+  "$defs": {
+    "visibleWhen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "equals"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][A-Za-z0-9]{0,63}$"
+        },
+        "equals": {}
+      }
+    },
+    "baseSetting": {
+      "type": "object",
+      "required": [
+        "key",
+        "scope",
+        "type",
+        "label",
+        "description",
+        "group",
+        "order",
+        "default"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][A-Za-z0-9]{0,63}$"
+        },
+        "scope": {"enum": ["component", "instance"]},
+        "type": {
+          "enum": [
+            "boolean",
+            "integer",
+            "number",
+            "string",
+            "enum",
+            "color",
+            "keybinding",
+            "file",
+            "directory"
+          ]
+        },
+        "label": {"type": "string", "minLength": 1, "maxLength": 128},
+        "description": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "group": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+        },
+        "order": {"type": "integer", "minimum": 0, "maximum": 100000},
+        "default": {},
+        "visibleWhen": {"$ref": "#/$defs/visibleWhen"}
+      }
+    },
+    "enumOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "label"],
+      "properties": {
+        "value": {"type": "string", "minLength": 1, "maxLength": 128},
+        "label": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    },
+    "keybinding": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["modifiers", "key"],
+          "properties": {
+            "modifiers": {
+              "type": "array",
+              "maxItems": 5,
+              "uniqueItems": true,
+              "items": {"enum": ["ctrl", "alt", "shift", "super", "hyper"]}
+            },
+            "key": {"type": "string", "minLength": 1, "maxLength": 64}
+          }
+        }
+      ]
+    },
+    "setting": {
+      "oneOf": [
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "properties": {
+                "type": {"const": "boolean"},
+                "default": {"type": "boolean"}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "required": ["minimum", "maximum"],
+              "properties": {
+                "type": {"const": "integer"},
+                "default": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "minimum": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "maximum": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "step": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "required": ["minimum", "maximum"],
+              "properties": {
+                "type": {"const": "number"},
+                "default": {"type": "number"},
+                "minimum": {"type": "number"},
+                "maximum": {"type": "number"},
+                "step": {"type": "number", "exclusiveMinimum": 0}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "required": ["maximumLength"],
+              "properties": {
+                "type": {"const": "string"},
+                "default": {"type": "string"},
+                "minimumLength": {"type": "integer", "minimum": 0, "maximum": 4096},
+                "maximumLength": {"type": "integer", "minimum": 1, "maximum": 4096}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "required": ["options"],
+              "properties": {
+                "type": {"const": "enum"},
+                "default": {"type": "string"},
+                "options": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 64,
+                  "items": {"$ref": "#/$defs/enumOption"}
+                }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "properties": {
+                "type": {"const": "color"},
+                "default": {
+                  "type": "string",
+                  "pattern": "^#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?$"
+                }
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "properties": {
+                "type": {"const": "keybinding"},
+                "default": {"$ref": "#/$defs/keybinding"}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "properties": {
+                "type": {"const": "file"},
+                "default": {"type": "null"}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        },
+        {
+          "allOf": [
+            {"$ref": "#/$defs/baseSetting"},
+            {
+              "properties": {
+                "type": {"const": "directory"},
+                "default": {"type": "null"}
+              }
+            }
+          ],
+          "unevaluatedProperties": false
+        }
+      ]
+    }
+  }
+}

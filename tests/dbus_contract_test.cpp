@@ -148,6 +148,101 @@ private slots:
             }
         );
     }
+
+    void componentManagerContract()
+    {
+        compareContract(
+            QStringLiteral(HYPRSHELLD_COMPONENT_MANAGER_XML),
+            {
+                QStringLiteral("node=/org/hyprshelld/ComponentManager1"),
+                QStringLiteral("interface=org.hyprshelld.ComponentManager1"),
+                QStringLiteral("property=CatalogDigest:s:read"),
+                QStringLiteral("annotation=property:CatalogDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("method=ListComponents"),
+                QStringLiteral("arg=method:ListComponents:componentIds:as:out"),
+                QStringLiteral("arg=method:ListComponents:catalogDigest:s:out"),
+                QStringLiteral("method=GetComponent"),
+                QStringLiteral("arg=method:GetComponent:componentId:s:in"),
+                QStringLiteral("arg=method:GetComponent:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:GetComponent:manifestVersion:u:out"),
+                QStringLiteral("arg=method:GetComponent:componentType:s:out"),
+                QStringLiteral("arg=method:GetComponent:version:s:out"),
+                QStringLiteral("arg=method:GetComponent:name:s:out"),
+                QStringLiteral("arg=method:GetComponent:description:s:out"),
+                QStringLiteral("arg=method:GetComponent:authorNames:as:out"),
+                QStringLiteral("arg=method:GetComponent:authorEmails:as:out"),
+                QStringLiteral("arg=method:GetComponent:authorHomepages:as:out"),
+                QStringLiteral("arg=method:GetComponent:license:s:out"),
+                QStringLiteral("arg=method:GetComponent:homepage:s:out"),
+                QStringLiteral("arg=method:GetComponent:source:s:out"),
+                QStringLiteral("arg=method:GetComponent:issues:s:out"),
+                QStringLiteral("arg=method:GetComponent:componentApiVersion:s:out"),
+                QStringLiteral("arg=method:GetComponent:runtimeKind:s:out"),
+                QStringLiteral("arg=method:GetComponent:runtimeFactory:s:out"),
+                QStringLiteral("arg=method:GetComponent:runtimeEntryPoint:s:out"),
+                QStringLiteral("arg=method:GetComponent:runtimeArguments:as:out"),
+                QStringLiteral("arg=method:GetComponent:settingsSchema:ay:out"),
+                QStringLiteral("arg=method:GetComponent:capabilityIds:as:out"),
+                QStringLiteral("arg=method:GetComponent:capabilityReasons:as:out"),
+                QStringLiteral("arg=method:GetComponent:dependencyIds:as:out"),
+                QStringLiteral("arg=method:GetComponent:dependencyVersionRequirements:as:out"),
+                QStringLiteral("arg=method:GetComponent:packageDigest:s:out"),
+                QStringLiteral("arg=method:GetComponent:origin:s:out"),
+                QStringLiteral("arg=method:GetComponent:removable:b:out"),
+            }
+        );
+    }
+
+    void componentConfigContract()
+    {
+        compareContract(
+            QStringLiteral(HYPRSHELLD_COMPONENT_CONFIG_XML),
+            {
+                QStringLiteral("node=/org/hyprshelld/Config1/Components"),
+                QStringLiteral("interface=org.hyprshelld.ComponentConfig1"),
+                QStringLiteral("property=Available:b:read"),
+                QStringLiteral("annotation=property:Available:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=CatalogAvailable:b:read"),
+                QStringLiteral("annotation=property:CatalogAvailable:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=Revision:t:read"),
+                QStringLiteral("annotation=property:Revision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=CatalogDigest:s:read"),
+                QStringLiteral("annotation=property:CatalogDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=LoadState:s:read"),
+                QStringLiteral("annotation=property:LoadState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("method=GetSnapshot"),
+                QStringLiteral("arg=method:GetSnapshot:snapshot:ay:out"),
+                QStringLiteral("arg=method:GetSnapshot:revision:t:out"),
+                QStringLiteral("arg=method:GetSnapshot:catalogDigest:s:out"),
+                QStringLiteral("method=ReplaceSnapshot"),
+                QStringLiteral("arg=method:ReplaceSnapshot:expectedRevision:t:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:candidateSnapshot:ay:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:revision:t:out"),
+            }
+        );
+    }
+
+    void componentRuntimeContract()
+    {
+        compareContract(
+            QStringLiteral(HYPRSHELLD_COMPONENT_RUNTIME_XML),
+            {
+                QStringLiteral("node=/org/hyprshelld/Coordinator1/Components"),
+                QStringLiteral("interface=org.hyprshelld.ComponentRuntime1"),
+                QStringLiteral("property=SurfacePlanRevision:t:read"),
+                QStringLiteral("annotation=property:SurfacePlanRevision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SurfacePlanDigest:s:read"),
+                QStringLiteral("annotation=property:SurfacePlanDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SurfacePlanState:s:read"),
+                QStringLiteral("annotation=property:SurfacePlanState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("method=GetSurfacePlan"),
+                QStringLiteral("arg=method:GetSurfacePlan:expectedSurfacePlanRevision:t:in"),
+                QStringLiteral("arg=method:GetSurfacePlan:surfacePlan:ay:out"),
+                QStringLiteral("arg=method:GetSurfacePlan:surfacePlanDigest:s:out"),
+            }
+        );
+    }
 };
 
 QTEST_APPLESS_MAIN(DbusContractTest)

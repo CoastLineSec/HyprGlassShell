@@ -10,7 +10,10 @@ qt_add_qml_module(
         Main.qml
         BarPreview.qml
         BarSettingsPage.qml
+        ComponentPill.qml
+        ComponentsPage.qml
         ShellHealthWarning.qml
+        WorkspaceSwitcherSettings.qml
 )
 
 target_link_libraries(

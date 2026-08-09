@@ -1,6 +1,7 @@
 # Settings
 
-HyprShelld Settings currently provides one place to adjust the bar.
+HyprShelld Settings provides one place to adjust the bar and its workspace
+switcher, and to choose which shell components are enabled.
 
 ## Open Settings
 
@@ -10,7 +11,15 @@ services are stopped, so you can inspect their state and reach recovery
 information without the bar running.
 
 Select **Bar** in the left sidebar to see a desktop preview and change the bar
-height.
+height or workspace switcher. The preview uses illustrative workspaces and
+applications rather than reading or controlling your current session.
+
+Select **Components** to manage installed shell features. The page keeps four
+categories in a stable order: **Bar Widgets**, **Desktop Widgets**,
+**Services**, and **Shell Applications**. Built-in components are clearly
+marked and can be enabled or disabled, but they cannot be removed. Their
+detailed choices remain in the natural Settings page for that feature rather
+than being duplicated on the Components page.
 
 ## Change the bar height
 
@@ -21,9 +30,56 @@ and applies it to every bar automatically.
 Select **Reset** to return to the default height. Reset is available only when
 the current height differs from the default.
 
-While a change is being saved, the controls are briefly unavailable. If the
-save fails, Settings displays the error beside the control and keeps the last
-successfully saved value.
+While the new height is being saved, the size control is briefly unavailable.
+If the save fails, Settings displays a bar-size warning above the preview and
+keeps the last successfully saved value. Workspace controls remain independent
+of a bar-size save or error.
+
+## Customize the workspace switcher
+
+Use the **Workspaces** card on the Bar page to choose:
+
+- **Numbers**, the default, with a filled circle for the current workspace and
+  smaller hollow circles for the others; numbered workspaces show their number
+  and named workspaces show an initial;
+- **Compact**, which keeps the circles but removes their identifiers;
+- **Names**, which keeps the circle identifier and appends the full custom or
+  named workspace label;
+- whether application icons are appended to each workspace anchor;
+- a limit of one to five visible application icons before a `+N` summary;
+- whether empty workspaces are hidden while the current workspace remains
+  visible; and
+- whether scrolling over the switcher is off, normal, or reversed.
+
+When application icons are enabled, repeated applications on an inactive
+workspace are grouped and show their window count. The current workspace keeps
+its windows individually represented and emphasizes the active one. Selecting a
+window icon on the current workspace brings that window forward. Icons on
+inactive workspaces are not hidden-window focus controls; selecting their area
+switches to that workspace.
+
+Normal and reversed scrolling move between the real workspaces currently shown
+on that display. Scrolling stops at the first or last workspace and never wraps
+around. The bar shows only workspaces reported by Hyprland, including empty
+workspaces configured to remain persistent; it does not add unused places.
+
+Workspace switcher changes are saved automatically as one atomic set and
+applied to every bar. While that set is being saved, only the **Workspaces**
+card is briefly unavailable. Select **Reset** in the card to restore numbered
+circles, hide application icons, show empty persistent workspaces, and turn
+scrolling off. The maximum icon setting returns to three.
+
+To remove the switcher from the bar, open **Components**, find **Workspace
+Switcher** under **Bar Widgets**, and turn it off. Its saved choices are
+preserved. The **Workspaces** card remains in the Bar page, but its controls and
+Reset button are dimmed and unavailable beneath this message:
+
+> This feature has been disabled. Enable it from Components → Bar Widgets to
+> change these settings.
+
+The illustrative preview also omits the workspace switcher while it is
+disabled. Turning the component back on restores the same saved choices in the
+card and preview.
 
 ## Desktop health and recovery
 
@@ -44,38 +100,63 @@ that the desktop is healthy.
 
 ## When settings cannot be saved
 
-The Bar page displays a separate warning when it cannot reach the configuration
-service. Values shown at that time may be stale, and changes remain disabled
-until the connection returns. This warning describes whether settings can be
-saved; the sidebar status describes the health of the complete desktop.
+Bar size and component settings use separate persistence and recovery areas.
+The Bar page reports them separately: a component-settings or catalog failure
+does not make the core bar-size setting read-only. Both interfaces are served
+by the configuration service, so a complete core service outage can make both
+areas temporarily unavailable:
 
-You can leave Settings open while waiting. It detects the service when it
-becomes available again, refreshes the displayed value, and re-enables the
-controls. Avoid changing configuration files while the service is unavailable.
+- A **bar size settings** warning disables only the height control. Its
+  displayed value may be stale until core settings reconnect.
+- A **workspace settings** warning disables only the **Workspaces** card. It
+  appears when component settings or the catalog are unavailable or read-only,
+  or when the expected built-in workspace-switcher record or placement cannot
+  be read. This unavailable warning is distinct from the intentional disabled
+  message.
+- A newer unsupported component-settings file is preserved rather than
+  overwritten. When the active choices are still readable but their recovery
+  copy uses the newer format, the choices remain visible but read-only.
+
+The preview remains deterministic and illustrative while either area is
+unavailable. During a temporary service loss, it can retain the last trusted
+workspace presentation; that retained preview does not mean its controls are
+writable. These configuration warnings describe whether choices can be saved;
+the sidebar status describes the health of the complete desktop.
+
+You can leave Settings open while waiting. It detects each service when it
+becomes available again, refreshes that area's displayed values, and re-enables
+only the controls that are safe to change. Avoid changing configuration files
+while their service is unavailable.
 
 ## Configuration recovery messages
 
-HyprShelld keeps a last-known-good copy of its settings and checks both copies
-when the configuration service starts.
+HyprShelld keeps separate active and last-known-good copies for core settings
+and component settings. Each area checks its own copies when the configuration
+service starts, so damage in the workspace component state does not block a bar
+height change.
 
-- **Restored from the last known good copy** means the main settings file was
-  missing or damaged, but HyprShelld recovered your previous valid settings and
-  repaired the main copy. Review the displayed bar height before continuing.
+- **Restored from the last known good copy** identifies the affected area. Its
+  main file was missing or damaged, but HyprShelld recovered the previous valid
+  value and repaired that area's active copy. Review the displayed bar height
+  or workspace choices before continuing.
 
-- **Safe defaults are in use** means neither copy could be recovered.
-  HyprShelld created valid replacement files and loaded the default bar height.
-  Review the result and choose your preferred height again if needed.
+- **Safe defaults are in use** means neither copy for the named area could be
+  recovered. HyprShelld created valid replacements and loaded that area's
+  defaults. The other settings area is not reset.
 
-On a standard Linux setup, the active settings are stored in
-`~/.config/hyprshelld/settings.json`, and the recovery copy is stored in
-`~/.local/state/hyprshelld/settings.last-good.json`. Systems with custom XDG
+On a standard Linux setup, core settings use
+`~/.config/hyprshelld/settings.json` and
+`~/.local/state/hyprshelld/settings.last-good.json`. Component settings use
+`~/.config/hyprshelld/components.json` and
+`~/.local/state/hyprshelld/components.last-good.json`. Systems with custom XDG
 paths may store them elsewhere.
 
-If a recovery message keeps returning, close Settings and preserve both files
-before seeking help. Do not delete or edit either file as a first
-troubleshooting step; doing so can remove the copy HyprShelld would otherwise
-use to recover your choices.
+If a recovery message keeps returning, close Settings and preserve the active
+and last-known-good file named above for the affected area before seeking help.
+Do not delete or edit either file as a first troubleshooting step; doing so can
+remove the copy HyprShelld would otherwise use to recover your choices.
 
-See [Bar](bar.md) for its current layout, spacing, and complete height range.
+See [Bar](bar.md) for its current layout, workspace behavior, spacing, and
+complete height range.
 
 Return to the [HyprShelld User Guide](index.md).

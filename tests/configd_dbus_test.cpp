@@ -247,8 +247,10 @@ private slots:
         QVERIFY(!bytesSeenAtSignal_.isEmpty());
 
         const auto persisted = QJsonDocument::fromJson(bytesSeenAtSignal_).object();
+        QCOMPARE(persisted.size(), 3);
         QCOMPARE(persisted.value(QStringLiteral("barHeight")).toInteger(), 60);
         QCOMPARE(persisted.value(QStringLiteral("revision")).toString(), QStringLiteral("1"));
+        QVERIFY(!persisted.contains(QStringLiteral("workspaceSwitcher")));
         QCOMPARE(proxy.barHeight(), 60U);
         QCOMPARE(proxy.revision(), 1ULL);
 

@@ -5,6 +5,7 @@ qt_add_qml_module(
     QML_FILES
         Bar.qml
         BarHeightControl.qml
+        WorkspaceSwitcher.qml
 )
 
 target_link_libraries(

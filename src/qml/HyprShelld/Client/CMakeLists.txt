@@ -19,6 +19,12 @@ qt_add_qml_module(
     SHARED
     URI HyprShelld.Client
     SOURCES
+        component_config_client.cpp
+        component_config_client.h
+        component_manager_client.cpp
+        component_manager_client.h
+        component_runtime_client.cpp
+        component_runtime_client.h
         coordinator_client.cpp
         coordinator_client.h
         config_client.cpp
@@ -44,6 +50,7 @@ target_link_libraries(
         Qt6::Core
         Qt6::DBus
         Qt6::Qml
+        hyprshelld-component-core
 )
 
 qt_query_qml_module(

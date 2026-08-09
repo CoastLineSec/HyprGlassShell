@@ -17,6 +17,20 @@ TestCase {
             minimumBarHeight: 24
             maximumBarHeight: 96
             defaultBarHeight: 40
+            workspaceLabelMode: "numbers"
+            workspaceShowApplications: false
+            workspaceMaximumApplications: 3
+            workspaceOccupiedOnly: false
+            workspaceScrollMode: "disabled"
+            workspaceInstanceAvailable: true
+        }
+    }
+
+    Component {
+        id: mainComponent
+
+        Settings.Main {
+            visible: false
         }
     }
 
@@ -41,53 +55,350 @@ TestCase {
         }
     }
 
+    function enableCoreSettings(page) {
+        page.coreServiceAvailable = true;
+    }
+
+    function enableWorkspaceSettings(page) {
+        page.componentServiceAvailable = true;
+        page.componentCatalogAvailable = true;
+        page.componentWritable = true;
+        page.workspaceInstanceAvailable = true;
+    }
+
+    Component {
+        id: workspaceSettingsComponent
+
+        Window {
+            width: 520
+            height: 900
+            visible: true
+
+            property alias settings: workspaceSettings
+
+            Settings.WorkspaceSwitcherSettings {
+                id: workspaceSettings
+
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 12
+                }
+                labelMode: "numbers"
+                showApplications: false
+                maximumApplications: 3
+                occupiedOnly: false
+                scrollMode: "disabled"
+                controlsEnabled: true
+            }
+        }
+    }
+
+    Component {
+        id: componentsPageComponent
+
+        Window {
+            width: 760
+            height: 720
+            visible: true
+
+            property alias page: componentsPage
+
+            Settings.ComponentsPage {
+                id: componentsPage
+
+                anchors.fill: parent
+            }
+        }
+    }
+
+    function workspaceCatalogRecord() {
+        return {
+            id: "io.github.coastlinesec.hyprshelld.workspace-switcher",
+            type: "bar-widget",
+            version: "0.1.0",
+            name: "Workspace Switcher",
+            description: "Shows and activates workspaces on each display.",
+            authors: [{ name: "CoastLineSec", email: "", homepage: "" }],
+            license: "LicenseRef-HyprShelld",
+            packageDigest:
+                "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7",
+            origin: "system",
+            removable: false,
+            hasSettings: true,
+            requestedCapabilities: []
+        };
+    }
+
+    function configureSnapshotForComponent(component, enabled) {
+        const components = {};
+        components[component.id] = {
+            packageDigest: component.packageDigest,
+            enabled: enabled,
+            grantedCapabilities: [],
+            settings: {}
+        };
+        return {
+            formatVersion: 1,
+            revision: "4",
+            components: components,
+            instances: {},
+            layouts: { bars: {}, desktops: {} }
+        };
+    }
+
+    function configureComponentsPage(page) {
+        const component = workspaceCatalogRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [component];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        page.configSnapshot = configureSnapshotForComponent(component, true);
+    }
+
     function test_serviceAvailability() {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
 
-        const warning = findChild(page, "serviceWarning");
+        const coreWarning = findChild(page, "coreServiceWarning");
+        const componentWarning = findChild(
+            page,
+            "componentServiceWarning"
+        );
         const control = findChild(page, "barHeightControl");
         const preview = findChild(page, "barPreview");
-        verify(warning !== null);
+        const workspaceSettings = findChild(
+            page,
+            "workspaceSwitcherSettingsCard"
+        );
+        verify(coreWarning !== null);
+        verify(componentWarning !== null);
         verify(control !== null);
         verify(preview !== null);
-        compare(page.serviceWarningVisible, true);
-        compare(page.controlsEnabled, false);
+        verify(workspaceSettings !== null);
+        compare(page.coreServiceWarningVisible, true);
+        compare(page.componentServiceWarningVisible, true);
+        compare(page.coreControlsEnabled, false);
+        compare(page.workspaceControlsEnabled, false);
         compare(control.busy, true);
         compare(preview.barHeight, 40);
         compare(preview.configurationAvailable, false);
+        compare(workspaceSettings.controlsEnabled, false);
 
-        page.serviceAvailable = true;
-        compare(page.serviceWarningVisible, false);
-        compare(page.controlsEnabled, true);
+        enableCoreSettings(page);
+        compare(page.coreServiceWarningVisible, false);
+        compare(page.componentServiceWarningVisible, true);
+        compare(page.coreControlsEnabled, true);
+        compare(page.workspaceControlsEnabled, false);
         compare(control.busy, false);
         compare(preview.configurationAvailable, true);
+
+        enableWorkspaceSettings(page);
+        compare(page.componentServiceWarningVisible, false);
+        compare(page.workspaceControlsEnabled, true);
+        compare(workspaceSettings.controlsEnabled, true);
+
+        page.coreServiceAvailable = false;
+        compare(page.coreControlsEnabled, false);
+        compare(page.workspaceControlsEnabled, true);
+        compare(control.enabled, false);
+        compare(workspaceSettings.controlsEnabled, true);
+
+        page.coreServiceAvailable = true;
+        page.componentCatalogAvailable = false;
+        compare(page.coreControlsEnabled, true);
+        compare(page.workspaceControlsEnabled, false);
+        compare(control.enabled, true);
+        compare(workspaceSettings.controlsEnabled, false);
+        verify(page.componentWarningMessage.includes("catalog"));
+
+        page.componentRecoveryState = "unsupported";
+        page.componentServiceAvailable = false;
+        verify(page.componentWarningMessage.includes("cannot read"));
+        compare(page.coreControlsEnabled, true);
+        page.componentServiceAvailable = true;
+        verify(page.componentWarningMessage.includes("recovery copy"));
+        compare(page.workspaceControlsEnabled, false);
     }
 
     function test_recoveryMessages() {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
 
-        const warning = findChild(page, "recoveryWarning");
+        const coreWarning = findChild(page, "coreRecoveryWarning");
+        const componentWarning = findChild(
+            page,
+            "componentRecoveryWarning"
+        );
+        verify(coreWarning !== null);
+        verify(componentWarning !== null);
+        compare(page.coreRecoveryWarningVisible, false);
+        compare(page.componentRecoveryWarningVisible, false);
+
+        page.coreRecoveryState = "recovered";
+        compare(page.coreRecoveryWarningVisible, true);
+        verify(page.coreRecoveryMessage.includes("last known good"));
+        compare(page.componentRecoveryWarningVisible, false);
+
+        page.coreRecoveryState = "normal";
+        page.componentRecoveryState = "defaulted";
+        compare(page.coreRecoveryWarningVisible, false);
+        compare(page.componentRecoveryWarningVisible, true);
+        verify(page.componentRecoveryMessage.includes("safe defaults"));
+
+        page.componentRecoveryState = "normal";
+        compare(page.componentRecoveryWarningVisible, false);
+    }
+
+    function test_componentsPageUsesFixedCategoriesAndProtectedBuiltinRow() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureComponentsPage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const categories = [
+            findChild(page, "componentCategory-bar-widget"),
+            findChild(page, "componentCategory-desktop-widget"),
+            findChild(page, "componentCategory-shell-service"),
+            findChild(page, "componentCategory-shell-application")
+        ];
+        for (const category of categories)
+            verify(category !== null);
+        compare(categories.map(category => category.text), [
+            "Bar Widgets",
+            "Desktop Widgets",
+            "Services",
+            "Shell Applications"
+        ]);
+        for (let index = 1; index < categories.length; ++index) {
+            verify(categories[index].mapToItem(page, 0, 0).y
+                > categories[index - 1].mapToItem(page, 0, 0).y);
+        }
+
+        const componentId = workspaceCatalogRecord().id;
+        const pill = findChild(page, "componentPill-" + componentId);
+        const origin = findChild(page, "componentOrigin-" + componentId);
+        const toggle = findChild(page, "componentEnabled-" + componentId);
+        verify(pill !== null);
+        verify(origin !== null);
+        verify(toggle !== null);
+        compare(origin.text, "Built-in");
+        compare(toggle.checked, true);
+        compare(toggle.enabled, true);
+        compare(findChild(page, "componentSettings-" + componentId), null);
+        compare(findChild(page, "componentRemove-" + componentId), null);
+        compare(findChild(page, "installComponent"), null);
+
+        let requested = [];
+        let requestCount = 0;
+        page.componentEnabledRequested.connect(function(
+            id,
+            packageDigest,
+            enabled
+        ) {
+            ++requestCount;
+            requested = [id, packageDigest, enabled];
+        });
+        toggle.checked = false;
+        toggle.toggled();
+        compare(requested, [
+            componentId,
+            workspaceCatalogRecord().packageDigest,
+            false
+        ]);
+        compare(requestCount, 1);
+
+        page.lastErrorComponentId = componentId;
+        page.configError = "The package digest no longer matches.";
+        wait(0);
+        compare(toggle.checked, true);
+        compare(requestCount, 1);
+
+        page.lastErrorComponentId = "";
+        page.configError = "";
+        toggle.checked = false;
+        toggle.toggled();
+        compare(requestCount, 2);
+        page.pendingComponentId = componentId;
+        page.configBusy = true;
+        wait(0);
+        compare(toggle.checked, false);
+        page.lastErrorComponentId = componentId;
+        page.configError = "The change could not be saved.";
+        page.pendingComponentId = "";
+        page.configBusy = false;
+        wait(0);
+        compare(toggle.checked, true);
+        compare(requestCount, 2);
+    }
+
+    function test_componentsToggleRequiresLiveDigestBoundState() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureComponentsPage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const component = workspaceCatalogRecord();
+        const toggle = findChild(page, "componentEnabled-" + component.id);
+        const status = findChild(page, "componentStatus-" + component.id);
+        const warning = findChild(page, "componentsAvailabilityWarning");
+        verify(toggle !== null);
+        verify(status !== null);
         verify(warning !== null);
-        compare(page.recoveryWarningVisible, false);
+        compare(toggle.enabled, true);
+        compare(warning.visible, false);
 
-        page.recoveryState = "recovered";
-        compare(page.recoveryWarningVisible, true);
-        verify(page.recoveryMessage.includes("last known good"));
+        page.managerBusy = true;
+        compare(toggle.enabled, false);
+        page.managerBusy = false;
+        page.configBusy = true;
+        compare(toggle.enabled, false);
+        page.configBusy = false;
 
-        page.recoveryState = "defaulted";
-        compare(page.recoveryWarningVisible, true);
-        verify(page.recoveryMessage.includes("safe defaults"));
+        page.configCatalogDigest =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        compare(toggle.enabled, false);
+        compare(warning.visible, true);
+        verify(page.availabilityMessage.includes("both services agree"));
 
-        page.recoveryState = "normal";
-        compare(page.recoveryWarningVisible, false);
+        page.configCatalogDigest = page.managerCatalogDigest;
+        const mismatched = JSON.parse(JSON.stringify(page.configSnapshot));
+        mismatched.components[component.id].packageDigest =
+            "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+        page.configSnapshot = mismatched;
+        compare(toggle.enabled, false);
+        compare(status.text,
+            "Configuration does not match the installed package.");
+
+        page.configSnapshot = configureSnapshotForComponent(component, true);
+        page.lastErrorComponentId = component.id;
+        page.configError = "The enablement change could not be saved.";
+        compare(status.text, "The enablement change could not be saved.");
+        compare(status.Accessible.role, Accessible.AlertMessage);
+
+        page.lastErrorComponentId = "org.example.some-other-component";
+        compare(status.text, "Enabled");
     }
 
     function test_requestsAreForwardedOnce() {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
-        page.serviceAvailable = true;
+        enableCoreSettings(page);
 
         const control = findChild(page, "barHeightControl");
         verify(control !== null);
@@ -114,17 +425,615 @@ TestCase {
     function test_busyAndErrorsAreWired() {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
-        page.serviceAvailable = true;
+        enableCoreSettings(page);
+        enableWorkspaceSettings(page);
 
         const control = findChild(page, "barHeightControl");
+        const workspaceSettings = findChild(
+            page,
+            "workspaceSwitcherSettingsCard"
+        );
+        const coreError = findChild(page, "coreConfigurationError");
+        const coreErrorLabel = findChild(
+            page,
+            "coreConfigurationErrorLabel"
+        );
+        const componentError = findChild(
+            page,
+            "componentConfigurationError"
+        );
+        const componentErrorLabel = findChild(
+            page,
+            "componentConfigurationErrorLabel"
+        );
         verify(control !== null);
+        verify(workspaceSettings !== null);
+        verify(coreError !== null);
+        verify(coreErrorLabel !== null);
+        verify(componentError !== null);
+        verify(componentErrorLabel !== null);
         compare(control.busy, false);
         compare(control.errorText, "");
+        compare(workspaceSettings.controlsEnabled, true);
 
-        page.busy = true;
-        page.errorText = "Could not save the setting.";
+        page.coreBusy = true;
+        page.coreErrorText = "Could not save the bar size.";
+        wait(0);
         compare(control.busy, true);
-        compare(control.errorText, "Could not save the setting.");
+        compare(control.errorText, "");
+        compare(workspaceSettings.controlsEnabled, true);
+        compare(page.coreConfigurationErrorVisible, true);
+        compare(page.componentConfigurationErrorVisible, false);
+        verify(coreErrorLabel.text.includes(
+            "Could not save the bar size."
+        ));
+        compare(
+            coreErrorLabel.Accessible.role,
+            Accessible.AlertMessage
+        );
+
+        page.coreBusy = false;
+        page.componentBusy = true;
+        page.componentErrorText = "Could not save workspace settings.";
+        wait(0);
+        compare(control.busy, false);
+        compare(workspaceSettings.controlsEnabled, false);
+        compare(page.coreConfigurationErrorVisible, true);
+        compare(page.componentConfigurationErrorVisible, true);
+        verify(componentErrorLabel.text.includes(
+            "Could not save workspace settings."
+        ));
+        compare(
+            componentErrorLabel.Accessible.role,
+            Accessible.AlertMessage
+        );
+    }
+
+    function test_workspaceControlsExposeCurrentSettings() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+
+        const labelMode = findChild(page, "workspaceLabelMode");
+        const showApplications = findChild(
+            page,
+            "workspaceShowApplications"
+        );
+        const maximumRow = findChild(
+            page,
+            "workspaceMaximumApplicationsRow"
+        );
+        const maximumApplications = findChild(
+            page,
+            "workspaceMaximumApplications"
+        );
+        const occupiedOnly = findChild(page, "workspaceOccupiedOnly");
+        const scrollMode = findChild(page, "workspaceScrollMode");
+        const reset = findChild(page, "resetWorkspaceSwitcher");
+        verify(labelMode !== null);
+        verify(showApplications !== null);
+        verify(maximumRow !== null);
+        verify(maximumApplications !== null);
+        verify(occupiedOnly !== null);
+        verify(scrollMode !== null);
+        verify(reset !== null);
+
+        compare(labelMode.currentText, "Numbers");
+        compare(showApplications.checked, false);
+        compare(maximumRow.visible, false);
+        compare(maximumApplications.from, 1);
+        compare(maximumApplications.to, 5);
+        compare(maximumApplications.value, 3);
+        compare(occupiedOnly.checked, false);
+        compare(scrollMode.currentText, "Off");
+        compare(reset.enabled, false);
+
+        enableWorkspaceSettings(page);
+        page.workspaceLabelMode = "names";
+        page.workspaceShowApplications = true;
+        page.workspaceMaximumApplications = 5;
+        page.workspaceOccupiedOnly = true;
+        page.workspaceScrollMode = "reversed";
+        const scrollView = findChild(page, "barSettingsScrollView");
+        verify(scrollView !== null);
+        scrollView.contentItem.contentY = scrollView.contentItem.contentHeight
+            - scrollView.contentItem.height;
+        wait(0);
+        compare(labelMode.currentText, "Names");
+        compare(showApplications.checked, true);
+        compare(maximumApplications.value, 5);
+        compare(occupiedOnly.checked, true);
+        compare(scrollMode.currentText, "Reversed");
+        compare(reset.enabled, true);
+
+        page.componentBusy = true;
+        compare(labelMode.enabled, false);
+        compare(showApplications.enabled, false);
+        compare(maximumApplications.enabled, false);
+        compare(occupiedOnly.enabled, false);
+        compare(scrollMode.enabled, false);
+        compare(reset.enabled, false);
+    }
+
+    function test_disabledWorkspaceGreysNaturalSettingsAndOmitsPreview() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        enableCoreSettings(page);
+        enableWorkspaceSettings(page);
+
+        const message = findChild(page, "workspaceFeatureDisabledMessage");
+        const messageLabel = findChild(
+            page,
+            "workspaceFeatureDisabledMessageLabel"
+        );
+        const controls = findChild(page, "workspaceSettingsControls");
+        const labelMode = findChild(page, "workspaceLabelMode");
+        const reset = findChild(page, "resetWorkspaceSwitcher");
+        const heightControl = findChild(page, "barHeightControl");
+        verify(message !== null);
+        verify(messageLabel !== null);
+        verify(controls !== null);
+        verify(labelMode !== null);
+        verify(reset !== null);
+        verify(heightControl !== null);
+
+        page.workspaceFeatureAvailable = true;
+        page.workspaceFeatureEnabled = false;
+        page.workspacePreviewEnabled = false;
+        wait(0);
+        const settingsCard = findChild(
+            page,
+            "workspaceSwitcherSettingsCard"
+        );
+        verify(settingsCard !== null);
+        compare(page.workspaceFeatureAvailable, true);
+        compare(page.workspaceFeatureEnabled, false);
+        compare(settingsCard.featureAvailable, true);
+        compare(settingsCard.featureEnabled, false);
+        compare(settingsCard.disabledMessageVisible, true);
+        compare(
+            messageLabel.text,
+            "This feature has been disabled. Enable it from Components → Bar Widgets to change these settings."
+        );
+        compare(messageLabel.opacity, 1);
+        compare(controls.opacity, 0.42);
+        compare(labelMode.enabled, false);
+        compare(reset.enabled, false);
+        compare(heightControl.enabled, true);
+        compare(findChild(page, "workspaceSwitcher"), null);
+
+        page.workspaceLabelMode = "names";
+        page.workspaceShowApplications = true;
+        page.workspaceMaximumApplications = 5;
+        page.workspaceOccupiedOnly = true;
+        page.workspaceScrollMode = "reversed";
+        page.workspaceFeatureEnabled = true;
+        page.workspacePreviewEnabled = true;
+        wait(0);
+        const switcher = findChild(page, "workspaceSwitcher");
+        verify(switcher !== null);
+        compare(settingsCard.disabledMessageVisible, false);
+        compare(controls.opacity, 1);
+        compare(labelMode.currentText, "Names");
+        compare(switcher.labelMode, "names");
+        compare(switcher.showApplications, true);
+        compare(switcher.maximumApplications, 5);
+        compare(switcher.scrollMode, "reversed");
+    }
+
+    function test_unavailableWorkspaceIsNotPresentedAsDisabled() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        enableCoreSettings(page);
+        enableWorkspaceSettings(page);
+
+        page.workspaceFeatureAvailable = false;
+        page.workspaceFeatureEnabled = true;
+        page.workspacePreviewEnabled = true;
+        wait(0);
+        const message = findChild(page, "workspaceFeatureDisabledMessage");
+        const switcher = findChild(page, "workspaceSwitcher");
+        verify(message !== null);
+        verify(switcher !== null);
+        compare(message.visible, false);
+        compare(page.componentServiceWarningVisible, true);
+        verify(page.componentWarningMessage.includes("placement"));
+        compare(page.workspaceControlsEnabled, false);
+        compare(switcher.labelMode, "numbers");
+    }
+
+    function test_workspaceAuthorityDistinguishesGlobalAndInstanceState() {
+        const application = createTemporaryObject(mainComponent, this);
+        verify(application !== null);
+        const definition = workspaceCatalogRecord();
+        const digest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const instanceId = application.workspaceInstanceId;
+        const instances = {};
+        instances[instanceId] = {
+            componentId: definition.id,
+            enabled: true,
+            settings: {
+                labelMode: "numbers",
+                showApplications: false,
+                maximumApplications: 3,
+                occupiedOnly: false,
+                scrollMode: "disabled"
+            }
+        };
+        const snapshot = configureSnapshotForComponent(definition, true);
+        snapshot.instances = instances;
+
+        let state = application.workspaceComponentStateFromServices(
+            true,
+            digest,
+            [definition],
+            true,
+            true,
+            digest,
+            snapshot
+        );
+        compare(state.available, true);
+        compare(state.desiredEnabled, true);
+        compare(state.instanceEnabled, true);
+        compare(state.previewEnabled, true);
+
+        state = application.workspaceComponentStateFromServices(
+            false,
+            digest,
+            [definition],
+            true,
+            true,
+            digest,
+            snapshot
+        );
+        compare(state.available, false);
+        compare(state.desiredEnabled, true);
+        compare(state.instanceEnabled, true);
+        compare(state.previewEnabled, true);
+
+        snapshot.components[definition.id].enabled = false;
+        snapshot.instances[instanceId].enabled = false;
+        state = application.workspaceComponentStateFromServices(
+            true, digest, [definition], true, true, digest, snapshot
+        );
+        compare(state.available, true);
+        compare(state.desiredEnabled, false);
+        compare(state.instanceEnabled, false);
+        compare(state.previewEnabled, false);
+        compare(application.workspaceNaturalSettingsAvailable(state), true);
+
+        snapshot.components[definition.id].enabled = true;
+        state = application.workspaceComponentStateFromServices(
+            true, digest, [definition], true, true, digest, snapshot
+        );
+        compare(state.available, true);
+        compare(state.desiredEnabled, true);
+        compare(state.instanceEnabled, false);
+        compare(state.previewEnabled, false);
+        compare(application.workspaceNaturalSettingsAvailable(state), false);
+
+        state = application.workspaceComponentStateFromServices(
+            true,
+            digest,
+            [definition],
+            true,
+            true,
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            snapshot
+        );
+        compare(state.available, false);
+        compare(state.previewEnabled, false);
+    }
+
+    function test_workspaceConditionalRowIsVisible() {
+        const testWindow = createTemporaryObject(
+            workspaceSettingsComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const settings = testWindow.settings;
+        verify(settings !== null);
+        const maximumRow = findChild(
+            settings,
+            "workspaceMaximumApplicationsRow"
+        );
+        verify(maximumRow !== null);
+        compare(maximumRow.visible, false);
+
+        settings.showApplications = true;
+        waitForRendering(settings);
+        compare(maximumRow.visible, true);
+
+        settings.featureEnabled = false;
+        waitForRendering(settings);
+        const disabledMessage = findChild(
+            settings,
+            "workspaceFeatureDisabledMessage"
+        );
+        verify(disabledMessage !== null);
+        compare(settings.disabledMessageVisible, true);
+        compare(disabledMessage.visible, true);
+    }
+
+    function test_workspaceRequestsCarryOneAtomicSnapshot() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        enableWorkspaceSettings(page);
+
+        const settings = findChild(
+            page,
+            "workspaceSwitcherSettingsCard"
+        );
+        const reset = findChild(page, "resetWorkspaceSwitcher");
+        verify(settings !== null);
+        verify(reset !== null);
+
+        let requestCount = 0;
+        let request = [];
+        let resetCount = 0;
+        page.workspaceSwitcherRequested.connect(function(
+            labelMode,
+            showApplications,
+            maximumApplications,
+            occupiedOnly,
+            scrollMode
+        ) {
+            ++requestCount;
+            request = [
+                labelMode,
+                showApplications,
+                maximumApplications,
+                occupiedOnly,
+                scrollMode
+            ];
+        });
+        page.resetWorkspaceSwitcherRequested.connect(function() {
+            ++resetCount;
+        });
+
+        settings.requestSnapshot(
+            "numbers", false, 3, false, "disabled"
+        );
+        compare(requestCount, 0);
+
+        settings.requestSnapshot(
+            "compact", false, 5, false, "disabled"
+        );
+        compare(requestCount, 1);
+        compare(request, ["compact", false, 5, false, "disabled"]);
+
+        page.workspaceMaximumApplications = 5;
+        page.workspaceOccupiedOnly = true;
+        settings.requestSnapshot(
+            "compact", false, 5, true, "reversed"
+        );
+        compare(requestCount, 2);
+        compare(request, ["compact", false, 5, true, "reversed"]);
+
+        page.componentBusy = true;
+        settings.requestSnapshot(
+            "names", false, 5, true, "reversed"
+        );
+        compare(requestCount, 2);
+
+        page.componentBusy = false;
+        reset.clicked();
+        compare(resetCount, 1);
+    }
+
+    function test_workspaceSnapshotReplacementIsWholeAndAtomic() {
+        const application = createTemporaryObject(mainComponent, this);
+        verify(application !== null);
+
+        const workspaceId = application.workspaceInstanceId;
+        const workspaceComponentId = application.workspaceComponentId;
+        const dormantId = "c89b6683-33a8-4d63-a573-b89b99fd0dd0";
+        const instances = {};
+        instances[workspaceId] = {
+            componentId: workspaceComponentId,
+            enabled: true,
+            settings: {
+                labelMode: "numbers",
+                showApplications: false,
+                maximumApplications: 3,
+                occupiedOnly: false,
+                scrollMode: "disabled"
+            }
+        };
+        instances[dormantId] = {
+            componentId: "org.example.dormant-widget",
+            enabled: false,
+            settings: { preserved: "exactly" }
+        };
+        const snapshot = {
+            formatVersion: 1,
+            revision: "42",
+            components: {
+                "org.example.dormant-widget": {
+                    packageDigest:
+                        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    enabled: false,
+                    grantedCapabilities: ["example.read"],
+                    settings: { retained: true }
+                }
+            },
+            instances: instances,
+            layouts: {
+                bars: {
+                    main: {
+                        outputs: { mode: "all" },
+                        regions: {
+                            start: [workspaceId],
+                            center: [],
+                            end: [dormantId]
+                        }
+                    }
+                },
+                desktops: {}
+            }
+        };
+
+        const extracted = application.workspaceSettingsFromSnapshot(
+            snapshot
+        );
+        compare(extracted.valid, true);
+        compare(extracted.labelMode, "numbers");
+
+        const replacement = application.workspaceSnapshotWithSettings(
+            snapshot,
+            "names",
+            true,
+            5,
+            true,
+            "reversed"
+        );
+        verify(replacement !== null);
+        verify(replacement !== snapshot);
+        compare(snapshot.instances[workspaceId].settings.labelMode, "numbers");
+        compare(replacement.instances[workspaceId].settings, {
+            labelMode: "names",
+            showApplications: true,
+            maximumApplications: 5,
+            occupiedOnly: true,
+            scrollMode: "reversed"
+        });
+        compare(
+            replacement.instances[dormantId],
+            snapshot.instances[dormantId]
+        );
+        compare(replacement.components, snapshot.components);
+        compare(replacement.layouts, snapshot.layouts);
+        compare(replacement.revision, "42");
+
+        const reset = application.workspaceSnapshotWithSettings(
+            replacement,
+            "numbers",
+            false,
+            3,
+            false,
+            "disabled"
+        );
+        compare(
+            reset.instances[workspaceId].settings,
+            application.workspaceDefaults
+        );
+
+        compare(application.workspaceSnapshotWithSettings(
+            snapshot,
+            "numbers",
+            false,
+            6,
+            false,
+            "disabled"
+        ), null);
+        snapshot.instances[workspaceId].componentId =
+            "org.example.wrong-component";
+        compare(
+            application.workspaceSettingsFromSnapshot(snapshot).valid,
+            false
+        );
+        compare(application.workspaceSnapshotWithSettings(
+            snapshot,
+            "numbers",
+            false,
+            3,
+            false,
+            "disabled"
+        ), null);
+    }
+
+    function test_previewDemonstratesWorkspaceSettings() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        const preview = findChild(page, "barPreview");
+        const bar = findChild(page, "previewBarVisual");
+        const startSlot = findChild(page, "barStartComponentSlot");
+        const switcher = findChild(page, "workspaceSwitcher");
+        verify(preview !== null);
+        verify(bar !== null);
+        verify(startSlot !== null);
+        verify(switcher !== null);
+
+        compare(bar.currentTime.getFullYear(), 1991);
+        compare(bar.currentTime.getMonth(), 8);
+        compare(bar.currentTime.getDate(), 17);
+        compare(bar.currentTime.getDay(), 2);
+        compare(bar.currentTime.getHours(), 15);
+        compare(bar.currentTime.getMinutes(), 42);
+
+        compare(preview.previewWorkspaces.length, 3);
+        compare(switcher.labelMode, "numbers");
+        compare(Boolean(preview.previewWorkspaces[0].placeholder), false);
+        compare(preview.previewWorkspaces[0].occupied, false);
+        compare(preview.previewWorkspaces[0].active, false);
+        compare(preview.previewWorkspaces[1].active, true);
+        compare(preview.previewWorkspaces[1].occupied, true);
+        compare(preview.previewWorkspaces[1].applications.length, 5);
+        compare(preview.previewWorkspaces[1].applications[0].iconSource, "");
+        compare(preview.previewWorkspaces[1].applications[0].fallbackInitial, "E");
+        compare(preview.previewWorkspaces[1].applications[0].active, true);
+        compare(preview.previewWorkspaces[1].applications[0].count, 1);
+        compare(preview.previewWorkspaces[1].applications[0].activatable, false);
+        verify(preview.previewWorkspaces[1].applications[1].iconSource.length > 0);
+        compare(preview.previewWorkspaces[2].urgent, true);
+        compare(preview.previewWorkspaces[2].occupied, true);
+        compare(preview.previewWorkspaces[2].applications.length, 1);
+        compare(preview.previewWorkspaces[2].applications[0].active, false);
+        compare(preview.previewWorkspaces[2].applications[0].count, 3);
+        compare(preview.previewWorkspaces[2].applications[0].activatable, false);
+        compare(findChild(page, "workspacePlaceholder-0"), null);
+
+        page.workspaceShowApplications = true;
+        page.workspaceMaximumApplications = 1;
+        wait(0);
+        const currentIndicator = findChild(page, "workspaceIndicator-2");
+        verify(currentIndicator !== null);
+        compare(currentIndicator.visibleApplications.length, 1);
+        compare(currentIndicator.visibleApplications[0].active, true);
+        compare(currentIndicator.applicationOverflow, 4);
+
+        page.workspaceLabelMode = "names";
+        page.workspaceMaximumApplications = 3;
+        page.workspaceScrollMode = "normal";
+        compare(switcher.labelMode, "names");
+        compare(switcher.showApplications, true);
+        compare(switcher.maximumApplications, 3);
+        compare(switcher.scrollMode, "normal");
+
+        page.workspaceOccupiedOnly = true;
+        compare(preview.previewWorkspaces.length, 2);
+        compare(preview.previewWorkspaces[0].active, true);
+        compare(preview.previewWorkspaces[1].occupied, true);
+
+        page.workspaceOccupiedOnly = false;
+        compare(preview.previewWorkspaces.length, 3);
+        compare(preview.previewWorkspaces[0].workspaceId, 1);
+        compare(preview.previewWorkspaces[2].workspaceId, 4);
+    }
+
+    function test_minimumSizeCanReachWorkspaceReset() {
+        const page = createTemporaryObject(pageComponent, this, {
+            width: 423,
+            height: 480
+        });
+        verify(page !== null);
+        const scrollView = findChild(page, "barSettingsScrollView");
+        const reset = findChild(page, "resetWorkspaceSwitcher");
+        verify(scrollView !== null);
+        verify(reset !== null);
+        waitForRendering(page);
+        wait(0);
+        verify(scrollView.contentItem.contentHeight > scrollView.height);
+
+        scrollView.contentItem.contentY = Math.max(
+            0,
+            scrollView.contentItem.contentHeight
+                - scrollView.contentItem.height
+        );
+        wait(0);
+        const resetPosition = reset.mapToItem(page, 0, 0);
+        verify(resetPosition.y >= 0);
+        verify(resetPosition.y + reset.height <= page.height);
     }
 
     function test_narrowPreviewUsesDesktopScale() {
@@ -138,13 +1047,26 @@ TestCase {
         const frame = findChild(page, "previewBarFrame");
         const bar = findChild(page, "previewBarVisual");
         const reservedLabel = findChild(page, "reservedWorkspaceLabel");
+        const switcher = findChild(page, "workspaceSwitcher");
+        const firstWorkspace = findChild(page, "workspaceIndicator-1");
+        const activeWorkspace = findChild(page, "workspaceIndicator-2");
+        const urgentWorkspace = findChild(page, "workspaceIndicator-4");
         verify(preview !== null);
         verify(frame !== null);
         verify(bar !== null);
         verify(reservedLabel !== null);
+        verify(switcher !== null);
+        verify(firstWorkspace !== null);
+        verify(activeWorkspace !== null);
+        verify(urgentWorkspace !== null);
         verify(preview.previewScale < 1);
         verify(frame.width * frame.scale <= preview.width);
         verify(reservedLabel.y >= frame.y + bar.height * frame.scale);
+        compare(switcher.interactive, false);
+        compare(firstWorkspace.workspaceActive, false);
+        compare(activeWorkspace.workspaceActive, true);
+        compare(urgentWorkspace.workspaceUrgent, true);
+        compare(findChild(page, "workspaceIndicator-3"), null);
     }
 
     function test_healthWarningIsQuietWhenHealthy() {
@@ -238,6 +1160,28 @@ TestCase {
         compare(requestCount, 2);
     }
 
+    function test_componentManagerFailureHasDedicatedRow() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorHealthy = false;
+        warning.coordinatorFailedUnits = [
+            "hyprshelld-componentd.service"
+        ];
+        waitForRendering(warning);
+
+        compare(warning.failedComponentCount, 1);
+        compare(
+            warning.friendlyName("hyprshelld-componentd.service"),
+            "Component manager"
+        );
+        verify(findChild(
+            warning,
+            "restartButton-hyprshelld-componentd.service"
+        ) !== null);
+    }
+
     function test_systemdFallbackIsReadOnly() {
         const testWindow = createTemporaryObject(healthWarningComponent, this);
         verify(testWindow !== null);
@@ -249,11 +1193,16 @@ TestCase {
         warning.targetState = "active";
         warning.coordinatorState = "failed";
         warning.configurationState = "active";
+        warning.componentManagerState = "failed";
         warning.surfaceState = "active";
         waitForRendering(warning);
         compare(warning.warningVisible, true);
-        compare(warning.failedComponentCount, 1);
+        compare(warning.failedComponentCount, 2);
         compare(warning.friendlyName("hyprshelld.service"), "Shell health");
+        compare(
+            warning.friendlyName("hyprshelld-componentd.service"),
+            "Component manager"
+        );
 
         const restartButton = findChild(
             warning,
@@ -261,6 +1210,12 @@ TestCase {
         );
         verify(restartButton !== null);
         compare(restartButton.visible, false);
+        const componentRestartButton = findChild(
+            warning,
+            "restartButton-hyprshelld-componentd.service"
+        );
+        verify(componentRestartButton !== null);
+        compare(componentRestartButton.visible, false);
         verify(warning.warningDescription.includes("directly from systemd"));
     }
 

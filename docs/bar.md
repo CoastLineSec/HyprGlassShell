@@ -10,9 +10,72 @@ pixels and defaults to 40 logical pixels.
 
 ## What the bar shows
 
-The current bar shows configuration availability on the left, the date and
-time in the center, and the display name on the right. A **!** badge appears
-beside the HyprShelld name only when a desktop component needs attention.
+The current bar shows configuration availability and, when enabled, the
+built-in workspace switcher component for that display on the left. The date
+and time remain in the center, and the display name remains on the right. A
+**!** badge appears beside the HyprShelld name only when a desktop component
+needs attention.
+
+## Switch workspaces
+
+Each bar shows the existing numbered and named workspaces assigned to that
+display. Numbered workspaces appear first in numeric order, followed by named
+workspaces in alphabetical order. This includes empty workspaces that Hyprland
+is configured to keep persistent. Special workspaces are not included, and the
+bar does not add unused workspace places of its own.
+
+The default **Numbers** style shows the current workspace as a filled circle.
+Numbered workspaces place their number inside the circle; named workspaces use
+their initial. Other workspaces use smaller hollow circles. A workspace that
+needs attention receives a separate attention marker. Select an inactive
+workspace to switch to it. The live bar does not take keyboard focus, so use
+the pointer or your normal Hyprland shortcuts to change workspaces.
+
+The switcher follows workspaces as they are created, removed, renamed, or moved
+between displays. When an ordinary empty workspace disappears from Hyprland,
+its circle also disappears. A persistent empty workspace remains visible.
+
+If the workspace connection becomes unavailable, the bar marks the switcher as
+unavailable and leaves it inactive until the connection returns.
+
+## Customize the workspace switcher
+
+Open **HyprShelld Settings**, select **Bar**, and use the **Workspaces** card to
+choose how the switcher behaves:
+
+- **Numbers** uses the filled current circle and smaller hollow circles with
+  numbers or named-workspace initials. This is the default.
+- **Compact** keeps the circle design but removes the identifiers.
+- **Names** keeps the circle identifier and appends the full custom or named
+  workspace label.
+- **Show application icons** appends the applications open on each workspace to
+  that workspace's anchor.
+  Repeated applications on an inactive workspace are grouped with a count. On
+  the current workspace, windows remain individually represented and the active
+  one is emphasized. Select a window icon on the current workspace to bring
+  that window forward. Icons on inactive workspaces, including grouped icons,
+  switch to that workspace instead of targeting a hidden window. You can show
+  from one to five icons per workspace; any remaining applications appear as a
+  `+N` summary.
+- **Show occupied only** hides empty workspaces, including persistent empty
+  workspaces, but always keeps the current workspace visible.
+- **Scroll to switch** can be off, normal, or reversed. Scrolling moves only
+  among the real workspaces currently shown on that display and stops at the
+  first or last one instead of wrapping around.
+
+Changes are saved automatically as one workspace-switcher update and apply to
+every bar. The Settings preview uses illustrative workspaces and applications;
+it is not a live view of your session.
+
+The workspace switcher itself can be disabled from **Settings → Components →
+Bar Widgets**. Disabling it removes the switcher without discarding its saved
+choices. Its natural **Workspaces** settings card remains visible but dimmed
+and read-only until the component is enabled again.
+
+Workspace choices are stored separately from the core bar size. If the
+component settings or component catalog is unavailable, Settings keeps the
+workspace preview visible but makes only the **Workspaces** card read-only. You
+can still change the bar height when core settings are available.
 
 ## Component failure notices
 
@@ -37,9 +100,10 @@ but the persistent warning remains available in Settings.
 Changes are saved automatically. Select **Reset** to return every bar to the
 default height of 40 logical pixels.
 
-If the settings service is unavailable, Settings shows a warning and disables
-the height control until the service reconnects. The displayed value may be
-out of date while that warning is visible.
+If core settings are unavailable, Settings shows a bar-size warning and
+disables the height control until they reconnect. The displayed height may be
+out of date while that warning is visible. A separate workspace warning does
+not disable the height control.
 
 See [Settings](settings.md) for recovery messages and configuration-file
 locations.

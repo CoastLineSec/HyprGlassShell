@@ -17,6 +17,7 @@ const QString propertiesInterface = QStringLiteral(
     "org.freedesktop.DBus.Properties"
 );
 const QString configUnit = QStringLiteral("hyprshelld-configd.service");
+const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
 const QString surfacedUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 class FakeCoordinator final : public QObject, protected QDBusContext {
@@ -155,7 +156,9 @@ public:
 public slots:
     void RestartComponent(const QString &unitName)
     {
-        if (unitName != configUnit && unitName != surfacedUnit) {
+        if (unitName != configUnit
+            && unitName != componentUnit
+            && unitName != surfacedUnit) {
             sendErrorReply(
                 QStringLiteral(
                     "org.hyprshelld.Coordinator1.Error.UnknownComponent"
@@ -290,11 +293,11 @@ private slots:
         QVERIFY(addedSpy.isValid());
 
         const auto initialSummary = QStringLiteral(
-            "Configuration and desktop shell need attention"
+            "Configuration, component manager, and desktop shell need attention"
         );
         service_.setState(
             false,
-            {surfacedUnit, configUnit},
+            {surfacedUnit, componentUnit, configUnit},
             initialSummary,
             false
         );
@@ -302,30 +305,33 @@ private slots:
 
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
         QCOMPARE(client.healthy(), false);
-        QCOMPARE(client.failedUnits(), QStringList({configUnit, surfacedUnit}));
+        QCOMPARE(
+            client.failedUnits(),
+            QStringList({componentUnit, configUnit, surfacedUnit})
+        );
         QCOMPARE(client.failureSummary(), initialSummary);
         QTRY_COMPARE_WITH_TIMEOUT(addedSpy.count(), 1, 3000);
         QCOMPARE(addedSpy.at(0).at(0).toString(), initialSummary);
         QCOMPARE(
             addedSpy.at(0).at(1).toStringList(),
-            QStringList({configUnit, surfacedUnit})
+            QStringList({componentUnit, configUnit, surfacedUnit})
         );
 
         service_.setState(
             false,
-            {surfacedUnit},
-            QStringLiteral("Desktop shell needs attention")
+            {surfacedUnit, componentUnit},
+            QStringLiteral("Component manager and desktop shell need attention")
         );
         QTRY_COMPARE_WITH_TIMEOUT(
             client.failedUnits(),
-            QStringList({surfacedUnit}),
+            QStringList({componentUnit, surfacedUnit}),
             3000
         );
         QCOMPARE(addedSpy.count(), 1);
 
         service_.setState(
             false,
-            {surfacedUnit, configUnit},
+            {surfacedUnit, componentUnit, configUnit},
             initialSummary
         );
         QTRY_COMPARE_WITH_TIMEOUT(addedSpy.count(), 2, 3000);

@@ -1,5 +1,7 @@
+add_subdirectory(component)
 add_subdirectory(coordinator)
 add_subdirectory(configd)
+add_subdirectory(componentd)
 add_subdirectory(qml/HyprShelld/Client)
 add_subdirectory(qml/HyprShelld/UI)
 add_subdirectory(settings)

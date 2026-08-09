@@ -23,6 +23,7 @@ Frame {
     property string targetState: "unknown"
     property string coordinatorState: "unknown"
     property string configurationState: "unknown"
+    property string componentManagerState: "unknown"
     property string surfaceState: "unknown"
 
     readonly property var failedComponentUnits: {
@@ -30,6 +31,7 @@ Frame {
         if (coordinatorAvailable) {
             for (const unitName of coordinatorFailedUnits) {
                 if (unitName === "hyprshelld-configd.service"
+                        || unitName === "hyprshelld-componentd.service"
                         || unitName === "hyprshelld-surfaced.service")
                     units.push(unitName);
             }
@@ -43,6 +45,8 @@ Frame {
             units.push("hyprshelld.service");
         if (configurationState === "failed")
             units.push("hyprshelld-configd.service");
+        if (componentManagerState === "failed")
+            units.push("hyprshelld-componentd.service");
         if (surfaceState === "failed")
             units.push("hyprshelld-surfaced.service");
         return units;
@@ -85,6 +89,8 @@ Frame {
             return qsTr("Shell health");
         if (unitName === "hyprshelld-configd.service")
             return qsTr("Settings service");
+        if (unitName === "hyprshelld-componentd.service")
+            return qsTr("Component manager");
         if (unitName === "hyprshelld-surfaced.service")
             return qsTr("Desktop shell");
         return qsTr("Shell component");
@@ -95,6 +101,8 @@ Frame {
             return qsTr("Monitors desktop components and reports persistent failures.");
         if (unitName === "hyprshelld-configd.service")
             return qsTr("Saves and applies desktop settings.");
+        if (unitName === "hyprshelld-componentd.service")
+            return qsTr("Provides the installed component catalog.");
         if (unitName === "hyprshelld-surfaced.service")
             return qsTr("Displays the bar and other desktop surfaces.");
         return qsTr("Provides part of the HyprShelld desktop.");

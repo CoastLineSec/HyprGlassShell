@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.hyprshelld.ComponentManager1
+Exec=@CMAKE_INSTALL_FULL_BINDIR@/hyprshelld-componentd
+SystemdService=hyprshelld-componentd.service

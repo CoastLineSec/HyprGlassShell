@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/hyprshelld/Coordinator1/Components">
+  <interface name="org.hyprshelld.ComponentRuntime1">
+    <!--
+      Opaque equality token derived from the complete normalized plan. Zero
+      means this coordinator has never produced a valid plan.
+    -->
+    <property name="SurfacePlanRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Lowercase SHA-256, or empty exactly when the revision is zero. -->
+    <property name="SurfacePlanDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of hydrating, authoritative, retained, or unavailable. -->
+    <property name="SurfacePlanState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Returns the exact immutable bytes associated with the expected revision.
+
+      Errors:
+        org.hyprshelld.ComponentRuntime1.Error.PlanUnavailable
+        org.hyprshelld.ComponentRuntime1.Error.StaleSurfacePlanRevision
+    -->
+    <method name="GetSurfacePlan">
+      <arg name="expectedSurfacePlanRevision" type="t" direction="in"/>
+      <arg name="surfacePlan" type="ay" direction="out"/>
+      <arg name="surfacePlanDigest" type="s" direction="out"/>
+    </method>
+  </interface>
+</node>

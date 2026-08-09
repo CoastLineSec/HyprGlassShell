@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import HyprShelld.Client
 
 ShellRoot {
@@ -32,6 +33,14 @@ ShellRoot {
     }
     readonly property string surfacedUnitName: "hyprshelld-surfaced.service"
     readonly property string coordinatorUnitName: "hyprshelld.service"
+
+    HyprlandWorkspaceSource {
+        id: hyprlandWorkspaceSource
+
+        requestSocketPath: Hyprland.requestSocketPath
+        eventSocketPath: Hyprland.eventSocketPath
+        onDispatchRequested: command => Hyprland.dispatch(command)
+    }
 
     function containsDisplayableFailure(unitNames) {
         for (let index = 0; index < unitNames.length; ++index) {
@@ -192,6 +201,7 @@ ShellRoot {
         model: Quickshell.screens
 
         BarSurface {
+            workspaceSource: hyprlandWorkspaceSource
             currentTime: root.currentTime
             shellDegraded: root.shellDegraded
             healthSummary: root.healthSummary

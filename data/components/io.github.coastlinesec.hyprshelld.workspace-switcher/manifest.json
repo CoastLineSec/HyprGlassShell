@@ -1,0 +1,34 @@
+{
+  "manifestVersion": 1,
+  "id": "io.github.coastlinesec.hyprshelld.workspace-switcher",
+  "version": "0.1.0",
+  "type": "bar-widget",
+  "name": "Workspace Switcher",
+  "description": "Shows the workspaces on each monitor and lets the user activate them.",
+  "authors": [
+    {
+      "name": "CoastLineSec",
+      "homepage": "https://github.com/CoastLineSec/HyprShelld"
+    }
+  ],
+  "license": "LicenseRef-HyprShelld",
+  "homepage": "https://github.com/CoastLineSec/HyprShelld",
+  "source": "https://github.com/CoastLineSec/HyprShelld",
+  "issues": "https://github.com/CoastLineSec/HyprShelld/issues",
+  "componentApiVersion": "1.0",
+  "runtime": {
+    "kind": "builtin-v1",
+    "factory": "workspace-switcher"
+  },
+  "settingsSchema": "settings.schema.json",
+  "requestedCapabilities": [
+    {
+      "id": "shell.workspaces.read",
+      "reason": "Display workspace, window, and active-workspace state."
+    },
+    {
+      "id": "shell.workspaces.activate",
+      "reason": "Activate a workspace selected with the pointer or scroll action."
+    }
+  ]
+}

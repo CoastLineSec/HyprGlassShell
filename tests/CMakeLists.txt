@@ -28,6 +28,104 @@ set_tests_properties(
 )
 
 set(
+    HYPRSHELLD_SCRIPT_MODEL_TEST_ROOT
+    "${PROJECT_BINARY_DIR}/.qsm"
+)
+foreach(directory config state cache data runtime)
+    file(
+        MAKE_DIRECTORY
+        "${HYPRSHELLD_SCRIPT_MODEL_TEST_ROOT}/${directory}"
+    )
+endforeach()
+file(
+    CHMOD
+    "${HYPRSHELLD_SCRIPT_MODEL_TEST_ROOT}/runtime"
+    PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        OWNER_EXECUTE
+)
+
+add_test(
+    NAME quickshell-script-model
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
+        "-DQML_IMPORT_PATH=${QT_QML_OUTPUT_DIRECTORY}"
+        "-DTEST_BUILD_ROOT=${PROJECT_BINARY_DIR}"
+        "-DTEST_ROOT=${HYPRSHELLD_SCRIPT_MODEL_TEST_ROOT}"
+        "-DTEST_QML=${CMAKE_CURRENT_SOURCE_DIR}/quickshell/scriptmodel/shell.qml"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_quickshell_script_model.cmake"
+)
+
+set_tests_properties(
+    quickshell-script-model
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "SCRIPT_MODEL_RECONCILIATION_PASS"
+        FAIL_REGULAR_EXPRESSION "SCRIPT_MODEL_RECONCILIATION_FAIL"
+        TIMEOUT 15
+        RUN_SERIAL TRUE
+)
+
+set(
+    HYPRSHELLD_COMPONENT_HOSTS_TEST_ROOT
+    "${PROJECT_BINARY_DIR}/.qch"
+)
+
+add_test(
+    NAME quickshell-component-hosts
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
+        "-DQML_IMPORT_PATH=${QT_QML_OUTPUT_DIRECTORY}"
+        "-DSHARED_UI_SOURCE_DIR=${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI"
+        "-DSURFACED_SOURCE_DIR=${PROJECT_SOURCE_DIR}/src/surfaced"
+        "-DTEST_BUILD_ROOT=${PROJECT_BINARY_DIR}"
+        "-DTEST_ROOT=${HYPRSHELLD_COMPONENT_HOSTS_TEST_ROOT}"
+        "-DTEST_QML=${CMAKE_CURRENT_SOURCE_DIR}/quickshell/component-hosts/shell.qml"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_quickshell_component_hosts.cmake"
+)
+
+set_tests_properties(
+    quickshell-component-hosts
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "COMPONENT_HOSTS_PASS"
+        FAIL_REGULAR_EXPRESSION "COMPONENT_HOSTS_FAIL"
+        TIMEOUT 15
+        RUN_SERIAL TRUE
+)
+
+set(
+    HYPRSHELLD_HYPRLAND_SOURCE_TEST_ROOT
+    "${PROJECT_BINARY_DIR}/.hws"
+)
+
+add_test(
+    NAME quickshell-hyprland-source
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
+        "-DQML_IMPORT_PATH=${QT_QML_OUTPUT_DIRECTORY}"
+        "-DSURFACED_SOURCE_DIR=${PROJECT_SOURCE_DIR}/src/surfaced"
+        "-DTEST_BUILD_ROOT=${PROJECT_BINARY_DIR}"
+        "-DTEST_ROOT=${HYPRSHELLD_HYPRLAND_SOURCE_TEST_ROOT}"
+        "-DTEST_QML=${CMAKE_CURRENT_SOURCE_DIR}/quickshell/hyprland-source-shell.qml"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_quickshell_hyprland_source.cmake"
+)
+
+set_tests_properties(
+    quickshell-hyprland-source
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "HYPRLAND_SOURCE_PASS"
+        FAIL_REGULAR_EXPRESSION "HYPRLAND_SOURCE_FAIL"
+        TIMEOUT 25
+        RUN_SERIAL TRUE
+)
+
+set(
     HYPRSHELLD_QUALIFICATION_QML
     "${CMAKE_CURRENT_SOURCE_DIR}/quickshell/qualification/shell.qml"
     "${CMAKE_CURRENT_SOURCE_DIR}/quickshell/qualification/QualificationSurface.qml"
@@ -50,14 +148,21 @@ add_test(
         "$<TARGET_FILE:Qt6::qmllint>"
         -W
         0
+        --bare
         -I
         "${QT_QML_OUTPUT_DIRECTORY}"
+        -I
+        "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_QML}"
         "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/Bar.qml"
         "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/BarHeightControl.qml"
+        "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/WorkspaceSwitcher.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/Main.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/ComponentPill.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/ComponentsPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceSwitcherSettings.qml"
 )
 
 add_test(
@@ -66,10 +171,21 @@ add_test(
         "$<TARGET_FILE:Qt6::qmllint>"
         -W
         0
+        --bare
         -I
         "${QT_QML_OUTPUT_DIRECTORY}"
+        -I
+        "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_QML}"
         "${PROJECT_SOURCE_DIR}/src/surfaced/shell.qml"
         "${PROJECT_SOURCE_DIR}/src/surfaced/BarSurface.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/HyprlandWorkspaceSource.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/HyprlandSocketRequest.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/HyprlandEventStream.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/HyprlandWorkspaceProtocol.js"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/WorkspaceProjection.js"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/components/BarComponentHost.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/components/BuiltinComponentFactory.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/components/WorkspaceSwitcherComponent.qml"
 )
 
 set(HYPRSHELLD_COORDINATOR_PROXY_SOURCES)
@@ -88,11 +204,36 @@ qt_add_dbus_interface(
     config1_interface
 )
 
+set(HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES)
+set(HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES)
+set(HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES)
+
+qt_add_dbus_interface(
+    HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentManager1.xml"
+    component_manager1_interface
+)
+
+qt_add_dbus_interface(
+    HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentConfig1.xml"
+    component_config1_interface
+)
+
+qt_add_dbus_interface(
+    HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentRuntime1.xml"
+    component_runtime1_interface
+)
+
 qt_add_executable(
     hyprshelld-dbus-contract-test
     dbus_contract_test.cpp
     ${HYPRSHELLD_COORDINATOR_PROXY_SOURCES}
     ${HYPRSHELLD_CONFIG_PROXY_SOURCES}
+    ${HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES}
+    ${HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES}
+    ${HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES}
 )
 
 target_compile_definitions(
@@ -100,6 +241,9 @@ target_compile_definitions(
     PRIVATE
         HYPRSHELLD_COORDINATOR_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Coordinator1.xml"
         HYPRSHELLD_CONFIG_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Config1.xml"
+        HYPRSHELLD_COMPONENT_MANAGER_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentManager1.xml"
+        HYPRSHELLD_COMPONENT_CONFIG_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentConfig1.xml"
+        HYPRSHELLD_COMPONENT_RUNTIME_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentRuntime1.xml"
 )
 
 target_link_libraries(
@@ -134,6 +278,207 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-surface-plan-test
+    surface_plan_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-surface-plan-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-component-core
+)
+
+add_test(
+    NAME surface-plan
+    COMMAND hyprshelld-surface-plan-test
+)
+
+qt_add_executable(
+    hyprshelld-component-plan-test
+    component_plan_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-plan-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-coordinator-core
+)
+
+add_test(
+    NAME component-plan
+    COMMAND hyprshelld-component-plan-test
+)
+
+qt_add_executable(
+    hyprshelld-component-plan-source-test
+    component_plan_source_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-plan-source-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-coordinator-core
+)
+
+add_test(
+    NAME component-plan-source
+    COMMAND hyprshelld-component-plan-source-test
+)
+
+qt_add_executable(
+    hyprshelld-component-plan-hydrator-test
+    component_plan_hydrator_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-plan-hydrator-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-coordinator-core
+)
+
+qt_add_executable(
+    hyprshelld-component-contract-test
+    component_contract_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-contract-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-component-core
+)
+
+add_test(
+    NAME component-contract
+    COMMAND hyprshelld-component-contract-test
+)
+
+qt_add_executable(
+    hyprshelld-component-settings-schema-test
+    component_settings_schema_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-settings-schema-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-component-core
+)
+
+add_test(
+    NAME component-settings-schema
+    COMMAND hyprshelld-component-settings-schema-test
+)
+
+set(
+    HYPRSHELLD_COMPONENT_DEFAULTS_FILE
+    "${PROJECT_SOURCE_DIR}/data/defaults/components.json"
+)
+set(
+    HYPRSHELLD_WORKSPACE_SCHEMA_FILE
+    "${PROJECT_SOURCE_DIR}/data/components/io.github.coastlinesec.hyprshelld.workspace-switcher/settings.schema.json"
+)
+
+qt_add_executable(
+    hyprshelld-component-configuration-test
+    component_configuration_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-component-configuration-test
+    PRIVATE
+        HYPRSHELLD_COMPONENT_DEFAULTS_FILE="${HYPRSHELLD_COMPONENT_DEFAULTS_FILE}"
+        HYPRSHELLD_WORKSPACE_SCHEMA_FILE="${HYPRSHELLD_WORKSPACE_SCHEMA_FILE}"
+        HYPRSHELLD_SOURCE_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components"
+)
+
+target_include_directories(
+    hyprshelld-component-configuration-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src/configd"
+)
+
+target_link_libraries(
+    hyprshelld-component-configuration-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-component-core
+        hyprshelld-componentd-core
+)
+
+add_test(
+    NAME component-configuration
+    COMMAND hyprshelld-component-configuration-test
+)
+
+qt_add_executable(
+    hyprshelld-component-store-test
+    component_store_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-component-store-test
+    PRIVATE
+        HYPRSHELLD_COMPONENT_DEFAULTS_FILE="${HYPRSHELLD_COMPONENT_DEFAULTS_FILE}"
+        HYPRSHELLD_WORKSPACE_SCHEMA_FILE="${HYPRSHELLD_WORKSPACE_SCHEMA_FILE}"
+)
+
+target_include_directories(
+    hyprshelld-component-store-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src/configd"
+)
+
+target_link_libraries(
+    hyprshelld-component-store-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-configd-core
+)
+
+add_test(
+    NAME component-store
+    COMMAND hyprshelld-component-store-test
+)
+
+qt_add_executable(
+    hyprshelld-componentd-catalog-test
+    componentd_catalog_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-componentd-catalog-test
+    PRIVATE
+        HYPRSHELLD_SOURCE_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components/io.github.coastlinesec.hyprshelld.workspace-switcher"
+)
+
+target_link_libraries(
+    hyprshelld-componentd-catalog-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-componentd-core
+)
+
+add_test(
+    NAME componentd-catalog
+    COMMAND hyprshelld-componentd-catalog-test
+)
+
+qt_add_executable(
     hyprshelld-config-store-test
     config_store_test.cpp
 )
@@ -155,6 +500,242 @@ find_program(
     HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE
     NAMES dbus-run-session
     REQUIRED
+)
+
+add_test(
+    NAME component-plan-hydrator
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
+        --
+        "$<TARGET_FILE:hyprshelld-component-plan-hydrator-test>"
+)
+
+set_tests_properties(
+    component-plan-hydrator
+    PROPERTIES
+        TIMEOUT 30
+)
+
+set(HYPRSHELLD_COMPONENT_CONFIG_TEST_ADAPTOR_SOURCES)
+
+qt_add_dbus_adaptor(
+    HYPRSHELLD_COMPONENT_CONFIG_TEST_ADAPTOR_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentConfig1.xml"
+    "${PROJECT_SOURCE_DIR}/src/configd/component_config_service.h"
+    HyprShelld::ComponentConfigService
+    component_config1_adaptor
+    ComponentConfig1Adaptor
+)
+
+qt_add_executable(
+    hyprshelld-component-config-dbus-test
+    component_config_dbus_test.cpp
+    "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/Client/component_config_client.cpp"
+    "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/Client/component_config_client.h"
+    ${HYPRSHELLD_COMPONENT_CONFIG_TEST_ADAPTOR_SOURCES}
+)
+
+set_target_properties(
+    hyprshelld-component-config-dbus-test
+    PROPERTIES
+        QT_QML_MODULE_NO_IMPORT_SCAN TRUE
+)
+
+target_compile_definitions(
+    hyprshelld-component-config-dbus-test
+    PRIVATE
+        HYPRSHELLD_COMPONENT_DEFAULTS_FILE="${HYPRSHELLD_COMPONENT_DEFAULTS_FILE}"
+        HYPRSHELLD_WORKSPACE_SCHEMA_FILE="${HYPRSHELLD_WORKSPACE_SCHEMA_FILE}"
+)
+
+target_include_directories(
+    hyprshelld-component-config-dbus-test
+    PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${PROJECT_SOURCE_DIR}/src/configd"
+        "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/Client"
+)
+
+target_link_libraries(
+    hyprshelld-component-config-dbus-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Qml
+        Qt6::Test
+        hyprshelld-component-core
+        hyprshelld-configd-core
+)
+
+add_test(
+    NAME component-config-dbus
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-component-config-dbus-test>"
+)
+
+set_tests_properties(
+    component-config-dbus
+    PROPERTIES
+        TIMEOUT 30
+)
+
+qt_add_executable(
+    hyprshelld-component-catalog-client-test
+    component_catalog_client_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-component-catalog-client-test
+    PRIVATE
+        HYPRSHELLD_SOURCE_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components"
+        HYPRSHELLD_WORKSPACE_SCHEMA_FILE="${HYPRSHELLD_WORKSPACE_SCHEMA_FILE}"
+)
+
+target_include_directories(
+    hyprshelld-component-catalog-client-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src/configd"
+)
+
+target_link_libraries(
+    hyprshelld-component-catalog-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-configd-core
+        hyprshelld-componentd-core
+)
+
+add_test(
+    NAME component-catalog-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-component-catalog-client-test>"
+)
+
+set_tests_properties(
+    component-catalog-client
+    PROPERTIES
+    TIMEOUT 15
+)
+
+add_executable(
+    hyprshelld-component-manager-client-test
+    component_manager_client_test.cpp
+)
+
+target_include_directories(
+    hyprshelld-component-manager-client-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/Client"
+)
+
+target_link_libraries(
+    hyprshelld-component-manager-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME component-manager-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
+        --
+        "$<TARGET_FILE:hyprshelld-component-manager-client-test>"
+)
+
+set_tests_properties(
+    component-manager-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+set(HYPRSHELLD_COMPONENT_MANAGER_TEST_ADAPTOR_SOURCES)
+
+qt_add_dbus_adaptor(
+    HYPRSHELLD_COMPONENT_MANAGER_TEST_ADAPTOR_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentManager1.xml"
+    "${PROJECT_SOURCE_DIR}/src/componentd/component_manager_service.h"
+    HyprShelld::ComponentManagerService
+    component_manager1_adaptor
+    ComponentManager1Adaptor
+)
+
+qt_add_executable(
+    hyprshelld-componentd-activation-test-service
+    "${PROJECT_SOURCE_DIR}/src/componentd/main.cpp"
+    ${HYPRSHELLD_COMPONENT_MANAGER_TEST_ADAPTOR_SOURCES}
+)
+
+target_include_directories(
+    hyprshelld-componentd-activation-test-service
+    PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${PROJECT_SOURCE_DIR}/src/componentd"
+)
+
+target_compile_definitions(
+    hyprshelld-componentd-activation-test-service
+    PRIVATE
+        HYPRSHELLD_SYSTEM_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components"
+)
+
+target_link_libraries(
+    hyprshelld-componentd-activation-test-service
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        hyprshelld-componentd-core
+)
+
+qt_add_executable(
+    hyprshelld-componentd-dbus-test
+    componentd_dbus_test.cpp
+    ${HYPRSHELLD_COMPONENT_MANAGER_TEST_ADAPTOR_SOURCES}
+)
+
+target_include_directories(
+    hyprshelld-componentd-dbus-test
+    PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+target_compile_definitions(
+    hyprshelld-componentd-dbus-test
+    PRIVATE
+        HYPRSHELLD_SOURCE_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components/io.github.coastlinesec.hyprshelld.workspace-switcher"
+)
+
+target_link_libraries(
+    hyprshelld-componentd-dbus-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-componentd-core
+)
+
+add_test(
+    NAME componentd-dbus
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-componentd-dbus-test>"
+)
+
+set_tests_properties(
+    componentd-dbus
+    PROPERTIES
+        TIMEOUT 30
 )
 
 qt_add_executable(
@@ -297,6 +878,35 @@ set_tests_properties(
 )
 
 add_executable(
+    hyprshelld-component-runtime-client-test
+    component_runtime_client_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-runtime-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME component-runtime-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
+        --
+        "$<TARGET_FILE:hyprshelld-component-runtime-client-test>"
+)
+
+set_tests_properties(
+    component-runtime-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_executable(
     hyprshelld-shell-runtime-status-test
     shell_runtime_status_test.cpp
 )
@@ -386,6 +996,10 @@ set(
     HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE
     "${PROJECT_BINARY_DIR}/data/dbus/org.hyprshelld.Config1.service"
 )
+set(
+    HYPRSHELLD_GENERATED_COMPONENT_MANAGER1_ACTIVATION_FILE
+    "${PROJECT_BINARY_DIR}/data/dbus/org.hyprshelld.ComponentManager1.service"
+)
 
 if(IS_ABSOLUTE "${QT6_INSTALL_QML}")
     set(HYPRSHELLD_INSTALL_QML_DIRECTORY "${QT6_INSTALL_QML}")
@@ -418,8 +1032,10 @@ target_compile_definitions(
     PRIVATE
         HYPRSHELLD_SYSTEMD_UNIT_DIR="${HYPRSHELLD_GENERATED_SYSTEMD_DIRECTORY}"
         HYPRSHELLD_CONFIG1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE}"
+        HYPRSHELLD_COMPONENT_MANAGER1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_COMPONENT_MANAGER1_ACTIVATION_FILE}"
         HYPRSHELLD_INSTALL_COORDINATOR="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld"
         HYPRSHELLD_INSTALL_CONFIGD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-configd"
+        HYPRSHELLD_INSTALL_COMPONENTD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-componentd"
         HYPRSHELLD_INSTALL_SURFACED="${CMAKE_INSTALL_FULL_DATADIR}/hyprshelld/surfaced"
         HYPRSHELLD_INSTALL_QML="${HYPRSHELLD_INSTALL_QML_DIRECTORY}"
         HYPRSHELLD_QUICKSHELL_EXECUTABLE="${QUICKSHELL_EXECUTABLE}"
@@ -452,6 +1068,7 @@ add_test(
         "-DVERIFY_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/systemd-verify"
         "-DCOORDINATOR_EXECUTABLE=$<TARGET_FILE:hyprshelld>"
         "-DCONFIGD_EXECUTABLE=$<TARGET_FILE:hyprshelld-configd>"
+        "-DCOMPONENTD_EXECUTABLE=$<TARGET_FILE:hyprshelld-componentd>"
         "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
         "-DSURFACED_DIRECTORY=${PROJECT_SOURCE_DIR}/src/surfaced"
         -P
@@ -494,6 +1111,28 @@ add_test(
 
 set_tests_properties(
     configd-activation
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_test(
+    NAME componentd-activation
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+        "-DDBUS_RUN_SESSION=${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "-DBUSCTL=${HYPRSHELLD_BUSCTL_EXECUTABLE}"
+        "-DSOURCE_ACTIVATION_FILE=${HYPRSHELLD_GENERATED_COMPONENT_MANAGER1_ACTIVATION_FILE}"
+        "-DFIXTURE_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/componentd-activation"
+        "-DINSTALL_COMPONENTD_EXECUTABLE=${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-componentd"
+        "-DTEST_COMPONENTD_EXECUTABLE=$<TARGET_FILE:hyprshelld-componentd-activation-test-service>"
+        "-DACTIVATION_DRIVER=${CMAKE_CURRENT_SOURCE_DIR}/componentd_activation_driver.sh"
+        -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/verify_componentd_activation.cmake"
+)
+
+set_tests_properties(
+    componentd-activation
     PROPERTIES
         TIMEOUT 30
 )

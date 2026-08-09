@@ -7,6 +7,10 @@ Item {
     required property date currentTime
     required property string screenName
     required property bool configurationAvailable
+    property Component startComponent
+    property Component centerComponent
+    property Component endComponent
+    property bool animationsEnabled: true
     property bool shellDegraded: false
     property string healthSummary: ""
     property bool failureNoticeVisible: false
@@ -42,6 +46,82 @@ Item {
             height: 9
             radius: width / 2
             color: root.configurationAvailable ? "#68d391" : "#f6ad55"
+        }
+
+        Loader {
+            id: startComponentLoader
+
+            objectName: "barStartComponentSlot"
+            active: root.startComponent !== null
+            visible: active && !root.failureNoticeVisible
+            sourceComponent: root.startComponent
+            anchors {
+                left: root.shellDegraded
+                    ? healthIndicator.right
+                    : brandLabel.right
+                leftMargin: 10
+                verticalCenter: parent.verticalCenter
+            }
+            width: Math.min(
+                implicitWidth,
+                Math.max(
+                    0,
+                    parent.width / 2
+                        - clockLabel.implicitWidth / 2
+                        - 18
+                        - x
+                )
+            )
+            height: parent.height
+        }
+
+        Loader {
+            id: centerComponentLoader
+
+            objectName: "barCenterComponentSlot"
+            active: root.centerComponent !== null
+            visible: active
+                && implicitWidth > 0
+                && !root.failureNoticeVisible
+            sourceComponent: root.centerComponent
+            anchors {
+                left: clockLabel.right
+                leftMargin: 10
+                verticalCenter: parent.verticalCenter
+            }
+            width: Math.min(
+                implicitWidth,
+                Math.max(
+                    0,
+                    (endComponentLoader.visible
+                        ? endComponentLoader.x - 10
+                        : screenLabel.x - 10) - x
+                )
+            )
+            height: parent.height
+        }
+
+        Loader {
+            id: endComponentLoader
+
+            objectName: "barEndComponentSlot"
+            active: root.endComponent !== null
+            visible: active && !root.failureNoticeVisible
+            sourceComponent: root.endComponent
+            anchors {
+                right: screenLabel.left
+                rightMargin: 10
+                verticalCenter: parent.verticalCenter
+            }
+            width: Math.min(
+                implicitWidth,
+                Math.max(
+                    0,
+                    screenLabel.x - 10
+                        - (clockLabel.x + clockLabel.width + 10)
+                )
+            )
+            height: parent.height
         }
 
         Text {
@@ -144,6 +224,8 @@ Item {
         }
 
         Text {
+            id: screenLabel
+
             anchors {
                 right: parent.right
                 rightMargin: 18

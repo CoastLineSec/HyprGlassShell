@@ -6,6 +6,7 @@ const QStringList &CoordinatorPolicy::allowedUnits()
 {
     static const QStringList units {
         QStringLiteral("hyprshelld-configd.service"),
+        QStringLiteral("hyprshelld-componentd.service"),
         QStringLiteral("hyprshelld-surfaced.service"),
     };
     return units;

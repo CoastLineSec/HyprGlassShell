@@ -22,11 +22,12 @@ const QString propertiesInterface = QStringLiteral(
     "org.freedesktop.DBus.Properties"
 );
 const QString configUnit = QStringLiteral("hyprshelld-configd.service");
+const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
 const QString surfacedUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 const QStringList &allowedUnits()
 {
-    static const QStringList units {configUnit, surfacedUnit};
+    static const QStringList units {configUnit, componentUnit, surfacedUnit};
     return units;
 }
 

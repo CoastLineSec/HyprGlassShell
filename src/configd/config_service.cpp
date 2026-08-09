@@ -48,7 +48,19 @@ ConfigService::ConfigService(
     , state_(loaded.state)
     , recoveryState_(recoveryStateName(loaded.recoveryState))
     , connection_(std::move(connection))
+    , legacyWorkspaceSettings_(loaded.legacyWorkspaceSettings)
+    , legacyWorkspaceRetirementPending_(
+          loaded.legacyWorkspaceRetirementPending
+      )
 {
+    legacyWorkspaceRetirementTimer_.setSingleShot(true);
+    legacyWorkspaceRetirementTimer_.setInterval(1000);
+    connect(
+        &legacyWorkspaceRetirementTimer_,
+        &QTimer::timeout,
+        this,
+        &ConfigService::attemptLegacyWorkspaceRetirement
+    );
 }
 
 uint ConfigService::barHeight() const
@@ -64,6 +76,12 @@ qulonglong ConfigService::revision() const
 QString ConfigService::recoveryState() const
 {
     return recoveryState_;
+}
+
+void ConfigService::authorizeLegacyWorkspaceRetirement()
+{
+    legacyWorkspaceRetirementAuthorized_ = true;
+    attemptLegacyWorkspaceRetirement();
 }
 
 qulonglong ConfigService::SetBarHeight(uint height)
@@ -104,7 +122,12 @@ qulonglong ConfigService::setBarHeight(uint height)
     };
 
     QString error;
-    if (!store_.persist(state_, next, error)) {
+    if (!store_.persist(
+            state_,
+            next,
+            legacyWorkspaceSettings_,
+            error
+        )) {
         reportError(persistenceError, error);
         return state_.revision;
     }
@@ -112,6 +135,29 @@ qulonglong ConfigService::setBarHeight(uint height)
     state_ = next;
     publishChange();
     return state_.revision;
+}
+
+void ConfigService::attemptLegacyWorkspaceRetirement()
+{
+    if (!legacyWorkspaceRetirementAuthorized_
+        || !legacyWorkspaceRetirementPending_) {
+        return;
+    }
+
+    QString error;
+    if (store_.retireLegacyWorkspaceSettings(state_, error)) {
+        legacyWorkspaceRetirementPending_ = false;
+        legacyWorkspaceSettings_.reset();
+        legacyWorkspaceRetirementTimer_.stop();
+        return;
+    }
+
+    qWarning().noquote()
+        << QStringLiteral("Failed to retire migrated workspace settings: %1")
+               .arg(error);
+    if (!legacyWorkspaceRetirementTimer_.isActive()) {
+        legacyWorkspaceRetirementTimer_.start();
+    }
 }
 
 void ConfigService::reportError(const QString &name, const QString &message) const

@@ -1,0 +1,38 @@
+{
+  "formatVersion": 1,
+  "revision": "0",
+  "components": {
+    "io.github.coastlinesec.hyprshelld.workspace-switcher": {
+      "packageDigest": "f4febcab5a093a803d35b93ae5300df3149f9bff5a571c759c771fe61699f0f7",
+      "enabled": true,
+      "grantedCapabilities": [],
+      "settings": {}
+    }
+  },
+  "instances": {
+    "7b4e2329-4320-4e15-894d-218fa690d782": {
+      "componentId": "io.github.coastlinesec.hyprshelld.workspace-switcher",
+      "enabled": true,
+      "settings": {
+        "labelMode": "numbers",
+        "showApplications": false,
+        "maximumApplications": 3,
+        "occupiedOnly": false,
+        "scrollMode": "disabled"
+      }
+    }
+  },
+  "layouts": {
+    "bars": {
+      "main": {
+        "outputs": {"mode": "all"},
+        "regions": {
+          "start": ["7b4e2329-4320-4e15-894d-218fa690d782"],
+          "center": [],
+          "end": []
+        }
+      }
+    },
+    "desktops": {}
+  }
+}

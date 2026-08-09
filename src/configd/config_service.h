@@ -6,6 +6,7 @@
 #include <QDBusContext>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 
 namespace HyprShelld {
 
@@ -27,12 +28,15 @@ public:
     [[nodiscard]] qulonglong revision() const;
     [[nodiscard]] QString recoveryState() const;
 
+    void authorizeLegacyWorkspaceRetirement();
+
 public slots:
     qulonglong SetBarHeight(uint height);
     qulonglong ResetBarHeight();
 
 private:
     qulonglong setBarHeight(uint height);
+    void attemptLegacyWorkspaceRetirement();
     void reportError(const QString &name, const QString &message) const;
     void publishChange() const;
 
@@ -40,6 +44,10 @@ private:
     ConfigState state_;
     QString recoveryState_;
     QDBusConnection connection_;
+    std::optional<LegacyWorkspaceSettings> legacyWorkspaceSettings_;
+    bool legacyWorkspaceRetirementPending_ = false;
+    bool legacyWorkspaceRetirementAuthorized_ = false;
+    QTimer legacyWorkspaceRetirementTimer_;
 };
 
 } // namespace HyprShelld

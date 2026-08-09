@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "settings": [
+    {
+      "key": "labelMode",
+      "scope": "instance",
+      "type": "enum",
+      "label": "Label style",
+      "description": "Choose numbers, compact circles without identifiers, or workspace names.",
+      "group": "appearance",
+      "order": 10,
+      "default": "numbers",
+      "options": [
+        {"value": "numbers", "label": "Numbers"},
+        {"value": "compact", "label": "Compact"},
+        {"value": "names", "label": "Names"}
+      ]
+    },
+    {
+      "key": "showApplications",
+      "scope": "instance",
+      "type": "boolean",
+      "label": "Show application icons",
+      "description": "Append the applications open on each workspace to its anchor.",
+      "group": "appearance",
+      "order": 20,
+      "default": false
+    },
+    {
+      "key": "maximumApplications",
+      "scope": "instance",
+      "type": "integer",
+      "label": "Maximum icons",
+      "description": "Summarize additional applications after this many icons.",
+      "group": "appearance",
+      "order": 30,
+      "default": 3,
+      "minimum": 1,
+      "maximum": 5,
+      "step": 1,
+      "visibleWhen": {
+        "key": "showApplications",
+        "equals": true
+      }
+    },
+    {
+      "key": "occupiedOnly",
+      "scope": "instance",
+      "type": "boolean",
+      "label": "Show occupied only",
+      "description": "Show workspaces with open windows while keeping the current workspace visible.",
+      "group": "behavior",
+      "order": 40,
+      "default": false
+    },
+    {
+      "key": "scrollMode",
+      "scope": "instance",
+      "type": "enum",
+      "label": "Scroll action",
+      "description": "Choose whether and in which direction scrolling changes workspaces.",
+      "group": "behavior",
+      "order": 50,
+      "default": "disabled",
+      "options": [
+        {"value": "disabled", "label": "Disabled"},
+        {"value": "normal", "label": "Normal"},
+        {"value": "reversed", "label": "Reversed"}
+      ]
+    }
+  ]
+}

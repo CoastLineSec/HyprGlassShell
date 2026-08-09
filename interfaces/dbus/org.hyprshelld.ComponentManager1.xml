@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/hyprshelld/ComponentManager1">
+  <interface name="org.hyprshelld.ComponentManager1">
+    <property name="CatalogDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Returns the complete sorted ID set and the digest that owns it as one
+      reply. The digest is the exact 64-character lowercase hexadecimal
+      SHA-256 of the framed, sorted component IDs and package digests.
+    -->
+    <method name="ListComponents">
+      <arg name="componentIds" type="as" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Empty strings represent absent optional URLs and author fields. Parallel
+      author, capability, and dependency arrays have matching lengths.
+
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest
+        org.hyprshelld.ComponentManager1.Error.UnknownComponent
+    -->
+    <method name="GetComponent">
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="manifestVersion" type="u" direction="out"/>
+      <arg name="componentType" type="s" direction="out"/>
+      <arg name="version" type="s" direction="out"/>
+      <arg name="name" type="s" direction="out"/>
+      <arg name="description" type="s" direction="out"/>
+      <arg name="authorNames" type="as" direction="out"/>
+      <arg name="authorEmails" type="as" direction="out"/>
+      <arg name="authorHomepages" type="as" direction="out"/>
+      <arg name="license" type="s" direction="out"/>
+      <arg name="homepage" type="s" direction="out"/>
+      <arg name="source" type="s" direction="out"/>
+      <arg name="issues" type="s" direction="out"/>
+      <arg name="componentApiVersion" type="s" direction="out"/>
+      <arg name="runtimeKind" type="s" direction="out"/>
+      <arg name="runtimeFactory" type="s" direction="out"/>
+      <arg name="runtimeEntryPoint" type="s" direction="out"/>
+      <arg name="runtimeArguments" type="as" direction="out"/>
+      <arg name="settingsSchema" type="ay" direction="out"/>
+      <arg name="capabilityIds" type="as" direction="out"/>
+      <arg name="capabilityReasons" type="as" direction="out"/>
+      <arg name="dependencyIds" type="as" direction="out"/>
+      <arg name="dependencyVersionRequirements" type="as" direction="out"/>
+      <arg name="packageDigest" type="s" direction="out"/>
+      <arg name="origin" type="s" direction="out"/>
+      <arg name="removable" type="b" direction="out"/>
+    </method>
+  </interface>
+</node>

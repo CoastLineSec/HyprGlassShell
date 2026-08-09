@@ -27,6 +27,7 @@ const QString invalidSnapshotError = QStringLiteral(
 const QString targetUnit = QStringLiteral("hyprshelld.target");
 const QString coordinatorUnit = QStringLiteral("hyprshelld.service");
 const QString configurationUnit = QStringLiteral("hyprshelld-configd.service");
+const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
 const QString surfaceUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 const QStringList &runtimeUnits()
@@ -35,6 +36,7 @@ const QStringList &runtimeUnits()
         targetUnit,
         coordinatorUnit,
         configurationUnit,
+        componentUnit,
         surfaceUnit,
     };
     return units;
@@ -175,6 +177,11 @@ QString ShellRuntimeStatus::configurationState() const
     return configurationState_;
 }
 
+QString ShellRuntimeStatus::componentManagerState() const
+{
+    return componentManagerState_;
+}
+
 QString ShellRuntimeStatus::surfaceState() const
 {
     return surfaceState_;
@@ -274,15 +281,18 @@ void ShellRuntimeStatus::refresh()
             const auto targetState = states.value(targetUnit);
             const auto coordinatorState = states.value(coordinatorUnit);
             const auto configurationState = states.value(configurationUnit);
+            const auto componentManagerState = states.value(componentUnit);
             const auto surfaceState = states.value(surfaceUnit);
             const bool statesChanged = targetState != targetState_
                 || coordinatorState != coordinatorState_
                 || configurationState != configurationState_
+                || componentManagerState != componentManagerState_
                 || surfaceState != surfaceState_;
 
             targetState_ = targetState;
             coordinatorState_ = coordinatorState;
             configurationState_ = configurationState;
+            componentManagerState_ = componentManagerState;
             surfaceState_ = surfaceState;
 
             if (statesChanged) {

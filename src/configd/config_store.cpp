@@ -15,6 +15,7 @@ namespace HyprShelld {
 namespace {
 
 constexpr auto formatVersion = 1;
+constexpr qsizetype maximumSnapshotBytes = 64 * 1024;
 
 enum class FileStatus {
     Missing,
@@ -27,15 +28,49 @@ enum class FileStatus {
 struct ReadResult final {
     FileStatus status = FileStatus::Missing;
     ConfigState state;
+    std::optional<LegacyWorkspaceSettings> legacyWorkspaceSettings;
+    bool hadLegacyWorkspaceBlock = false;
     QString error;
 };
 
-QByteArray serialize(const ConfigState &state)
+QByteArray serialize(
+    const ConfigState &state,
+    const std::optional<LegacyWorkspaceSettings> &legacyWorkspaceSettings
+)
 {
     QJsonObject object;
     object.insert(QStringLiteral("formatVersion"), formatVersion);
     object.insert(QStringLiteral("revision"), QString::number(state.revision));
     object.insert(QStringLiteral("barHeight"), static_cast<qint64>(state.barHeight));
+    if (legacyWorkspaceSettings) {
+        object.insert(
+            QStringLiteral("workspaceSwitcher"),
+            QJsonObject{
+                {
+                    QStringLiteral("labelMode"),
+                    legacyWorkspaceSettings->labelMode,
+                },
+                {
+                    QStringLiteral("showApplications"),
+                    legacyWorkspaceSettings->showApplications,
+                },
+                {
+                    QStringLiteral("maximumApplications"),
+                    static_cast<qint64>(
+                        legacyWorkspaceSettings->maximumApplications
+                    ),
+                },
+                {
+                    QStringLiteral("occupiedOnly"),
+                    legacyWorkspaceSettings->occupiedOnly,
+                },
+                {
+                    QStringLiteral("scrollMode"),
+                    legacyWorkspaceSettings->scrollMode,
+                },
+            }
+        );
+    }
 
     auto data = QJsonDocument(object).toJson(QJsonDocument::Compact);
     data.append('\n');
@@ -59,6 +94,54 @@ bool parseRevision(const QString &text, quint64 &revision)
     return converted;
 }
 
+std::optional<LegacyWorkspaceSettings> parseLegacyWorkspaceSettings(
+    const QJsonValue &value
+)
+{
+    if (!value.isObject()) {
+        return std::nullopt;
+    }
+
+    const auto workspace = value.toObject();
+    const auto labelMode = workspace.value(QStringLiteral("labelMode"));
+    const auto showApplications = workspace.value(
+        QStringLiteral("showApplications")
+    );
+    const auto maximumApplications = workspace.value(
+        QStringLiteral("maximumApplications")
+    );
+    const auto occupiedOnly = workspace.value(QStringLiteral("occupiedOnly"));
+    const auto scrollMode = workspace.value(QStringLiteral("scrollMode"));
+
+    const auto label = labelMode.toString();
+    const auto scroll = scrollMode.toString();
+    const auto maximum = maximumApplications.toInteger(-1);
+    const auto validLabel = label == QStringLiteral("compact")
+        || label == QStringLiteral("numbers")
+        || label == QStringLiteral("names");
+    const auto validScroll = scroll == QStringLiteral("disabled")
+        || scroll == QStringLiteral("normal")
+        || scroll == QStringLiteral("reversed");
+
+    if (!labelMode.isString() || !validLabel
+        || !showApplications.isBool()
+        || !maximumApplications.isDouble()
+        || maximumApplications.toDouble() != static_cast<double>(maximum)
+        || maximum < 1 || maximum > 5
+        || !occupiedOnly.isBool()
+        || !scrollMode.isString() || !validScroll) {
+        return std::nullopt;
+    }
+
+    return LegacyWorkspaceSettings{
+        .labelMode = label,
+        .showApplications = showApplications.toBool(),
+        .maximumApplications = static_cast<quint32>(maximum),
+        .occupiedOnly = occupiedOnly.toBool(),
+        .scrollMode = scroll,
+    };
+}
+
 ReadResult readSnapshot(const QString &path)
 {
     if (!QFileInfo::exists(path)) {
@@ -73,8 +156,33 @@ ReadResult readSnapshot(const QString &path)
         };
     }
 
+    const auto size = file.size();
+    if (size < 0 || size > maximumSnapshotBytes) {
+        return {
+            .status = FileStatus::Damaged,
+            .error = QStringLiteral("Configuration exceeds the size limit in %1")
+                         .arg(path),
+        };
+    }
+
+    const auto bytes = file.read(maximumSnapshotBytes + 1);
+    if (bytes.size() > maximumSnapshotBytes) {
+        return {
+            .status = FileStatus::Damaged,
+            .error = QStringLiteral("Configuration exceeds the size limit in %1")
+                         .arg(path),
+        };
+    }
+    if (file.error() != QFileDevice::NoError) {
+        return {
+            .status = FileStatus::Unreadable,
+            .error = QStringLiteral("Cannot read %1: %2")
+                         .arg(path, file.errorString()),
+        };
+    }
+
     QJsonParseError parseError;
-    const auto document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    const auto document = QJsonDocument::fromJson(bytes, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
         return {
             .status = FileStatus::Damaged,
@@ -131,16 +239,31 @@ ReadResult readSnapshot(const QString &path)
         };
     }
 
+    ConfigState state;
+    state.barHeight = static_cast<quint32>(height);
+    state.revision = revision;
+
     return {
         .status = FileStatus::Valid,
-        .state = {
-            .barHeight = static_cast<quint32>(height),
-            .revision = revision,
-        },
+        .state = state,
+        .legacyWorkspaceSettings = object.contains(
+            QStringLiteral("workspaceSwitcher")
+        ) ? parseLegacyWorkspaceSettings(object.value(
+                QStringLiteral("workspaceSwitcher")
+            ))
+          : std::nullopt,
+        .hadLegacyWorkspaceBlock = object.contains(
+            QStringLiteral("workspaceSwitcher")
+        ),
     };
 }
 
-bool writeSnapshot(const QString &path, const ConfigState &state, QString &error)
+bool writeSnapshot(
+    const QString &path,
+    const ConfigState &state,
+    const std::optional<LegacyWorkspaceSettings> &legacyWorkspaceSettings,
+    QString &error
+)
 {
     const auto parent = QFileInfo(path).absolutePath();
     if (!QDir().mkpath(parent)) {
@@ -155,7 +278,7 @@ bool writeSnapshot(const QString &path, const ConfigState &state, QString &error
         return false;
     }
 
-    const auto data = serialize(state);
+    const auto data = serialize(state, legacyWorkspaceSettings);
     if (file.write(data) != data.size()) {
         error = QStringLiteral("Cannot write %1: %2").arg(path, file.errorString());
         file.cancelWriting();
@@ -176,10 +299,10 @@ bool initializeSnapshots(
     QString &error
 )
 {
-    if (!writeSnapshot(paths.recoveryFile, state, error)) {
+    if (!writeSnapshot(paths.recoveryFile, state, std::nullopt, error)) {
         return false;
     }
-    return writeSnapshot(paths.activeFile, state, error);
+    return writeSnapshot(paths.activeFile, state, std::nullopt, error);
 }
 
 } // namespace
@@ -227,9 +350,17 @@ ConfigLoadResult ConfigStore::load() const
     }
 
     if (active.status == FileStatus::Valid) {
-        if (recovery.status != FileStatus::Valid || recovery.state != active.state) {
+        if (recovery.status != FileStatus::Valid
+            || recovery.state != active.state
+            || recovery.legacyWorkspaceSettings
+                != active.legacyWorkspaceSettings) {
             QString error;
-            if (!writeSnapshot(paths_.recoveryFile, active.state, error)) {
+            if (!writeSnapshot(
+                    paths_.recoveryFile,
+                    active.state,
+                    active.legacyWorkspaceSettings,
+                    error
+                )) {
                 return {.error = error};
             }
         }
@@ -238,12 +369,20 @@ ConfigLoadResult ConfigStore::load() const
             .success = true,
             .state = active.state,
             .recoveryState = ConfigRecoveryState::Normal,
+            .legacyWorkspaceSettings = active.legacyWorkspaceSettings,
+            .legacyWorkspaceRetirementPending =
+                active.hadLegacyWorkspaceBlock,
         };
     }
 
     if (recovery.status == FileStatus::Valid) {
         QString error;
-        if (!writeSnapshot(paths_.activeFile, recovery.state, error)) {
+        if (!writeSnapshot(
+                paths_.activeFile,
+                recovery.state,
+                recovery.legacyWorkspaceSettings,
+                error
+            )) {
             return {.error = error};
         }
 
@@ -251,6 +390,9 @@ ConfigLoadResult ConfigStore::load() const
             .success = true,
             .state = recovery.state,
             .recoveryState = ConfigRecoveryState::Recovered,
+            .legacyWorkspaceSettings = recovery.legacyWorkspaceSettings,
+            .legacyWorkspaceRetirementPending =
+                recovery.hadLegacyWorkspaceBlock,
         };
     }
 
@@ -274,24 +416,51 @@ ConfigLoadResult ConfigStore::load() const
 bool ConfigStore::persist(
     const ConfigState &current,
     const ConfigState &next,
+    const std::optional<LegacyWorkspaceSettings> &legacyWorkspaceSettings,
     QString &error
 ) const
 {
-    if (!writeSnapshot(paths_.recoveryFile, current, error)) {
+    if (!writeSnapshot(
+            paths_.recoveryFile,
+            current,
+            legacyWorkspaceSettings,
+            error
+        )) {
         return false;
     }
-    if (!writeSnapshot(paths_.activeFile, next, error)) {
+    if (!writeSnapshot(
+            paths_.activeFile,
+            next,
+            legacyWorkspaceSettings,
+            error
+        )) {
         return false;
     }
 
     QString recoveryError;
-    if (!writeSnapshot(paths_.recoveryFile, next, recoveryError)) {
+    if (!writeSnapshot(
+            paths_.recoveryFile,
+            next,
+            legacyWorkspaceSettings,
+            recoveryError
+        )) {
         qWarning().noquote()
             << QStringLiteral("Failed to refresh recovery settings: %1")
                    .arg(recoveryError);
     }
 
     return true;
+}
+
+bool ConfigStore::retireLegacyWorkspaceSettings(
+    const ConfigState &state,
+    QString &error
+) const
+{
+    if (!writeSnapshot(paths_.recoveryFile, state, std::nullopt, error)) {
+        return false;
+    }
+    return writeSnapshot(paths_.activeFile, state, std::nullopt, error);
 }
 
 } // namespace HyprShelld

@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -15,6 +17,30 @@ ApplicationWindow {
     color: "#101319"
 
     readonly property real sidebarWidth: Math.min(232, Math.max(196, width * 0.22))
+    property string currentPage: "bar"
+    readonly property string workspaceComponentId:
+        "io.github.coastlinesec.hyprshelld.workspace-switcher"
+    readonly property string workspaceInstanceId:
+        "7b4e2329-4320-4e15-894d-218fa690d782"
+    readonly property var workspaceDefaults: ({
+        labelMode: "numbers",
+        showApplications: false,
+        maximumApplications: 3,
+        occupiedOnly: false,
+        scrollMode: "disabled"
+    })
+    readonly property var workspaceInstanceState:
+        workspaceSettingsFromSnapshot(ComponentConfigClient.snapshot)
+    readonly property var workspaceComponentState:
+        workspaceComponentStateFromServices(
+            ComponentManagerClient.available,
+            ComponentManagerClient.catalogDigest,
+            ComponentManagerClient.components,
+            ComponentConfigClient.available,
+            ComponentConfigClient.catalogAvailable,
+            ComponentConfigClient.catalogDigest,
+            ComponentConfigClient.snapshot
+        )
     readonly property int failedComponentCount: shellHealthWarning.failedComponentCount
     readonly property string desktopStatusText: {
         if (CoordinatorClient.available) {
@@ -43,6 +69,211 @@ ApplicationWindow {
         if (CoordinatorClient.available && CoordinatorClient.healthy)
             return "#68d391";
         return "#f6ad55";
+    }
+
+    function isWorkspaceSettings(settings) {
+        if (!settings || typeof settings !== "object"
+                || Array.isArray(settings)) {
+            return false;
+        }
+        if (!["numbers", "compact", "names"].includes(
+                settings.labelMode)) {
+            return false;
+        }
+        if (typeof settings.showApplications !== "boolean"
+                || typeof settings.occupiedOnly !== "boolean") {
+            return false;
+        }
+        if (typeof settings.maximumApplications !== "number"
+                || Math.floor(settings.maximumApplications)
+                    !== settings.maximumApplications
+                || settings.maximumApplications < 1
+                || settings.maximumApplications > 5) {
+            return false;
+        }
+        return ["disabled", "normal", "reversed"].includes(
+            settings.scrollMode
+        );
+    }
+
+    function workspaceSettingsFromSnapshot(snapshot) {
+        const fallback = {
+            valid: false,
+            enabled: false,
+            labelMode: root.workspaceDefaults.labelMode,
+            showApplications: root.workspaceDefaults.showApplications,
+            maximumApplications:
+                root.workspaceDefaults.maximumApplications,
+            occupiedOnly: root.workspaceDefaults.occupiedOnly,
+            scrollMode: root.workspaceDefaults.scrollMode
+        };
+        if (!snapshot || typeof snapshot !== "object"
+                || Array.isArray(snapshot)
+                || !snapshot.instances
+                || typeof snapshot.instances !== "object"
+                || Array.isArray(snapshot.instances)) {
+            return fallback;
+        }
+        const instance = snapshot.instances[root.workspaceInstanceId];
+        if (!instance || typeof instance !== "object"
+                || Array.isArray(instance)
+                || instance.componentId !== root.workspaceComponentId
+                || typeof instance.enabled !== "boolean"
+                || !root.isWorkspaceSettings(instance.settings)) {
+            return fallback;
+        }
+        return {
+            valid: true,
+            enabled: instance.enabled,
+            labelMode: instance.settings.labelMode,
+            showApplications: instance.settings.showApplications,
+            maximumApplications: instance.settings.maximumApplications,
+            occupiedOnly: instance.settings.occupiedOnly,
+            scrollMode: instance.settings.scrollMode
+        };
+    }
+
+    function catalogComponent(components, componentId) {
+        if (!Array.isArray(components))
+            return null;
+        for (const component of components) {
+            if (component && typeof component === "object"
+                    && component.id === componentId) {
+                return component;
+            }
+        }
+        return null;
+    }
+
+    function workspaceComponentStateFromServices(
+        managerAvailable,
+        managerDigest,
+        components,
+        configAvailable,
+        configCatalogAvailable,
+        configDigest,
+        snapshot
+    ) {
+        const unavailable = {
+            available: false,
+            desiredEnabled: false,
+            instanceEnabled: false,
+            previewEnabled: false,
+            packageDigest: ""
+        };
+        const definition = root.catalogComponent(
+            components,
+            root.workspaceComponentId
+        );
+        if (typeof managerDigest !== "string"
+                || managerDigest.length !== 64
+                || managerDigest !== configDigest
+                || !definition
+                || definition.type !== "bar-widget"
+                || definition.origin !== "system"
+                || typeof definition.packageDigest !== "string"
+                || !/^[0-9a-f]{64}$/.test(definition.packageDigest)
+                || !snapshot || typeof snapshot !== "object"
+                || Array.isArray(snapshot)
+                || !snapshot.components
+                || typeof snapshot.components !== "object"
+                || Array.isArray(snapshot.components)) {
+            return unavailable;
+        }
+        const desired = snapshot.components[root.workspaceComponentId];
+        const instance = root.workspaceSettingsFromSnapshot(snapshot);
+        if (!desired || typeof desired !== "object"
+                || Array.isArray(desired)
+                || desired.packageDigest !== definition.packageDigest
+                || typeof desired.enabled !== "boolean"
+                || !instance.valid) {
+            return unavailable;
+        }
+        return {
+            available: managerAvailable
+                && configAvailable
+                && configCatalogAvailable,
+            desiredEnabled: desired.enabled,
+            instanceEnabled: instance.enabled,
+            previewEnabled: desired.enabled && instance.enabled,
+            packageDigest: definition.packageDigest
+        };
+    }
+
+    function workspaceNaturalSettingsAvailable(state) {
+        return state && state.available
+            && (!state.desiredEnabled || state.instanceEnabled);
+    }
+
+    function workspaceSnapshotWithSettings(
+        snapshot,
+        labelMode,
+        showApplications,
+        maximumApplications,
+        occupiedOnly,
+        scrollMode
+    ) {
+        const settings = {
+            labelMode: labelMode,
+            showApplications: showApplications,
+            maximumApplications: maximumApplications,
+            occupiedOnly: occupiedOnly,
+            scrollMode: scrollMode
+        };
+        if (!root.isWorkspaceSettings(settings))
+            return null;
+
+        let replacement = null;
+        try {
+            replacement = JSON.parse(JSON.stringify(snapshot));
+        } catch (error) {
+            return null;
+        }
+        if (!replacement || typeof replacement !== "object"
+                || Array.isArray(replacement)
+                || !replacement.instances
+                || typeof replacement.instances !== "object"
+                || Array.isArray(replacement.instances)) {
+            return null;
+        }
+        const instance = replacement.instances[root.workspaceInstanceId];
+        if (!instance || typeof instance !== "object"
+                || Array.isArray(instance)
+                || instance.componentId !== root.workspaceComponentId
+                || !root.isWorkspaceSettings(instance.settings)) {
+            return null;
+        }
+        instance.settings = settings;
+        return replacement;
+    }
+
+    function replaceWorkspaceSettings(
+        labelMode,
+        showApplications,
+        maximumApplications,
+        occupiedOnly,
+        scrollMode
+    ) {
+        const replacement = root.workspaceSnapshotWithSettings(
+            ComponentConfigClient.snapshot,
+            labelMode,
+            showApplications,
+            maximumApplications,
+            occupiedOnly,
+            scrollMode
+        );
+        if (replacement)
+            ComponentConfigClient.replaceSnapshot(replacement);
+    }
+
+    function resetWorkspaceSettings() {
+        root.replaceWorkspaceSettings(
+            root.workspaceDefaults.labelMode,
+            root.workspaceDefaults.showApplications,
+            root.workspaceDefaults.maximumApplications,
+            root.workspaceDefaults.occupiedOnly,
+            root.workspaceDefaults.scrollMode
+        );
     }
 
     palette.window: "#101319"
@@ -127,7 +358,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
                     checkable: true
-                    checked: true
+                    checked: root.currentPage === "bar"
                     autoExclusive: true
                     focusPolicy: Qt.StrongFocus
                     leftPadding: 18
@@ -137,6 +368,8 @@ ApplicationWindow {
                     Accessible.role: Accessible.PageTab
                     Accessible.name: qsTr("Bar settings")
                     Accessible.checked: checked
+
+                    onClicked: root.currentPage = "bar"
 
                     background: Rectangle {
                         radius: 12
@@ -202,6 +435,88 @@ ApplicationWindow {
                             color: root.palette.text
                             font.pixelSize: 14
                             font.weight: barNavigationItem.checked ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                ItemDelegate {
+                    id: componentsNavigationItem
+
+                    objectName: "componentsNavigationItem"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    checkable: true
+                    checked: root.currentPage === "components"
+                    autoExclusive: true
+                    focusPolicy: Qt.StrongFocus
+                    leftPadding: 18
+                    rightPadding: 12
+                    topPadding: 8
+                    bottomPadding: 8
+                    Accessible.role: Accessible.PageTab
+                    Accessible.name: qsTr("Component settings")
+                    Accessible.checked: checked
+
+                    onClicked: root.currentPage = "components"
+
+                    background: Rectangle {
+                        radius: 12
+                        color: componentsNavigationItem.checked
+                            ? Qt.rgba(root.palette.highlight.r, root.palette.highlight.g, root.palette.highlight.b, 0.18)
+                            : componentsNavigationItem.hovered
+                                ? Qt.rgba(root.palette.text.r, root.palette.text.g, root.palette.text.b, 0.06)
+                                : "transparent"
+                        border.width: componentsNavigationItem.activeFocus ? 2 : 0
+                        border.color: root.palette.highlight
+
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                leftMargin: 5
+                                verticalCenter: parent.verticalCenter
+                            }
+
+                            width: 3
+                            height: 24
+                            radius: 2
+                            visible: componentsNavigationItem.checked
+                            color: root.palette.highlight
+                        }
+                    }
+
+                    contentItem: RowLayout {
+                        spacing: 11
+
+                        Item {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+
+                            Repeater {
+                                model: 4
+
+                                Rectangle {
+                                    required property int index
+
+                                    width: 8
+                                    height: 8
+                                    x: (index % 2) * 12
+                                    y: Math.floor(index / 2) * 12
+                                    radius: 2
+                                    color: index === 0
+                                        ? root.palette.highlight
+                                        : root.palette.text
+                                }
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Components")
+                            color: root.palette.text
+                            font.pixelSize: 14
+                            font.weight: componentsNavigationItem.checked
+                                ? Font.DemiBold : Font.Normal
                             elide: Text.ElideRight
                         }
                     }
@@ -283,6 +598,8 @@ ApplicationWindow {
                     targetState: shellRuntimeStatus.targetState
                     coordinatorState: shellRuntimeStatus.coordinatorState
                     configurationState: shellRuntimeStatus.configurationState
+                    componentManagerState:
+                        shellRuntimeStatus.componentManagerState
                     surfaceState: shellRuntimeStatus.surfaceState
 
                     onRestartRequested: unitName => {
@@ -291,21 +608,113 @@ ApplicationWindow {
                 }
             }
 
-            BarSettingsPage {
+            StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                barHeight: ConfigClient.barHeight
-                minimumBarHeight: ConfigClient.minimumBarHeight
-                maximumBarHeight: ConfigClient.maximumBarHeight
-                defaultBarHeight: ConfigClient.defaultBarHeight
-                serviceAvailable: ConfigClient.available
-                busy: ConfigClient.busy
-                errorText: ConfigClient.lastErrorMessage
-                recoveryState: ConfigClient.recoveryState
-                contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
+                currentIndex: root.currentPage === "components" ? 1 : 0
 
-                onBarHeightRequested: height => ConfigClient.setBarHeight(height)
-                onResetBarHeightRequested: ConfigClient.resetBarHeight()
+                BarSettingsPage {
+                    barHeight: ConfigClient.barHeight
+                    minimumBarHeight: ConfigClient.minimumBarHeight
+                    maximumBarHeight: ConfigClient.maximumBarHeight
+                    defaultBarHeight: ConfigClient.defaultBarHeight
+                    workspaceLabelMode: root.workspaceInstanceState.labelMode
+                    workspaceShowApplications:
+                        root.workspaceInstanceState.showApplications
+                    workspaceMaximumApplications:
+                        root.workspaceInstanceState.maximumApplications
+                    workspaceOccupiedOnly:
+                        root.workspaceInstanceState.occupiedOnly
+                    workspaceScrollMode:
+                        root.workspaceInstanceState.scrollMode
+                    workspaceFeatureAvailable:
+                        root.workspaceNaturalSettingsAvailable(
+                            root.workspaceComponentState
+                        )
+                    workspaceFeatureEnabled:
+                        root.workspaceComponentState.desiredEnabled
+                    workspacePreviewEnabled:
+                        root.workspaceComponentState.previewEnabled
+                    coreServiceAvailable: ConfigClient.available
+                    coreBusy: ConfigClient.busy
+                    coreErrorText: ConfigClient.lastErrorMessage
+                    coreRecoveryState: ConfigClient.recoveryState
+                    componentServiceAvailable:
+                        ComponentConfigClient.available
+                    componentCatalogAvailable:
+                        ComponentConfigClient.catalogAvailable
+                        && ComponentManagerClient.available
+                        && ComponentConfigClient.catalogDigest
+                            === ComponentManagerClient.catalogDigest
+                    componentWritable: [
+                        "normal", "recovered", "defaulted"
+                    ].includes(ComponentConfigClient.loadState)
+                    workspaceInstanceAvailable:
+                        root.workspaceComponentState.available
+                    componentBusy: ComponentConfigClient.busy
+                        || ComponentManagerClient.busy
+                    componentErrorText:
+                        ComponentConfigClient.lastErrorComponentId.length === 0
+                            ? ComponentConfigClient.lastErrorMessage : ""
+                    componentRecoveryState:
+                        ComponentConfigClient.loadState
+                    contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
+
+                    onBarHeightRequested: height =>
+                        ConfigClient.setBarHeight(height)
+                    onResetBarHeightRequested: ConfigClient.resetBarHeight()
+                    onWorkspaceSwitcherRequested: (
+                        labelMode,
+                        showApplications,
+                        maximumApplications,
+                        occupiedOnly,
+                        scrollMode
+                    ) => root.replaceWorkspaceSettings(
+                        labelMode,
+                        showApplications,
+                        maximumApplications,
+                        occupiedOnly,
+                        scrollMode
+                    )
+                    onResetWorkspaceSwitcherRequested:
+                        root.resetWorkspaceSettings()
+                }
+
+                ComponentsPage {
+                    objectName: "componentsPage"
+                    managerAvailable: ComponentManagerClient.available
+                    managerBusy: ComponentManagerClient.busy
+                    managerCatalogDigest:
+                        ComponentManagerClient.catalogDigest
+                    components: ComponentManagerClient.components
+                    managerError: ComponentManagerClient.lastError
+                    configAvailable: ComponentConfigClient.available
+                    configCatalogAvailable:
+                        ComponentConfigClient.catalogAvailable
+                    configWritable: [
+                        "normal", "recovered", "defaulted"
+                    ].includes(ComponentConfigClient.loadState)
+                    configBusy: ComponentConfigClient.busy
+                    configCatalogDigest:
+                        ComponentConfigClient.catalogDigest
+                    configSnapshot: ComponentConfigClient.snapshot
+                    pendingComponentId:
+                        ComponentConfigClient.pendingComponentId
+                    lastErrorComponentId:
+                        ComponentConfigClient.lastErrorComponentId
+                    configError: ComponentConfigClient.lastErrorMessage
+                    contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
+
+                    onComponentEnabledRequested: (
+                        componentId,
+                        packageDigest,
+                        enabled
+                    ) => ComponentConfigClient.setComponentEnabled(
+                        componentId,
+                        packageDigest,
+                        enabled
+                    )
+                }
             }
         }
     }
