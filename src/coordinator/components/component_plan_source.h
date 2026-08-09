@@ -35,6 +35,7 @@ struct RuntimeCatalogComponentRecord final {
     QString runtimeFactory;
     QString runtimeEntryPoint;
     QStringList runtimeArguments;
+    QByteArray declarativeRuntime;
     QByteArray settingsSchema;
     QStringList capabilityIds;
     QStringList capabilityReasons;

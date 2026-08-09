@@ -51,6 +51,14 @@ private:
         qsizetype index,
         Components::ConfigurationCatalog catalog
     );
+    void fetchDeclarativeRuntime(
+        quint64 generation,
+        QStringList componentIds,
+        QString catalogDigest,
+        qsizetype index,
+        Components::ConfigurationCatalog catalog,
+        Components::ConfigurationCatalogEntry entry
+    );
     void fail(quint64 generation);
 
     QDBusConnection connection_;

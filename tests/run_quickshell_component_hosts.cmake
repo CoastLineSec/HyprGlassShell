@@ -55,7 +55,9 @@ configure_file(
 )
 foreach(source_file
         BarComponentHost.qml
+        ComponentFactory.qml
         BuiltinComponentFactory.qml
+        DeclarativeComponentFactory.qml
         WorkspaceSwitcherComponent.qml)
     configure_file(
         "${SURFACED_SOURCE_DIR}/components/${source_file}"

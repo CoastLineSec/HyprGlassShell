@@ -2,6 +2,7 @@
 
 #include "component/component_package_bundle.h"
 #include "component/component_configuration.h"
+#include "component/declarative_document.h"
 #include "component/package_integrity.h"
 #include "component/settings_schema.h"
 #include "component/strict_json.h"
@@ -296,6 +297,7 @@ bool validateInstalledTree(
         return false;
     }
 
+    std::optional<SettingsSchema> parsedSettingsSchema;
     if (report.normalizedSettingsSchema.has_value()) {
         QByteArray schemaBytes;
         if (!readBoundedFile(
@@ -310,7 +312,7 @@ bool validateInstalledTree(
             );
             return false;
         }
-        const auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
+        auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
         const auto schemaObject = parseStrictJsonObject(
             QByteArrayView(schemaBytes),
             {.maximumBytes = 256 * 1024, .maximumDepth = 32}
@@ -319,6 +321,37 @@ bool validateInstalledTree(
             || *schemaObject.value != *report.normalizedSettingsSchema) {
             error = QStringLiteral(
                 "The installed settings schema differs from its manager receipt"
+            );
+            return false;
+        }
+        parsedSettingsSchema = std::move(*schema.value);
+    }
+
+    if (manifest.value->runtime.kind == RuntimeKind::DeclarativeV1) {
+        QByteArray documentBytes;
+        if (!readBoundedFile(
+                QDir(rootPath).filePath(
+                    manifest.value->runtime.entrypoint
+                ),
+                maximumDeclarativeDocumentBytes,
+                documentBytes
+            )) {
+            error = QStringLiteral(
+                "The installed declarative document cannot be read safely"
+            );
+            return false;
+        }
+        const auto document = parseDeclarativeDocument(
+            documentBytes,
+            parsedSettingsSchema.has_value()
+                ? &*parsedSettingsSchema
+                : nullptr
+        );
+        if (!document
+            || serializeDeclarativeDocument(*document.value)
+                != report.declarativeRuntime) {
+            error = QStringLiteral(
+                "The installed declarative document differs from its manager receipt"
             );
             return false;
         }
@@ -828,6 +861,7 @@ UserPackageLoadResult UserPackageStore::load() const
         result.entries.append({
             .manifest = manifest,
             .settingsSchema = std::move(settingsSchema),
+            .declarativeRuntime = report.declarativeRuntime,
             .packageDigest = report.packageDigest,
         });
     }
@@ -1231,6 +1265,7 @@ UserPackageStoreResult UserPackageStore::install(
     CatalogEntry installedEntry{
         .manifest = report.manifest,
         .settingsSchema = std::move(settingsSchema),
+        .declarativeRuntime = report.declarativeRuntime,
         .packageDigest = report.packageDigest,
     };
     auto catalogEntries = currentCatalog.entries;

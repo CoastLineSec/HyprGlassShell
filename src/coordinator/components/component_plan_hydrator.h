@@ -58,6 +58,14 @@ private:
         qsizetype index,
         QVector<Components::RuntimeCatalogComponentRecord> records
     );
+    void fetchDeclarativeRuntime(
+        quint64 generation,
+        QStringList componentIds,
+        QString catalogDigest,
+        qsizetype index,
+        QVector<Components::RuntimeCatalogComponentRecord> records,
+        Components::RuntimeCatalogComponentRecord record
+    );
     void fetchConfigurationProperties(
         quint64 generation,
         Components::HydratedRuntimeCatalog catalog

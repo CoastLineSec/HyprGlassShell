@@ -28,6 +28,18 @@
         value="true"/>
     </property>
 
+    <property name="RuntimeHealthRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ThirdPartySafeMode" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
     <!--
       Returns the exact immutable bytes associated with the expected revision.
 
@@ -40,5 +52,56 @@
       <arg name="surfacePlan" type="ay" direction="out"/>
       <arg name="surfacePlanDigest" type="s" direction="out"/>
     </method>
+
+    <!--
+      Returns rows sorted by component ID and package digest. Healthy packages
+      are omitted. Probation rows have an empty reason and zero failures.
+      Quarantined rows have one of incomplete-startup, timeout, render-failed,
+      or protocol-invalid and a failure count from 1 through 1000000.
+    -->
+    <method name="ListComponentRuntimeStates">
+      <arg name="expectedRuntimeHealthRevision" type="t" direction="in"/>
+      <arg name="componentIds" type="as" direction="out"/>
+      <arg name="packageDigests" type="as" direction="out"/>
+      <arg name="states" type="as" direction="out"/>
+      <arg name="reasons" type="as" direction="out"/>
+      <arg name="failureCounts" type="au" direction="out"/>
+      <annotation
+        name="org.qtproject.QtDBus.QtTypeName.Out4"
+        value="QList&lt;uint&gt;"/>
+    </method>
+
+    <method name="RetryComponent">
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="expectedPackageDigest" type="s" direction="in"/>
+      <arg name="expectedRuntimeHealthRevision" type="t" direction="in"/>
+      <arg name="runtimeHealthRevision" type="t" direction="out"/>
+    </method>
+
+    <method name="ActivationStable">
+      <arg name="instanceId" type="s" direction="in"/>
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="packageDigest" type="s" direction="in"/>
+      <arg name="surfacePlanRevision" type="t" direction="in"/>
+    </method>
+
+    <method name="AuthorizeSurfacePlan">
+      <arg name="surfacePlanRevision" type="t" direction="in"/>
+      <arg name="accepted" type="b" direction="out"/>
+    </method>
+
+    <method name="CancelSurfacePlanAuthorization">
+      <arg name="surfacePlanRevision" type="t" direction="in"/>
+      <arg name="cancelled" type="b" direction="out"/>
+    </method>
+
+    <method name="ActivationFailed">
+      <arg name="instanceId" type="s" direction="in"/>
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="packageDigest" type="s" direction="in"/>
+      <arg name="surfacePlanRevision" type="t" direction="in"/>
+      <arg name="reason" type="s" direction="in"/>
+    </method>
+
   </interface>
 </node>

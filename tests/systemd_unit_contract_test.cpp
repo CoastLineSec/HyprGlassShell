@@ -235,7 +235,8 @@ private slots:
                     QStringLiteral("Unit"),
                     QStringLiteral("StartLimitBurst")
                 ),
-                QStringList{QStringLiteral("5")}
+                QStringList{service == surfaced_.get()
+                    ? QStringLiteral("10") : QStringLiteral("5")}
             );
             QCOMPARE(
                 service->values(QStringLiteral("Service"), QStringLiteral("Slice")),
@@ -257,7 +258,8 @@ private slots:
                     QStringLiteral("Service"),
                     QStringLiteral("RestartSec")
                 ),
-                QStringList{QStringLiteral("1s")}
+                QStringList{service == surfaced_.get()
+                    ? QStringLiteral("2s") : QStringLiteral("1s")}
             );
             QCOMPARE(
                 service->values(
@@ -270,6 +272,16 @@ private slots:
             QVERIFY(service->values(QStringLiteral("Unit"), QStringLiteral("Requires")).isEmpty());
             QVERIFY(service->values(QStringLiteral("Unit"), QStringLiteral("Requisite")).isEmpty());
         }
+
+        // A bad declarative process is quarantined after eight seconds. With
+        // two-second retries, the safe-plan restart occurs well before the
+        // surfaced unit can consume its ten-attempt, thirty-second budget.
+        constexpr auto activationDeadlineSeconds = 8;
+        constexpr auto surfacedRestartSeconds = 2;
+        constexpr auto surfacedStartLimitBurst = 10;
+        const auto startsThroughSafePlan =
+            activationDeadlineSeconds / surfacedRestartSeconds + 2;
+        QVERIFY(startsThroughSafePlan < surfacedStartLimitBurst);
 
         QCOMPARE(
             slice_->values(

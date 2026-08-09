@@ -269,10 +269,10 @@ Dialog {
                     objectName: "componentActivationNoticeText"
                     anchors.fill: parent
                     text: root.activationSupported
-                        ? qsTr("The component will be installed disabled. Review it here, then enable it separately if you decide to run it.")
+                        ? qsTr("Installation does not change saved enablement or placements. A new or changed version stays disabled; reinstalling the exact version you previously enabled can restore that saved state.")
                         : (root.review && root.review.compatibilityReason
-                            ? qsTr("The component will be installed disabled and cannot be enabled: %1").arg(root.review.compatibilityReason)
-                            : qsTr("The component will be installed disabled because this shell cannot activate it."))
+                            ? qsTr("This shell cannot activate the package. Installation does not change saved state: %1").arg(root.review.compatibilityReason)
+                            : qsTr("This shell cannot activate the package. Installation does not change saved enablement or placements."))
                     color: root.palette.placeholderText
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText

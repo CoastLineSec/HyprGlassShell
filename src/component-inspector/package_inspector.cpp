@@ -1,6 +1,7 @@
 #include "package_inspector.h"
 
 #include "component/component_package_bundle.h"
+#include "component/declarative_document.h"
 #include "component/package_integrity.h"
 #include "component/settings_schema.h"
 #include "component/strict_json.h"
@@ -774,6 +775,7 @@ PackageInspectionResult inspectComponentPackage(
         );
     }
     std::optional<QJsonObject> normalizedSchema;
+    std::optional<SettingsSchema> parsedSettingsSchema;
     if (schemaIndex != fileIndexes.cend()) {
         const auto &schemaBytes = files.at(*schemaIndex).contents;
         auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
@@ -787,6 +789,7 @@ PackageInspectionResult inspectComponentPackage(
         if (!schemaObject) {
             return {std::nullopt, std::move(schemaObject.errors)};
         }
+        parsedSettingsSchema = std::move(*schema.value);
         normalizedSchema = std::move(*schemaObject.value);
     }
 
@@ -797,6 +800,23 @@ PackageInspectionResult inspectComponentPackage(
             QStringLiteral("package.entrypoint-missing"),
             QStringLiteral("The declared entry point is not a regular package file.")
         );
+    }
+    QByteArray declarativeRuntime;
+    if (manifest.value->runtime.kind == RuntimeKind::DeclarativeV1) {
+        const auto entrypointIndex = fileIndexes.constFind(
+            manifest.value->runtime.entrypoint
+        );
+        Q_ASSERT(entrypointIndex != fileIndexes.cend());
+        const auto document = parseDeclarativeDocument(
+            QByteArrayView(files.at(*entrypointIndex).contents),
+            parsedSettingsSchema.has_value()
+                ? &*parsedSettingsSchema
+                : nullptr
+        );
+        if (!document) {
+            return {std::nullopt, std::move(document.errors)};
+        }
+        declarativeRuntime = serializeDeclarativeDocument(*document.value);
     }
     const auto iconIndex = fileIndexes.constFind(QStringLiteral("icon.png"));
     if (iconIndex != fileIndexes.cend()) {
@@ -820,6 +840,7 @@ PackageInspectionResult inspectComponentPackage(
         .manifest = std::move(*manifest.value),
         .normalizedManifest = std::move(*normalizedManifest.value),
         .normalizedSettingsSchema = std::move(normalizedSchema),
+        .declarativeRuntime = std::move(declarativeRuntime),
     };
     report.files.reserve(files.size());
     for (const auto &file : files) {

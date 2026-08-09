@@ -16,6 +16,7 @@ namespace HyprShelld::Components {
 struct CatalogEntry final {
     ComponentManifest manifest;
     QByteArray settingsSchema;
+    QByteArray declarativeRuntime;
     QString packageDigest;
 
     friend bool operator==(const CatalogEntry &, const CatalogEntry &) = default;

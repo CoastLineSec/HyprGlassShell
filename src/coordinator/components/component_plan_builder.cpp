@@ -2,6 +2,7 @@
 
 #include "component/builtin_component_defaults.h"
 #include "component/component_contract.h"
+#include "component/declarative_document.h"
 
 #include <QRegularExpression>
 #include <QSet>
@@ -54,6 +55,51 @@ bool isExactWorkspaceCatalogEntry(const RuntimeCatalogEntry &entry)
                 QString::fromLatin1(workspacesActivateCapability),
                 QString::fromLatin1(workspacesReadCapability),
             };
+}
+
+bool isExactDeclarativeCatalogEntry(const RuntimeCatalogEntry &entry)
+{
+    return entry.componentType == QStringLiteral("bar-widget")
+        && digestPattern().match(entry.packageDigest).hasMatch()
+        && entry.origin == QStringLiteral("user")
+        && entry.removable
+        && entry.componentApiVersion
+            == QLatin1StringView(currentComponentApiVersion)
+        && entry.runtimeKind == QStringLiteral("declarative-v1")
+        && entry.factory.isEmpty()
+        && !entry.runtimeEntryPoint.isEmpty()
+        && entry.runtimeArguments.isEmpty()
+        && entry.capabilityIds.isEmpty()
+        && entry.dependencyIds.isEmpty()
+        && !entry.declarativeRuntime.isEmpty()
+        && entry.declarativeDocument.has_value()
+        && serializeDeclarativeDocument(*entry.declarativeDocument)
+            == entry.declarativeRuntime;
+}
+
+std::optional<QString> resolveDeclarativeText(
+    const RuntimeCatalogEntry &entry,
+    const RuntimeDesiredComponent &component
+)
+{
+    if (!entry.declarativeDocument.has_value()) {
+        return std::nullopt;
+    }
+    const auto &source = entry.declarativeDocument->text;
+    QString text;
+    if (source.kind == DeclarativeTextSourceKind::Literal) {
+        text = source.value;
+    } else {
+        const auto value = component.settings.value(source.value);
+        if (!value.isString()) {
+            return std::nullopt;
+        }
+        text = value.toString();
+    }
+    if (!isValidDeclarativeResolvedText(text)) {
+        return std::nullopt;
+    }
+    return text;
 }
 
 QStringList *regionByName(SurfaceBarLayout &layout, const QString &name)
@@ -250,28 +296,51 @@ ValidationResult<SurfacePlan> buildSurfacePlan(
                     continue;
                 }
 
-                if (desiredInstance->componentId != workspaceId
-                    || !isExactWorkspaceCatalogEntry(*catalogEntry)
-                    || !desiredComponent->grantedCapabilities.isEmpty()
-                    || !isValidWorkspaceSwitcherSettings(
+                const auto builtinValid =
+                    desiredInstance->componentId == workspaceId
+                    && isExactWorkspaceCatalogEntry(*catalogEntry)
+                    && desiredComponent->grantedCapabilities.isEmpty()
+                    && isValidWorkspaceSwitcherSettings(
                         desiredInstance->settings
-                    )) {
+                    );
+                const auto declarativeText = resolveDeclarativeText(
+                    *catalogEntry,
+                    *desiredComponent
+                );
+                const auto declarativeValid =
+                    isExactDeclarativeCatalogEntry(*catalogEntry)
+                    && layoutId == QLatin1StringView(defaultBarLayoutId)
+                    && desiredComponent->grantedCapabilities.isEmpty()
+                    && desiredInstance->settings.isEmpty()
+                    && declarativeText.has_value();
+                if (!builtinValid && !declarativeValid) {
                     appendError(
                         result.errors,
                         QStringLiteral("$.instances.%1").arg(instanceId),
                         QStringLiteral("component-runtime.invalid-effective-instance"),
-                        QStringLiteral("The desired built-in instance is invalid.")
+                        QStringLiteral("The desired trusted instance is invalid.")
                     );
                     return result;
                 }
 
+                const auto &document = catalogEntry->declarativeDocument;
                 plan.instances.insert(instanceId, {
                     .componentId = catalogEntry->componentId,
                     .componentType = catalogEntry->componentType,
                     .packageDigest = catalogEntry->packageDigest,
                     .runtimeKind = catalogEntry->runtimeKind,
                     .factory = catalogEntry->factory,
-                    .settings = desiredInstance->settings,
+                    .declarativeText = declarativeValid
+                        ? *declarativeText : QString(),
+                    .declarativeTooltip = declarativeValid
+                        && document->tooltip.has_value()
+                            ? *document->tooltip : QString(),
+                    .declarativeMaximumWidth = declarativeValid
+                        ? document->maximumWidth.value_or(
+                            defaultDeclarativeMaximumWidth
+                        ) : 0,
+                    .settings = builtinValid
+                        ? desiredInstance->settings : QJsonObject(),
                 });
                 effectiveIds->append(instanceId);
             }

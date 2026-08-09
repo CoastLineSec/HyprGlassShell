@@ -25,6 +25,11 @@ struct ConfigurationCatalogEntry final {
     ComponentOrigin origin = ComponentOrigin::User;
     SettingsSchema settingsSchema;
     QSet<QString> requestedCapabilities;
+    QString componentApiVersion;
+    RuntimeKind runtimeKind = RuntimeKind::BuiltinV1;
+    QStringList dependencyIds;
+    bool activationSupported = false;
+    QByteArray declarativeRuntime;
 };
 
 struct ConfigurationCatalog final {

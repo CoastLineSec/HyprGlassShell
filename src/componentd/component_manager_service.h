@@ -76,6 +76,12 @@ public slots:
         bool &removable
     ) const;
 
+    QByteArray GetDeclarativeRuntime(
+        const QString &componentId,
+        const QString &expectedPackageDigest,
+        const QString &expectedCatalogDigest
+    ) const;
+
     QString BeginPackageInspection(
         const QDBusUnixFileDescriptor &packageFile
     );

@@ -2,6 +2,7 @@
 
 #include "builtin_component_defaults.h"
 #include "component_contract.h"
+#include "declarative_document.h"
 #include "strict_json.h"
 
 #include <QCryptographicHash>
@@ -17,7 +18,7 @@
 namespace HyprShelld::Components {
 namespace {
 
-constexpr auto surfacePlanFormatVersion = 1;
+constexpr auto surfacePlanFormatVersion = 2;
 
 const QRegularExpression &digestPattern()
 {
@@ -227,33 +228,13 @@ bool parseInstance(
 
     const auto runtime = runtimeValue.toObject();
     const auto runtimePath = childPath(path, QStringLiteral("runtime"));
-    if (!requireExactKeys(
-            runtime,
-            {QStringLiteral("kind"), QStringLiteral("factory")},
-            runtimePath,
-            errors
-        )) {
-        return false;
-    }
     const auto kind = runtime.value(QStringLiteral("kind"));
-    const auto factory = runtime.value(QStringLiteral("factory"));
-    if (!kind.isString() || kind.toString() != QStringLiteral("builtin-v1")) {
+    if (!kind.isString()) {
         appendError(
             errors,
             childPath(runtimePath, QStringLiteral("kind")),
             QStringLiteral("surface-plan.unsupported-runtime"),
-            QStringLiteral("Only builtin-v1 is supported.")
-        );
-        return false;
-    }
-    if (!factory.isString()
-        || factory.toString().size() > 64
-        || !factoryPattern().match(factory.toString()).hasMatch()) {
-        appendError(
-            errors,
-            childPath(runtimePath, QStringLiteral("factory")),
-            QStringLiteral("surface-plan.invalid-factory"),
-            QStringLiteral("The built-in factory key is invalid.")
+            QStringLiteral("The trusted runtime kind is invalid.")
         );
         return false;
     }
@@ -268,14 +249,107 @@ bool parseInstance(
         return false;
     }
 
-    if (componentId.toString() != QLatin1StringView(workspaceSwitcherId)
-        || factory.toString() != QLatin1StringView(workspaceSwitcherFactory)
-        || !isValidWorkspaceSwitcherSettings(settingsValue.toObject())) {
+    QString factory;
+    QString declarativeText;
+    QString declarativeTooltip;
+    quint32 declarativeMaximumWidth = 0;
+    if (kind.toString() == QStringLiteral("builtin-v1")) {
+        if (!requireExactKeys(
+                runtime,
+                {QStringLiteral("kind"), QStringLiteral("factory")},
+                runtimePath,
+                errors
+            )) {
+            return false;
+        }
+        const auto factoryValue = runtime.value(QStringLiteral("factory"));
+        if (!factoryValue.isString()
+            || factoryValue.toString().size() > 64
+            || !factoryPattern().match(factoryValue.toString()).hasMatch()) {
+            appendError(
+                errors,
+                childPath(runtimePath, QStringLiteral("factory")),
+                QStringLiteral("surface-plan.invalid-factory"),
+                QStringLiteral("The built-in factory key is invalid.")
+            );
+            return false;
+        }
+        factory = factoryValue.toString();
+        if (componentId.toString() != QLatin1StringView(workspaceSwitcherId)
+            || factory != QLatin1StringView(workspaceSwitcherFactory)
+            || !isValidWorkspaceSwitcherSettings(settingsValue.toObject())) {
+            appendError(
+                errors,
+                path,
+                QStringLiteral("surface-plan.unsupported-factory-instance"),
+                QStringLiteral("The built-in instance is not supported by this host.")
+            );
+            return false;
+        }
+    } else if (kind.toString() == QStringLiteral("declarative-v1")) {
+        if (!requireExactKeys(
+                runtime,
+                {
+                    QStringLiteral("kind"),
+                    QStringLiteral("text"),
+                    QStringLiteral("tooltip"),
+                    QStringLiteral("maximumWidth"),
+                },
+                runtimePath,
+                errors
+            )) {
+            return false;
+        }
+        const auto text = runtime.value(QStringLiteral("text"));
+        const auto tooltip = runtime.value(QStringLiteral("tooltip"));
+        const auto maximumWidth = runtime.value(QStringLiteral("maximumWidth"));
+        const auto width = maximumWidth.toInteger(-1);
+        if (!text.isString()
+            || !isValidDeclarativeResolvedText(text.toString())
+            || !tooltip.isString()
+            || tooltip.toString().size() > maximumDeclarativeTooltipLength
+            || !maximumWidth.isDouble()
+            || maximumWidth.toDouble() != static_cast<double>(width)
+            || width < minimumDeclarativeMaximumWidth
+            || width > maximumDeclarativeMaximumWidth
+            || !settingsValue.toObject().isEmpty()) {
+            appendError(
+                errors,
+                runtimePath,
+                QStringLiteral("surface-plan.invalid-declarative-runtime"),
+                QStringLiteral("The resolved declarative runtime is invalid.")
+            );
+            return false;
+        }
+        DeclarativeDocument resolvedDocument;
+        resolvedDocument.text = {
+            .kind = DeclarativeTextSourceKind::Literal,
+            .value = text.toString(),
+        };
+        if (!tooltip.toString().isEmpty()) {
+            resolvedDocument.tooltip = tooltip.toString();
+        }
+        resolvedDocument.maximumWidth = static_cast<quint32>(width);
+        if (!parseDeclarativeDocument(QByteArrayView(
+                serializeDeclarativeDocument(resolvedDocument)
+            ))) {
+            appendError(
+                errors,
+                runtimePath,
+                QStringLiteral("surface-plan.invalid-declarative-runtime"),
+                QStringLiteral("The resolved declarative text is invalid.")
+            );
+            return false;
+        }
+        declarativeText = text.toString();
+        declarativeTooltip = tooltip.toString();
+        declarativeMaximumWidth = static_cast<quint32>(width);
+    } else {
         appendError(
             errors,
-            path,
-            QStringLiteral("surface-plan.unsupported-factory-instance"),
-            QStringLiteral("The built-in instance is not supported by this host.")
+            childPath(runtimePath, QStringLiteral("kind")),
+            QStringLiteral("surface-plan.unsupported-runtime"),
+            QStringLiteral("Only trusted built-in and declarative runtimes are supported.")
         );
         return false;
     }
@@ -285,7 +359,10 @@ bool parseInstance(
         .componentType = componentType.toString(),
         .packageDigest = packageDigest.toString(),
         .runtimeKind = kind.toString(),
-        .factory = factory.toString(),
+        .factory = std::move(factory),
+        .declarativeText = std::move(declarativeText),
+        .declarativeTooltip = std::move(declarativeTooltip),
+        .declarativeMaximumWidth = declarativeMaximumWidth,
         .settings = settingsValue.toObject(),
     };
     return true;
@@ -457,16 +534,27 @@ QJsonArray stringArray(const QStringList &values)
 
 QJsonObject instanceObject(const SurfaceInstance &instance)
 {
+    QJsonObject runtime{{QStringLiteral("kind"), instance.runtimeKind}};
+    if (instance.runtimeKind == QStringLiteral("builtin-v1")) {
+        runtime.insert(QStringLiteral("factory"), instance.factory);
+    } else {
+        runtime.insert(QStringLiteral("text"), instance.declarativeText);
+        runtime.insert(
+            QStringLiteral("tooltip"),
+            instance.declarativeTooltip
+        );
+        runtime.insert(
+            QStringLiteral("maximumWidth"),
+            static_cast<qint64>(instance.declarativeMaximumWidth)
+        );
+    }
     return {
         {QStringLiteral("componentId"), instance.componentId},
         {QStringLiteral("componentType"), instance.componentType},
         {QStringLiteral("packageDigest"), instance.packageDigest},
         {
             QStringLiteral("runtime"),
-            QJsonObject{
-                {QStringLiteral("kind"), instance.runtimeKind},
-                {QStringLiteral("factory"), instance.factory},
-            }
+            runtime
         },
         {QStringLiteral("settings"), instance.settings},
     };
@@ -502,7 +590,7 @@ ValidationResult<SurfacePlan> parseSurfacePlan(QByteArrayView bytes)
         }
     );
     if (!parsed) {
-        return {.errors = parsed.errors};
+        return {.value = std::nullopt, .errors = parsed.errors};
     }
 
     ValidationResult<SurfacePlan> result;
@@ -530,7 +618,7 @@ ValidationResult<SurfacePlan> parseSurfacePlan(QByteArrayView bytes)
             result.errors,
             QStringLiteral("$.formatVersion"),
             QStringLiteral("surface-plan.unsupported-format"),
-            QStringLiteral("Only surface plan format version 1 is supported.")
+            QStringLiteral("Only surface plan format version 2 is supported.")
         );
         return result;
     }
@@ -709,7 +797,7 @@ ValidationResult<SurfacePlanArtifact> makeSurfacePlanArtifact(
     bytes.append('\n');
     auto parsed = parseSurfacePlan(QByteArrayView(bytes));
     if (!parsed) {
-        return {.errors = parsed.errors};
+        return {.value = std::nullopt, .errors = parsed.errors};
     }
 
     const auto digest = surfacePlanDigest(QByteArrayView(bytes));
@@ -720,6 +808,7 @@ ValidationResult<SurfacePlanArtifact> makeSurfacePlanArtifact(
             .digest = digest,
             .revision = surfacePlanRevision(digest),
         },
+        .errors = {},
     };
 }
 

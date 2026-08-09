@@ -118,6 +118,7 @@ bool decodeCatalogRecord(
         .runtimeFactory = arguments.at(14).toString(),
         .runtimeEntryPoint = arguments.at(15).toString(),
         .runtimeArguments = arguments.at(16).toStringList(),
+        .declarativeRuntime = {},
         .settingsSchema = arguments.at(17).toByteArray(),
         .capabilityIds = arguments.at(18).toStringList(),
         .capabilityReasons = arguments.at(19).toStringList(),
@@ -415,8 +416,102 @@ void ComponentPlanHydrator::fetchCatalogRecord(
                 );
                 return;
             }
-            const auto validated =
-                Components::validateRuntimeCatalogRecord(record);
+            if (record.runtimeKind == QStringLiteral("declarative-v1")) {
+                fetchDeclarativeRuntime(
+                    generation,
+                    std::move(componentIds),
+                    std::move(catalogDigest),
+                    index,
+                    std::move(records),
+                    std::move(record)
+                );
+                return;
+            }
+
+            const auto validated = Components::validateRuntimeCatalogRecord(
+                record
+            );
+            if (!validated) {
+                fail(generation, describeErrors(validated.errors));
+                return;
+            }
+            records.append(std::move(record));
+            fetchCatalogRecord(
+                generation,
+                std::move(componentIds),
+                std::move(catalogDigest),
+                index + 1,
+                std::move(records)
+            );
+        }
+    );
+}
+
+void ComponentPlanHydrator::fetchDeclarativeRuntime(
+    const quint64 generation,
+    QStringList componentIds,
+    QString catalogDigest,
+    const qsizetype index,
+    QVector<Components::RuntimeCatalogComponentRecord> records,
+    Components::RuntimeCatalogComponentRecord record
+)
+{
+    if (generation != generation_) {
+        return;
+    }
+
+    auto message = QDBusMessage::createMethodCall(
+        managerService,
+        managerPath,
+        managerInterface,
+        QStringLiteral("GetDeclarativeRuntime")
+    );
+    message.setArguments({
+        record.componentId,
+        record.packageDigest,
+        catalogDigest,
+    });
+    auto *watcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(message, callTimeoutMs),
+        this
+    );
+    connect(
+        watcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [
+            this,
+            watcher,
+            generation,
+            componentIds = std::move(componentIds),
+            catalogDigest = std::move(catalogDigest),
+            index,
+            records = std::move(records),
+            record = std::move(record)
+        ]() mutable {
+            const auto reply = watcher->reply();
+            watcher->deleteLater();
+            if (generation != generation_) {
+                return;
+            }
+            const auto arguments = reply.arguments();
+            if (reply.type() == QDBusMessage::ErrorMessage
+                || arguments.size() != 1
+                || !exactType(
+                    arguments.constFirst(),
+                    QMetaType::fromType<QByteArray>()
+                )) {
+                fail(
+                    generation,
+                    QStringLiteral("ComponentManager1.GetDeclarativeRuntime returned malformed data.")
+                );
+                return;
+            }
+
+            record.declarativeRuntime = arguments.constFirst().toByteArray();
+            const auto validated = Components::validateRuntimeCatalogRecord(
+                record
+            );
             if (!validated) {
                 fail(generation, describeErrors(validated.errors));
                 return;

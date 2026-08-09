@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMetaType>
+#include <QUuid>
 
 #include <algorithm>
 #include <utility>
@@ -199,34 +200,14 @@ void ComponentConfigClient::setComponentSettings(
     if (!record.isEmpty()
         && record.value(QStringLiteral("packageDigest")).toString()
             != expectedPackageDigest) {
-        const auto enabled = record.value(QStringLiteral("enabled"));
-        const auto grants = record.value(
-            QStringLiteral("grantedCapabilities")
+        setError(
+            componentId,
+            packageDigestMismatchError,
+            QStringLiteral(
+                "Adopt the installed package version before changing its settings"
+            )
         );
-        if (enabled.metaType().id() != QMetaType::Bool
-            || enabled.toBool()
-            || grants.metaType().id() != QMetaType::QVariantList
-            || !grants.toList().isEmpty()) {
-            setError(
-                componentId,
-                packageDigestMismatchError,
-                QStringLiteral(
-                    "The installed package changed while its previous settings were not safely disabled"
-                )
-            );
-            return;
-        }
-        // Saving the trusted, host-rendered schema form is the explicit review
-        // step that adopts an updated user package. It never carries grants or
-        // enables the package; configd independently verifies that the live
-        // catalog entry is third-party and that these settings match its
-        // current schema before allowing the dormant digest to advance.
-        record.insert(QStringLiteral("packageDigest"), expectedPackageDigest);
-        record.insert(QStringLiteral("enabled"), false);
-        record.insert(
-            QStringLiteral("grantedCapabilities"),
-            QVariantList{}
-        );
+        return;
     }
     if (record.isEmpty()) {
         record = {
@@ -242,6 +223,275 @@ void ComponentConfigClient::setComponentSettings(
     auto replacement = snapshot_;
     components.insert(componentId, record);
     replacement.insert(QStringLiteral("components"), components);
+    beginReplaceSnapshot(replacement, componentId);
+}
+
+void ComponentConfigClient::adoptComponentPackage(
+    const QString &componentId,
+    const QString &expectedPackageDigest,
+    const QVariantMap &defaultComponentSettings
+)
+{
+    if (!available_ || !catalogAvailable_ || busy_) {
+        const auto name = !available_ ? unavailableError
+            : !catalogAvailable_ ? catalogUnavailableError : busyError;
+        setError(
+            componentId,
+            name,
+            QStringLiteral("The updated component cannot be adopted right now")
+        );
+        return;
+    }
+    if (!Components::isValidComponentId(componentId)
+        || !Components::isFullSha256Digest(expectedPackageDigest)) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The component ID or package digest is invalid")
+        );
+        return;
+    }
+
+    auto components = snapshot_.value(QStringLiteral("components")).toMap();
+    const auto found = components.constFind(componentId);
+    if (found == components.cend()) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("No previous component settings are available to adopt")
+        );
+        return;
+    }
+    auto record = found->toMap();
+    const auto previousDigest = record.value(
+        QStringLiteral("packageDigest")
+    ).toString();
+    if (!Components::isFullSha256Digest(previousDigest)) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The previous component settings record is malformed")
+        );
+        return;
+    }
+    if (previousDigest == expectedPackageDigest) {
+        clearError();
+        return;
+    }
+
+    // Package adoption is intentionally separate from activation. It advances
+    // the digest to the catalog-reviewed package, replaces component-scoped
+    // settings with that package's trusted defaults, and removes all authority.
+    // Existing instances and placements remain untouched for a later explicit
+    // Add/Enable action.
+    record.insert(QStringLiteral("packageDigest"), expectedPackageDigest);
+    record.insert(QStringLiteral("enabled"), false);
+    record.insert(QStringLiteral("grantedCapabilities"), QVariantList{});
+    record.insert(QStringLiteral("settings"), defaultComponentSettings);
+    components.insert(componentId, record);
+
+    auto replacement = snapshot_;
+    replacement.insert(QStringLiteral("components"), components);
+    beginReplaceSnapshot(replacement, componentId);
+}
+
+void ComponentConfigClient::addComponentToBar(
+    const QString &componentId,
+    const QString &expectedPackageDigest,
+    const QVariantMap &defaultComponentSettings
+)
+{
+    if (!available_ || !catalogAvailable_ || busy_) {
+        const auto name = !available_ ? unavailableError
+            : !catalogAvailable_ ? catalogUnavailableError : busyError;
+        setError(
+            componentId,
+            name,
+            QStringLiteral("The component cannot be added to the bar right now")
+        );
+        return;
+    }
+    if (!Components::isValidComponentId(componentId)
+        || !Components::isFullSha256Digest(expectedPackageDigest)) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The component ID or package digest is invalid")
+        );
+        return;
+    }
+
+    auto components = snapshot_.value(QStringLiteral("components")).toMap();
+    auto record = components.value(componentId).toMap();
+    if (!record.isEmpty()) {
+        if (record.value(QStringLiteral("packageDigest")).toString()
+            != expectedPackageDigest) {
+            setError(
+                componentId,
+                packageDigestMismatchError,
+                QStringLiteral("The installed package no longer matches its settings")
+            );
+            return;
+        }
+        const auto enabled = record.value(QStringLiteral("enabled"));
+        const auto grants = record.value(QStringLiteral("grantedCapabilities"));
+        const auto settings = record.value(QStringLiteral("settings"));
+        if (enabled.metaType().id() != QMetaType::Bool
+            || grants.metaType().id() != QMetaType::QVariantList
+            || !grants.toList().isEmpty()
+            || settings.metaType().id() != QMetaType::QVariantMap) {
+            setError(
+                componentId,
+                invalidComponentError,
+                QStringLiteral("The component settings record is not safe to activate")
+            );
+            return;
+        }
+    } else {
+        record = {
+            {QStringLiteral("packageDigest"), expectedPackageDigest},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("grantedCapabilities"), QVariantList{}},
+            {QStringLiteral("settings"), defaultComponentSettings},
+        };
+    }
+    record.insert(QStringLiteral("enabled"), true);
+    record.insert(QStringLiteral("grantedCapabilities"), QVariantList{});
+    components.insert(componentId, record);
+
+    auto instances = snapshot_.value(QStringLiteral("instances")).toMap();
+    QStringList componentInstanceIds;
+    for (auto iterator = instances.constBegin(); iterator != instances.constEnd();
+         ++iterator) {
+        const auto candidate = iterator.value().toMap();
+        if (candidate.value(QStringLiteral("componentId")).toString()
+            == componentId) {
+            componentInstanceIds.append(iterator.key());
+        }
+    }
+    if (componentInstanceIds.size() > 1) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral(
+                "Multiple existing instances make the bar placement ambiguous"
+            )
+        );
+        return;
+    }
+    QString instanceId = componentInstanceIds.value(0);
+
+    if (instanceId.isEmpty()) {
+        for (int attempt = 0; attempt < 8 && instanceId.isEmpty(); ++attempt) {
+            const auto candidate = QUuid::createUuid().toString(
+                QUuid::WithoutBraces
+            );
+            if (Components::isLowercaseUuidV4(candidate)
+                && !instances.contains(candidate)) {
+                instanceId = candidate;
+            }
+        }
+        if (instanceId.isEmpty()) {
+            setError(
+                componentId,
+                invalidComponentError,
+                QStringLiteral("A unique component placement could not be created")
+            );
+            return;
+        }
+        instances.insert(instanceId, QVariantMap{
+            {QStringLiteral("componentId"), componentId},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("settings"), QVariantMap{}},
+        });
+    } else {
+        auto instance = instances.value(instanceId).toMap();
+        const auto enabled = instance.value(QStringLiteral("enabled"));
+        const auto settings = instance.value(QStringLiteral("settings"));
+        if (!Components::isLowercaseUuidV4(instanceId)
+            || enabled.metaType().id() != QMetaType::Bool
+            || settings.metaType().id() != QMetaType::QVariantMap) {
+            setError(
+                componentId,
+                invalidComponentError,
+                QStringLiteral("The existing component placement is malformed")
+            );
+            return;
+        }
+        instance.insert(QStringLiteral("enabled"), true);
+        instance.insert(QStringLiteral("settings"), QVariantMap{});
+        instances.insert(instanceId, instance);
+    }
+
+    auto layouts = snapshot_.value(QStringLiteral("layouts")).toMap();
+    auto bars = layouts.value(QStringLiteral("bars")).toMap();
+    const auto mainRegions = bars.value(QStringLiteral("main")).toMap()
+                                 .value(QStringLiteral("regions")).toMap();
+    bool placedInMain = false;
+    for (const auto &regionName : {
+             QStringLiteral("start"),
+             QStringLiteral("center"),
+             QStringLiteral("end"),
+         }) {
+        const auto region = mainRegions.value(regionName).toList();
+        placedInMain = placedInMain || std::ranges::any_of(
+            region,
+            [&instanceId](const QVariant &value) {
+                return value.metaType().id() == QMetaType::QString
+                    && value.toString() == instanceId;
+            }
+        );
+    }
+    if (!placedInMain) {
+        for (auto layout = bars.begin(); layout != bars.end(); ++layout) {
+            auto layoutMap = layout.value().toMap();
+            auto regions = layoutMap.value(QStringLiteral("regions")).toMap();
+            for (const auto &regionName : {
+                     QStringLiteral("start"),
+                     QStringLiteral("center"),
+                     QStringLiteral("end"),
+                 }) {
+                auto region = regions.value(regionName).toList();
+                region.removeIf([&instanceId](const QVariant &value) {
+                    return value.metaType().id() == QMetaType::QString
+                        && value.toString() == instanceId;
+                });
+                regions.insert(regionName, region);
+            }
+            layoutMap.insert(QStringLiteral("regions"), regions);
+            layout.value() = layoutMap;
+        }
+
+        auto main = bars.value(QStringLiteral("main")).toMap();
+        if (main.isEmpty()) {
+            main = {
+                {QStringLiteral("outputs"), QVariantMap{
+                    {QStringLiteral("mode"), QStringLiteral("all")},
+                }},
+                {QStringLiteral("regions"), QVariantMap{
+                    {QStringLiteral("start"), QVariantList{}},
+                    {QStringLiteral("center"), QVariantList{}},
+                    {QStringLiteral("end"), QVariantList{}},
+                }},
+            };
+        }
+        auto regions = main.value(QStringLiteral("regions")).toMap();
+        auto end = regions.value(QStringLiteral("end")).toList();
+        end.append(instanceId);
+        regions.insert(QStringLiteral("end"), end);
+        main.insert(QStringLiteral("regions"), regions);
+        bars.insert(QStringLiteral("main"), main);
+        layouts.insert(QStringLiteral("bars"), bars);
+    }
+
+    auto replacement = snapshot_;
+    replacement.insert(QStringLiteral("components"), components);
+    replacement.insert(QStringLiteral("instances"), instances);
+    replacement.insert(QStringLiteral("layouts"), layouts);
+    if (replacement == snapshot_) {
+        clearError();
+        return;
+    }
     beginReplaceSnapshot(replacement, componentId);
 }
 

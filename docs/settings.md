@@ -29,6 +29,30 @@ marks it as unverified, and you should install only code you have inspected and
 trust. A newly installed component remains disabled. Selecting another local
 package with the same component ID uses the same review flow for an update,
 reinstall, or downgrade; HyprShelld does not download packages automatically.
+Installing a new or changed digest does not enable, grant, or place it. An exact
+reinstall of bytes you previously reviewed may make the same retained,
+digest-pinned enabled state and placements effective again.
+
+A newly installed compatible data-only bar widget shows **Add to Bar** until it
+has a placement. This performs one atomic settings change: it records the exact
+installed package digest, applies the widget's component-setting defaults,
+creates one enabled instance, and appends that instance to the end of the main
+bar. Once placed, the row shows the normal global enable switch. Turning that
+switch off preserves the instance, its settings, and its bar position. Calling
+the add operation again cannot create a duplicate placement. Version-one
+data-only widgets receive no capabilities and may not declare dependencies;
+packages that request either remain installed but disabled. If one preserved
+instance exists in an inactive older layout, **Add to Bar** moves that same
+instance to the main bar instead of duplicating it. Settings refuses to guess
+when multiple preserved instances make the target ambiguous.
+
+When an update or downgrade changes the package digest of a previously
+configured widget, the row instead shows **Use Installed Version**. That
+separate action adopts the exact catalog-reviewed digest and new trusted
+defaults, forces the component off, clears grants, and preserves every existing
+instance and placement. It never activates the changed package. Afterward, the
+normal switch or **Add to Bar** is a second explicit action, depending on
+whether the preserved instance is already in the main bar.
 
 Third-party bar widgets, desktop widgets, and services may provide a data-only
 settings schema. Settings renders those shared choices with trusted built-in
@@ -124,6 +148,14 @@ Select **Restart** beside an affected component to request recovery. The
 button shows **Restarting…** while the request is being submitted. The warning
 remains until HyprShelld confirms that the component is running again; an
 accepted restart request alone does not clear it.
+
+Third-party widget activation failures are isolated from service restarts. If
+a widget does not complete its trusted-renderer stability window, HyprShelld
+quarantines that exact package digest and removes it from the active surface
+plan. An interrupted activation is treated conservatively; it does not prove
+that package data caused the interruption. The component row explains that
+activation did not complete and offers **Try Again**. Retrying clears only that
+digest's quarantine; saved settings and bar placement remain intact.
 
 If the shell health service is unavailable, Settings reads the current service
 states directly from systemd. This fallback is read-only, so restart controls

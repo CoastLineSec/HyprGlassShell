@@ -2,6 +2,7 @@
 
 #include "component/component_configuration.h"
 #include "component/component_contract.h"
+#include "component/declarative_document.h"
 #include "component/package_inspection_report.h"
 #include "component/settings_schema.h"
 
@@ -49,6 +50,8 @@ constexpr qsizetype maximumSettingsSchemaBytes = 256 * 1024;
 struct DecodedComponent final {
     QVariantMap presentation;
     QString packageDigest;
+    Components::SettingsSchema settingsSchema;
+    bool requiresDeclarativeRuntime = false;
 };
 
 bool hasExactMetaTypes(
@@ -361,6 +364,8 @@ QVariantMap inspectionPresentation(
         }
     }
 
+    const auto activationSupported = !report.declarativeRuntime.isEmpty()
+        && Components::validateCurrentHostSupport(manifest).isEmpty();
     return {
         {QStringLiteral("operation"), operation},
         {QStringLiteral("id"), manifest.id},
@@ -391,10 +396,12 @@ QVariantMap inspectionPresentation(
         {QStringLiteral("hasSettings"),
          report.normalizedSettingsSchema.has_value()},
         {QStringLiteral("settingsDefinitions"), settingsDefinitions(schema)},
-        {QStringLiteral("activationSupported"), false},
-        {QStringLiteral("compatibilityReason"), QStringLiteral(
-             "Runtime activation for third-party components is not available yet."
-         )},
+        {QStringLiteral("activationSupported"), activationSupported},
+        {QStringLiteral("compatibilityReason"), activationSupported
+             ? QString()
+             : QStringLiteral(
+                   "This component does not have an enforceable runtime on the current shell."
+               )},
     };
 }
 
@@ -648,6 +655,12 @@ std::optional<DecodedComponent> decodeComponent(
         });
     }
 
+    const auto hostSupported = Components::validateCurrentHostSupport(
+        parsed
+    ).isEmpty();
+    const auto requiresDeclarativeRuntime = hostSupported
+        && parsed.origin == Components::ComponentOrigin::User
+        && parsed.runtime.kind == Components::RuntimeKind::DeclarativeV1;
     return DecodedComponent{
         .presentation = QVariantMap{
             {QStringLiteral("id"), parsed.id},
@@ -677,18 +690,24 @@ std::optional<DecodedComponent> decodeComponent(
              settingsDefinitions(parsedSettingsSchema)},
             {QStringLiteral("activationSupported"),
              parsed.origin == Components::ComponentOrigin::System
-                 && Components::validateCurrentHostSupport(parsed).isEmpty()},
+                 && hostSupported},
             {QStringLiteral("compatibilityReason"),
              parsed.origin == Components::ComponentOrigin::System
                  ? QString()
+                 : requiresDeclarativeRuntime
+                     ? QStringLiteral(
+                           "The declarative runtime has not been verified yet."
+                       )
                  : QStringLiteral(
-                       "Runtime activation for third-party components is not available yet."
+                       "This component does not have an enforceable runtime on the current shell."
                    )},
             {QStringLiteral("requestedCapabilities"),
              presentationCapabilities},
             {QStringLiteral("dependencies"), presentationDependencies},
         },
         .packageDigest = packageDigest,
+        .settingsSchema = std::move(parsedSettingsSchema),
+        .requiresDeclarativeRuntime = requiresDeclarativeRuntime,
     };
 }
 
@@ -1282,6 +1301,83 @@ void ComponentManagerClient::fetchNext(
             auto decoded = decodeComponent(componentId, reply.arguments(), error);
             if (!decoded.has_value()) {
                 fail(generation, error);
+                return;
+            }
+            if (decoded->requiresDeclarativeRuntime) {
+                auto runtimeCall = QDBusMessage::createMethodCall(
+                    serviceName,
+                    objectPath,
+                    interfaceName,
+                    QStringLiteral("GetDeclarativeRuntime")
+                );
+                runtimeCall.setArguments({
+                    componentId,
+                    decoded->packageDigest,
+                    state->catalogDigest,
+                });
+                auto *runtimeWatcher = new QDBusPendingCallWatcher(
+                    connection_.asyncCall(runtimeCall, callTimeoutMs), this
+                );
+                connect(
+                    runtimeWatcher,
+                    &QDBusPendingCallWatcher::finished,
+                    this,
+                    [this, runtimeWatcher, generation,
+                     state = std::move(state), componentId,
+                     decoded = std::move(*decoded)]() mutable {
+                        const auto runtimeReply = runtimeWatcher->reply();
+                        runtimeWatcher->deleteLater();
+                        if (generation != generation_) {
+                            return;
+                        }
+                        const auto runtimeArguments = runtimeReply.arguments();
+                        if (runtimeReply.type() == QDBusMessage::ErrorMessage
+                            || !hasExactMetaTypes(
+                                runtimeArguments, {QMetaType::QByteArray}
+                            )) {
+                            fail(
+                                generation,
+                                replyError(
+                                    runtimeReply,
+                                    QStringLiteral("GetDeclarativeRuntime")
+                                )
+                            );
+                            return;
+                        }
+                        const auto bytes = runtimeArguments.first().toByteArray();
+                        const auto document =
+                            Components::parseDeclarativeDocument(
+                                QByteArrayView(bytes),
+                                &decoded.settingsSchema
+                            );
+                        if (!document
+                            || Components::serializeDeclarativeDocument(
+                                *document.value
+                            ) != bytes) {
+                            fail(
+                                generation,
+                                QStringLiteral(
+                                    "ComponentManager1.GetDeclarativeRuntime returned a malformed or non-canonical document."
+                                )
+                            );
+                            return;
+                        }
+                        decoded.presentation.insert(
+                            QStringLiteral("activationSupported"), true
+                        );
+                        decoded.presentation.insert(
+                            QStringLiteral("compatibilityReason"), QString()
+                        );
+                        state->components.append(
+                            std::move(decoded.presentation)
+                        );
+                        state->packageDigests.insert(
+                            componentId, std::move(decoded.packageDigest)
+                        );
+                        ++state->index;
+                        fetchNext(generation, std::move(state));
+                    }
+                );
                 return;
             }
             state->components.append(std::move(decoded->presentation));

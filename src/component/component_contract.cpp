@@ -1070,19 +1070,25 @@ ValidationResult<ComponentManifest> parseComponentManifest(
 ValidationErrors validateCurrentHostSupport(const ComponentManifest &manifest)
 {
     ValidationErrors errors;
-    if (manifest.origin != ComponentOrigin::System
-        || manifest.id != QLatin1StringView(workspaceSwitcherId)
-        || manifest.type != ComponentType::BarWidget
-        || manifest.componentApiVersion
-            != QLatin1StringView(currentComponentApiVersion)
-        || manifest.runtime.kind != RuntimeKind::BuiltinV1
-        || manifest.runtime.factory
-            != QLatin1StringView(workspaceSwitcherFactory)) {
+    const auto supportedBuiltin = manifest.origin == ComponentOrigin::System
+        && manifest.id == QLatin1StringView(workspaceSwitcherId)
+        && manifest.type == ComponentType::BarWidget
+        && manifest.componentApiVersion
+            == QLatin1StringView(currentComponentApiVersion)
+        && manifest.runtime.kind == RuntimeKind::BuiltinV1
+        && manifest.runtime.factory
+            == QLatin1StringView(workspaceSwitcherFactory);
+    const auto supportedDeclarative = manifest.origin == ComponentOrigin::User
+        && manifest.type == ComponentType::BarWidget
+        && manifest.componentApiVersion
+            == QLatin1StringView(currentComponentApiVersion)
+        && manifest.runtime.kind == RuntimeKind::DeclarativeV1;
+    if (!supportedBuiltin && !supportedDeclarative) {
         addError(
             errors,
             QStringLiteral("$"),
             QStringLiteral("component.unsupported-by-host"),
-            QStringLiteral("The current component host supports only the protected workspace-switcher factory.")
+            QStringLiteral("The current host supports only its protected workspace switcher and data-only declarative-v1 user bar widgets.")
         );
     }
     if (!manifest.dependencies.isEmpty()) {
@@ -1090,8 +1096,23 @@ ValidationErrors validateCurrentHostSupport(const ComponentManifest &manifest)
             errors,
             QStringLiteral("$.dependencies"),
             QStringLiteral("component.unsupported-dependencies"),
-            QStringLiteral("The built-in workspace switcher has no component dependencies.")
+            QStringLiteral("The current host does not activate components with dependencies.")
         );
+    }
+
+    if (supportedDeclarative) {
+        if (!manifest.requestedCapabilities.isEmpty()) {
+            addError(
+                errors,
+                QStringLiteral("$.requestedCapabilities"),
+                QStringLiteral("component.unsupported-capability"),
+                QStringLiteral("The data-only declarative runtime exposes no capabilities.")
+            );
+        }
+        return errors;
+    }
+    if (!supportedBuiltin) {
+        return errors;
     }
 
     const QSet<QString> requiredCapabilities{

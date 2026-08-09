@@ -15,6 +15,12 @@ Frame {
     property bool packageOperationBusy: false
     property bool configureEnabled: false
     property bool removeEnabled: false
+    property bool adoptPackageVisible: false
+    property bool adoptPackageEnabled: false
+    property bool addToBarVisible: false
+    property bool addToBarEnabled: false
+    property bool retryVisible: false
+    property bool retryEnabled: false
     property string statusText: ""
     property string errorText: ""
 
@@ -29,6 +35,7 @@ Frame {
     readonly property bool configureVisible:
         root.thirdParty
         && root.component.type !== "shell-application"
+        && !root.adoptPackageVisible
         && root.listValue(root.component.settingsDefinitions).length > 0
     readonly property bool removeVisible:
         root.thirdParty && root.component.removable === true
@@ -40,6 +47,9 @@ Frame {
     )
     signal configureRequested(var component)
     signal removeRequested(var component)
+    signal adoptPackageRequested(var component)
+    signal addToBarRequested(var component)
+    signal retryRequested(var component)
 
     function listValue(value) {
         if (Array.isArray(value))
@@ -230,6 +240,8 @@ Frame {
                 id: enableControl
 
                 objectName: "componentEnabled-" + root.componentId
+                visible: !root.addToBarVisible
+                    && !root.adoptPackageVisible
                 enabled: root.toggleEnabled
                     && root.activationSupported
                     && !root.packageOperationBusy
@@ -263,6 +275,50 @@ Frame {
                     when: !root.pending
                     restoreMode: Binding.RestoreNone
                 }
+            }
+
+            Button {
+                objectName: "componentAdoptPackage-" + root.componentId
+                Layout.fillWidth: true
+                visible: root.adoptPackageVisible
+                text: root.pending
+                    ? qsTr("Adopting…") : qsTr("Use Installed Version")
+                enabled: root.adoptPackageEnabled
+                    && !root.pending
+                    && !root.packageOperationBusy
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Use the installed %1 version").arg(
+                        root.component.name
+                    ) : qsTr("Use installed component version")
+                onClicked: root.adoptPackageRequested(root.component)
+            }
+
+            Button {
+                objectName: "componentAddToBar-" + root.componentId
+                Layout.fillWidth: true
+                visible: root.addToBarVisible
+                text: root.pending ? qsTr("Adding…") : qsTr("Add to Bar")
+                enabled: root.addToBarEnabled
+                    && !root.pending
+                    && !root.packageOperationBusy
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Add %1 to the bar").arg(root.component.name)
+                    : qsTr("Add component to the bar")
+                onClicked: root.addToBarRequested(root.component)
+            }
+
+            Button {
+                objectName: "componentRetry-" + root.componentId
+                Layout.fillWidth: true
+                visible: root.retryVisible
+                text: qsTr("Try Again")
+                enabled: root.retryEnabled
+                    && !root.pending
+                    && !root.packageOperationBusy
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Try %1 again").arg(root.component.name)
+                    : qsTr("Try component again")
+                onClicked: root.retryRequested(root.component)
             }
 
             Button {

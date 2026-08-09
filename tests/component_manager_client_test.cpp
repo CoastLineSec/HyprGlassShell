@@ -36,6 +36,7 @@ const QString workspaceId = QString::fromLatin1(
     Components::workspaceSwitcherId
 );
 const QString serviceId = QStringLiteral("org.example.background-service");
+const QString widgetId = QStringLiteral("org.example.clock-widget");
 
 void addDigestField(
     QCryptographicHash &hash,
@@ -142,6 +143,37 @@ QVariantList serviceRecord(
         QStringList(),
         QStringList(),
         packageDigest,
+        QStringLiteral("user"),
+        true,
+    };
+}
+
+QVariantList declarativeWidgetRecord()
+{
+    return {
+        1U,
+        QStringLiteral("bar-widget"),
+        QStringLiteral("1.0.0"),
+        QStringLiteral("Clock Widget"),
+        QStringLiteral("Shows a trusted data-only label."),
+        QStringList{QStringLiteral("Example Author")},
+        QStringList{QString()},
+        QStringList{QString()},
+        QStringLiteral("MIT"),
+        QString(),
+        QString(),
+        QString(),
+        QStringLiteral("1.0"),
+        QStringLiteral("declarative-v1"),
+        QString(),
+        QStringLiteral("payload/widget.json"),
+        QStringList(),
+        QByteArrayLiteral("{\"schemaVersion\":1,\"settings\":[]}\n"),
+        QStringList(),
+        QStringList(),
+        QStringList(),
+        QStringList(),
+        QString(64, QLatin1Char('d')),
         QStringLiteral("user"),
         true,
     };
@@ -296,6 +328,26 @@ public:
             }
             return true;
         }
+        if (message.member() == QStringLiteral("GetDeclarativeRuntime")) {
+            ++runtimeCalls;
+            lastRuntimeArguments = message.arguments();
+            if (holdRuntimeReplies && !heldRuntimeMessage_.has_value()) {
+                heldRuntimeMessage_ = message;
+                return true;
+            }
+            if (malformedRuntimeOnce) {
+                malformedRuntimeOnce = false;
+                ++malformedRuntimeReplies;
+                connection_.send(message.createReply(
+                    QVariantList{QByteArrayLiteral("{}")}
+                ));
+            } else {
+                connection_.send(message.createReply(
+                    QVariantList{declarativeRuntime}
+                ));
+            }
+            return true;
+        }
         if (message.member() != QStringLiteral("GetComponent")) {
             return false;
         }
@@ -407,11 +459,28 @@ public:
         ));
     }
 
+    [[nodiscard]] bool hasHeldRuntimeReply() const
+    {
+        return heldRuntimeMessage_.has_value();
+    }
+
+    void releaseHeldRuntimeReply()
+    {
+        QVERIFY(heldRuntimeMessage_.has_value());
+        const auto message = *heldRuntimeMessage_;
+        heldRuntimeMessage_.reset();
+        QVERIFY(connection_.send(message.createReply(
+            QVariantList{declarativeRuntime}
+        )));
+    }
+
     bool malformedListOnce = false;
     bool malformedGetOnce = false;
     bool invalidSchemaOnce = false;
     bool staleGetOnce = false;
     bool failInstallOnce = false;
+    bool malformedRuntimeOnce = false;
+    bool holdRuntimeReplies = false;
     int listCalls = 0;
     int getCalls = 0;
     int invalidSchemaReplies = 0;
@@ -420,6 +489,12 @@ public:
     int cancelCalls = 0;
     int installCalls = 0;
     int removeCalls = 0;
+    int runtimeCalls = 0;
+    int malformedRuntimeReplies = 0;
+    QVariantList lastRuntimeArguments;
+    QByteArray declarativeRuntime = QByteArrayLiteral(
+        R"({"documentVersion":1,"text":{"literal":"Clock"},"type":"text-pill"})"
+    );
     QString lastInstallCatalogDigest;
     QString inspectionToken = QStringLiteral(
         "00112233445566778899aabbccddeeff"
@@ -432,6 +507,7 @@ private:
     QString digest_;
     QString holdId_;
     std::optional<QDBusMessage> heldMessage_;
+    std::optional<QDBusMessage> heldRuntimeMessage_;
 };
 
 } // namespace
@@ -592,6 +668,81 @@ private slots:
 
         QVERIFY(serviceBus.unregisterService(serviceName));
         serviceBus.unregisterObject(objectPath);
+    }
+
+    void verifiesDeclarativeRuntimeBeforePresentingActivation()
+    {
+        const auto serviceConnectionName = QStringLiteral(
+            "component-manager-runtime-test-service"
+        );
+        const auto clientConnectionName = QStringLiteral(
+            "component-manager-runtime-test-client"
+        );
+        auto serviceBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus, serviceConnectionName
+        );
+        auto clientBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus, clientConnectionName
+        );
+        QVERIFY(serviceBus.isConnected());
+        QVERIFY(clientBus.isConnected());
+
+        FakeManager manager(serviceBus);
+        manager.setRecords({
+            {workspaceId, workspaceRecord()},
+            {widgetId, declarativeWidgetRecord()},
+        });
+        manager.malformedRuntimeOnce = true;
+        QVERIFY(serviceBus.registerVirtualObject(objectPath, &manager));
+        QVERIFY(serviceBus.registerService(serviceName));
+
+        ComponentManagerClient client(clientBus, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 10000);
+        QVERIFY(manager.runtimeCalls >= 2);
+        QCOMPARE(manager.malformedRuntimeReplies, 1);
+        QCOMPARE(manager.lastRuntimeArguments, QVariantList({
+            widgetId,
+            QString(64, QLatin1Char('d')),
+            client.catalogDigest(),
+        }));
+        const auto rows = client.components();
+        const auto found = std::ranges::find_if(
+            rows,
+            [](const QVariant &value) {
+                return value.toMap().value(QStringLiteral("id")).toString()
+                    == widgetId;
+            }
+        );
+        QVERIFY(found != rows.cend());
+        const auto widget = found->toMap();
+        QCOMPARE(
+            widget.value(QStringLiteral("activationSupported")).toBool(),
+            true
+        );
+        QCOMPARE(
+            widget.value(QStringLiteral("compatibilityReason")).toString(),
+            QString()
+        );
+
+        const auto accepted = client.components();
+        manager.holdRuntimeReplies = true;
+        manager.announceCatalogChange();
+        QTRY_VERIFY_WITH_TIMEOUT(manager.hasHeldRuntimeReply(), 3000);
+        QVERIFY(!client.available());
+        QVERIFY(serviceBus.unregisterService(serviceName));
+        manager.releaseHeldRuntimeReply();
+        QTest::qWait(20);
+        QCOMPARE(client.components(), accepted);
+
+        manager.holdRuntimeReplies = false;
+        QVERIFY(serviceBus.registerService(serviceName));
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 5000);
+        QCOMPARE(client.components(), accepted);
+
+        serviceBus.unregisterService(serviceName);
+        serviceBus.unregisterObject(objectPath);
+        QDBusConnection::disconnectFromBus(clientConnectionName);
+        QDBusConnection::disconnectFromBus(serviceConnectionName);
     }
 
     void reviewsDowngradeAndReconcilesPackageLifecycleFailures()

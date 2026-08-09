@@ -5,6 +5,7 @@
 #include <QDBusContext>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
 namespace HyprShelld {
 
@@ -16,6 +17,8 @@ class ComponentRuntimeService final : public QObject, protected QDBusContext {
     Q_PROPERTY(qulonglong SurfacePlanRevision READ surfacePlanRevision)
     Q_PROPERTY(QString SurfacePlanDigest READ surfacePlanDigest)
     Q_PROPERTY(QString SurfacePlanState READ surfacePlanState)
+    Q_PROPERTY(qulonglong RuntimeHealthRevision READ runtimeHealthRevision)
+    Q_PROPERTY(bool ThirdPartySafeMode READ thirdPartySafeMode)
 
 public:
     ComponentRuntimeService(
@@ -27,15 +30,49 @@ public:
     [[nodiscard]] qulonglong surfacePlanRevision() const;
     [[nodiscard]] QString surfacePlanDigest() const;
     [[nodiscard]] QString surfacePlanState() const;
+    [[nodiscard]] qulonglong runtimeHealthRevision() const;
+    [[nodiscard]] bool thirdPartySafeMode() const;
 
 public slots:
     QByteArray GetSurfacePlan(
         qulonglong expectedSurfacePlanRevision,
         QString &surfacePlanDigest
     ) const;
+    QStringList ListComponentRuntimeStates(
+        qulonglong expectedRuntimeHealthRevision,
+        QStringList &packageDigests,
+        QStringList &states,
+        QStringList &reasons,
+        QList<uint> &failureCounts
+    ) const;
+    qulonglong RetryComponent(
+        const QString &componentId,
+        const QString &expectedPackageDigest,
+        qulonglong expectedRuntimeHealthRevision
+    );
+    bool AuthorizeSurfacePlan(
+        qulonglong surfacePlanRevision
+    );
+    bool CancelSurfacePlanAuthorization(
+        qulonglong surfacePlanRevision
+    );
+    void ActivationStable(
+        const QString &instanceId,
+        const QString &componentId,
+        const QString &packageDigest,
+        qulonglong surfacePlanRevision
+    );
+    void ActivationFailed(
+        const QString &instanceId,
+        const QString &componentId,
+        const QString &packageDigest,
+        qulonglong surfacePlanRevision,
+        const QString &reason
+    );
 
 private:
     void publishChange() const;
+    void publishHealthChange() const;
     void reportError(const QString &name, const QString &message) const;
 
     ComponentPlanController *controller_;

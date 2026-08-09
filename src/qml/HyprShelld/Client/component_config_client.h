@@ -53,6 +53,16 @@ public:
         const QString &expectedPackageDigest,
         const QVariantMap &settings
     );
+    Q_INVOKABLE void adoptComponentPackage(
+        const QString &componentId,
+        const QString &expectedPackageDigest,
+        const QVariantMap &defaultComponentSettings
+    );
+    Q_INVOKABLE void addComponentToBar(
+        const QString &componentId,
+        const QString &expectedPackageDigest,
+        const QVariantMap &defaultComponentSettings
+    );
     Q_INVOKABLE void preparePackageChange(
         const QString &componentId,
         const QString &expectedPackageDigest

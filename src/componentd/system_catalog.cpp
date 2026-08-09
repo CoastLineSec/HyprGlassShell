@@ -1,6 +1,7 @@
 #include "system_catalog.h"
 
 #include "component/component_configuration.h"
+#include "component/declarative_document.h"
 #include "component/settings_schema.h"
 
 #include <QCryptographicHash>
@@ -330,6 +331,7 @@ CatalogLoadResult SystemCatalog::load(const QString &rootPath)
         CatalogEntry entry{
             .manifest = std::move(*parsed.value),
             .settingsSchema = std::move(settingsSchemaBytes),
+            .declarativeRuntime = {},
             .packageDigest = digest,
         };
         catalog.entries_.insert(entry.manifest.id, std::move(entry));
@@ -381,6 +383,47 @@ CatalogLoadResult SystemCatalog::withUserEntries(
             return {
                 std::nullopt,
                 QStringLiteral("A user component has an invalid package digest: %1")
+                    .arg(manifest.id),
+            };
+        }
+        if (manifest.settingsSchema.has_value()
+            != !entry.settingsSchema.isEmpty()) {
+            return {
+                std::nullopt,
+                QStringLiteral("A user component disagrees with its settings schema bytes: %1")
+                    .arg(manifest.id),
+            };
+        }
+        std::optional<SettingsSchema> settingsSchema;
+        if (!entry.settingsSchema.isEmpty()) {
+            auto parsed = parseSettingsSchema(entry.settingsSchema);
+            if (!parsed) {
+                return {
+                    std::nullopt,
+                    QStringLiteral("A user component has an invalid settings schema: %1")
+                        .arg(manifest.id),
+                };
+            }
+            settingsSchema = std::move(*parsed.value);
+        }
+        if (manifest.runtime.kind == RuntimeKind::DeclarativeV1) {
+            const auto document = parseDeclarativeDocument(
+                entry.declarativeRuntime,
+                settingsSchema.has_value() ? &*settingsSchema : nullptr
+            );
+            if (!document
+                || serializeDeclarativeDocument(*document.value)
+                    != entry.declarativeRuntime) {
+                return {
+                    std::nullopt,
+                    QStringLiteral("A user component has a missing or non-canonical declarative runtime: %1")
+                        .arg(manifest.id),
+                };
+            }
+        } else if (!entry.declarativeRuntime.isEmpty()) {
+            return {
+                std::nullopt,
+                QStringLiteral("A non-declarative user component carries a declarative runtime: %1")
                     .arg(manifest.id),
             };
         }

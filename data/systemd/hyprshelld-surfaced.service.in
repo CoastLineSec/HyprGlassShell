@@ -3,7 +3,7 @@ Description=HyprShelld shell surfaces
 PartOf=hyprshelld.target graphical-session.target
 After=graphical-session.target
 StartLimitIntervalSec=30s
-StartLimitBurst=5
+StartLimitBurst=10
 
 [Service]
 Type=exec
@@ -13,5 +13,5 @@ Environment=QS_DISABLE_CRASH_HANDLER=1
 Slice=session-hyprshelld.slice
 Restart=always
 RestartMode=direct
-RestartSec=1s
+RestartSec=2s
 TimeoutStopSec=5s

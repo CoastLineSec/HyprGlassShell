@@ -345,8 +345,6 @@ bool ComponentConfigService::preservesDormantState(
             && live->origin == Components::ComponentOrigin::User
             && desired->packageDigest != live->packageDigest
             && proposed->packageDigest == live->packageDigest
-            && !desired->enabled
-            && desired->grantedCapabilities.isEmpty()
             && !proposed->enabled
             && proposed->grantedCapabilities.isEmpty();
         if (proposed == candidate.components.cend()

@@ -76,7 +76,7 @@ Item {
 
             onCountChanged: ++componentLayout.layoutRevision
 
-            delegate: BuiltinComponentFactory {
+            delegate: ComponentFactory {
                 required property var modelData
                 required property int index
 

@@ -1,6 +1,7 @@
 #include "component-inspector/package_inspector.h"
 
 #include "component/component_package_bundle.h"
+#include "component/declarative_document.h"
 #include "component/package_integrity.h"
 #include "component/package_inspection_report.h"
 
@@ -90,7 +91,10 @@ QVector<ArchiveEntry> validEntries()
     QVector<ArchiveEntry> entries{
         {QByteArrayLiteral("manifest.json"), manifestBytes()},
         {QByteArrayLiteral("payload/widget.json"),
-         QByteArrayLiteral("{\"type\":\"text\",\"text\":\"12:34\"}\n")},
+         QByteArrayLiteral(
+             "{\"documentVersion\":1,\"type\":\"text-pill\","
+             "\"text\":{\"literal\":\"12:34\"}}\n"
+         )},
     };
     entries.append({
         QByteArrayLiteral("integrity.json"),
@@ -334,7 +338,7 @@ class ComponentPackageInspectorTest final : public QObject {
     Q_OBJECT
 
 private slots:
-    void acceptsValidStructuralPackage()
+    void acceptsValidDeclarativePackage()
     {
         QTemporaryDir archiveDirectory;
         QVERIFY(archiveDirectory.isValid());
@@ -353,9 +357,22 @@ private slots:
         QCOMPARE(result.report->manifest.id, QStringLiteral("org.example.clock"));
         QCOMPARE(result.report->files.size(), 3);
         QVERIFY(!result.report->packageDigest.isEmpty());
+        QCOMPARE(
+            result.report->declarativeRuntime,
+            QByteArrayLiteral(
+                "{\"documentVersion\":1,\"text\":{\"literal\":\"12:34\"},"
+                "\"type\":\"text-pill\"}"
+            )
+        );
 
         const auto reportBytes = serializePackageInspectionReport(
             *result.report
+        );
+        QCOMPARE(
+            QJsonDocument::fromJson(reportBytes).object().value(
+                QStringLiteral("activationState")
+            ).toString(),
+            QStringLiteral("supported")
         );
         const auto parsedReport = parsePackageInspectionReport(reportBytes);
         QVERIFY(parsedReport);
@@ -386,6 +403,142 @@ private slots:
         ));
         QVERIFY(payload.isFile());
         QVERIFY(!(payload.permissions() & QFileDevice::ExeOwner));
+
+        auto mismatchedReport = *result.report;
+        const auto otherDocument = parseDeclarativeDocument(
+            R"({"documentVersion":1,"type":"text-pill","text":{"literal":"Different"}})"
+        );
+        QVERIFY(otherDocument);
+        mismatchedReport.declarativeRuntime = serializeDeclarativeDocument(
+            *otherDocument.value
+        );
+        QTemporaryDir rejectedDestination;
+        QVERIFY(rejectedDestination.isValid());
+        QBuffer rejectedReader(&bundleBytes);
+        QVERIFY(rejectedReader.open(QIODevice::ReadOnly));
+        const auto rejectedErrors = materializeComponentPackageBundle(
+            rejectedReader,
+            mismatchedReport,
+            rejectedDestination.path()
+        );
+        QVERIFY(std::ranges::any_of(
+            rejectedErrors,
+            [](const ValidationError &error) {
+                return error.code == QStringLiteral(
+                    "package-bundle.declarative-runtime-mismatch"
+                );
+            }
+        ));
+    }
+
+    void rejectsUntrustedDeclarativeFields()
+    {
+        QTemporaryDir directory;
+        const auto path = directory.filePath(QStringLiteral("action.zip"));
+        auto entries = validEntries();
+        entries[1].contents = QByteArrayLiteral(
+            "{\"documentVersion\":1,\"type\":\"text-pill\","
+            "\"text\":{\"literal\":\"Clock\"},"
+            "\"action\":{\"command\":\"date\"}}"
+        );
+        entries[2].contents = integrityBytes(entries.sliced(0, 2));
+        QVERIFY(writeArchive(path, entries));
+        const auto result = inspect(path);
+        QVERIFY(!result);
+        QVERIFY(hasErrorCode(
+            result,
+            QStringLiteral("declarative.unknown-field")
+        ));
+    }
+
+    void validatesSettingBindingsAgainstTheTrustedSchema()
+    {
+        QTemporaryDir directory;
+        const auto path = directory.filePath(QStringLiteral("setting.zip"));
+        auto manifest = QJsonDocument::fromJson(manifestBytes()).object();
+        manifest.insert(
+            QStringLiteral("settingsSchema"),
+            QStringLiteral("settings.schema.json")
+        );
+        const auto schema = QByteArrayLiteral(R"({
+          "schemaVersion":1,
+          "settings":[
+            {"key":"displayMode","scope":"component","type":"string","label":"Display mode","description":"Text shown by the pill.","group":"general","order":1,"default":"Clock","minimumLength":1,"maximumLength":64}
+          ]
+        })");
+        QVector<ArchiveEntry> entries{
+            {QByteArrayLiteral("manifest.json"),
+             QJsonDocument(manifest).toJson(QJsonDocument::Compact)},
+            {QByteArrayLiteral("payload/widget.json"),
+             QByteArrayLiteral(
+                 "{\"documentVersion\":1,\"type\":\"text-pill\","
+                 "\"text\":{\"setting\":\"displayMode\"}}"
+             )},
+            {QByteArrayLiteral("settings.schema.json"), schema},
+        };
+        entries.append({
+            QByteArrayLiteral("integrity.json"),
+            integrityBytes(entries),
+        });
+        QVERIFY(writeArchive(path, entries));
+        auto result = inspect(path);
+        QVERIFY2(result, qPrintable(
+            result.errors.isEmpty() ? QString() : result.errors.first().message
+        ));
+
+        entries[1].contents.replace("displayMode", "missingMode");
+        entries.last().contents = integrityBytes(entries.sliced(0, 3));
+        QVERIFY(writeArchive(path, entries));
+        result = inspect(path);
+        QVERIFY(!result);
+        QVERIFY(hasErrorCode(
+            result,
+            QStringLiteral("declarative.unknown-setting")
+        ));
+    }
+
+    void requestedCapabilitiesKeepDeclarativePackageInert()
+    {
+        QTemporaryDir directory;
+        const auto path = directory.filePath(QStringLiteral("capability.zip"));
+        auto entries = validEntries();
+        auto manifest = QJsonDocument::fromJson(entries[0].contents).object();
+        manifest.insert(
+            QStringLiteral("requestedCapabilities"),
+            QJsonArray{QJsonObject{
+                {QStringLiteral("id"), QStringLiteral("example.clock.read")},
+                {QStringLiteral("reason"),
+                 QStringLiteral("Read an external clock source.")},
+            }}
+        );
+        entries[0].contents = QJsonDocument(manifest).toJson(
+            QJsonDocument::Compact
+        );
+        entries[2].contents = integrityBytes(entries.sliced(0, 2));
+        QVERIFY(writeArchive(path, entries));
+        const auto result = inspect(path);
+        QVERIFY(result);
+        auto reportBytes = serializePackageInspectionReport(*result.report);
+        QCOMPARE(
+            QJsonDocument::fromJson(reportBytes).object().value(
+                QStringLiteral("activationState")
+            ).toString(),
+            QStringLiteral("unsupported")
+        );
+        reportBytes.replace(
+            QByteArrayLiteral("\"activationState\":\"unsupported\""),
+            QByteArrayLiteral("\"activationState\":\"supported\"")
+        );
+        const auto tampered = parsePackageInspectionReport(reportBytes);
+        QVERIFY(!tampered);
+        QVERIFY(std::ranges::any_of(
+            tampered.errors,
+            [](const ValidationError &error) {
+                return error.code == QStringLiteral(
+                    "inspection-report.activation-state-mismatch"
+                );
+            }
+        ));
     }
 
     void rejectsIntegrityMismatch()
@@ -878,7 +1031,8 @@ private slots:
         entries[2].contents = integrityBytes(entries.sliced(0, 2));
         QVERIFY(writeArchive(path, entries));
         const auto result = inspect(path);
-        QVERIFY(result);
+        QVERIFY(!result);
+        QVERIFY(!result.errors.isEmpty());
         QVERIFY(!QFileInfo::exists(marker));
     }
 

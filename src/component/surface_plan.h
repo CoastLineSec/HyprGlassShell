@@ -15,6 +15,7 @@ namespace HyprShelld::Components {
 inline constexpr qsizetype maximumSurfacePlanBytes = 4 * 1024 * 1024;
 inline constexpr qsizetype maximumSurfacePlanInstances = 512;
 inline constexpr qsizetype maximumSurfacePlanBarLayouts = 64;
+inline constexpr quint32 defaultDeclarativeMaximumWidth = 240;
 
 struct SurfaceInstance final {
     QString componentId;
@@ -22,6 +23,9 @@ struct SurfaceInstance final {
     QString packageDigest;
     QString runtimeKind;
     QString factory;
+    QString declarativeText;
+    QString declarativeTooltip;
+    quint32 declarativeMaximumWidth = 0;
     QJsonObject settings;
 
     friend bool operator==(const SurfaceInstance &, const SurfaceInstance &) = default;

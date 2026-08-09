@@ -27,6 +27,10 @@ Page {
     property string pendingComponentId: ""
     property string lastErrorComponentId: ""
     property string configError: ""
+    property bool runtimeAvailable: false
+    property bool thirdPartySafeMode: false
+    property var runtimeStates: []
+    property string runtimeRetryBusyComponentId: ""
     property real contentTopMargin: 28
     property var settingsComponent: null
     property var removalComponent: null
@@ -78,6 +82,20 @@ Page {
         string packageDigest,
         var settings
     )
+    signal componentAdoptionRequested(
+        string componentId,
+        string packageDigest,
+        var defaultComponentSettings
+    )
+    signal componentAddToBarRequested(
+        string componentId,
+        string packageDigest,
+        var defaultComponentSettings
+    )
+    signal componentRetryRequested(
+        string componentId,
+        string packageDigest
+    )
 
     function componentsForType(type) {
         if (!Array.isArray(root.components))
@@ -95,7 +113,18 @@ Page {
         });
     }
 
-    function configRecord(component) {
+    function listValue(value) {
+        if (Array.isArray(value))
+            return value.slice();
+        if (!value || typeof value.length !== "number")
+            return [];
+        const result = [];
+        for (let index = 0; index < value.length; ++index)
+            result.push(value[index]);
+        return result;
+    }
+
+    function rawConfigRecord(component) {
         if (!component || !root.configSnapshot
                 || typeof root.configSnapshot !== "object"
                 || Array.isArray(root.configSnapshot)
@@ -105,12 +134,23 @@ Page {
             return null;
         }
         const record = root.configSnapshot.components[component.id];
-        if (!record || typeof record !== "object" || Array.isArray(record)
-                || record.packageDigest !== component.packageDigest
-                || typeof record.enabled !== "boolean") {
+        if (!record || typeof record !== "object" || Array.isArray(record))
             return null;
-        }
         return record;
+    }
+
+    function configRecord(component) {
+        const record = root.rawConfigRecord(component);
+        return record !== null
+                && record.packageDigest === component.packageDigest
+                && typeof record.enabled === "boolean"
+            ? record : null;
+    }
+
+    function digestMismatch(component) {
+        const record = root.rawConfigRecord(component);
+        return record !== null
+            && record.packageDigest !== component.packageDigest;
     }
 
     function desiredStateAvailable(component) {
@@ -123,13 +163,143 @@ Page {
         return record !== null && record.enabled;
     }
 
+    function hasPlacement(component) {
+        if (root.configRecord(component) === null || !root.configSnapshot
+                || typeof root.configSnapshot !== "object"
+                || !root.configSnapshot.instances
+                || typeof root.configSnapshot.instances !== "object"
+                || Array.isArray(root.configSnapshot.instances)) {
+            return false;
+        }
+        const instanceIds = Object.keys(root.configSnapshot.instances).filter(
+            instanceId => {
+                const instance = root.configSnapshot.instances[instanceId];
+                return instance && typeof instance === "object"
+                    && !Array.isArray(instance)
+                    && instance.componentId === component.id
+                    && instance.enabled === true;
+            }
+        );
+        if (instanceIds.length === 0 || !root.configSnapshot.layouts
+                || typeof root.configSnapshot.layouts !== "object"
+                || Array.isArray(root.configSnapshot.layouts)
+                || !root.configSnapshot.layouts.bars
+                || typeof root.configSnapshot.layouts.bars !== "object"
+                || Array.isArray(root.configSnapshot.layouts.bars)) {
+            return false;
+        }
+        const bars = root.configSnapshot.layouts.bars;
+        const declarativeV1 = component.origin === "user"
+            && component.type === "bar-widget"
+            && component.runtime
+            && component.runtime.kind === "declarative-v1"
+            && component.activationSupported !== false;
+        const layouts = declarativeV1 ? [bars.main] : Object.values(bars);
+        return layouts.some(layout => {
+            if (!layout || typeof layout !== "object"
+                    || Array.isArray(layout) || !layout.regions
+                    || typeof layout.regions !== "object"
+                    || Array.isArray(layout.regions)) {
+                return false;
+            }
+            return ["start", "center", "end"].some(regionName =>
+                root.listValue(layout.regions[regionName]).some(
+                    instanceId => instanceIds.includes(instanceId)
+                )
+            );
+        });
+    }
+
+    function addToBarVisible(component) {
+        return component && component.origin === "user"
+            && component.type === "bar-widget"
+            && component.activationSupported !== false
+            && !root.digestMismatch(component)
+            && !root.hasPlacement(component);
+    }
+
+    function adoptPackageVisible(component) {
+        return component && component.origin === "user"
+            && component.type === "bar-widget"
+            && component.activationSupported !== false
+            && root.digestMismatch(component);
+    }
+
+    function adoptPackageAvailable(component) {
+        return root.adoptPackageVisible(component)
+            && root.catalogJoinAvailable
+            && root.configWritable
+            && !root.managerBusy
+            && !root.configBusy
+            && !root.packageOperationBusy;
+    }
+
+    function addToBarAvailable(component) {
+        return root.addToBarVisible(component)
+            && root.catalogJoinAvailable
+            && root.configWritable
+            && !root.managerBusy
+            && !root.configBusy
+            && !root.packageOperationBusy
+            && !root.thirdPartySafeMode;
+    }
+
+    function defaultComponentSettings(component) {
+        const result = {};
+        if (!component)
+            return result;
+        for (const definition of root.listValue(
+            component.settingsDefinitions
+        )) {
+            if (!definition || definition.scope !== "component"
+                    || typeof definition.key !== "string"
+                    || !Object.prototype.hasOwnProperty.call(
+                        definition, "defaultValue"
+                    )) {
+                continue;
+            }
+            result[definition.key] = definition.defaultValue;
+        }
+        return result;
+    }
+
+    function runtimeState(component) {
+        if (!component)
+            return null;
+        return root.listValue(root.runtimeStates).find(state => state
+            && state.componentId === component.id
+            && state.packageDigest === component.packageDigest) || null;
+    }
+
+    function quarantined(component) {
+        const state = root.runtimeState(component);
+        return state !== null && state.state === "quarantined";
+    }
+
+    function runtimeFailureDescription(reason) {
+        switch (reason) {
+        case "timeout":
+            return qsTr("The trusted renderer did not stabilize in time.");
+        case "incomplete-startup":
+            return qsTr("Activation was interrupted before it completed.");
+        case "render-failed":
+            return qsTr("The trusted renderer could not create this widget.");
+        case "protocol-invalid":
+            return qsTr("The runtime rejected invalid activation data.");
+        default:
+            return "";
+        }
+    }
+
     function toggleAvailable(component) {
         return root.desiredStateAvailable(component)
             && component.activationSupported !== false
             && root.configWritable
             && !root.managerBusy
             && !root.packageOperationBusy
-            && !root.configBusy;
+            && !root.configBusy
+            && !(component.origin === "user"
+                && root.thirdPartySafeMode);
     }
 
     function inspectionReviewAvailable() {
@@ -143,8 +313,25 @@ Page {
         if (!root.catalogJoinAvailable)
             return qsTr("Unavailable");
         const record = root.configRecord(component);
-        if (record === null && component.origin === "user")
+        if (component.origin === "user"
+                && component.activationSupported !== false
+                && root.thirdPartySafeMode) {
+            return qsTr("Temporarily disabled while third-party runtime safe mode is active.");
+        }
+        if (record === null && component.origin === "user") {
+            if (root.digestMismatch(component))
+                return qsTr("A different package version is installed. Using it resets this widget's settings to the installed defaults and keeps it disabled.");
+            if (component.activationSupported === false) {
+                return component.compatibilityReason
+                    ? qsTr("Installed disabled. %1").arg(
+                        component.compatibilityReason
+                    )
+                    : qsTr("Installed disabled. This shell cannot activate it.");
+            }
+            if (root.addToBarVisible(component))
+                return qsTr("Installed disabled. Add it to the bar when you're ready.");
             return qsTr("Installed disabled. Review it before enabling.");
+        }
         if (record === null)
             return qsTr("Configuration does not match the installed package.");
         if (component.origin === "user"
@@ -154,6 +341,18 @@ Page {
                     component.compatibilityReason
                 )
                 : qsTr("Installed disabled. This shell cannot activate it.");
+        }
+        const runtime = root.runtimeState(component);
+        if (runtime !== null && runtime.state === "quarantined") {
+            const detail = root.runtimeFailureDescription(runtime.reason);
+            return detail.length > 0
+                ? qsTr("Disabled because activation did not complete. %1").arg(
+                    detail
+                )
+                : qsTr("Disabled because activation did not complete. You can try it again when ready.");
+        }
+        if (root.addToBarVisible(component)) {
+            return qsTr("Configured but not on the bar.");
         }
         if (component.origin === "user" && !record.enabled)
             return qsTr("Installed disabled. Review it before enabling.");
@@ -297,6 +496,29 @@ Page {
             }
 
             Frame {
+                objectName: "componentRuntimeSafeModeWarning"
+                Layout.fillWidth: true
+                visible: root.thirdPartySafeMode
+                padding: 16
+
+                background: Rectangle {
+                    color: "#33251a"
+                    radius: 12
+                    border.color: "#8bf6ad55"
+                }
+
+                Label {
+                    anchors.fill: parent
+                    text: qsTr("Third-party components are temporarily disabled because their runtime recovery data could not be trusted. Built-in features remain available.")
+                    color: "#ffd5a1"
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    Accessible.role: Accessible.AlertMessage
+                    Accessible.name: text
+                }
+            }
+
+            Frame {
                 objectName: "componentPackageWarning"
                 Layout.fillWidth: true
                 visible: root.packageError.length > 0
@@ -376,6 +598,18 @@ Page {
                                 && root.managerCatalogDigest.length > 0
                                 && !root.managerBusy
                                 && !root.packageOperationBusy
+                            adoptPackageVisible:
+                                root.adoptPackageVisible(modelData)
+                            adoptPackageEnabled:
+                                root.adoptPackageAvailable(modelData)
+                            addToBarVisible:
+                                root.addToBarVisible(modelData)
+                            addToBarEnabled:
+                                root.addToBarAvailable(modelData)
+                            retryVisible: root.quarantined(modelData)
+                            retryEnabled: root.runtimeAvailable
+                                && !root.thirdPartySafeMode
+                                && root.runtimeRetryBusyComponentId.length === 0
                             statusText: root.statusText(modelData)
                             errorText: root.lastErrorComponentId === modelData.id
                                 ? root.configError : ""
@@ -393,6 +627,23 @@ Page {
                                 root.openComponentSettings(component)
                             onRemoveRequested: component =>
                                 root.requestComponentRemoval(component)
+                            onAdoptPackageRequested: component =>
+                                root.componentAdoptionRequested(
+                                    component.id,
+                                    component.packageDigest,
+                                    root.defaultComponentSettings(component)
+                                )
+                            onAddToBarRequested: component =>
+                                root.componentAddToBarRequested(
+                                    component.id,
+                                    component.packageDigest,
+                                    root.defaultComponentSettings(component)
+                                )
+                            onRetryRequested: component =>
+                                root.componentRetryRequested(
+                                    component.id,
+                                    component.packageDigest
+                                )
                         }
                     }
                 }

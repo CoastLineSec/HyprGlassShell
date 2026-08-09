@@ -1,5 +1,6 @@
 #include "component_configuration.h"
 
+#include "declarative_document.h"
 #include "strict_json.h"
 
 #include <QJsonArray>
@@ -286,6 +287,27 @@ QJsonArray stringArray(const QStringList &values)
     return result;
 }
 
+bool isSupportedUserDeclarative(
+    const ConfigurationCatalogEntry &entry
+)
+{
+    if (!entry.activationSupported
+        || entry.origin != ComponentOrigin::User
+        || entry.type != ComponentType::BarWidget
+        || entry.componentApiVersion
+            != QLatin1StringView(currentComponentApiVersion)
+        || entry.runtimeKind != RuntimeKind::DeclarativeV1
+        || !entry.requestedCapabilities.isEmpty()
+        || !entry.dependencyIds.isEmpty()
+        || entry.declarativeRuntime.isEmpty()) {
+        return false;
+    }
+    return parseDeclarativeDocument(
+        QByteArrayView(entry.declarativeRuntime),
+        &entry.settingsSchema
+    ).ok();
+}
+
 } // namespace
 
 bool isFullSha256Digest(const QString &digest)
@@ -457,18 +479,24 @@ ValidationResult<ComponentConfiguration> parseComponentConfiguration(
             const auto catalogEntry = catalog.entries.constFind(iterator.key());
             if (catalogEntry != catalog.entries.cend()
                 && desired.packageDigest == catalogEntry->packageDigest) {
-                // Community runtime hosts are deliberately not shipped yet.
-                // A structurally valid user package may be installed and
-                // configured while inert, but desired activation must remain
-                // impossible until the runtime-safety slice provides an
-                // enforced host for it.
+                const auto supportedUserDeclarative =
+                    isSupportedUserDeclarative(*catalogEntry);
                 if (catalogEntry->origin == ComponentOrigin::User
-                    && desired.enabled) {
+                    && desired.enabled && !supportedUserDeclarative) {
                     addError(
                         result.errors,
                         path + QStringLiteral(".enabled"),
                         QStringLiteral("component-config.user-runtime-unavailable"),
-                        QStringLiteral("Third-party component runtimes are not available yet.")
+                        QStringLiteral("This third-party component does not have an enforceable runtime on the current host.")
+                    );
+                }
+                if (supportedUserDeclarative
+                    && !desired.grantedCapabilities.isEmpty()) {
+                    addError(
+                        result.errors,
+                        path + QStringLiteral(".grantedCapabilities"),
+                        QStringLiteral("component-config.declarative-grants-forbidden"),
+                        QStringLiteral("The data-only declarative runtime does not accept capability grants.")
                     );
                 }
                 if (catalogEntry->origin == ComponentOrigin::System
@@ -500,6 +528,31 @@ ValidationResult<ComponentConfiguration> parseComponentConfiguration(
                     result.errors += normalized.errors;
                 } else {
                     desired.settings = *normalized.value;
+                    if (supportedUserDeclarative) {
+                        const auto document = parseDeclarativeDocument(
+                            QByteArrayView(catalogEntry->declarativeRuntime),
+                            &catalogEntry->settingsSchema
+                        );
+                        if (document
+                            && document.value->text.kind
+                                == DeclarativeTextSourceKind::ComponentSetting) {
+                            const auto resolved = desired.settings.value(
+                                document.value->text.value
+                            );
+                            if (!resolved.isString()
+                                || !isValidDeclarativeResolvedText(
+                                    resolved.toString()
+                                )) {
+                                addError(
+                                    result.errors,
+                                    path + QStringLiteral(".settings.")
+                                        + document.value->text.value,
+                                    QStringLiteral("component-config.invalid-declarative-resolved-text"),
+                                    QStringLiteral("The resolved declarative label must be bounded normalized plain text.")
+                                );
+                            }
+                        }
+                    }
                 }
             }
             configuration.components.insert(iterator.key(), std::move(desired));
@@ -591,16 +644,27 @@ ValidationResult<ComponentConfiguration> parseComponentConfiguration(
                         QStringLiteral("The current visual host supports only bar-widget instances.")
                     );
                 }
-                const auto normalized = normalizeSettings(
-                    catalogEntry->settingsSchema,
-                    SettingScope::Instance,
-                    instance.settings,
-                    true
-                );
-                if (!normalized) {
-                    result.errors += normalized.errors;
+                if (isSupportedUserDeclarative(*catalogEntry)) {
+                    if (!instance.settings.isEmpty()) {
+                        addError(
+                            result.errors,
+                            path + QStringLiteral(".settings"),
+                            QStringLiteral("component-config.declarative-instance-settings-forbidden"),
+                            QStringLiteral("Version one declarative widgets use component settings only.")
+                        );
+                    }
                 } else {
-                    instance.settings = *normalized.value;
+                    const auto normalized = normalizeSettings(
+                        catalogEntry->settingsSchema,
+                        SettingScope::Instance,
+                        instance.settings,
+                        true
+                    );
+                    if (!normalized) {
+                        result.errors += normalized.errors;
+                    } else {
+                        instance.settings = *normalized.value;
+                    }
                 }
             }
             configuration.instances.insert(iterator.key(), std::move(instance));
@@ -782,27 +846,64 @@ ValidationResult<ComponentConfiguration> parseComponentConfiguration(
     QSet<QString> placed;
     for (auto layout = configuration.bars.constBegin();
          layout != configuration.bars.constEnd(); ++layout) {
-        for (const auto &region : {layout->start, layout->center, layout->end}) {
-            for (const auto &instanceId : region) {
+        const auto validateRegion = [&](const QString &regionName,
+                                        const QStringList &region) {
+            for (qsizetype index = 0; index < region.size(); ++index) {
+                const auto &instanceId = region.at(index);
+                const auto placementPath = QStringLiteral(
+                    "$.layouts.bars.%1.regions.%2[%3]"
+                ).arg(layout.key(), regionName).arg(index);
                 if (!isLowercaseUuidV4(instanceId)
                     || !configuration.instances.contains(instanceId)) {
                     addError(
                         result.errors,
-                        QStringLiteral("$.layouts.bars.%1.regions").arg(layout.key()),
+                        placementPath,
                         QStringLiteral("component-config.unknown-instance-placement"),
                         QStringLiteral("Every placement must reference an existing instance.")
                     );
                 } else if (placed.contains(instanceId)) {
                     addError(
                         result.errors,
-                        QStringLiteral("$.layouts.bars.%1.regions").arg(layout.key()),
+                        placementPath,
                         QStringLiteral("component-config.duplicate-instance-placement"),
                         QStringLiteral("An instance may appear in exactly one placement.")
                     );
+                } else {
+                    const auto instance = configuration.instances.constFind(
+                        instanceId
+                    );
+                    const auto desired = configuration.components.constFind(
+                        instance->componentId
+                    );
+                    const auto catalogEntry = catalog.entries.constFind(
+                        instance->componentId
+                    );
+                    if (layout.key() != QStringLiteral("main")
+                        && instance->enabled
+                        && desired != configuration.components.cend()
+                        && desired->enabled
+                        && catalogEntry != catalog.entries.cend()
+                        && desired->packageDigest
+                            == catalogEntry->packageDigest
+                        && isSupportedUserDeclarative(*catalogEntry)) {
+                        addError(
+                            result.errors,
+                            placementPath,
+                            QStringLiteral(
+                                "component-config.declarative-main-layout-required"
+                            ),
+                            QStringLiteral(
+                                "Enabled declarative-v1 widgets must be placed in the main bar layout."
+                            )
+                        );
+                    }
                 }
                 placed.insert(instanceId);
             }
-        }
+        };
+        validateRegion(QStringLiteral("start"), layout->start);
+        validateRegion(QStringLiteral("center"), layout->center);
+        validateRegion(QStringLiteral("end"), layout->end);
     }
     for (auto instance = configuration.instances.constBegin();
          instance != configuration.instances.constEnd(); ++instance) {

@@ -1,5 +1,6 @@
 #include "package_inspection_report.h"
 
+#include "declarative_document.h"
 #include "settings_schema.h"
 #include "strict_json.h"
 
@@ -136,6 +137,8 @@ QByteArray serializePackageInspectionReport(
         });
     }
 
+    const auto activationSupported = !report.declarativeRuntime.isEmpty()
+        && validateCurrentHostSupport(report.manifest).isEmpty();
     QJsonObject root{
         {QStringLiteral("reportVersion"), 1},
         {QStringLiteral("inspectionToken"), report.inspectionToken},
@@ -143,7 +146,9 @@ QByteArray serializePackageInspectionReport(
         {QStringLiteral("packageDigest"), report.packageDigest},
         {QStringLiteral("archiveSize"), static_cast<qint64>(report.archiveSize)},
         {QStringLiteral("expandedSize"), static_cast<qint64>(report.expandedSize)},
-        {QStringLiteral("activationState"), QStringLiteral("unsupported")},
+        {QStringLiteral("activationState"),
+         activationSupported ? QStringLiteral("supported")
+                             : QStringLiteral("unsupported")},
         {QStringLiteral("manifest"), report.normalizedManifest},
         {QStringLiteral("files"), files},
     };
@@ -151,6 +156,12 @@ QByteArray serializePackageInspectionReport(
         root.insert(
             QStringLiteral("settingsSchema"),
             *report.normalizedSettingsSchema
+        );
+    }
+    if (!report.declarativeRuntime.isEmpty()) {
+        root.insert(
+            QStringLiteral("declarativeRuntime"),
+            QJsonDocument::fromJson(report.declarativeRuntime).object()
         );
     }
 
@@ -189,6 +200,7 @@ ValidationResult<PackageInspectionReport> parsePackageInspectionReport(
             QStringLiteral("activationState"),
             QStringLiteral("manifest"),
             QStringLiteral("settingsSchema"),
+            QStringLiteral("declarativeRuntime"),
             QStringLiteral("files"),
         },
         QStringLiteral("$"),
@@ -240,12 +252,13 @@ ValidationResult<PackageInspectionReport> parsePackageInspectionReport(
         );
     }
     if (!activation.isString()
-        || activation.toString() != QStringLiteral("unsupported")) {
+        || (activation.toString() != QStringLiteral("supported")
+            && activation.toString() != QStringLiteral("unsupported"))) {
         addError(
             result.errors,
             QStringLiteral("$.activationState"),
             QStringLiteral("inspection-report.invalid-activation-state"),
-            QStringLiteral("This inspector version reports third-party activation as unsupported.")
+            QStringLiteral("activationState must be supported or unsupported.")
         );
     }
 
@@ -301,6 +314,7 @@ ValidationResult<PackageInspectionReport> parsePackageInspectionReport(
         }
     }
 
+    std::optional<SettingsSchema> parsedSettingsSchema;
     const auto schemaValue = root.value(QStringLiteral("settingsSchema"));
     if (!schemaValue.isUndefined()) {
         if (!schemaValue.isObject()) {
@@ -314,11 +328,65 @@ ValidationResult<PackageInspectionReport> parsePackageInspectionReport(
             report.normalizedSettingsSchema = schemaValue.toObject();
             const auto schemaBytes = QJsonDocument(*report.normalizedSettingsSchema)
                                          .toJson(QJsonDocument::Compact);
-            const auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
+            auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
             if (!schema) {
                 result.errors += schema.errors;
+            } else {
+                parsedSettingsSchema = std::move(*schema.value);
             }
         }
+    }
+
+    const auto declarativeValue = root.value(
+        QStringLiteral("declarativeRuntime")
+    );
+    if (report.manifest.runtime.kind == RuntimeKind::DeclarativeV1) {
+        if (!declarativeValue.isObject()) {
+            addError(
+                result.errors,
+                QStringLiteral("$.declarativeRuntime"),
+                QStringLiteral("inspection-report.declarative-object-required"),
+                QStringLiteral("A declarative-v1 report must contain its normalized runtime document.")
+            );
+        } else {
+            const auto documentBytes = QJsonDocument(
+                declarativeValue.toObject()
+            ).toJson(QJsonDocument::Compact);
+            const auto document = parseDeclarativeDocument(
+                QByteArrayView(documentBytes),
+                parsedSettingsSchema.has_value()
+                    ? &*parsedSettingsSchema
+                    : nullptr
+            );
+            if (!document) {
+                result.errors += document.errors;
+            } else {
+                report.declarativeRuntime = serializeDeclarativeDocument(
+                    *document.value
+                );
+            }
+        }
+    } else if (!declarativeValue.isUndefined()) {
+        addError(
+            result.errors,
+            QStringLiteral("$.declarativeRuntime"),
+            QStringLiteral("inspection-report.unexpected-declarative-runtime"),
+            QStringLiteral("Only declarative-v1 packages may carry a declarative runtime document.")
+        );
+    }
+
+    const auto expectedActivation = !report.declarativeRuntime.isEmpty()
+            && validateCurrentHostSupport(report.manifest).isEmpty()
+        ? QStringLiteral("supported")
+        : QStringLiteral("unsupported");
+    if (activation.isString()
+        && activation.toString() != expectedActivation) {
+        addError(
+            result.errors,
+            QStringLiteral("$.activationState"),
+            QStringLiteral("inspection-report.activation-state-mismatch"),
+            QStringLiteral("activationState does not match the validated manifest and runtime document.")
+        );
     }
 
     const auto filesValue = root.value(QStringLiteral("files"));
@@ -394,7 +462,14 @@ ValidationResult<PackageInspectionReport> parsePackageInspectionReport(
                 || (typedPath == QStringLiteral("settings.schema.json")
                     && fileSize > 256 * 1024)
                 || (typedPath == QStringLiteral("icon.png")
-                    && fileSize > 4 * 1024 * 1024)) {
+                    && fileSize > 4 * 1024 * 1024)
+                || (report.manifest.runtime.kind
+                        == RuntimeKind::DeclarativeV1
+                    && typedPath == report.manifest.runtime.entrypoint
+                    && fileSize
+                        > static_cast<quint64>(
+                            maximumDeclarativeDocumentBytes
+                        ))) {
                 addError(
                     result.errors,
                     path + QStringLiteral(".size"),

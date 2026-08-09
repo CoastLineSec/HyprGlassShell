@@ -724,6 +724,13 @@ ApplicationWindow {
                     lastErrorComponentId:
                         ComponentConfigClient.lastErrorComponentId
                     configError: ComponentConfigClient.lastErrorMessage
+                    runtimeAvailable: ComponentRuntimeClient.available
+                        && ComponentRuntimeClient.runtimeHealthAvailable
+                    thirdPartySafeMode:
+                        ComponentRuntimeClient.thirdPartySafeMode
+                    runtimeStates: ComponentRuntimeClient.runtimeStates
+                    runtimeRetryBusyComponentId:
+                        ComponentRuntimeClient.runtimeRetryBusyComponentId
                     contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
 
                     onComponentEnabledRequested: (
@@ -758,6 +765,31 @@ ApplicationWindow {
                         componentId,
                         packageDigest,
                         settings
+                    )
+                    onComponentAdoptionRequested: (
+                        componentId,
+                        packageDigest,
+                        defaultComponentSettings
+                    ) => ComponentConfigClient.adoptComponentPackage(
+                        componentId,
+                        packageDigest,
+                        defaultComponentSettings
+                    )
+                    onComponentAddToBarRequested: (
+                        componentId,
+                        packageDigest,
+                        defaultComponentSettings
+                    ) => ComponentConfigClient.addComponentToBar(
+                        componentId,
+                        packageDigest,
+                        defaultComponentSettings
+                    )
+                    onComponentRetryRequested: (
+                        componentId,
+                        packageDigest
+                    ) => ComponentRuntimeClient.retryComponent(
+                        componentId,
+                        packageDigest
                     )
                 }
             }

@@ -27,6 +27,11 @@ class ComponentRuntimeClient final : public QObject {
     Q_PROPERTY(QString planDigest READ planDigest NOTIFY planChanged)
     Q_PROPERTY(QString planState READ planState NOTIFY planStateChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
+    Q_PROPERTY(qulonglong runtimeHealthRevision READ runtimeHealthRevision NOTIFY runtimeHealthChanged)
+    Q_PROPERTY(bool runtimeHealthAvailable READ runtimeHealthAvailable NOTIFY runtimeHealthChanged)
+    Q_PROPERTY(bool thirdPartySafeMode READ thirdPartySafeMode NOTIFY runtimeHealthChanged)
+    Q_PROPERTY(QVariantList runtimeStates READ runtimeStates NOTIFY runtimeHealthChanged)
+    Q_PROPERTY(QString runtimeRetryBusyComponentId READ runtimeRetryBusyComponentId NOTIFY runtimeRetryBusyChanged)
 
 public:
     explicit ComponentRuntimeClient(QObject *parent = nullptr);
@@ -39,18 +44,48 @@ public:
     [[nodiscard]] QString planDigest() const;
     [[nodiscard]] QString planState() const;
     [[nodiscard]] QString lastError() const;
+    [[nodiscard]] qulonglong runtimeHealthRevision() const;
+    [[nodiscard]] bool runtimeHealthAvailable() const;
+    [[nodiscard]] bool thirdPartySafeMode() const;
+    [[nodiscard]] QVariantList runtimeStates() const;
+    [[nodiscard]] QString runtimeRetryBusyComponentId() const;
 
     Q_INVOKABLE QVariantList barInstances(
         const QString &layoutId,
         const QString &outputName,
         const QString &region
     ) const;
+    Q_INVOKABLE void reportActivationStable(
+        const QString &instanceId,
+        const QString &componentId,
+        const QString &packageDigest,
+        const QString &surfacePlanDigest
+    );
+    Q_INVOKABLE bool authorizeCurrentPlan();
+    Q_INVOKABLE bool cancelCurrentPlanAuthorization();
+    Q_INVOKABLE void reportActivationFailed(
+        const QString &instanceId,
+        const QString &componentId,
+        const QString &packageDigest,
+        const QString &surfacePlanDigest,
+        const QString &reason
+    );
+    Q_INVOKABLE QVariantMap runtimeStatus(
+        const QString &componentId,
+        const QString &packageDigest
+    ) const;
+    Q_INVOKABLE bool retryComponent(
+        const QString &componentId,
+        const QString &packageDigest
+    );
 
 signals:
     void availableChanged();
     void planStateChanged();
     void planChanged();
     void lastErrorChanged();
+    void runtimeHealthChanged();
+    void runtimeRetryBusyChanged();
 
 private slots:
     void propertiesChanged(
@@ -68,6 +103,7 @@ private:
     void refreshProperties();
     bool applyProperties(const QVariantMap &properties, bool requireComplete);
     void fetchPlan(quint64 revision, const QString &digest);
+    void fetchRuntimeStates(quint64 runtimeHealthRevision);
     void acceptPlan(
         Components::SurfacePlan plan,
         quint64 revision,
@@ -75,7 +111,10 @@ private:
     );
     void setAvailable(bool available);
     void setLastError(const QString &error);
+    void invalidatePlan(const QString &error);
+    void invalidateRuntimeHealth(const QString &error);
     void invalidateRuntime(const QString &error);
+    void retainBuiltinsOnly();
     void publishStateIfChanged(bool previousCurrent, const QString &previousState);
     [[nodiscard]] QVariantList fallbackBarInstances(
         const QString &layoutId,
@@ -96,9 +135,21 @@ private:
     quint64 serverRevision_ = 0;
     QString serverDigest_;
     QString serverState_ = QStringLiteral("hydrating");
+    quint64 serverRuntimeHealthRevision_ = 0;
+    bool thirdPartySafeMode_ = true;
+    bool runtimeHealthAvailable_ = false;
+    quint64 healthRefreshGeneration_ = 0;
+    quint64 acceptedRuntimeHealthRevision_ = 0;
+    QVariantList runtimeStates_;
+    QString runtimeRetryBusyComponentId_;
+    quint64 retryGeneration_ = 0;
+    quint64 authorizedSurfacePlanRevision_ = 0;
+    bool authorizationBusy_ = false;
+    quint64 authorizationGeneration_ = 0;
     quint64 acceptedRevision_ = 0;
     QString acceptedDigest_;
     std::optional<Components::SurfacePlan> acceptedPlan_;
+    bool acceptedPlanSanitized_ = false;
     QString lastError_;
 };
 

@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
     HyprShelld::SystemdUserManager manager(connection);
     HyprShelld::CoordinatorService service(&manager, connection);
     const Coordinator1Adaptor adaptor(&service);
-    HyprShelld::ComponentPlanController componentPlanController;
+    HyprShelld::ComponentPlanController componentPlanController(
+        HyprShelld::ComponentRuntimeHealthPaths::standard()
+    );
     HyprShelld::ComponentRuntimeService componentRuntimeService(
         &componentPlanController,
         connection
@@ -59,6 +61,7 @@ int main(int argc, char *argv[])
             &connection,
             &service,
             &componentRuntimeService,
+            &componentPlanController,
             &componentPlanHydrator
         ]() {
             if (!connection.registerObject(
@@ -89,6 +92,16 @@ int main(int argc, char *argv[])
                                             .arg(connection.lastError().message());
                 application.exit(EXIT_FAILURE);
                 return;
+            }
+
+            QString runtimeHealthError;
+            if (!componentPlanController.initializeRuntimeHealth(
+                    runtimeHealthError
+                )) {
+                qWarning().noquote()
+                    << QStringLiteral(
+                           "Third-party component safe mode is active: %1"
+                       ).arg(runtimeHealthError);
             }
 
             componentPlanHydrator.start();

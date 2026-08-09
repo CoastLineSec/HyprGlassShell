@@ -13,7 +13,7 @@
   ],
   "properties": {
     "formatVersion": {
-      "const": 1
+      "const": 2
     },
     "catalogDigest": {
       "$ref": "#/$defs/sha256"
@@ -75,17 +75,45 @@
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
     "runtime": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "factory"],
-      "properties": {
-        "kind": {
-          "const": "builtin-v1"
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "factory"],
+          "properties": {
+            "kind": {
+              "const": "builtin-v1"
+            },
+            "factory": {
+              "$ref": "#/$defs/factoryKey"
+            }
+          }
         },
-        "factory": {
-          "$ref": "#/$defs/factoryKey"
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "text", "tooltip", "maximumWidth"],
+          "properties": {
+            "kind": {
+              "const": "declarative-v1"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "tooltip": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "maximumWidth": {
+              "type": "integer",
+              "minimum": 48,
+              "maximum": 512
+            }
+          }
         }
-      }
+      ]
     },
     "instance": {
       "type": "object",

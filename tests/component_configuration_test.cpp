@@ -31,6 +31,44 @@ QByteArray encode(QJsonObject object)
     return bytes;
 }
 
+Components::ConfigurationCatalogEntry declarativeCatalogEntry(
+    const QString &packageDigest
+)
+{
+    return {
+        .packageDigest = packageDigest,
+        .type = Components::ComponentType::BarWidget,
+        .origin = Components::ComponentOrigin::User,
+        .settingsSchema = {},
+        .requestedCapabilities = {},
+        .componentApiVersion = QString::fromLatin1(
+            Components::currentComponentApiVersion
+        ),
+        .runtimeKind = Components::RuntimeKind::DeclarativeV1,
+        .dependencyIds = {},
+        .activationSupported = true,
+        .declarativeRuntime = QByteArrayLiteral(
+            R"({"documentVersion":1,"text":{"literal":"Clock"},"type":"text-pill"})"
+        ),
+    };
+}
+
+Components::ConfigurationCatalogEntry settingDeclarativeCatalogEntry(
+    const QString &packageDigest
+)
+{
+    const auto schema = Components::parseSettingsSchema(QByteArrayView(
+        QByteArrayLiteral(R"({"schemaVersion":1,"settings":[{"key":"label","scope":"component","type":"string","label":"Label","description":"Text shown in the pill.","group":"appearance","order":1,"default":"Clock","minimumLength":1,"maximumLength":64}]})")
+    ));
+    Q_ASSERT(schema);
+    auto entry = declarativeCatalogEntry(packageDigest);
+    entry.settingsSchema = *schema.value;
+    entry.declarativeRuntime = QByteArrayLiteral(
+        R"({"documentVersion":1,"text":{"setting":"label"},"type":"text-pill"})"
+    );
+    return entry;
+}
+
 } // namespace
 
 class ComponentConfigurationTest final : public QObject {
@@ -455,6 +493,244 @@ private slots:
 
         auto desired = components.value(componentId).toObject();
         desired.insert(QStringLiteral("enabled"), false);
+        components.insert(componentId, desired);
+        root.insert(QStringLiteral("components"), components);
+        QVERIFY(Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        ));
+    }
+
+    void allowsOnlyExactDataOnlyUserActivation()
+    {
+        auto currentCatalog = catalog();
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto packageDigest = QString(64, QLatin1Char('b'));
+        currentCatalog.entries.insert(
+            componentId, declarativeCatalogEntry(packageDigest)
+        );
+
+        auto root = QJsonDocument::fromJson(defaultsBytes()).object();
+        auto components = root.value(QStringLiteral("components")).toObject();
+        components.insert(componentId, QJsonObject{
+            {QStringLiteral("packageDigest"), packageDigest},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("grantedCapabilities"), QJsonArray{}},
+            {QStringLiteral("settings"), QJsonObject{}},
+        });
+        root.insert(QStringLiteral("components"), components);
+
+        const auto instanceId = QStringLiteral(
+            "d9a61b25-670b-44cb-a824-9e52772e79f1"
+        );
+        auto instances = root.value(QStringLiteral("instances")).toObject();
+        instances.insert(instanceId, QJsonObject{
+            {QStringLiteral("componentId"), componentId},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("settings"), QJsonObject{}},
+        });
+        root.insert(QStringLiteral("instances"), instances);
+        auto layouts = root.value(QStringLiteral("layouts")).toObject();
+        auto bars = layouts.value(QStringLiteral("bars")).toObject();
+        auto main = bars.value(QStringLiteral("main")).toObject();
+        auto regions = main.value(QStringLiteral("regions")).toObject();
+        auto end = regions.value(QStringLiteral("end")).toArray();
+        end.append(instanceId);
+        regions.insert(QStringLiteral("end"), end);
+        main.insert(QStringLiteral("regions"), regions);
+        bars.insert(QStringLiteral("main"), main);
+        layouts.insert(QStringLiteral("bars"), bars);
+        root.insert(QStringLiteral("layouts"), layouts);
+
+        const auto parsed = Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        );
+        QVERIFY2(parsed, qPrintable(parsed.errors.isEmpty()
+            ? QString() : parsed.errors.front().message));
+        QCOMPARE(parsed.value->components.value(componentId).enabled, true);
+        QCOMPARE(parsed.value->instances.value(instanceId).settings, QJsonObject{});
+
+        auto badInstance = instances.value(instanceId).toObject();
+        badInstance.insert(
+            QStringLiteral("settings"),
+            QJsonObject{{QStringLiteral("instanceTitle"), QStringLiteral("x")}}
+        );
+        instances.insert(instanceId, badInstance);
+        root.insert(QStringLiteral("instances"), instances);
+        const auto withInstanceSettings =
+            Components::parseComponentConfiguration(
+                QByteArrayView(encode(root)), currentCatalog
+            );
+        QVERIFY(!withInstanceSettings);
+        QVERIFY(std::ranges::any_of(
+            withInstanceSettings.errors,
+            [](const auto &error) {
+                return error.code == QStringLiteral(
+                    "component-config.declarative-instance-settings-forbidden"
+                );
+            }
+        ));
+    }
+
+    void requiresActiveDeclarativeWidgetsInTheMainLayout()
+    {
+        auto currentCatalog = catalog();
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto packageDigest = QString(64, QLatin1Char('b'));
+        currentCatalog.entries.insert(
+            componentId, declarativeCatalogEntry(packageDigest)
+        );
+
+        auto root = QJsonDocument::fromJson(defaultsBytes()).object();
+        auto components = root.value(QStringLiteral("components")).toObject();
+        components.insert(componentId, QJsonObject{
+            {QStringLiteral("packageDigest"), packageDigest},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("grantedCapabilities"), QJsonArray{}},
+            {QStringLiteral("settings"), QJsonObject{}},
+        });
+        root.insert(QStringLiteral("components"), components);
+
+        const auto instanceId = QStringLiteral(
+            "d9a61b25-670b-44cb-a824-9e52772e79f1"
+        );
+        auto instances = root.value(QStringLiteral("instances")).toObject();
+        instances.insert(instanceId, QJsonObject{
+            {QStringLiteral("componentId"), componentId},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("settings"), QJsonObject{}},
+        });
+        root.insert(QStringLiteral("instances"), instances);
+
+        auto layouts = root.value(QStringLiteral("layouts")).toObject();
+        auto bars = layouts.value(QStringLiteral("bars")).toObject();
+        bars.insert(QStringLiteral("secondary"), QJsonObject{
+            {QStringLiteral("outputs"), QJsonObject{
+                {QStringLiteral("mode"), QStringLiteral("all")},
+            }},
+            {QStringLiteral("regions"), QJsonObject{
+                {QStringLiteral("start"), QJsonArray{}},
+                {QStringLiteral("center"), QJsonArray{}},
+                {QStringLiteral("end"), QJsonArray{instanceId}},
+            }},
+        });
+        layouts.insert(QStringLiteral("bars"), bars);
+        root.insert(QStringLiteral("layouts"), layouts);
+
+        const auto active = Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        );
+        QVERIFY(!active);
+        QVERIFY(std::ranges::any_of(active.errors, [](const auto &error) {
+            return error.code == QStringLiteral(
+                "component-config.declarative-main-layout-required"
+            );
+        }));
+
+        auto component = components.value(componentId).toObject();
+        component.insert(QStringLiteral("enabled"), false);
+        components.insert(componentId, component);
+        root.insert(QStringLiteral("components"), components);
+        QVERIFY(Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        ));
+
+        component.insert(QStringLiteral("enabled"), true);
+        component.insert(
+            QStringLiteral("packageDigest"),
+            QString(64, QLatin1Char('c'))
+        );
+        components.insert(componentId, component);
+        root.insert(QStringLiteral("components"), components);
+        QVERIFY(Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        ));
+    }
+
+    void keepsCapabilitiesDependenciesAndInvalidDocumentsInert()
+    {
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto packageDigest = QString(64, QLatin1Char('b'));
+        auto root = QJsonDocument::fromJson(defaultsBytes()).object();
+        auto components = root.value(QStringLiteral("components")).toObject();
+        components.insert(componentId, QJsonObject{
+            {QStringLiteral("packageDigest"), packageDigest},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("grantedCapabilities"), QJsonArray{}},
+            {QStringLiteral("settings"), QJsonObject{}},
+        });
+        root.insert(QStringLiteral("components"), components);
+
+        auto entry = declarativeCatalogEntry(packageDigest);
+        for (const auto scenario : {
+                 QStringLiteral("capability"),
+                 QStringLiteral("dependency"),
+                 QStringLiteral("invalid-document"),
+             }) {
+            auto currentCatalog = catalog();
+            auto candidate = entry;
+            if (scenario == QStringLiteral("capability")) {
+                candidate.requestedCapabilities.insert(
+                    QStringLiteral("example.read")
+                );
+            } else if (scenario == QStringLiteral("dependency")) {
+                candidate.dependencyIds.append(
+                    QStringLiteral("org.example.dependency")
+                );
+            } else {
+                candidate.declarativeRuntime = QByteArrayLiteral("{}");
+            }
+            currentCatalog.entries.insert(componentId, std::move(candidate));
+            const auto parsed = Components::parseComponentConfiguration(
+                QByteArrayView(encode(root)), currentCatalog
+            );
+            QVERIFY2(!parsed, qPrintable(scenario));
+            QVERIFY(std::ranges::any_of(
+                parsed.errors,
+                [](const auto &error) {
+                    return error.code == QStringLiteral(
+                        "component-config.user-runtime-unavailable"
+                    );
+                }
+            ));
+        }
+    }
+
+    void rejectsResolvedDeclarativeTextThatWouldPoisonTheRuntimePlan()
+    {
+        auto currentCatalog = catalog();
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto packageDigest = QString(64, QLatin1Char('b'));
+        currentCatalog.entries.insert(
+            componentId, settingDeclarativeCatalogEntry(packageDigest)
+        );
+
+        auto root = QJsonDocument::fromJson(defaultsBytes()).object();
+        auto components = root.value(QStringLiteral("components")).toObject();
+        components.insert(componentId, QJsonObject{
+            {QStringLiteral("packageDigest"), packageDigest},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("grantedCapabilities"), QJsonArray{}},
+            {QStringLiteral("settings"), QJsonObject{
+                {QStringLiteral("label"), QStringLiteral(" padded ")},
+            }},
+        });
+        root.insert(QStringLiteral("components"), components);
+
+        const auto rejected = Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        );
+        QVERIFY(!rejected);
+        QVERIFY(std::ranges::any_of(rejected.errors, [](const auto &error) {
+            return error.code == QStringLiteral(
+                "component-config.invalid-declarative-resolved-text"
+            );
+        }));
+
+        auto desired = components.value(componentId).toObject();
+        desired.insert(
+            QStringLiteral("settings"),
+            QJsonObject{{QStringLiteral("label"), QStringLiteral("Clock")}}
+        );
         components.insert(componentId, desired);
         root.insert(QStringLiteral("components"), components);
         QVERIFY(Components::parseComponentConfiguration(

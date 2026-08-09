@@ -19,6 +19,7 @@
 #include <QtTest>
 
 #include <utility>
+#include <algorithm>
 
 #include <sys/stat.h>
 
@@ -548,20 +549,89 @@ private slots:
         bus.unregisterObject(objectPath);
     }
 
-    void reviewedUserPackageUpdateAdoptsOnlyDisabledDigest()
+    void reviewedUserPackageUpdateAdoptsInertlyAndPreservesPlacement()
     {
         QTemporaryDir directory;
         QVERIFY(directory.isValid());
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto oldPackageDigest = QString(64, QLatin1Char('b'));
+        const auto newPackageDigest = QString(64, QLatin1Char('c'));
+        const auto instanceId = QStringLiteral(
+            "d9a61b25-670b-44cb-a824-9e52772e79f1"
+        );
+
+        const auto baseCatalog = catalog();
+        const auto parsedDefaults = Components::parseComponentConfiguration(
+            QByteArrayView(Tests::readBytes(QStringLiteral(
+                HYPRSHELLD_COMPONENT_DEFAULTS_FILE
+            ))),
+            baseCatalog
+        );
+        QVERIFY(parsedDefaults);
+        auto seeded = *parsedDefaults.value;
+        seeded.revision = 7;
+        seeded.components.insert(componentId, {
+            .packageDigest = oldPackageDigest,
+            .enabled = true,
+            .grantedCapabilities = {QStringLiteral("old.permission")},
+            .settings = {{QStringLiteral("oldValue"), QStringLiteral("Old")}},
+        });
+        seeded.instances.insert(instanceId, {
+            .componentId = componentId,
+            .enabled = true,
+            .settings = {},
+        });
+        seeded.bars[QStringLiteral("main")].end.append(instanceId);
+        const auto paths = Tests::componentPathsFor(
+            directory.path(),
+            QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
+        );
+        const auto seededBytes = Components::serializeComponentConfiguration(
+            seeded
+        );
+        QVERIFY(Tests::writeBytes(paths.activeFile, seededBytes));
+        QVERIFY(Tests::writeBytes(paths.recoveryFile, seededBytes));
+
+        const auto parsedSchema = Components::parseSettingsSchema(
+            QByteArrayLiteral(R"({
+              "schemaVersion":1,
+              "settings":[{
+                "key":"label",
+                "scope":"component",
+                "type":"string",
+                "label":"Label",
+                "description":"Text shown in the pill.",
+                "group":"general",
+                "order":1,
+                "default":"New Clock",
+                "minimumLength":1,
+                "maximumLength":128
+              }]
+            })")
+        );
+        QVERIFY(parsedSchema);
+        auto newCatalog = baseCatalog;
+        newCatalog.digest = QString(64, QLatin1Char('e'));
+        newCatalog.entries.insert(
+            componentId,
+            {
+                .packageDigest = newPackageDigest,
+                .type = Components::ComponentType::BarWidget,
+                .origin = Components::ComponentOrigin::User,
+                .settingsSchema = *parsedSchema.value,
+                .requestedCapabilities = {},
+                .componentApiVersion = QStringLiteral("1.0"),
+                .runtimeKind = Components::RuntimeKind::DeclarativeV1,
+                .activationSupported = true,
+                .declarativeRuntime = QByteArrayLiteral(
+                    R"({"documentVersion":1,"text":{"setting":"label"},"type":"text-pill"})"
+                ),
+            }
+        );
+
         auto bus = QDBusConnection::sessionBus();
         QVERIFY(bus.isConnected());
-
-        ComponentConfigService service(
-            ComponentStore(Tests::componentPathsFor(
-                directory.path(),
-                QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
-            )),
-            bus
-        );
+        ComponentConfigService service(ComponentStore(paths), bus);
         const ComponentConfig1Adaptor adaptor(&service);
         QVERIFY(bus.registerObject(
             objectPath,
@@ -569,51 +639,82 @@ private slots:
             QDBusConnection::ExportAdaptors
         ));
         QVERIFY(bus.registerService(serviceName));
-
-        const auto componentId = QStringLiteral("org.example.clock");
-        const auto oldPackageDigest = QString(64, QLatin1Char('b'));
-        const auto newPackageDigest = QString(64, QLatin1Char('c'));
-        auto oldCatalog = catalog();
-        oldCatalog.digest = QString(64, QLatin1Char('d'));
-        oldCatalog.entries.insert(
-            componentId,
-            {
-                .packageDigest = oldPackageDigest,
-                .type = Components::ComponentType::BarWidget,
-                .origin = Components::ComponentOrigin::User,
-                .settingsSchema = {},
-                .requestedCapabilities = {},
-            }
-        );
-        service.applyCatalog(oldCatalog);
+        service.applyCatalog(newCatalog);
 
         ComponentConfigClient client(bus, nullptr);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
         QTRY_COMPARE_WITH_TIMEOUT(
-            client.catalogDigest(), oldCatalog.digest, 3000
-        );
-        client.setComponentSettings(componentId, oldPackageDigest, {});
-        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 1ULL, 3000);
-        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
-
-        auto newCatalog = oldCatalog;
-        newCatalog.digest = QString(64, QLatin1Char('e'));
-        newCatalog.entries[componentId].packageDigest = newPackageDigest;
-        service.applyCatalog(newCatalog);
-        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
-        QTRY_COMPARE_WITH_TIMEOUT(
             client.catalogDigest(), newCatalog.digest, 3000
         );
+        QCOMPARE(client.revision(), 7ULL);
+        const auto activeOldSnapshot = client.snapshot();
         QCOMPARE(
-            client.snapshot()
-                .value(QStringLiteral("components")).toMap()
+            activeOldSnapshot.value(QStringLiteral("components")).toMap()
+                .value(componentId).toMap()
+                .value(QStringLiteral("enabled")).toBool(),
+            true
+        );
+        QCOMPARE(
+            activeOldSnapshot.value(QStringLiteral("components")).toMap()
+                .value(componentId).toMap()
+                .value(QStringLiteral("grantedCapabilities")).toList(),
+            QVariantList{QStringLiteral("old.permission")}
+        );
+        QCOMPARE(
+            activeOldSnapshot.value(QStringLiteral("components")).toMap()
                 .value(componentId).toMap()
                 .value(QStringLiteral("packageDigest")).toString(),
             oldPackageDigest
         );
 
-        client.setComponentSettings(componentId, newPackageDigest, {});
-        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 2ULL, 3000);
+        auto activatingAdoption = activeOldSnapshot;
+        auto activatingComponents = activatingAdoption.value(
+            QStringLiteral("components")
+        ).toMap();
+        auto activatingRecord = activatingComponents.value(
+            componentId
+        ).toMap();
+        activatingRecord.insert(
+            QStringLiteral("packageDigest"),
+            newPackageDigest
+        );
+        activatingRecord.insert(QStringLiteral("enabled"), true);
+        activatingRecord.insert(
+            QStringLiteral("grantedCapabilities"),
+            QVariantList{}
+        );
+        activatingRecord.insert(
+            QStringLiteral("settings"),
+            QVariantMap{{QStringLiteral("label"), QStringLiteral("New Clock")}}
+        );
+        activatingComponents.insert(componentId, activatingRecord);
+        activatingAdoption.insert(
+            QStringLiteral("components"),
+            activatingComponents
+        );
+        auto activatingBytes = QJsonDocument::fromVariant(
+            activatingAdoption
+        ).toJson(QJsonDocument::Compact);
+        activatingBytes.append('\n');
+        const auto rejectedActivation = replaceCall(
+            bus,
+            client.revision(),
+            newCatalog.digest,
+            activatingBytes
+        );
+        QCOMPARE(rejectedActivation.type(), QDBusMessage::ErrorMessage);
+        QCOMPARE(
+            rejectedActivation.errorName(),
+            QStringLiteral("org.hyprshelld.ComponentConfig1.Error.InvalidSnapshot")
+        );
+        QCOMPARE(client.revision(), 7ULL);
+
+        client.adoptComponentPackage(
+            componentId,
+            newPackageDigest,
+            {{QStringLiteral("label"), QStringLiteral("New Clock")}}
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 8ULL, 3000);
         QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
         const auto adopted = client.snapshot()
                                  .value(QStringLiteral("components")).toMap()
@@ -627,7 +728,31 @@ private slots:
             adopted.value(QStringLiteral("grantedCapabilities"))
                 .toList().isEmpty()
         );
+        QCOMPARE(
+            adopted.value(QStringLiteral("settings")).toMap().value(
+                QStringLiteral("label")
+            ).toString(),
+            QStringLiteral("New Clock")
+        );
+        QCOMPARE(
+            client.snapshot().value(QStringLiteral("instances")),
+            activeOldSnapshot.value(QStringLiteral("instances"))
+        );
+        QCOMPARE(
+            client.snapshot().value(QStringLiteral("layouts")),
+            activeOldSnapshot.value(QStringLiteral("layouts"))
+        );
         QVERIFY(client.lastErrorName().isEmpty());
+
+        client.setComponentEnabled(componentId, newPackageDigest, true);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 9ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(
+            client.snapshot().value(QStringLiteral("components")).toMap()
+                .value(componentId).toMap()
+                .value(QStringLiteral("enabled")).toBool(),
+            true
+        );
 
         bus.unregisterService(serviceName);
         bus.unregisterObject(objectPath);
@@ -1026,6 +1151,345 @@ private slots:
 
         bus.unregisterService(serviceName);
         bus.unregisterObject(objectPath);
+    }
+
+    void addToBarBuildsOneDigestBoundAtomicPlacement()
+    {
+        auto clientBus = QDBusConnection::sessionBus();
+        QVERIFY(clientBus.isConnected());
+        const auto connectionName = QStringLiteral(
+            "hyprshelld-component-config-add-to-bar"
+        );
+        auto serviceBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus, connectionName
+        );
+        QVERIFY(serviceBus.isConnected());
+        DelayedSnapshotService service(serviceBus);
+        QVERIFY(serviceBus.registerObject(
+            objectPath,
+            &service,
+            QDBusConnection::ExportAllProperties
+                | QDBusConnection::ExportAllSlots
+        ));
+        QVERIFY(serviceBus.registerService(serviceName));
+
+        ComponentConfigClient client(clientBus, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        const auto componentId = QStringLiteral("org.example.clock-widget");
+        const auto packageDigest = QString(64, QLatin1Char('d'));
+        client.addComponentToBar(
+            componentId,
+            packageDigest,
+            {{QStringLiteral("label"), QStringLiteral("Clock")}}
+        );
+        QVERIFY(client.busy());
+        QCOMPARE(client.pendingComponentId(), componentId);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 1ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+
+        const auto snapshot = client.snapshot();
+        const auto desired = snapshot.value(QStringLiteral("components"))
+                                 .toMap().value(componentId).toMap();
+        QCOMPARE(
+            desired.value(QStringLiteral("packageDigest")).toString(),
+            packageDigest
+        );
+        QCOMPARE(desired.value(QStringLiteral("enabled")).toBool(), true);
+        QCOMPARE(
+            desired.value(QStringLiteral("grantedCapabilities")).toList(),
+            QVariantList{}
+        );
+        QCOMPARE(
+            desired.value(QStringLiteral("settings")).toMap().value(
+                QStringLiteral("label")
+            ).toString(),
+            QStringLiteral("Clock")
+        );
+
+        const auto instances = snapshot.value(QStringLiteral("instances")).toMap();
+        QString instanceId;
+        for (auto iterator = instances.constBegin();
+             iterator != instances.constEnd(); ++iterator) {
+            if (iterator.value().toMap().value(
+                    QStringLiteral("componentId")
+                ).toString() == componentId) {
+                instanceId = iterator.key();
+                QCOMPARE(
+                    iterator.value().toMap().value(
+                        QStringLiteral("enabled")
+                    ).toBool(),
+                    true
+                );
+                QCOMPARE(
+                    iterator.value().toMap().value(
+                        QStringLiteral("settings")
+                    ).toMap(),
+                    QVariantMap{}
+                );
+            }
+        }
+        QVERIFY(Components::isLowercaseUuidV4(instanceId));
+        const auto main = snapshot.value(QStringLiteral("layouts")).toMap()
+                              .value(QStringLiteral("bars")).toMap()
+                              .value(QStringLiteral("main")).toMap();
+        const auto end = main.value(QStringLiteral("regions")).toMap()
+                             .value(QStringLiteral("end")).toList();
+        QCOMPARE(std::ranges::count(end, QVariant(instanceId)), 1);
+
+        client.addComponentToBar(
+            componentId,
+            packageDigest,
+            {{QStringLiteral("label"), QStringLiteral("Ignored")}}
+        );
+        QCOMPARE(service.replaceCalls(), 1);
+        QCOMPARE(client.revision(), 1ULL);
+        QCOMPARE(client.snapshot(), snapshot);
+
+        client.addComponentToBar(
+            componentId,
+            QString(64, QLatin1Char('e')),
+            {{QStringLiteral("label"), QStringLiteral("Wrong")}}
+        );
+        QCOMPARE(service.replaceCalls(), 1);
+        QCOMPARE(client.snapshot(), snapshot);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral(
+                "org.hyprshelld.Client.ComponentConfig.Error.PackageDigestMismatch"
+            )
+        );
+
+        client.setComponentEnabled(componentId, packageDigest, false);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 2ULL, 3000);
+        const auto disabled = client.snapshot();
+        QCOMPARE(
+            disabled.value(QStringLiteral("components")).toMap()
+                .value(componentId).toMap()
+                .value(QStringLiteral("enabled")).toBool(),
+            false
+        );
+        QCOMPARE(
+            disabled.value(QStringLiteral("instances")).toMap(),
+            snapshot.value(QStringLiteral("instances")).toMap()
+        );
+        QCOMPARE(
+            disabled.value(QStringLiteral("layouts")).toMap(),
+            snapshot.value(QStringLiteral("layouts")).toMap()
+        );
+
+        auto offMain = disabled;
+        auto offMainLayouts = offMain.value(QStringLiteral("layouts")).toMap();
+        auto offMainBars = offMainLayouts.value(QStringLiteral("bars")).toMap();
+        auto offMainMain = offMainBars.value(QStringLiteral("main")).toMap();
+        auto offMainMainRegions = offMainMain.value(
+            QStringLiteral("regions")
+        ).toMap();
+        auto offMainEnd = offMainMainRegions.value(
+            QStringLiteral("end")
+        ).toList();
+        offMainEnd.removeAll(instanceId);
+        offMainMainRegions.insert(QStringLiteral("end"), offMainEnd);
+        offMainMain.insert(QStringLiteral("regions"), offMainMainRegions);
+        offMainBars.insert(QStringLiteral("main"), offMainMain);
+        offMainBars.insert(QStringLiteral("secondary"), QVariantMap{
+            {QStringLiteral("outputs"), QVariantMap{
+                {QStringLiteral("mode"), QStringLiteral("all")},
+            }},
+            {QStringLiteral("regions"), QVariantMap{
+                {QStringLiteral("start"), QVariantList{}},
+                {QStringLiteral("center"), QVariantList{}},
+                {QStringLiteral("end"), QVariantList{instanceId}},
+            }},
+        });
+        offMainLayouts.insert(QStringLiteral("bars"), offMainBars);
+        offMain.insert(QStringLiteral("layouts"), offMainLayouts);
+        client.replaceSnapshot(offMain);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 3ULL, 3000);
+
+        client.addComponentToBar(
+            componentId,
+            packageDigest,
+            {{QStringLiteral("label"), QStringLiteral("Ignored")}}
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 4ULL, 3000);
+        const auto relocated = client.snapshot();
+        const auto relocatedBars = relocated.value(QStringLiteral("layouts"))
+                                       .toMap().value(QStringLiteral("bars"))
+                                       .toMap();
+        QCOMPARE(
+            relocatedBars.value(QStringLiteral("secondary")).toMap()
+                .value(QStringLiteral("regions")).toMap()
+                .value(QStringLiteral("end")).toList(),
+            QVariantList{}
+        );
+        QCOMPARE(
+            std::ranges::count(
+                relocatedBars.value(QStringLiteral("main")).toMap()
+                    .value(QStringLiteral("regions")).toMap()
+                    .value(QStringLiteral("end")).toList(),
+                QVariant(instanceId)
+            ),
+            1
+        );
+
+        client.setComponentEnabled(componentId, packageDigest, false);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 5ULL, 3000);
+
+        auto disabledPlaced = client.snapshot();
+        auto disabledPlacedInstances = disabledPlaced.value(
+            QStringLiteral("instances")
+        ).toMap();
+        auto disabledPlacedInstance = disabledPlacedInstances.value(
+            instanceId
+        ).toMap();
+        disabledPlacedInstance.insert(QStringLiteral("enabled"), false);
+        disabledPlacedInstances.insert(instanceId, disabledPlacedInstance);
+        disabledPlaced.insert(
+            QStringLiteral("instances"),
+            disabledPlacedInstances
+        );
+        client.replaceSnapshot(disabledPlaced);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 6ULL, 3000);
+
+        client.addComponentToBar(
+            componentId,
+            packageDigest,
+            {{QStringLiteral("label"), QStringLiteral("Ignored")}}
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 7ULL, 3000);
+        const auto reenabledPlaced = client.snapshot();
+        QCOMPARE(
+            reenabledPlaced.value(QStringLiteral("instances")).toMap()
+                .value(instanceId).toMap()
+                .value(QStringLiteral("enabled")).toBool(),
+            true
+        );
+        QCOMPARE(
+            std::ranges::count(
+                reenabledPlaced.value(QStringLiteral("layouts")).toMap()
+                    .value(QStringLiteral("bars")).toMap()
+                    .value(QStringLiteral("main")).toMap()
+                    .value(QStringLiteral("regions")).toMap()
+                    .value(QStringLiteral("end")).toList(),
+                QVariant(instanceId)
+            ),
+            1
+        );
+
+        client.setComponentEnabled(componentId, packageDigest, false);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 8ULL, 3000);
+        auto ambiguous = client.snapshot();
+        auto ambiguousInstances = ambiguous.value(
+            QStringLiteral("instances")
+        ).toMap();
+        const auto secondInstanceId = QStringLiteral(
+            "a7e2d4d8-2de4-4da7-8d4c-430b8c73f55a"
+        );
+        ambiguousInstances.insert(secondInstanceId, QVariantMap{
+            {QStringLiteral("componentId"), componentId},
+            {QStringLiteral("enabled"), false},
+            {QStringLiteral("settings"), QVariantMap{}},
+        });
+        ambiguous.insert(QStringLiteral("instances"), ambiguousInstances);
+        auto ambiguousLayouts = ambiguous.value(
+            QStringLiteral("layouts")
+        ).toMap();
+        auto ambiguousBars = ambiguousLayouts.value(
+            QStringLiteral("bars")
+        ).toMap();
+        auto secondary = ambiguousBars.value(
+            QStringLiteral("secondary")
+        ).toMap();
+        auto secondaryRegions = secondary.value(
+            QStringLiteral("regions")
+        ).toMap();
+        secondaryRegions.insert(
+            QStringLiteral("end"),
+            QVariantList{secondInstanceId}
+        );
+        secondary.insert(QStringLiteral("regions"), secondaryRegions);
+        ambiguousBars.insert(QStringLiteral("secondary"), secondary);
+        ambiguousLayouts.insert(QStringLiteral("bars"), ambiguousBars);
+        ambiguous.insert(QStringLiteral("layouts"), ambiguousLayouts);
+        client.replaceSnapshot(ambiguous);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 9ULL, 3000);
+        const auto callsBeforeAmbiguousAdd = service.replaceCalls();
+        client.addComponentToBar(
+            componentId,
+            packageDigest,
+            {{QStringLiteral("label"), QStringLiteral("Ignored")}}
+        );
+        QCOMPARE(service.replaceCalls(), callsBeforeAmbiguousAdd);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral(
+                "org.hyprshelld.Client.ComponentConfig.Error.InvalidComponent"
+            )
+        );
+
+        serviceBus.unregisterService(serviceName);
+        serviceBus.unregisterObject(objectPath);
+        QDBusConnection::disconnectFromBus(connectionName);
+    }
+
+    void staleAddToBarRollsBackWithoutPartialWriteOrReplay()
+    {
+        auto clientBus = QDBusConnection::sessionBus();
+        QVERIFY(clientBus.isConnected());
+        const auto connectionName = QStringLiteral(
+            "hyprshelld-component-config-stale-add-to-bar"
+        );
+        auto serviceBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus, connectionName
+        );
+        QVERIFY(serviceBus.isConnected());
+        DelayedSnapshotService service(serviceBus);
+        service.setHoldReplacements(true);
+        QVERIFY(serviceBus.registerObject(
+            objectPath,
+            &service,
+            QDBusConnection::ExportAllProperties
+                | QDBusConnection::ExportAllSlots
+        ));
+        QVERIFY(serviceBus.registerService(serviceName));
+
+        ComponentConfigClient client(clientBus, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        const auto before = client.snapshot();
+        const auto componentId = QStringLiteral("org.example.clock-widget");
+        client.addComponentToBar(
+            componentId,
+            QString(64, QLatin1Char('d')),
+            {{QStringLiteral("label"), QStringLiteral("Clock")}}
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(service.heldReplacementCalls(), 1, 3000);
+        QVERIFY(client.busy());
+
+        service.externallySetOccupiedOnly(true);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        service.releaseReplacementsAsStale();
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(service.replaceCalls(), 1);
+        QCOMPARE(client.revision(), 1ULL);
+        QVERIFY(!client.snapshot().value(QStringLiteral("components"))
+                     .toMap().contains(componentId));
+        QCOMPARE(
+            client.snapshot().value(QStringLiteral("instances")).toMap().size(),
+            before.value(QStringLiteral("instances")).toMap().size()
+        );
+        const auto workspaceInstance = client.snapshot()
+            .value(QStringLiteral("instances")).toMap().constBegin().value()
+            .toMap();
+        QCOMPARE(
+            workspaceInstance.value(QStringLiteral("settings")).toMap()
+                .value(QStringLiteral("occupiedOnly")).toBool(),
+            true
+        );
+
+        serviceBus.unregisterService(serviceName);
+        serviceBus.unregisterObject(objectPath);
+        QDBusConnection::disconnectFromBus(connectionName);
     }
 
     void clientBlocksRapidMutationUntilDelayedSnapshotHydrates()

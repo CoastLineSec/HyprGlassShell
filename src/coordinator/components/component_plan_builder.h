@@ -1,12 +1,15 @@
 #pragma once
 
 #include "component/surface_plan.h"
+#include "component/declarative_document.h"
 
 #include <QHash>
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
 #include <QtTypes>
+
+#include <optional>
 
 namespace HyprShelld::Components {
 
@@ -21,6 +24,8 @@ struct RuntimeCatalogEntry final {
     QString factory;
     QString runtimeEntryPoint;
     QStringList runtimeArguments;
+    QByteArray declarativeRuntime;
+    std::optional<DeclarativeDocument> declarativeDocument;
     QStringList capabilityIds;
     QStringList dependencyIds;
 
@@ -45,6 +50,7 @@ struct RuntimeDesiredComponent final {
     bool enabled = false;
     QString packageDigest;
     QStringList grantedCapabilities;
+    QJsonObject settings;
 
     friend bool operator==(
         const RuntimeDesiredComponent &,

@@ -59,6 +59,24 @@
     </method>
 
     <!--
+      Returns only the canonical, manager-validated data document for a
+      declarative-v1 component. Package paths and author-controlled executable
+      sources never cross this boundary.
+
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest
+        org.hyprshelld.ComponentManager1.Error.UnknownComponent
+        org.hyprshelld.ComponentManager1.Error.PackageDigestMismatch
+        org.hyprshelld.ComponentManager1.Error.RuntimeUnavailable
+    -->
+    <method name="GetDeclarativeRuntime">
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="expectedPackageDigest" type="s" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="definition" type="ay" direction="out"/>
+    </method>
+
+    <!--
       Starts inspection of one already-open local archive. The descriptor is
       copied into manager-owned staging before this call returns; componentd
       never reopens a caller-controlled path. Completion is delivered only to
@@ -86,8 +104,10 @@
 
     <!--
       Commits the exact staged bytes described by an accepted inspection.
-      Installation and update do not enable, grant, place, or execute the
-      component. User packages remain runtime-incompatible in this boundary.
+      The transaction does not mutate enablement, grants, or placements. A new
+      or changed digest stays inert until an explicit ComponentConfig1 change;
+      reinstalling an identical, previously authorized digest may make its
+      retained desired state and placements effective again.
 
       Errors:
         org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest
@@ -111,9 +131,12 @@
     </method>
 
     <!--
-      Removes only a third-party package. Built-ins are immutable. The current
-      slice has no third-party runtime host, so user packages are necessarily
-      inactive; dormant configuration is preserved by configd.
+      Removes only a third-party package. Built-ins are immutable. Any retained
+      settings and placements become dormant when the exact package digest
+      leaves the catalog; configd preserves them for later recovery. Reinstalling
+      that identical digest may make its already-authorized desired state
+      effective again; a different digest remains dormant until explicit inert
+      adoption through ComponentConfig1.
 
       Errors:
         org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest

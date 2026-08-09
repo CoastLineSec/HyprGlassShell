@@ -1,5 +1,6 @@
 #include "component_package_bundle.h"
 
+#include "declarative_document.h"
 #include "package_integrity.h"
 #include "settings_schema.h"
 #include "strict_json.h"
@@ -475,11 +476,12 @@ ValidationErrors materializeComponentPackageBundle(
         return errors;
     }
 
+    std::optional<SettingsSchema> parsedSettingsSchema;
     const auto schemaBytes = contentsByPath.value(
         QStringLiteral("settings.schema.json")
     );
     if (expectedReport.normalizedSettingsSchema.has_value()) {
-        const auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
+        auto schema = parseSettingsSchema(QByteArrayView(schemaBytes));
         const auto schemaObject = parseStrictJsonObject(
             QByteArrayView(schemaBytes),
             {.maximumBytes = 256 * 1024, .maximumDepth = 32}
@@ -495,12 +497,43 @@ ValidationErrors materializeComponentPackageBundle(
             );
             return errors;
         }
+        parsedSettingsSchema = std::move(*schema.value);
     } else if (!schemaBytes.isEmpty()) {
         addError(
             errors,
             QStringLiteral("$.settingsSchema"),
             QStringLiteral("package-bundle.schema-mismatch"),
             QStringLiteral("The bundle contains an undeclared settings schema.")
+        );
+        return errors;
+    }
+
+    if (manifest.value->runtime.kind == RuntimeKind::DeclarativeV1) {
+        const auto document = parseDeclarativeDocument(
+            QByteArrayView(contentsByPath.value(
+                manifest.value->runtime.entrypoint
+            )),
+            parsedSettingsSchema.has_value()
+                ? &*parsedSettingsSchema
+                : nullptr
+        );
+        if (!document
+            || serializeDeclarativeDocument(*document.value)
+                != expectedReport.declarativeRuntime) {
+            addError(
+                errors,
+                QStringLiteral("$.declarativeRuntime"),
+                QStringLiteral("package-bundle.declarative-runtime-mismatch"),
+                QStringLiteral("The bundled declarative document differs from the inspection report.")
+            );
+            return errors;
+        }
+    } else if (!expectedReport.declarativeRuntime.isEmpty()) {
+        addError(
+            errors,
+            QStringLiteral("$.declarativeRuntime"),
+            QStringLiteral("package-bundle.declarative-runtime-mismatch"),
+            QStringLiteral("A non-declarative bundle cannot carry a declarative runtime document.")
         );
         return errors;
     }

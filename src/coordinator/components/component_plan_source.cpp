@@ -1,6 +1,7 @@
 #include "component_plan_source.h"
 
 #include "component/component_contract.h"
+#include "component/declarative_document.h"
 #include "component/settings_schema.h"
 
 #include <QCryptographicHash>
@@ -137,6 +138,7 @@ bool recordFieldsAreBounded(const RuntimeCatalogComponentRecord &record)
         && boundedString(record.runtimeFactory, 64)
         && boundedString(record.runtimeEntryPoint, 255)
         && boundedStrings(record.runtimeArguments, 32, 1024)
+        && record.declarativeRuntime.size() <= maximumDeclarativeDocumentBytes
         && record.settingsSchema.size() <= maximumSettingsSchemaBytes
         && boundedStrings(record.capabilityIds, 64, 255)
         && boundedStrings(record.capabilityReasons, 64, 1024)
@@ -444,6 +446,53 @@ validateRuntimeCatalogRecord(const RuntimeCatalogComponentRecord &record)
         schema = std::move(*parsedSchema.value);
     }
 
+    std::optional<DeclarativeDocument> declarativeDocument;
+    if (!record.declarativeRuntime.isEmpty()) {
+        if (manifest.value->runtime.kind != RuntimeKind::DeclarativeV1) {
+            addError(
+                result.errors,
+                QStringLiteral("$.runtime"),
+                QStringLiteral("component-runtime.unexpected-declarative-runtime"),
+                QStringLiteral("Only declarative-v1 may expose a trusted declarative document.")
+            );
+            return result;
+        }
+        auto parsedDocument = parseDeclarativeDocument(
+            QByteArrayView(record.declarativeRuntime),
+            &schema
+        );
+        if (!parsedDocument
+            || serializeDeclarativeDocument(*parsedDocument.value)
+                != record.declarativeRuntime) {
+            if (!parsedDocument) {
+                result.errors += parsedDocument.errors;
+            }
+            addError(
+                result.errors,
+                QStringLiteral("$.runtime"),
+                QStringLiteral("component-runtime.invalid-declarative-runtime"),
+                QStringLiteral("The declarative runtime must be canonical trusted data.")
+            );
+            return result;
+        }
+        declarativeDocument = std::move(*parsedDocument.value);
+    } else if (manifest.value->origin == ComponentOrigin::User
+        && manifest.value->runtime.kind == RuntimeKind::DeclarativeV1
+        && validateCurrentHostSupport(*manifest.value).isEmpty()) {
+        addError(
+            result.errors,
+            QStringLiteral("$.runtime"),
+            QStringLiteral("component-runtime.missing-declarative-runtime"),
+            QStringLiteral("A supported declarative package must expose its canonical document.")
+        );
+        return result;
+    }
+
+    const auto activationSupported =
+        validateCurrentHostSupport(*manifest.value).isEmpty()
+        && (manifest.value->runtime.kind != RuntimeKind::DeclarativeV1
+            || declarativeDocument.has_value());
+
     result.value = ValidatedRuntimeCatalogRecord{
         .configurationEntry = {
             .packageDigest = record.packageDigest,
@@ -453,6 +502,11 @@ validateRuntimeCatalogRecord(const RuntimeCatalogComponentRecord &record)
                 : ComponentOrigin::User,
             .settingsSchema = std::move(schema),
             .requestedCapabilities = std::move(requestedCapabilities),
+            .componentApiVersion = record.componentApiVersion,
+            .runtimeKind = *runtimeKindFromString(record.runtimeKind),
+            .dependencyIds = record.dependencyIds,
+            .activationSupported = activationSupported,
+            .declarativeRuntime = record.declarativeRuntime,
         },
         .runtimeEntry = {
             .componentId = record.componentId,
@@ -465,6 +519,8 @@ validateRuntimeCatalogRecord(const RuntimeCatalogComponentRecord &record)
             .factory = record.runtimeFactory,
             .runtimeEntryPoint = record.runtimeEntryPoint,
             .runtimeArguments = record.runtimeArguments,
+            .declarativeRuntime = record.declarativeRuntime,
+            .declarativeDocument = std::move(declarativeDocument),
             .capabilityIds = record.capabilityIds,
             .dependencyIds = record.dependencyIds,
         },
@@ -601,6 +657,7 @@ ValidationResult<RuntimeConfigurationSnapshot> hydrateRuntimeConfiguration(
             .enabled = iterator->enabled,
             .packageDigest = iterator->packageDigest,
             .grantedCapabilities = iterator->grantedCapabilities,
+            .settings = iterator->settings,
         });
     }
     for (auto iterator = parsed.value->instances.cbegin();

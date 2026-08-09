@@ -188,6 +188,8 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/surfaced/WorkspaceProjection.js"
         "${PROJECT_SOURCE_DIR}/src/surfaced/components/BarComponentHost.qml"
         "${PROJECT_SOURCE_DIR}/src/surfaced/components/BuiltinComponentFactory.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/components/ComponentFactory.qml"
+        "${PROJECT_SOURCE_DIR}/src/surfaced/components/DeclarativeComponentFactory.qml"
         "${PROJECT_SOURCE_DIR}/src/surfaced/components/WorkspaceSwitcherComponent.qml"
 )
 
@@ -317,6 +319,24 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-component-runtime-health-test
+    component_runtime_health_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-component-runtime-health-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-coordinator-core
+)
+
+add_test(
+    NAME component-runtime-health
+    COMMAND hyprshelld-component-runtime-health-test
+)
+
+qt_add_executable(
     hyprshelld-component-plan-source-test
     component_plan_source_test.cpp
 )
@@ -382,6 +402,24 @@ target_link_libraries(
 add_test(
     NAME component-settings-schema
     COMMAND hyprshelld-component-settings-schema-test
+)
+
+qt_add_executable(
+    hyprshelld-declarative-document-test
+    declarative_document_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-declarative-document-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-component-core
+)
+
+add_test(
+    NAME declarative-document
+    COMMAND hyprshelld-declarative-document-test
 )
 
 set(

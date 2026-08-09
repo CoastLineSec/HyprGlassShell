@@ -129,9 +129,9 @@ struct ComponentManifest final {
     ComponentOrigin origin
 );
 
-// The current host intentionally supports one protected factory and no
-// executable community runtime. Structural parsing remains separate so host
-// support can expand without weakening the manifest grammar.
+// The current host supports one protected built-in factory and the deliberately
+// data-only declarative-v1 bar runtime. Structural parsing remains separate so
+// reserved executable runtimes do not become usable by implication.
 [[nodiscard]] ValidationErrors validateCurrentHostSupport(
     const ComponentManifest &manifest
 );

@@ -28,6 +28,7 @@ PanelWindow { // qmllint disable uncreatable-type
     readonly property var startComponentInstances: {
         ComponentRuntimeClient.planRevision;
         ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.planCurrent;
         ComponentRuntimeClient.usingFallback;
         return ComponentRuntimeClient.barInstances(
             "main",
@@ -38,6 +39,7 @@ PanelWindow { // qmllint disable uncreatable-type
     readonly property var centerComponentInstances: {
         ComponentRuntimeClient.planRevision;
         ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.planCurrent;
         ComponentRuntimeClient.usingFallback;
         return ComponentRuntimeClient.barInstances(
             "main",
@@ -48,6 +50,7 @@ PanelWindow { // qmllint disable uncreatable-type
     readonly property var endComponentInstances: {
         ComponentRuntimeClient.planRevision;
         ComponentRuntimeClient.planDigest;
+        ComponentRuntimeClient.planCurrent;
         ComponentRuntimeClient.usingFallback;
         return ComponentRuntimeClient.barInstances(
             "main",

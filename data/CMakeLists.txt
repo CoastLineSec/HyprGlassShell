@@ -84,6 +84,7 @@ set(
     "${PROJECT_SOURCE_DIR}/interfaces/components/v1/manifest.schema.json"
     "${PROJECT_SOURCE_DIR}/interfaces/components/v1/integrity.schema.json"
     "${PROJECT_SOURCE_DIR}/interfaces/components/v1/settings.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/components/v1/declarative.schema.json"
     "${PROJECT_SOURCE_DIR}/interfaces/components/v1/surface-plan.schema.json"
 )
 

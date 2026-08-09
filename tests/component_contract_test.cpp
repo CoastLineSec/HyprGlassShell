@@ -264,6 +264,88 @@ private slots:
         ));
     }
 
+    void supportGateAllowsOnlyCapabilityFreeDeclarativeUserBars()
+    {
+        const auto userManifest = [](const QString &type,
+                                     const QString &runtimeKind,
+                                     const QJsonArray &capabilities = {}) {
+            return QJsonDocument(QJsonObject{
+                {QStringLiteral("manifestVersion"), 1},
+                {QStringLiteral("id"), QStringLiteral("org.example.clock")},
+                {QStringLiteral("version"), QStringLiteral("1.0.0")},
+                {QStringLiteral("type"), type},
+                {QStringLiteral("name"), QStringLiteral("Clock")},
+                {QStringLiteral("description"), QStringLiteral("A safe clock.")},
+                {QStringLiteral("authors"), QJsonArray{QJsonObject{
+                     {QStringLiteral("name"), QStringLiteral("Example")},
+                 }}},
+                {QStringLiteral("license"), QStringLiteral("MIT")},
+                {QStringLiteral("componentApiVersion"), QStringLiteral("1.0")},
+                {QStringLiteral("runtime"), QJsonObject{
+                     {QStringLiteral("kind"), runtimeKind},
+                     {QStringLiteral("entrypoint"),
+                      QStringLiteral("payload/widget.json")},
+                 }},
+                {QStringLiteral("requestedCapabilities"), capabilities},
+            }).toJson(QJsonDocument::Compact);
+        };
+
+        auto parsed = parseComponentManifest(
+            userManifest(
+                QStringLiteral("bar-widget"),
+                QStringLiteral("declarative-v1")
+            ),
+            ComponentOrigin::User
+        );
+        QVERIFY(parsed);
+        QVERIFY(validateCurrentHostSupport(*parsed.value).isEmpty());
+
+        parsed = parseComponentManifest(
+            userManifest(
+                QStringLiteral("bar-widget"),
+                QStringLiteral("declarative-v1"),
+                QJsonArray{QJsonObject{
+                    {QStringLiteral("id"),
+                     QStringLiteral("example.clock.read")},
+                    {QStringLiteral("reason"),
+                     QStringLiteral("Read a clock source.")},
+                }}
+            ),
+            ComponentOrigin::User
+        );
+        QVERIFY(parsed);
+        QVERIFY(hasCode(
+            validateCurrentHostSupport(*parsed.value),
+            QStringLiteral("component.unsupported-capability")
+        ));
+
+        parsed = parseComponentManifest(
+            userManifest(
+                QStringLiteral("desktop-widget"),
+                QStringLiteral("declarative-v1")
+            ),
+            ComponentOrigin::User
+        );
+        QVERIFY(parsed);
+        QVERIFY(hasCode(
+            validateCurrentHostSupport(*parsed.value),
+            QStringLiteral("component.unsupported-by-host")
+        ));
+
+        parsed = parseComponentManifest(
+            userManifest(
+                QStringLiteral("bar-widget"),
+                QStringLiteral("qml-full-trust-v1")
+            ),
+            ComponentOrigin::User
+        );
+        QVERIFY(parsed);
+        QVERIFY(hasCode(
+            validateCurrentHostSupport(*parsed.value),
+            QStringLiteral("component.unsupported-by-host")
+        ));
+    }
+
     void capabilityLabelsCannotEndWithHyphens()
     {
         auto manifest = workspaceManifest();

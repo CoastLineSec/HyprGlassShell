@@ -7,6 +7,8 @@ qt_add_library(
         component_configuration.h
         component_contract.cpp
         component_contract.h
+        declarative_document.cpp
+        declarative_document.h
         component_package_bundle.cpp
         component_package_bundle.h
         package_inspection_report.cpp

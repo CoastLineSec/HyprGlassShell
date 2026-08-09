@@ -1,4 +1,5 @@
 #include "component/component_package_bundle.h"
+#include "component/declarative_document.h"
 #include "component/package_inspection_report.h"
 #include "component/strict_json.h"
 #include "componentd/user_package_store.h"
@@ -41,6 +42,13 @@ PackageFixture makePackage(
     const QString &dependencyId = {}
 )
 {
+    const auto documentBytes = QJsonDocument(QJsonObject{
+        {QStringLiteral("documentVersion"), 1},
+        {QStringLiteral("type"), QStringLiteral("text-pill")},
+        {QStringLiteral("text"), QJsonObject{
+             {QStringLiteral("literal"), sha256(payload).left(16)},
+         }},
+    }).toJson(QJsonDocument::Compact);
     QJsonObject manifest{
         {QStringLiteral("manifestVersion"), 1},
         {QStringLiteral("id"), componentId},
@@ -76,7 +84,7 @@ PackageFixture makePackage(
     );
     QJsonObject integrityFiles{
         {QStringLiteral("manifest.json"), sha256(manifestBytes)},
-        {QStringLiteral("payload/widget.json"), sha256(payload)},
+        {QStringLiteral("payload/widget.json"), sha256(documentBytes)},
     };
     const auto integrityBytes = QJsonDocument(QJsonObject{
         {QStringLiteral("integrityVersion"), 1},
@@ -87,7 +95,7 @@ PackageFixture makePackage(
     QVector<ComponentPackageBundleFile> files{
         {QStringLiteral("manifest.json"), manifestBytes},
         {QStringLiteral("integrity.json"), integrityBytes},
-        {QStringLiteral("payload/widget.json"), payload},
+        {QStringLiteral("payload/widget.json"), documentBytes},
     };
     std::ranges::sort(files, {}, &ComponentPackageBundleFile::path);
 
@@ -101,6 +109,8 @@ PackageFixture makePackage(
     );
     Q_ASSERT(parsedManifest);
     Q_ASSERT(parsedManifestObject);
+    const auto parsedDocument = parseDeclarativeDocument(documentBytes);
+    Q_ASSERT(parsedDocument);
 
     PackageInspectionReport report{
         .inspectionToken = QString(32, QLatin1Char('a')),
@@ -109,6 +119,9 @@ PackageFixture makePackage(
         .archiveSize = 1024,
         .manifest = *parsedManifest.value,
         .normalizedManifest = *parsedManifestObject.value,
+        .declarativeRuntime = serializeDeclarativeDocument(
+            *parsedDocument.value
+        ),
     };
     for (const auto &file : files) {
         report.expandedSize += static_cast<quint64>(file.contents.size());
@@ -138,6 +151,27 @@ PackageInspectionReport makeLargeDeclaredReport(const QString &componentId)
         QStringLiteral("1.0.0"),
         QByteArrayLiteral("not-materialized")
     );
+    auto runtime = fixture.report.normalizedManifest.value(
+        QStringLiteral("runtime")
+    ).toObject();
+    runtime.insert(
+        QStringLiteral("kind"),
+        QStringLiteral("qml-full-trust-v1")
+    );
+    fixture.report.normalizedManifest.insert(
+        QStringLiteral("runtime"),
+        runtime
+    );
+    const auto manifestBytes = QJsonDocument(
+        fixture.report.normalizedManifest
+    ).toJson(QJsonDocument::Compact);
+    const auto manifest = parseComponentManifest(
+        manifestBytes,
+        ComponentOrigin::User
+    );
+    Q_ASSERT(manifest);
+    fixture.report.manifest = *manifest.value;
+    fixture.report.declarativeRuntime.clear();
     auto payload = std::ranges::find_if(
         fixture.report.files,
         [](const InspectedPackageFile &file) {
@@ -327,6 +361,10 @@ private slots:
             loaded.entries.first().manifest.origin == ComponentOrigin::User
         );
         QCOMPARE(loaded.entries.first().packageDigest, installed.packageDigest);
+        QCOMPARE(
+            loaded.entries.first().declarativeRuntime,
+            fixture.report.declarativeRuntime
+        );
 
         const QFileInfo payload(QDir(installedRoot(
             dataRoot,
@@ -436,7 +474,14 @@ private slots:
         QCOMPARE(loaded.entries.first().packageDigest, fixture.report.packageDigest);
         QFile payload(payloadPath);
         QVERIFY(payload.open(QIODevice::ReadOnly));
-        QCOMPARE(payload.readAll(), QByteArrayLiteral("reviewed-content"));
+        const auto expectedPayload = std::ranges::find_if(
+            fixture.files,
+            [](const ComponentPackageBundleFile &file) {
+                return file.path == QStringLiteral("payload/widget.json");
+            }
+        );
+        QVERIFY(expectedPayload != fixture.files.cend());
+        QCOMPARE(payload.readAll(), expectedPayload->contents);
     }
 
     void exactReinstallRepairsCorruptReceipt()

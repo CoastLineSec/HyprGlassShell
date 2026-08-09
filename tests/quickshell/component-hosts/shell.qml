@@ -82,6 +82,25 @@ ShellRoot {
             return;
 
         if (root.stage === 0) {
+            const timedFactory = root.findNamed(
+                host,
+                "builtinComponentFactory-" + root.firstInstanceId
+            );
+            if (!root.check(timedFactory
+                    && timedFactory.stabilizationWindowMs === 2000,
+                    "declarative stabilization window drifted")) {
+                return;
+            }
+            const hostileLabel = root.findNamed(
+                hostileDeclarative,
+                "declarativeTextPillLabel"
+            );
+            if (!root.check(hostileLabel
+                    && hostileLabel.text === "<img src='file:///tmp/x'>"
+                    && hostileLabel.textFormat === Text.PlainText,
+                    "declarative text was not pinned to plain text")) {
+                return;
+            }
             const validLoader = root.findNamed(
                 validFactory,
                 "builtinComponentLoader"
@@ -288,6 +307,16 @@ ShellRoot {
         interactive: false
         animationsEnabled: false
         instances: root.instances
+    }
+
+    SurfaceComponents.DeclarativeComponentFactory {
+        id: hostileDeclarative
+
+        width: implicitWidth
+        height: 40
+        displayText: "<img src='file:///tmp/x'>"
+        tooltipText: "<b>plain tooltip</b>"
+        maximumWidth: 240
     }
 
     Timer {

@@ -144,6 +144,33 @@ ShellRoot {
         }
     }
 
+    function authorizeRuntimePlan() {
+        if (Quickshell.screens.length === 0) {
+            ComponentRuntimeClient.cancelCurrentPlanAuthorization();
+            return;
+        }
+        if (!ComponentRuntimeClient.planCurrent) {
+            return;
+        }
+        ComponentRuntimeClient.authorizeCurrentPlan();
+    }
+
+    Component.onCompleted: root.authorizeRuntimePlan()
+    Component.onDestruction:
+        ComponentRuntimeClient.cancelCurrentPlanAuthorization()
+
+    Connections {
+        target: ComponentRuntimeClient
+
+        function onPlanChanged() {
+            Qt.callLater(root.authorizeRuntimePlan);
+        }
+
+        function onPlanStateChanged() {
+            Qt.callLater(root.authorizeRuntimePlan);
+        }
+    }
+
     ShellRuntimeStatus {
         id: shellRuntimeStatus
 
@@ -179,6 +206,7 @@ ShellRoot {
 
         function onScreensChanged() {
             root.reconcileFailureNoticeScreen();
+            root.authorizeRuntimePlan();
         }
     }
 

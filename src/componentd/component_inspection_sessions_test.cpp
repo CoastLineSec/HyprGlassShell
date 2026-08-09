@@ -88,7 +88,7 @@ QVector<Components::ComponentPackageBundleFile> packageFiles()
         {QStringLiteral("license"), QStringLiteral("MIT")},
         {QStringLiteral("componentApiVersion"), QStringLiteral("1.0")},
         {QStringLiteral("runtime"), QJsonObject{
-             {QStringLiteral("kind"), QStringLiteral("declarative-v1")},
+             {QStringLiteral("kind"), QStringLiteral("qml-full-trust-v1")},
              {QStringLiteral("entrypoint"),
               QStringLiteral("payload/main.qml")},
          }},

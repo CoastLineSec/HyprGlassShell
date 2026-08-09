@@ -15,6 +15,8 @@ qt_add_library(
         components/component_plan_source.h
         components/component_runtime_service.cpp
         components/component_runtime_service.h
+        components/component_runtime_health_store.cpp
+        components/component_runtime_health_store.h
         systemd_user_manager.cpp
         systemd_user_manager.h
 )

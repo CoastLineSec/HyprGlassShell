@@ -98,12 +98,16 @@ revision. Caller-supplied digests are equality assertions and never establish
 package or schema authority.
 Missing packages and package-digest mismatches remain inert, structurally
 bounded desired-state records. ReplaceSnapshot cannot edit, delete, advance,
-or relocate those dormant records and their instances. Configd may advance a
-protected built-in record only through a narrowly pinned, catalog-joined data
-migration. Such a migration validates every old instance shape, preserves
-unrelated state, increments the configuration revision once, and commits the
-migrated snapshot to recovery before active storage. Unrecognized packages
-remain dormant for future package-lifecycle handling.
+or relocate those dormant records and their instances, except for one explicit
+inert adoption of an installed user package: the proposed digest must equal the
+exact live catalog entry, its component record must be disabled with no grants,
+and every instance and placement must remain unchanged. The normal parser also
+validates its new trusted settings schema. Configd may advance a protected
+built-in record only through a narrowly pinned, catalog-joined data migration.
+Such a migration validates every old instance shape, preserves unrelated state,
+increments the configuration revision once, and commits the migrated snapshot
+to recovery before active storage. Other unrecognized packages remain dormant
+for future package-lifecycle handling.
 Dormant numeric values remain canonical JSON numbers and must be finite with a
 magnitude no greater than 9007199254740991, so parsing and persistence cannot
 silently round an unknown component's retained values.
@@ -121,10 +125,11 @@ Component configuration errors have these meanings:
 
 ## Component runtime
 
-ComponentRuntime1 is the coordinator-owned, read-only activation boundary used
-by surfaced. Its plan joins one complete ComponentManager1 catalog generation
+ComponentRuntime1 is the coordinator-owned activation boundary used by
+surfaced. Its plan joins one complete ComponentManager1 catalog generation
 with one complete ComponentConfig1 desired-state revision. It never publishes
-a partially hydrated host plan.
+a partially hydrated host plan or a package path, package QML, or an
+author-controlled loader target.
 
 `SurfacePlanRevision` is an opaque unsigned equality token for the complete
 normalized plan; zero means no authoritative plan has been produced in this
@@ -149,9 +154,40 @@ Before its first authoritative plan, surfaced may render only the compiled
 first-run built-in plan. Once any authoritative plan is accepted, including an
 authoritative empty plan, surfaced retains that last-known-good authority
 through ordinary coordinator loss and never resurrects the compiled fallback.
-The runtime plan may request only factories compiled into surfaced's built-in
-allowlist; desired enablement, instance settings, output matching, and bar
-placement still come from ComponentConfig1.
+Retained, unavailable, malformed, and locally stale plans strip every
+third-party instance; protected built-ins may remain. An authoritative plan
+may request only factories compiled into surfaced's built-in allowlist or the
+trusted `declarative-v1` text-pill renderer. Declarative plan entries inline
+only coordinator-resolved plain text, an optional plain-text tooltip, and a
+bounded maximum width. Desired enablement, component settings, output
+matching, and bar placement still come from ComponentConfig1. Version one
+keeps declarative placements in the active `main` bar layout; other layouts are
+dormant for this runtime.
+
+Surfaced must explicitly authorize the current complete plan before it exposes
+any declarative entries. The coordinator writes all renderable declarative
+instances to its private runtime-health recovery snapshot in one transaction
+before authorization succeeds. The trusted renderer reports success only
+after a two-second stabilization window, or reports a bounded render failure.
+An eight-second coordinator deadline quarantines the exact component package
+digest when activation does not complete. A normal last-screen removal or
+graceful surfaced shutdown cancels the whole plan authorization; an interrupted
+activation retained across coordinator restart is conservatively quarantined
+without claiming which process caused the interruption. The surfaced systemd
+restart budget is sized so quarantine and a safe-plan restart occur before its
+start limit is exhausted.
+
+`RuntimeHealthRevision` is the comparison token for listing and retrying this
+state. Runtime-state rows are sorted by component ID and package digest, and
+healthy packages are omitted. A probation row has an empty reason and zero
+failures. A quarantined row has one of `incomplete-startup`, `timeout`,
+`render-failed`, or `protocol-invalid` and a failure count from 1 through
+1,000,000. `RetryComponent` removes only the exact quarantined package digest
+at the expected health revision. A new package digest starts clean. Unsafe,
+unsupported, exhausted, or unreadable health storage enters third-party safe
+mode instead of activating untracked content. The recovery snapshot is the
+durable commit point; a failed active-file mirror is repaired from its newer
+revision on load.
 
 ## Component manager
 
@@ -159,7 +195,11 @@ ComponentManager1 exposes one joined catalog containing protected built-ins and
 locally installed per-user packages. `ListComponents` returns the complete
 sorted ID set and the catalog digest that owns it. A caller passes that digest
 to `GetComponent` so metadata and the trusted settings schema cannot be combined
-across catalog generations.
+across catalog generations. For `declarative-v1`, the caller then passes both
+that catalog digest and the entry's exact package digest to
+`GetDeclarativeRuntime`. The reply contains only compact canonical JSON for the
+manager-validated trusted primitive; it never exposes or asks surfaced to open
+the author-controlled package entrypoint.
 `CatalogDigest` is the exact 64-character lowercase hexadecimal SHA-256 of the
 catalog entries sorted by component ID. Each entry is framed as an unsigned
 64-bit big-endian ID byte length, the UTF-8 ID bytes, an unsigned 64-bit
@@ -185,13 +225,19 @@ used by another sender, and are consumed by the first install attempt.
 the exact catalog generation shown during review; a concurrent catalog change
 fails closed without consuming the inspection. Selecting another package with the same component ID uses
 that operation for an update, reinstall, or downgrade. Installation never
-enables, grants, places, or executes the component. This interface version has
-no third-party runtime host, so user packages remain explicitly unsupported and
-inert. After an update changes a package digest, the old component settings
-remain dormant. Saving the new package's trusted, host-rendered settings form
-may adopt that live user-package digest only while both the old and proposed
-records are disabled and carry no grants; configd validates the new schema and
-preserves every instance and placement. `RemovePackage` is digest- and
+mutates enablement, grants, or placements. A first install is inert; an exact
+reinstall may make already-authorized retained state for that identical digest
+effective again. Compatible data-only declarative bar widgets can otherwise be
+activated later through ComponentConfig1;
+reserved QML, process, and desktop-widget runtimes remain explicitly
+unsupported and inert. After an update changes a package digest, the old
+component settings remain dormant. A separate explicit adoption snapshot may
+advance only to the exact live user-package digest; it must force the proposed
+record disabled, clear every grant, and provide settings valid under the new
+trusted schema. The old dormant record may have been enabled or granted because
+its mismatched digest is already unsurfaceable. Configd preserves every
+instance and placement, and adoption never activates the update.
+`RemovePackage` is digest- and
 catalog-guarded, applies only to user
 packages without installed dependents, and removes package bytes while configd
 retains any settings and placements as dormant recovery data. There is no
@@ -215,7 +261,11 @@ Component manager errors have these meanings:
 - `org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest`: the caller's
   digest no longer identifies the active catalog; and
 - `org.hyprshelld.ComponentManager1.Error.UnknownComponent`: the requested ID
-  is not present in that catalog.
+  is not present in that catalog;
+- `org.hyprshelld.ComponentManager1.Error.PackageDigestMismatch`: the requested
+  package generation is no longer installed; and
+- `org.hyprshelld.ComponentManager1.Error.RuntimeUnavailable`: the component
+  has no manager-validated declarative runtime document.
 
 Package lifecycle errors additionally distinguish invalid descriptors,
 unavailable, unknown, expired, or wrong-owner inspections, archive and package

@@ -39,6 +39,7 @@ struct PackageInspectionReport final {
     ComponentManifest manifest;
     QJsonObject normalizedManifest;
     std::optional<QJsonObject> normalizedSettingsSchema;
+    QByteArray declarativeRuntime;
     QVector<InspectedPackageFile> files;
 
     friend bool operator==(

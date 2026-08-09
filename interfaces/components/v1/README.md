@@ -21,9 +21,31 @@ Version 1 reserves these component and runtime names:
 
 Visual component types may use only visual runtime kinds. Applications and
 services may use only `process-v1`. `builtin-v1` is available only to protected
-system components. The first host implementation intentionally supports only
-the built-in `workspace-switcher` factory; reserving a name does not mean the
-runtime has shipped.
+system components. The host activates the protected `workspace-switcher` and a
+strict, data-only `declarative-v1` subset for third-party bar widgets. The
+`qml-full-trust-v1`, `process-v1`, and desktop-widget runtimes remain inert;
+reserving a name does not mean that runtime has shipped.
+
+The `declarative-v1` entrypoint is a JSON document governed by
+`declarative.schema.json`, limited to 16 KiB and nesting depth 8. Version one
+has exactly one trusted primitive, `text-pill`. Its text is either a bounded
+literal or a reference to a component-scoped string or enumeration setting in
+the same package. Literal, resolved string, and enumeration values are limited
+to 128 characters; a referenced string definition must declare a maximum no
+larger than that bound and a minimum of at least one. Resolved text remains
+subject to the same NFC, padding, and control/format-character checks as a
+literal. A pill may add a literal tooltip of at most 256 characters and a
+maximum width from 48 through 512 logical pixels. Unknown fields are rejected.
+Documents cannot contain QML, JavaScript, actions, assets, URLs, commands, styles, or
+resource paths. The isolated inspector validates and normalizes the entrypoint;
+only canonical JSON bytes—not the package path—cross the manager/runtime
+boundary. Declarative widgets request no capabilities and declare no component
+dependencies in this first activation slice. A bound setting's default and
+every possible enumeration value must satisfy the same final renderer-text
+boundary, so a package cannot advertise compatibility with an unusable default.
+Active declarative instances are hosted only from the `main` bar layout; an
+off-main, disabled, unknown, or digest-mismatched placement remains inert and
+preserved rather than being treated as active.
 
 All JSON is UTF-8, has an object root, is limited to nesting depth 32, and must
 not contain duplicate object keys. Manifests are limited to 128 KiB,

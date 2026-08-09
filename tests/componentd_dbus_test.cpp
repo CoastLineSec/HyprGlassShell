@@ -1,5 +1,6 @@
 #include "component_manager1_adaptor.h"
 #include "component/component_package_bundle.h"
+#include "component/declarative_document.h"
 #include "component/package_inspection_report.h"
 #include "component/strict_json.h"
 #include "component_inspection_sessions.h"
@@ -69,7 +70,10 @@ bool writeInspectionOutputs(
 {
     using namespace HyprShelld::Components;
 
-    const auto payload = QByteArrayLiteral("{\"text\":\"catalog watch\"}\n");
+    const auto payload = QByteArrayLiteral(
+        "{\"documentVersion\":1,\"type\":\"text-pill\","
+        "\"text\":{\"literal\":\"Catalog watch\"}}\n"
+    );
     const auto manifestBytes = QJsonDocument(QJsonObject{
         {QStringLiteral("manifestVersion"), 1},
         {QStringLiteral("id"), userComponentId},
@@ -120,6 +124,11 @@ bool writeInspectionOutputs(
         error = QStringLiteral("Cannot build the inspected package fixture");
         return false;
     }
+    const auto parsedDocument = parseDeclarativeDocument(payload);
+    if (!parsedDocument) {
+        error = QStringLiteral("Cannot validate the declarative fixture");
+        return false;
+    }
 
     PackageInspectionReport report{
         .inspectionToken = request.token,
@@ -128,6 +137,9 @@ bool writeInspectionOutputs(
         .archiveSize = static_cast<quint64>(spool.size()),
         .manifest = *parsedManifest.value,
         .normalizedManifest = *parsedObject.value,
+        .declarativeRuntime = serializeDeclarativeDocument(
+            *parsedDocument.value
+        ),
     };
     for (const auto &file : files) {
         report.expandedSize += static_cast<quint64>(file.contents.size());
@@ -399,6 +411,24 @@ private slots:
         QCOMPARE(fields.at(23).toString(), QStringLiteral("system"));
         QCOMPARE(fields.at(24).toBool(), false);
 
+        auto runtimeCall = QDBusMessage::createMethodCall(
+            QString::fromLatin1(busName),
+            QString::fromLatin1(objectPath),
+            QString::fromLatin1(interfaceName),
+            QStringLiteral("GetDeclarativeRuntime")
+        );
+        runtimeCall.setArguments({id, fields.at(22), catalogDigest});
+        const auto runtimeReply = QDBusConnection::sessionBus().call(
+            runtimeCall
+        );
+        QCOMPARE(runtimeReply.type(), QDBusMessage::ErrorMessage);
+        QCOMPARE(
+            runtimeReply.errorName(),
+            QStringLiteral(
+                "org.hyprshelld.ComponentManager1.Error.RuntimeUnavailable"
+            )
+        );
+
         auto propertyCall = QDBusMessage::createMethodCall(
             QString::fromLatin1(busName),
             QString::fromLatin1(objectPath),
@@ -655,6 +685,38 @@ private slots:
             installReply.arguments().at(2).toString();
         QCOMPARE(packageDigest, report.value->packageDigest);
         QVERIFY(installedCatalogDigest != initialDigest);
+
+        auto runtimeCall = QDBusMessage::createMethodCall(
+            QString::fromLatin1(busName),
+            QString::fromLatin1(objectPath),
+            QString::fromLatin1(interfaceName),
+            QStringLiteral("GetDeclarativeRuntime")
+        );
+        runtimeCall.setArguments({
+            userComponentId,
+            QString(64, QLatin1Char('0')),
+            installedCatalogDigest,
+        });
+        auto runtimeReply = client.call(runtimeCall);
+        QCOMPARE(runtimeReply.type(), QDBusMessage::ErrorMessage);
+        QCOMPARE(
+            runtimeReply.errorName(),
+            QStringLiteral(
+                "org.hyprshelld.ComponentManager1.Error.PackageDigestMismatch"
+            )
+        );
+        runtimeCall.setArguments({
+            userComponentId,
+            packageDigest,
+            installedCatalogDigest,
+        });
+        runtimeReply = client.call(runtimeCall);
+        QCOMPARE(runtimeReply.type(), QDBusMessage::ReplyMessage);
+        QCOMPARE(runtimeReply.arguments().size(), 1);
+        QCOMPARE(
+            runtimeReply.arguments().constFirst().toByteArray(),
+            report.value->declarativeRuntime
+        );
 
         QTRY_COMPARE_WITH_TIMEOUT(propertySpy.size(), 1, 3000);
         auto change = propertySpy.takeFirst();

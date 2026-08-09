@@ -214,6 +214,44 @@ TestCase {
         return record;
     }
 
+    function thirdPartyDeclarativeWidgetRecord() {
+        return {
+            id: "org.example.clock-widget",
+            type: "bar-widget",
+            version: "1.0.0",
+            name: "Clock Widget",
+            description: "A data-only local clock label.",
+            authors: [{ name: "Example Author" }],
+            license: "MIT",
+            packageDigest:
+                "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            origin: "user",
+            removable: true,
+            hasSettings: true,
+            activationSupported: true,
+            compatibilityReason: "",
+            runtime: {
+                kind: "declarative-v1",
+                entrypoint: "payload/widget.json"
+            },
+            settingsDefinitions: [{
+                key: "label",
+                scope: "component",
+                type: "string",
+                label: "Label",
+                description: "Text shown in the bar.",
+                group: "appearance",
+                order: 10,
+                defaultValue: "Clock",
+                minimumLength: 1,
+                maximumLength: 32,
+                options: []
+            }],
+            requestedCapabilities: [],
+            dependencies: []
+        };
+    }
+
     function configureSnapshotForComponent(component, enabled) {
         const components = {};
         components[component.id] = {
@@ -588,7 +626,16 @@ TestCase {
         compare(review.opened, true);
         compare(name.text, "Local Service");
         verify(capabilities.text.includes("example.read"));
-        verify(activation.text.includes("installed disabled"));
+        verify(activation.text.includes("cannot activate"));
+        verify(activation.text.includes("does not change saved state"));
+        const supportedReview = Object.assign({}, page.inspectionReview, {
+            activationSupported: true,
+            compatibilityReason: ""
+        });
+        page.inspectionReview = supportedReview;
+        wait(0);
+        verify(activation.text.includes("does not change saved enablement"));
+        verify(activation.text.includes("exact version"));
 
         let installRequests = 0;
         page.installInspectedPackageRequested.connect(function() {
@@ -872,6 +919,415 @@ TestCase {
             saved[2],
             "instanceTitle"
         ));
+    }
+
+    function test_compatibleWidgetUsesAtomicAddToBarThenGlobalToggle() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const widget = thirdPartyDeclarativeWidgetRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [widget];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        const instanceId = "d9a61b25-670b-44cb-a824-9e52772e79f1";
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "4",
+            components: {},
+            instances: {},
+            layouts: { bars: {}, desktops: {} }
+        };
+        waitForRendering(page);
+        wait(0);
+
+        const add = findChild(page, "componentAddToBar-" + widget.id);
+        const toggle = findChild(page, "componentEnabled-" + widget.id);
+        const status = findChild(page, "componentStatus-" + widget.id);
+        verify(add !== null);
+        verify(toggle !== null);
+        verify(status !== null);
+        compare(add.visible, true);
+        compare(add.enabled, true);
+        compare(toggle.visible, false);
+        verify(status.text.includes("Add it to the bar"));
+
+        const configuredComponents = {};
+        configuredComponents[widget.id] = {
+            packageDigest: widget.packageDigest,
+            enabled: false,
+            grantedCapabilities: [],
+            settings: { label: "Clock" }
+        };
+        const unplacedInstances = {};
+        unplacedInstances[instanceId] = {
+            componentId: widget.id,
+            enabled: false,
+            settings: {}
+        };
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "5",
+            components: configuredComponents,
+            instances: unplacedInstances,
+            layouts: { bars: {}, desktops: {} }
+        };
+        wait(0);
+        compare(add.visible, true);
+        compare(toggle.visible, false);
+        compare(status.text, "Configured but not on the bar.");
+
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "6",
+            components: configuredComponents,
+            instances: unplacedInstances,
+            layouts: {
+                bars: {
+                    secondary: {
+                        outputs: { mode: "all" },
+                        regions: {
+                            start: [],
+                            center: [],
+                            end: [instanceId]
+                        }
+                    }
+                },
+                desktops: {}
+            }
+        };
+        wait(0);
+        compare(add.visible, true);
+        compare(toggle.visible, false);
+        compare(status.text, "Configured but not on the bar.");
+
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "7",
+            components: configuredComponents,
+            instances: unplacedInstances,
+            layouts: {
+                bars: {
+                    main: {
+                        outputs: { mode: "all" },
+                        regions: {
+                            start: [], center: [], end: [instanceId]
+                        }
+                    }
+                },
+                desktops: {}
+            }
+        };
+        wait(0);
+        compare(add.visible, true);
+        compare(toggle.visible, false);
+        compare(status.text, "Configured but not on the bar.");
+
+        let request = [];
+        page.componentAddToBarRequested.connect(function(
+            componentId,
+            packageDigest,
+            settings
+        ) {
+            request = [componentId, packageDigest, settings];
+        });
+        add.clicked();
+        compare(request[0], widget.id);
+        compare(request[1], widget.packageDigest);
+        compare(request[2].label, "Clock");
+
+        const components = {};
+        components[widget.id] = {
+            packageDigest: widget.packageDigest,
+            enabled: true,
+            grantedCapabilities: [],
+            settings: { label: "Clock" }
+        };
+        const instances = {};
+        instances[instanceId] = {
+            componentId: widget.id,
+            enabled: true,
+            settings: {}
+        };
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "5",
+            components: components,
+            instances: instances,
+            layouts: {
+                bars: {
+                    main: {
+                        outputs: { mode: "all" },
+                        regions: { start: [], center: [], end: [instanceId] }
+                    }
+                },
+                desktops: {}
+            }
+        };
+        wait(0);
+        compare(add.visible, false);
+        compare(toggle.visible, true);
+        compare(toggle.checked, true);
+        compare(status.text, "Enabled");
+
+        const disabled = JSON.parse(JSON.stringify(page.configSnapshot));
+        disabled.components[widget.id].enabled = false;
+        page.configSnapshot = disabled;
+        wait(0);
+        compare(add.visible, false);
+        compare(toggle.visible, true);
+        compare(toggle.checked, false);
+        compare(status.text, "Installed disabled. Review it before enabling.");
+    }
+
+    function test_updatedSchemaFreeWidgetRequiresExplicitInertAdoption() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const widget = thirdPartyDeclarativeWidgetRecord();
+        widget.settingsDefinitions = [];
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [widget];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        const instanceId = "d9a61b25-670b-44cb-a824-9e52772e79f1";
+        const oldDigest =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        const components = {};
+        components[widget.id] = {
+            packageDigest: oldDigest,
+            enabled: true,
+            grantedCapabilities: ["old.permission"],
+            settings: { oldValue: "preserved only until adoption" }
+        };
+        const instances = {};
+        instances[instanceId] = {
+            componentId: widget.id,
+            enabled: true,
+            settings: {}
+        };
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "7",
+            components: components,
+            instances: instances,
+            layouts: {
+                bars: {
+                    main: {
+                        outputs: { mode: "all" },
+                        regions: {
+                            start: [], center: [], end: [instanceId]
+                        }
+                    }
+                },
+                desktops: {}
+            }
+        };
+        waitForRendering(page);
+        wait(0);
+
+        const adopt = findChild(
+            page,
+            "componentAdoptPackage-" + widget.id
+        );
+        const add = findChild(page, "componentAddToBar-" + widget.id);
+        const toggle = findChild(page, "componentEnabled-" + widget.id);
+        const configure = findChild(
+            page,
+            "componentSettings-" + widget.id
+        );
+        const status = findChild(page, "componentStatus-" + widget.id);
+        verify(adopt !== null);
+        verify(add !== null);
+        verify(toggle !== null);
+        verify(configure !== null);
+        verify(status !== null);
+        compare(adopt.visible, true);
+        compare(adopt.enabled, true);
+        compare(adopt.text, "Use Installed Version");
+        compare(add.visible, false);
+        compare(toggle.visible, false);
+        compare(configure.visible, false);
+        verify(status.text.includes("different package version"));
+
+        let adoption = [];
+        page.componentAdoptionRequested.connect(function(
+            componentId,
+            packageDigest,
+            settings
+        ) {
+            adoption = [componentId, packageDigest, settings];
+        });
+        adopt.clicked();
+        compare(adoption[0], widget.id);
+        compare(adoption[1], widget.packageDigest);
+        compare(Object.keys(adoption[2]).length, 0);
+
+        const adopted = JSON.parse(JSON.stringify(page.configSnapshot));
+        adopted.revision = "8";
+        adopted.components[widget.id] = {
+            packageDigest: widget.packageDigest,
+            enabled: false,
+            grantedCapabilities: [],
+            settings: {}
+        };
+        page.configSnapshot = adopted;
+        wait(0);
+        compare(adopt.visible, false);
+        compare(add.visible, false);
+        compare(toggle.visible, true);
+        compare(toggle.checked, false);
+        compare(status.text, "Installed disabled. Review it before enabling.");
+    }
+
+    function test_quarantinedWidgetOffersDigestBoundRetry() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const widget = thirdPartyDeclarativeWidgetRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [widget];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        const instanceId = "d9a61b25-670b-44cb-a824-9e52772e79f1";
+        const placed = configureSnapshotForComponent(widget, true);
+        placed.instances[instanceId] = {
+            componentId: widget.id,
+            enabled: true,
+            settings: {}
+        };
+        placed.layouts.bars.main = {
+            outputs: { mode: "all" },
+            regions: { start: [], center: [], end: [instanceId] }
+        };
+        page.configSnapshot = placed;
+        page.runtimeAvailable = true;
+        page.runtimeStates = [{
+            componentId: widget.id,
+            packageDigest: widget.packageDigest,
+            state: "quarantined",
+            reason: "timeout",
+            failureCount: 1
+        }];
+        waitForRendering(page);
+        wait(0);
+
+        const retry = findChild(page, "componentRetry-" + widget.id);
+        const add = findChild(page, "componentAddToBar-" + widget.id);
+        const status = findChild(page, "componentStatus-" + widget.id);
+        verify(retry !== null);
+        verify(add !== null);
+        verify(status !== null);
+        compare(add.visible, false);
+        compare(retry.visible, true);
+        compare(retry.enabled, true);
+        verify(status.text.includes("activation did not complete"));
+        verify(status.text.includes("did not stabilize"));
+
+        let request = [];
+        page.componentRetryRequested.connect(function(
+            componentId,
+            packageDigest
+        ) {
+            request = [componentId, packageDigest];
+        });
+        retry.clicked();
+        compare(request, [widget.id, widget.packageDigest]);
+        page.runtimeRetryBusyComponentId = widget.id;
+        compare(retry.enabled, false);
+    }
+
+    function test_thirdPartyRuntimeSafeModeWarnsAndLocksActivation() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const widget = thirdPartyDeclarativeWidgetRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [widget];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        page.configSnapshot = configureSnapshotForComponent(widget, true);
+        page.runtimeAvailable = true;
+        page.thirdPartySafeMode = true;
+        waitForRendering(page);
+        wait(0);
+
+        const warning = findChild(page, "componentRuntimeSafeModeWarning");
+        const add = findChild(page, "componentAddToBar-" + widget.id);
+        const toggle = findChild(page, "componentEnabled-" + widget.id);
+        const retry = findChild(page, "componentRetry-" + widget.id);
+        const status = findChild(page, "componentStatus-" + widget.id);
+        verify(warning !== null);
+        verify(add !== null);
+        verify(toggle !== null);
+        verify(retry !== null);
+        verify(status !== null);
+        compare(warning.visible, true);
+        compare(add.visible, true);
+        compare(add.enabled, false);
+        compare(toggle.visible, false);
+        compare(retry.visible, false);
+        verify(status.text.includes("runtime safe mode"));
+
+        const instanceId = "d9a61b25-670b-44cb-a824-9e52772e79f1";
+        const placed = configureSnapshotForComponent(widget, true);
+        placed.instances[instanceId] = {
+            componentId: widget.id,
+            enabled: true,
+            settings: {}
+        };
+        placed.layouts.bars.main = {
+            outputs: { mode: "all" },
+            regions: { start: [], center: [], end: [instanceId] }
+        };
+        page.configSnapshot = placed;
+        page.runtimeStates = [{
+            componentId: widget.id,
+            packageDigest: widget.packageDigest,
+            state: "quarantined",
+            reason: "Recovery data could not be trusted.",
+            failureCount: 1
+        }];
+        wait(0);
+        compare(add.visible, false);
+        compare(toggle.visible, true);
+        compare(toggle.enabled, false);
+        compare(retry.visible, true);
+        compare(retry.enabled, false);
+        verify(status.text.includes("runtime safe mode"));
+
+        page.thirdPartySafeMode = false;
+        compare(warning.visible, false);
+        compare(toggle.enabled, true);
+        compare(retry.enabled, true);
     }
 
     function test_requestsAreForwardedOnce() {

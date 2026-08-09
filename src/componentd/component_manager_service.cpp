@@ -19,6 +19,12 @@ const QString staleCatalogDigestError = QStringLiteral(
 const QString unknownComponentError = QStringLiteral(
     "org.hyprshelld.ComponentManager1.Error.UnknownComponent"
 );
+const QString runtimeUnavailableError = QStringLiteral(
+    "org.hyprshelld.ComponentManager1.Error.RuntimeUnavailable"
+);
+const QString packageDigestMismatchError = QStringLiteral(
+    "org.hyprshelld.ComponentManager1.Error.PackageDigestMismatch"
+);
 
 QString optionalString(const std::optional<QString> &value)
 {
@@ -206,6 +212,47 @@ uint ComponentManagerService::GetComponent(
     origin = Components::toString(manifest.origin);
     removable = manifest.origin == Components::ComponentOrigin::User;
     return manifest.manifestVersion;
+}
+
+QByteArray ComponentManagerService::GetDeclarativeRuntime(
+    const QString &componentId,
+    const QString &expectedPackageDigest,
+    const QString &expectedCatalogDigest
+) const
+{
+    if (expectedCatalogDigest != catalog_.catalogDigest()) {
+        reportError(
+            staleCatalogDigestError,
+            QStringLiteral("The component catalog changed; list it again")
+        );
+        return {};
+    }
+
+    const auto *entry = catalog_.find(componentId);
+    if (entry == nullptr) {
+        reportError(
+            unknownComponentError,
+            QStringLiteral("The requested component is not installed")
+        );
+        return {};
+    }
+    if (entry->packageDigest != expectedPackageDigest) {
+        reportError(
+            packageDigestMismatchError,
+            QStringLiteral("The installed component digest changed")
+        );
+        return {};
+    }
+    if (entry->manifest.runtime.kind
+            != Components::RuntimeKind::DeclarativeV1
+        || entry->declarativeRuntime.isEmpty()) {
+        reportError(
+            runtimeUnavailableError,
+            QStringLiteral("The requested component has no declarative runtime")
+        );
+        return {};
+    }
+    return entry->declarativeRuntime;
 }
 
 QString ComponentManagerService::BeginPackageInspection(

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/components/v1/declarative.schema.json",
+  "title": "HyprShelld trusted declarative widget document v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documentVersion", "type", "text"],
+  "properties": {
+    "documentVersion": {"const": 1},
+    "type": {"const": "text-pill"},
+    "text": {"$ref": "#/$defs/textSource"},
+    "tooltip": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "maximumWidth": {
+      "type": "integer",
+      "minimum": 48,
+      "maximum": 512
+    }
+  },
+  "$defs": {
+    "textSource": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["literal"],
+          "properties": {
+            "literal": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["setting"],
+          "properties": {
+            "setting": {
+              "type": "string",
+              "pattern": "^[a-z][A-Za-z0-9]{0,63}$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
