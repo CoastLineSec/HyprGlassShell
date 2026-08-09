@@ -61,9 +61,13 @@ void rejectUnknownFields(
     const bool allowNewlines
 )
 {
-    for (const auto character : value) {
-        if (character.category() == QChar::Other_Control
-            && !(allowNewlines && character == QLatin1Char('\n'))) {
+    for (const auto codePoint : value.toUcs4()) {
+        const auto category = QChar::category(
+            static_cast<char32_t>(codePoint)
+        );
+        if ((category == QChar::Other_Control
+                || category == QChar::Other_Format)
+            && !(allowNewlines && codePoint == '\n')) {
             return true;
         }
     }

@@ -7,6 +7,7 @@
 #include <QString>
 #include <QStringList>
 #include <QtTypes>
+#include <QVector>
 
 #include <optional>
 
@@ -25,6 +26,10 @@ struct CatalogLoadResult;
 class SystemCatalog final {
 public:
     [[nodiscard]] static CatalogLoadResult load(const QString &rootPath);
+    [[nodiscard]] static CatalogLoadResult withUserEntries(
+        SystemCatalog systemCatalog,
+        QVector<CatalogEntry> userEntries
+    );
 
     [[nodiscard]] const QString &catalogDigest() const;
     [[nodiscard]] QStringList componentIds() const;

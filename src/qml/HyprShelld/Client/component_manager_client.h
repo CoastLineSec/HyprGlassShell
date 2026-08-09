@@ -6,6 +6,7 @@
 #include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
 #include <memory>
@@ -24,6 +25,11 @@ class ComponentManagerClient final : public QObject {
     Q_PROPERTY(QString catalogDigest READ catalogDigest NOTIFY catalogDigestChanged)
     Q_PROPERTY(QVariantList components READ components NOTIFY componentsChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
+    Q_PROPERTY(bool inspectionBusy READ inspectionBusy NOTIFY inspectionBusyChanged)
+    Q_PROPERTY(bool packageOperationBusy READ packageOperationBusy NOTIFY packageOperationBusyChanged)
+    Q_PROPERTY(QVariantMap inspectionReview READ inspectionReview NOTIFY inspectionReviewChanged)
+    Q_PROPERTY(QString inspectionToken READ inspectionToken NOTIFY inspectionTokenChanged)
+    Q_PROPERTY(QString packageError READ packageError NOTIFY packageErrorChanged)
 
 public:
     explicit ComponentManagerClient(QObject *parent = nullptr);
@@ -34,6 +40,21 @@ public:
     [[nodiscard]] QString catalogDigest() const;
     [[nodiscard]] QVariantList components() const;
     [[nodiscard]] QString lastError() const;
+    [[nodiscard]] bool inspectionBusy() const;
+    [[nodiscard]] bool packageOperationBusy() const;
+    [[nodiscard]] QVariantMap inspectionReview() const;
+    [[nodiscard]] QString inspectionToken() const;
+    [[nodiscard]] QString packageError() const;
+
+    Q_INVOKABLE void inspectPackage(const QUrl &packageUrl);
+    Q_INVOKABLE void cancelInspection();
+    Q_INVOKABLE void installInspectedPackage();
+    Q_INVOKABLE void removeComponent(
+        const QString &componentId,
+        const QString &packageDigest,
+        const QString &expectedCatalogDigest
+    );
+    Q_INVOKABLE void clearPackageError();
 
 signals:
     void availableChanged();
@@ -41,6 +62,13 @@ signals:
     void catalogDigestChanged();
     void componentsChanged();
     void lastErrorChanged();
+    void inspectionBusyChanged();
+    void packageOperationBusyChanged();
+    void inspectionReviewChanged();
+    void inspectionTokenChanged();
+    void packageErrorChanged();
+    void packageInstalled(const QString &componentId);
+    void packageRemoved(const QString &componentId);
 
 private slots:
     void propertiesChanged(
@@ -52,6 +80,12 @@ private slots:
         const QString &name,
         const QString &oldOwner,
         const QString &newOwner
+    );
+    void packageInspectionFinished(
+        const QString &inspectionToken,
+        const QByteArray &review,
+        const QString &errorCode,
+        const QString &errorMessage
     );
 
 private:
@@ -65,6 +99,11 @@ private:
     void setAvailable(bool available);
     void setBusy(bool busy);
     void setLastError(const QString &error);
+    void setInspectionBusy(bool busy);
+    void setPackageOperationBusy(bool busy);
+    void setInspectionReview(QVariantMap review);
+    void setInspectionToken(QString token);
+    void setPackageError(QString error);
 
     QDBusConnection connection_;
     QDBusServiceWatcher *serviceWatcher_ = nullptr;
@@ -73,9 +112,17 @@ private:
     QString catalogDigest_;
     QString lastError_;
     quint64 generation_ = 0;
+    quint64 packageGeneration_ = 0;
     int retryDelayMs_ = 250;
     bool available_ = false;
     bool busy_ = false;
+    bool inspectionBusy_ = false;
+    bool packageOperationBusy_ = false;
+    QVariantMap inspectionReview_;
+    QString inspectionToken_;
+    QString inspectionArchiveDigest_;
+    QString inspectionCatalogDigest_;
+    QString packageError_;
 };
 
 } // namespace HyprShelld

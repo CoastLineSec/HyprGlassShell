@@ -1,0 +1,8 @@
+[Unit]
+Description=HyprShelld isolated component helpers
+StopWhenUnneeded=yes
+
+[Slice]
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=32

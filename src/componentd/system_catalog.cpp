@@ -1,5 +1,6 @@
 #include "system_catalog.h"
 
+#include "component/component_configuration.h"
 #include "component/settings_schema.h"
 
 #include <QCryptographicHash>
@@ -343,6 +344,51 @@ CatalogLoadResult SystemCatalog::load(const QString &rootPath)
 
     catalog.catalogDigest_ = deriveCatalogDigest(catalog.entries_);
     return {std::move(catalog), QString()};
+}
+
+CatalogLoadResult SystemCatalog::withUserEntries(
+    SystemCatalog systemCatalog,
+    QVector<CatalogEntry> userEntries
+)
+{
+    if (systemCatalog.entries_.size() + userEntries.size()
+        > maximumSystemComponents) {
+        return {
+            std::nullopt,
+            QStringLiteral("The combined component catalog contains more than %1 entries")
+                .arg(maximumSystemComponents),
+        };
+    }
+
+    for (auto &entry : userEntries) {
+        const auto &manifest = entry.manifest;
+        if (manifest.origin != ComponentOrigin::User
+            || isReservedBuiltinId(manifest.id)) {
+            return {
+                std::nullopt,
+                QStringLiteral("A user component attempted to use a protected identity: %1")
+                    .arg(manifest.id),
+            };
+        }
+        if (systemCatalog.entries_.contains(manifest.id)) {
+            return {
+                std::nullopt,
+                QStringLiteral("Duplicate component ID across system and user catalogs: %1")
+                    .arg(manifest.id),
+            };
+        }
+        if (!isFullSha256Digest(entry.packageDigest)) {
+            return {
+                std::nullopt,
+                QStringLiteral("A user component has an invalid package digest: %1")
+                    .arg(manifest.id),
+            };
+        }
+        systemCatalog.entries_.insert(manifest.id, std::move(entry));
+    }
+
+    systemCatalog.catalogDigest_ = deriveCatalogDigest(systemCatalog.entries_);
+    return {std::move(systemCatalog), QString()};
 }
 
 const QString &SystemCatalog::catalogDigest() const

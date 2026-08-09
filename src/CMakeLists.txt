@@ -1,4 +1,5 @@
 add_subdirectory(component)
+add_subdirectory(component-inspector)
 add_subdirectory(coordinator)
 add_subdirectory(configd)
 add_subdirectory(componentd)

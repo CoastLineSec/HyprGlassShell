@@ -548,6 +548,91 @@ private slots:
         bus.unregisterObject(objectPath);
     }
 
+    void reviewedUserPackageUpdateAdoptsOnlyDisabledDigest()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        auto bus = QDBusConnection::sessionBus();
+        QVERIFY(bus.isConnected());
+
+        ComponentConfigService service(
+            ComponentStore(Tests::componentPathsFor(
+                directory.path(),
+                QStringLiteral(HYPRSHELLD_COMPONENT_DEFAULTS_FILE)
+            )),
+            bus
+        );
+        const ComponentConfig1Adaptor adaptor(&service);
+        QVERIFY(bus.registerObject(
+            objectPath,
+            &service,
+            QDBusConnection::ExportAdaptors
+        ));
+        QVERIFY(bus.registerService(serviceName));
+
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto oldPackageDigest = QString(64, QLatin1Char('b'));
+        const auto newPackageDigest = QString(64, QLatin1Char('c'));
+        auto oldCatalog = catalog();
+        oldCatalog.digest = QString(64, QLatin1Char('d'));
+        oldCatalog.entries.insert(
+            componentId,
+            {
+                .packageDigest = oldPackageDigest,
+                .type = Components::ComponentType::BarWidget,
+                .origin = Components::ComponentOrigin::User,
+                .settingsSchema = {},
+                .requestedCapabilities = {},
+            }
+        );
+        service.applyCatalog(oldCatalog);
+
+        ComponentConfigClient client(bus, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.catalogDigest(), oldCatalog.digest, 3000
+        );
+        client.setComponentSettings(componentId, oldPackageDigest, {});
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 1ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+
+        auto newCatalog = oldCatalog;
+        newCatalog.digest = QString(64, QLatin1Char('e'));
+        newCatalog.entries[componentId].packageDigest = newPackageDigest;
+        service.applyCatalog(newCatalog);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.catalogDigest(), newCatalog.digest, 3000
+        );
+        QCOMPARE(
+            client.snapshot()
+                .value(QStringLiteral("components")).toMap()
+                .value(componentId).toMap()
+                .value(QStringLiteral("packageDigest")).toString(),
+            oldPackageDigest
+        );
+
+        client.setComponentSettings(componentId, newPackageDigest, {});
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 2ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        const auto adopted = client.snapshot()
+                                 .value(QStringLiteral("components")).toMap()
+                                 .value(componentId).toMap();
+        QCOMPARE(
+            adopted.value(QStringLiteral("packageDigest")).toString(),
+            newPackageDigest
+        );
+        QCOMPARE(adopted.value(QStringLiteral("enabled")).toBool(), false);
+        QVERIFY(
+            adopted.value(QStringLiteral("grantedCapabilities"))
+                .toList().isEmpty()
+        );
+        QVERIFY(client.lastErrorName().isEmpty());
+
+        bus.unregisterService(serviceName);
+        bus.unregisterObject(objectPath);
+    }
+
     void hotCatalogMigrationPublishesOneDurableRevision()
     {
         QTemporaryDir directory;

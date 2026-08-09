@@ -57,5 +57,84 @@
       <arg name="origin" type="s" direction="out"/>
       <arg name="removable" type="b" direction="out"/>
     </method>
+
+    <!--
+      Starts inspection of one already-open local archive. The descriptor is
+      copied into manager-owned staging before this call returns; componentd
+      never reopens a caller-controlled path. Completion is delivered only to
+      the unique bus sender that owns the token.
+
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.InvalidPackageDescriptor
+        org.hyprshelld.ComponentManager1.Error.InspectionUnavailable
+    -->
+    <method name="BeginPackageInspection">
+      <arg name="packageFile" type="h" direction="in"/>
+      <arg name="inspectionToken" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.UnknownInspection
+        org.hyprshelld.ComponentManager1.Error.InspectionUnavailable
+        org.hyprshelld.ComponentManager1.Error.InspectionExpired
+        org.hyprshelld.ComponentManager1.Error.InspectionOwnerMismatch
+    -->
+    <method name="CancelPackageInspection">
+      <arg name="inspectionToken" type="s" direction="in"/>
+    </method>
+
+    <!--
+      Commits the exact staged bytes described by an accepted inspection.
+      Installation and update do not enable, grant, place, or execute the
+      component. User packages remain runtime-incompatible in this boundary.
+
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest
+        org.hyprshelld.ComponentManager1.Error.UnknownInspection
+        org.hyprshelld.ComponentManager1.Error.InspectionUnavailable
+        org.hyprshelld.ComponentManager1.Error.InspectionExpired
+        org.hyprshelld.ComponentManager1.Error.InspectionOwnerMismatch
+        org.hyprshelld.ComponentManager1.Error.ArchiveDigestMismatch
+        org.hyprshelld.ComponentManager1.Error.ReservedComponentId
+        org.hyprshelld.ComponentManager1.Error.PackageCatalogFull
+        org.hyprshelld.ComponentManager1.Error.SameVersionDifferentDigest
+        org.hyprshelld.ComponentManager1.Error.PackageTransactionFailed
+    -->
+    <method name="InstallInspectedPackage">
+      <arg name="inspectionToken" type="s" direction="in"/>
+      <arg name="expectedArchiveDigest" type="s" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="componentId" type="s" direction="out"/>
+      <arg name="packageDigest" type="s" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Removes only a third-party package. Built-ins are immutable. The current
+      slice has no third-party runtime host, so user packages are necessarily
+      inactive; dormant configuration is preserved by configd.
+
+      Errors:
+        org.hyprshelld.ComponentManager1.Error.StaleCatalogDigest
+        org.hyprshelld.ComponentManager1.Error.UnknownComponent
+        org.hyprshelld.ComponentManager1.Error.BuiltinRemovalForbidden
+        org.hyprshelld.ComponentManager1.Error.PackageDigestMismatch
+        org.hyprshelld.ComponentManager1.Error.PackageHasDependents
+        org.hyprshelld.ComponentManager1.Error.PackageTransactionFailed
+    -->
+    <method name="RemovePackage">
+      <arg name="componentId" type="s" direction="in"/>
+      <arg name="expectedPackageDigest" type="s" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+    </method>
+
+    <signal name="PackageInspectionFinished">
+      <arg name="inspectionToken" type="s"/>
+      <arg name="review" type="ay"/>
+      <arg name="errorCode" type="s"/>
+      <arg name="errorMessage" type="s"/>
+    </signal>
   </interface>
 </node>

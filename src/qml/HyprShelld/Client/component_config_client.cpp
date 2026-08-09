@@ -168,6 +168,146 @@ void ComponentConfigClient::setComponentEnabled(
     beginReplaceSnapshot(replacement, componentId);
 }
 
+void ComponentConfigClient::setComponentSettings(
+    const QString &componentId,
+    const QString &expectedPackageDigest,
+    const QVariantMap &settings
+)
+{
+    if (!available_ || !catalogAvailable_ || busy_) {
+        const auto name = !available_ ? unavailableError
+            : !catalogAvailable_ ? catalogUnavailableError : busyError;
+        setError(
+            componentId,
+            name,
+            QStringLiteral("Component settings cannot be changed right now")
+        );
+        return;
+    }
+    if (!Components::isValidComponentId(componentId)
+        || !Components::isFullSha256Digest(expectedPackageDigest)) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The component ID or package digest is invalid")
+        );
+        return;
+    }
+
+    auto components = snapshot_.value(QStringLiteral("components")).toMap();
+    auto record = components.value(componentId).toMap();
+    if (!record.isEmpty()
+        && record.value(QStringLiteral("packageDigest")).toString()
+            != expectedPackageDigest) {
+        const auto enabled = record.value(QStringLiteral("enabled"));
+        const auto grants = record.value(
+            QStringLiteral("grantedCapabilities")
+        );
+        if (enabled.metaType().id() != QMetaType::Bool
+            || enabled.toBool()
+            || grants.metaType().id() != QMetaType::QVariantList
+            || !grants.toList().isEmpty()) {
+            setError(
+                componentId,
+                packageDigestMismatchError,
+                QStringLiteral(
+                    "The installed package changed while its previous settings were not safely disabled"
+                )
+            );
+            return;
+        }
+        // Saving the trusted, host-rendered schema form is the explicit review
+        // step that adopts an updated user package. It never carries grants or
+        // enables the package; configd independently verifies that the live
+        // catalog entry is third-party and that these settings match its
+        // current schema before allowing the dormant digest to advance.
+        record.insert(QStringLiteral("packageDigest"), expectedPackageDigest);
+        record.insert(QStringLiteral("enabled"), false);
+        record.insert(
+            QStringLiteral("grantedCapabilities"),
+            QVariantList{}
+        );
+    }
+    if (record.isEmpty()) {
+        record = {
+            {QStringLiteral("packageDigest"), expectedPackageDigest},
+            {QStringLiteral("enabled"), false},
+            {QStringLiteral("grantedCapabilities"), QVariantList{}},
+            {QStringLiteral("settings"), settings},
+        };
+    } else {
+        record.insert(QStringLiteral("settings"), settings);
+    }
+
+    auto replacement = snapshot_;
+    components.insert(componentId, record);
+    replacement.insert(QStringLiteral("components"), components);
+    beginReplaceSnapshot(replacement, componentId);
+}
+
+void ComponentConfigClient::preparePackageChange(
+    const QString &componentId,
+    const QString &expectedPackageDigest
+)
+{
+    if (!available_ || !catalogAvailable_ || busy_) {
+        setError(
+            componentId,
+            !available_ ? unavailableError
+                : !catalogAvailable_ ? catalogUnavailableError : busyError,
+            QStringLiteral("The component cannot be prepared for a package change")
+        );
+        return;
+    }
+    if (!Components::isValidComponentId(componentId)
+        || !Components::isFullSha256Digest(expectedPackageDigest)) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The component ID or package digest is invalid")
+        );
+        return;
+    }
+
+    auto components = snapshot_.value(QStringLiteral("components")).toMap();
+    const auto found = components.constFind(componentId);
+    if (found == components.cend()) {
+        clearError();
+        return;
+    }
+    auto record = found->toMap();
+    if (record.value(QStringLiteral("packageDigest")).toString()
+        != expectedPackageDigest) {
+        setError(
+            componentId,
+            packageDigestMismatchError,
+            QStringLiteral("The installed package no longer matches its settings")
+        );
+        return;
+    }
+    const auto enabled = record.value(QStringLiteral("enabled"));
+    const auto grants = record.value(QStringLiteral("grantedCapabilities"));
+    if (enabled.metaType().id() != QMetaType::Bool
+        || grants.metaType().id() != QMetaType::QVariantList) {
+        setError(
+            componentId,
+            invalidComponentError,
+            QStringLiteral("The component settings record is malformed")
+        );
+        return;
+    }
+    if (!enabled.toBool() && grants.toList().isEmpty()) {
+        clearError();
+        return;
+    }
+    record.insert(QStringLiteral("enabled"), false);
+    record.insert(QStringLiteral("grantedCapabilities"), QVariantList{});
+    components.insert(componentId, record);
+    auto replacement = snapshot_;
+    replacement.insert(QStringLiteral("components"), components);
+    beginReplaceSnapshot(replacement, componentId);
+}
+
 void ComponentConfigClient::beginReplaceSnapshot(
     const QVariantMap &snapshot,
     const QString &componentId

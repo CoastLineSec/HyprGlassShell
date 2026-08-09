@@ -414,6 +414,54 @@ private slots:
         QCOMPARE(parsed.value->components.first().settings.size(), 1);
     }
 
+    void rejectsActivationOfMatchingUserPackage()
+    {
+        auto currentCatalog = catalog();
+        const auto componentId = QStringLiteral("org.example.clock");
+        const auto packageDigest = QString(64, QLatin1Char('b'));
+        currentCatalog.entries.insert(
+            componentId,
+            {
+                .packageDigest = packageDigest,
+                .type = Components::ComponentType::BarWidget,
+                .origin = Components::ComponentOrigin::User,
+                .settingsSchema = {},
+                .requestedCapabilities = {},
+            }
+        );
+
+        auto root = QJsonDocument::fromJson(defaultsBytes()).object();
+        auto components = root.value(QStringLiteral("components")).toObject();
+        components.insert(
+            componentId,
+            QJsonObject{
+                {QStringLiteral("packageDigest"), packageDigest},
+                {QStringLiteral("enabled"), true},
+                {QStringLiteral("grantedCapabilities"), QJsonArray{}},
+                {QStringLiteral("settings"), QJsonObject{}},
+            }
+        );
+        root.insert(QStringLiteral("components"), components);
+
+        const auto parsed = Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        );
+        QVERIFY(!parsed);
+        QVERIFY(std::ranges::any_of(parsed.errors, [](const auto &error) {
+            return error.code == QStringLiteral(
+                "component-config.user-runtime-unavailable"
+            );
+        }));
+
+        auto desired = components.value(componentId).toObject();
+        desired.insert(QStringLiteral("enabled"), false);
+        components.insert(componentId, desired);
+        root.insert(QStringLiteral("components"), components);
+        QVERIFY(Components::parseComponentConfiguration(
+            QByteArrayView(encode(root)), currentCatalog
+        ));
+    }
+
     void preservesBoundedDormantFractionalNumbers()
     {
         auto root = QJsonDocument::fromJson(defaultsBytes()).object();

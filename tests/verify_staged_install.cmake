@@ -5,6 +5,7 @@ foreach(required IN ITEMS
     INSTALL_PREFIX
     INSTALL_BINDIR
     INSTALL_LIBDIR
+    INSTALL_LIBEXECDIR
     INSTALL_DATADIR
     INSTALL_QMLDIR
     INSTALL_SYSTEMD_UNIT_DIR
@@ -51,6 +52,7 @@ endif()
 
 set(bin_root "${STAGE_DIRECTORY}${INSTALL_BINDIR}")
 set(lib_root "${STAGE_DIRECTORY}${INSTALL_LIBDIR}")
+set(libexec_root "${STAGE_DIRECTORY}${INSTALL_LIBEXECDIR}")
 set(data_root "${STAGE_DIRECTORY}${INSTALL_DATADIR}")
 set(qml_root "${STAGE_DIRECTORY}${INSTALL_QMLDIR}")
 set(systemd_root "${STAGE_DIRECTORY}${INSTALL_SYSTEMD_UNIT_DIR}")
@@ -60,10 +62,12 @@ set(required_files
     "${bin_root}/hyprshelld-configd"
     "${bin_root}/hyprshelld-componentd"
     "${bin_root}/hyprshelld-settings"
+    "${libexec_root}/hyprshelld/hyprshelld-component-inspector"
     "${lib_root}/libhyprshelld-client.so"
     "${lib_root}/libhyprshelld-ui.so"
     "${systemd_root}/hyprshelld.target"
     "${systemd_root}/session-hyprshelld.slice"
+    "${systemd_root}/session-hyprshelld-components.slice"
     "${systemd_root}/hyprshelld.service"
     "${systemd_root}/hyprshelld-configd.service"
     "${systemd_root}/hyprshelld-componentd.service"
@@ -71,6 +75,7 @@ set(required_files
     "${data_root}/dbus-1/services/org.hyprshelld.Config1.service"
     "${data_root}/dbus-1/services/org.hyprshelld.ComponentManager1.service"
     "${data_root}/applications/${SETTINGS_DESKTOP_ID}.desktop"
+    "${data_root}/mime/packages/org.hyprshelld.component.xml"
     "${data_root}/hyprshelld/components/io.github.coastlinesec.hyprshelld.workspace-switcher/manifest.json"
     "${data_root}/hyprshelld/components/io.github.coastlinesec.hyprshelld.workspace-switcher/settings.schema.json"
     "${data_root}/hyprshelld/defaults/components.json"

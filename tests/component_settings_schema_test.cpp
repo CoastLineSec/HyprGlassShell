@@ -171,7 +171,7 @@ private slots:
         ));
     }
 
-    void rejectsC1ControlsInSchemaAndSettingValues()
+    void rejectsControlsAndFormatCharactersInSchemas()
     {
         const QByteArray c1Label = R"({
           "schemaVersion":1,
@@ -180,6 +180,45 @@ private slots:
           ]
         })";
         auto parsed = parseSettingsSchema(c1Label);
+        QVERIFY(!parsed.ok());
+        QVERIFY(hasCode(
+            parsed.errors,
+            QStringLiteral("settings-schema.invalid-string")
+        ));
+
+        const QByteArray bidiLabel = R"({
+          "schemaVersion":1,
+          "settings":[
+            {"key":"title","scope":"component","type":"string","label":"Safe\u202eeman","description":"Visible title.","group":"general","order":1,"default":"Clean","maximumLength":32}
+          ]
+        })";
+        parsed = parseSettingsSchema(bidiLabel);
+        QVERIFY(!parsed.ok());
+        QVERIFY(hasCode(
+            parsed.errors,
+            QStringLiteral("settings-schema.invalid-string")
+        ));
+
+        const QByteArray joinerOption = R"({
+          "schemaVersion":1,
+          "settings":[
+            {"key":"mode","scope":"component","type":"enum","label":"Mode","description":"Visible mode.","group":"general","order":1,"default":"safe","options":[{"value":"safe","label":"Safe\u200dMode"}]}
+          ]
+        })";
+        parsed = parseSettingsSchema(joinerOption);
+        QVERIFY(!parsed.ok());
+        QVERIFY(hasCode(
+            parsed.errors,
+            QStringLiteral("settings-schema.invalid-string")
+        ));
+
+        const QByteArray supplementaryFormatLabel = R"({
+          "schemaVersion":1,
+          "settings":[
+            {"key":"title","scope":"component","type":"string","label":"Safe\udb40\udc01Name","description":"Visible title.","group":"general","order":1,"default":"Clean","maximumLength":32}
+          ]
+        })";
+        parsed = parseSettingsSchema(supplementaryFormatLabel);
         QVERIFY(!parsed.ok());
         QVERIFY(hasCode(
             parsed.errors,

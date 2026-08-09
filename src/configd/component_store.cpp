@@ -347,6 +347,14 @@ bool writeSnapshot(
                     .arg(path, file.errorString());
         return false;
     }
+    if (!file.setPermissions(
+            QFileDevice::ReadOwner | QFileDevice::WriteOwner
+        )) {
+        error = QStringLiteral("Cannot protect %1: %2")
+                    .arg(path, file.errorString());
+        file.cancelWriting();
+        return false;
+    }
     const auto bytes = Components::serializeComponentConfiguration(state);
     if (file.write(bytes) != bytes.size()) {
         error = QStringLiteral("Cannot write %1: %2")

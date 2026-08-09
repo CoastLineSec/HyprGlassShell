@@ -155,22 +155,60 @@ placement still come from ComponentConfig1.
 
 ## Component manager
 
-ComponentManager1 currently exposes the protected built-in component catalog
-read-only. `ListComponents` returns the complete sorted ID set and the catalog
-digest that owns it. A caller passes that digest to `GetComponent` so metadata
-and the trusted settings schema cannot be combined across catalog generations.
+ComponentManager1 exposes one joined catalog containing protected built-ins and
+locally installed per-user packages. `ListComponents` returns the complete
+sorted ID set and the catalog digest that owns it. A caller passes that digest
+to `GetComponent` so metadata and the trusted settings schema cannot be combined
+across catalog generations.
 `CatalogDigest` is the exact 64-character lowercase hexadecimal SHA-256 of the
 catalog entries sorted by component ID. Each entry is framed as an unsigned
 64-bit big-endian ID byte length, the UTF-8 ID bytes, an unsigned 64-bit
 big-endian package-digest byte length, and the lowercase hexadecimal package
 digest bytes. It is an equality token, not a counter.
 
-Origin and removability are derived from the protected install root rather
-than manifest claims. `packageDigest` is a manager-derived SHA-256 digest of
-the exact built-in manifest and settings-schema bytes. The first catalog entry
-is `io.github.coastlinesec.hyprshelld.workspace-switcher`; package inspection,
-installation, updates, removal, and execution are intentionally absent from
-the current read-only component-manager interface.
+Origin and removability are derived from the catalog root rather than manifest
+claims. For a built-in, `packageDigest` covers the exact manifest and settings
+schema bytes. For a user package, it covers every validated regular package
+file, including `integrity.json`, using the same length-framed path-and-content
+algorithm.
+
+`BeginPackageInspection` accepts an already-open read-only Unix file
+descriptor. componentd copies and hashes those bytes into a private bounded
+runtime spool before returning a random sender-bound token; it never reopens a
+Settings pathname. A short-lived systemd transient helper parses only ZIP
+Store/Deflate entries under strict file, expanded-size, path, type, integrity,
+and metadata limits. Its normalized report is delivered only to the caller's
+unique bus name through `PackageInspectionFinished`. Tokens expire, cannot be
+used by another sender, and are consumed by the first install attempt.
+
+`InstallInspectedPackage` commits only the exact reviewed archive digest into
+the exact catalog generation shown during review; a concurrent catalog change
+fails closed without consuming the inspection. Selecting another package with the same component ID uses
+that operation for an update, reinstall, or downgrade. Installation never
+enables, grants, places, or executes the component. This interface version has
+no third-party runtime host, so user packages remain explicitly unsupported and
+inert. After an update changes a package digest, the old component settings
+remain dormant. Saving the new package's trusted, host-rendered settings form
+may adopt that live user-package digest only while both the old and proposed
+records are disabled and carry no grants; configd validates the new schema and
+preserves every instance and placement. `RemovePackage` is digest- and
+catalog-guarded, applies only to user
+packages without installed dependents, and removes package bytes while configd
+retains any settings and placements as dormant recovery data. There is no
+remote repository, downloader, updater, signature authority, or package code
+execution in this boundary.
+
+The user catalog is bounded to 511 receipts and 512 MiB of expanded active
+package data. At startup, each receipt and installed tree is revalidated. An
+invalid receipt or tree is excluded from the published catalog without hiding
+healthy third-party packages; its dormant configd state is preserved. Selecting
+the same reviewed component again repairs corrupt contents or a missing tree
+under safe directory ancestry. Unsafe non-regular receipts, symlinked storage
+ancestors, and non-directory storage entries remain rejected and require manual
+removal. Package transactions
+retain only the committed version, and post-ownership recovery removes bounded
+staging/trash leftovers and receipt-unreachable versions from interrupted
+transactions.
 
 Component manager errors have these meanings:
 
@@ -178,6 +216,13 @@ Component manager errors have these meanings:
   digest no longer identifies the active catalog; and
 - `org.hyprshelld.ComponentManager1.Error.UnknownComponent`: the requested ID
   is not present in that catalog.
+
+Package lifecycle errors additionally distinguish invalid descriptors,
+unavailable, unknown, expired, or wrong-owner inspections, archive and package
+digest mismatches, protected IDs or built-in removal, same-version byte
+changes, installed dependents, and persistence failures. The exact typed names
+are documented beside their methods in
+`org.hyprshelld.ComponentManager1.xml`.
 
 ## Change publication and versioning
 

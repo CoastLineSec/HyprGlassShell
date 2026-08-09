@@ -108,6 +108,18 @@ private slots:
             Tests::readBytes(paths.activeFile),
             Tests::readBytes(paths.recoveryFile)
         );
+        const auto verifyPrivate = [](const QString &path) {
+            const auto permissions = QFileInfo(path).permissions();
+            QVERIFY(permissions.testFlag(QFileDevice::ReadOwner));
+            QVERIFY(permissions.testFlag(QFileDevice::WriteOwner));
+            QVERIFY(!(permissions & (
+                QFileDevice::ReadGroup | QFileDevice::WriteGroup
+                    | QFileDevice::ExeGroup | QFileDevice::ReadOther
+                    | QFileDevice::WriteOther | QFileDevice::ExeOther
+            )));
+        };
+        verifyPrivate(paths.activeFile);
+        verifyPrivate(paths.recoveryFile);
         QCOMPARE(loaded.state.revision, quint64(0));
         QCOMPARE(loaded.state.components.size(), 1);
         QCOMPARE(loaded.state.instances.size(), 1);

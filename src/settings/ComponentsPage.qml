@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 
 Page {
@@ -12,6 +13,11 @@ Page {
     property string managerCatalogDigest: ""
     property var components: []
     property string managerError: ""
+    property bool inspectionBusy: false
+    property bool packageOperationBusy: false
+    property var inspectionReview: ({})
+    property string inspectionToken: ""
+    property string packageError: ""
     property bool configAvailable: false
     property bool configCatalogAvailable: false
     property bool configWritable: false
@@ -22,6 +28,8 @@ Page {
     property string lastErrorComponentId: ""
     property string configError: ""
     property real contentTopMargin: 28
+    property var settingsComponent: null
+    property var removalComponent: null
 
     readonly property var categories: [
         { type: "bar-widget", title: qsTr("Bar Widgets") },
@@ -56,6 +64,19 @@ Page {
         string componentId,
         string packageDigest,
         bool enabled
+    )
+    signal inspectPackageRequested(url packageUrl)
+    signal cancelInspectionRequested()
+    signal installInspectedPackageRequested()
+    signal packageRemovalRequested(
+        string componentId,
+        string packageDigest,
+        string catalogDigest
+    )
+    signal componentSettingsRequested(
+        string componentId,
+        string packageDigest,
+        var settings
     )
 
     function componentsForType(type) {
@@ -104,18 +125,94 @@ Page {
 
     function toggleAvailable(component) {
         return root.desiredStateAvailable(component)
+            && component.activationSupported !== false
             && root.configWritable
             && !root.managerBusy
+            && !root.packageOperationBusy
             && !root.configBusy;
+    }
+
+    function inspectionReviewAvailable() {
+        return root.inspectionReview
+            && typeof root.inspectionReview === "object"
+            && !Array.isArray(root.inspectionReview)
+            && Object.keys(root.inspectionReview).length > 0;
     }
 
     function statusText(component) {
         if (!root.catalogJoinAvailable)
             return qsTr("Unavailable");
         const record = root.configRecord(component);
+        if (record === null && component.origin === "user")
+            return qsTr("Installed disabled. Review it before enabling.");
         if (record === null)
             return qsTr("Configuration does not match the installed package.");
+        if (component.origin === "user"
+                && component.activationSupported === false) {
+            return component.compatibilityReason
+                ? qsTr("Installed disabled. %1").arg(
+                    component.compatibilityReason
+                )
+                : qsTr("Installed disabled. This shell cannot activate it.");
+        }
+        if (component.origin === "user" && !record.enabled)
+            return qsTr("Installed disabled. Review it before enabling.");
         return record.enabled ? qsTr("Enabled") : qsTr("Disabled");
+    }
+
+    function openComponentSettings(component) {
+        const record = root.configRecord(component);
+        if (!component || component.origin !== "user"
+                || component.type === "shell-application"
+                || !root.catalogJoinAvailable || !root.configWritable
+                || root.managerBusy || root.configBusy
+                || root.packageOperationBusy) {
+            return;
+        }
+        root.settingsComponent = component;
+        genericSettings.begin(
+            component,
+            record && record.settings ? record.settings : {}
+        );
+        componentSettingsDialog.open();
+    }
+
+    function requestComponentRemoval(component) {
+        if (!component || component.origin !== "user"
+                || component.removable !== true) {
+            return;
+        }
+        root.removalComponent = component;
+        componentRemovalDialog.open();
+    }
+
+    function packageRemovalCompleted(componentId) {
+        if (root.removalComponent
+                && root.removalComponent.id === componentId) {
+            componentRemovalDialog.close();
+            root.removalComponent = null;
+        }
+    }
+
+    function inspectSelectedPackage(packageUrl) {
+        root.inspectPackageRequested(packageUrl);
+    }
+
+    onInspectionTokenChanged: {
+        if (root.inspectionToken.length > 0
+                && root.inspectionReviewAvailable()) {
+            componentReviewDialog.open();
+        } else if (!root.packageOperationBusy) {
+            componentReviewDialog.close();
+        }
+    }
+    onInspectionReviewChanged: {
+        if (root.inspectionToken.length > 0
+                && root.inspectionReviewAvailable()) {
+            componentReviewDialog.open();
+        } else if (!root.packageOperationBusy) {
+            componentReviewDialog.close();
+        }
     }
 
     background: Rectangle {
@@ -136,25 +233,42 @@ Page {
             width: Math.max(0, Math.min(root.width - 48, 980))
             spacing: 22
 
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 18
 
-                Label {
-                    text: qsTr("Components")
-                    color: root.palette.text
-                    font.pixelSize: 30
-                    font.weight: Font.DemiBold
-                    Accessible.role: Accessible.Heading
-                    Accessible.name: text
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Label {
+                        text: qsTr("Components")
+                        color: root.palette.text
+                        font.pixelSize: 30
+                        font.weight: Font.DemiBold
+                        Accessible.role: Accessible.Heading
+                        Accessible.name: text
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Choose which built-in and third-party shell features are available. Built-in feature settings stay in their natural Settings pages.")
+                        color: root.palette.placeholderText
+                        font.pixelSize: 14
+                        wrapMode: Text.Wrap
+                    }
                 }
 
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("Choose which built-in and third-party shell features are available. Built-in feature settings stay in their natural Settings pages.")
-                    color: root.palette.placeholderText
-                    font.pixelSize: 14
-                    wrapMode: Text.Wrap
+                Button {
+                    objectName: "installComponent"
+                    text: root.inspectionBusy
+                        ? qsTr("Inspecting…") : qsTr("Install from file…")
+                    enabled: root.managerAvailable
+                        && !root.managerBusy
+                        && !root.inspectionBusy
+                        && !root.packageOperationBusy
+                    Accessible.name: qsTr("Install a third-party component from a local file")
+                    onClicked: componentFileDialog.open()
                 }
             }
 
@@ -177,6 +291,30 @@ Page {
                         ? root.availabilityMessage : root.managerError
                     color: "#ffd5a1"
                     wrapMode: Text.Wrap
+                    Accessible.role: Accessible.AlertMessage
+                    Accessible.name: text
+                }
+            }
+
+            Frame {
+                objectName: "componentPackageWarning"
+                Layout.fillWidth: true
+                visible: root.packageError.length > 0
+                    && root.inspectionToken.length === 0
+                padding: 16
+
+                background: Rectangle {
+                    color: "#3a1f27"
+                    radius: 12
+                    border.color: "#8bff7187"
+                }
+
+                Label {
+                    anchors.fill: parent
+                    text: root.packageError
+                    color: "#ffb8c3"
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
                     Accessible.role: Accessible.AlertMessage
                     Accessible.name: text
                 }
@@ -225,6 +363,19 @@ Page {
                             desiredEnabled: root.desiredEnabled(modelData)
                             toggleEnabled: root.toggleAvailable(modelData)
                             pending: root.pendingComponentId === modelData.id
+                            packageOperationBusy:
+                                root.packageOperationBusy
+                            configureEnabled:
+                                root.catalogJoinAvailable
+                                && root.configWritable
+                                && !root.managerBusy
+                                && !root.configBusy
+                                && !root.packageOperationBusy
+                            removeEnabled:
+                                root.managerAvailable
+                                && root.managerCatalogDigest.length > 0
+                                && !root.managerBusy
+                                && !root.packageOperationBusy
                             statusText: root.statusText(modelData)
                             errorText: root.lastErrorComponentId === modelData.id
                                 ? root.configError : ""
@@ -238,6 +389,10 @@ Page {
                                 packageDigest,
                                 enabled
                             )
+                            onConfigureRequested: component =>
+                                root.openComponentSettings(component)
+                            onRemoveRequested: component =>
+                                root.requestComponentRemoval(component)
                         }
                     }
                 }
@@ -246,6 +401,153 @@ Page {
             Item {
                 Layout.preferredHeight: 12
             }
+        }
+    }
+
+    FileDialog {
+        id: componentFileDialog
+
+        objectName: "componentInstallFileDialog"
+        title: qsTr("Choose a HyprShelld component")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [
+            qsTr("HyprShelld components (*.hyprshelld-component)"),
+            qsTr("All files (*)")
+        ]
+        onAccepted: root.inspectSelectedPackage(selectedFile)
+    }
+
+    ComponentReviewDialog {
+        id: componentReviewDialog
+
+        review: root.inspectionReview
+        inspectionToken: root.inspectionToken
+        operationBusy: root.packageOperationBusy
+        errorText: root.packageError
+
+        onCancelRequested: {
+            close();
+            root.cancelInspectionRequested();
+        }
+        onInstallRequested: root.installInspectedPackageRequested()
+    }
+
+    Dialog {
+        id: componentSettingsDialog
+
+        objectName: "componentSettingsDialog"
+        title: root.settingsComponent && root.settingsComponent.name
+            ? qsTr("Configure %1").arg(root.settingsComponent.name)
+            : qsTr("Configure component")
+        modal: true
+        width: Math.min(720, root.width - 48)
+        height: Math.min(720, root.height - 48)
+        standardButtons: Dialog.Close
+
+        contentItem: ScrollView {
+            clip: true
+            contentWidth: availableWidth
+
+            GenericComponentSettings {
+                id: genericSettings
+
+                width: parent.width
+                controlsEnabled: root.settingsComponent !== null
+                    && root.configWritable
+                    && !root.configBusy
+                    && !root.packageOperationBusy
+                saving: root.settingsComponent !== null
+                    && root.pendingComponentId
+                        === root.settingsComponent.id
+                errorText: root.settingsComponent !== null
+                        && root.lastErrorComponentId
+                            === root.settingsComponent.id
+                    ? root.configError : ""
+
+                onSettingsRequested: settings => {
+                    if (!root.settingsComponent)
+                        return;
+                    root.componentSettingsRequested(
+                        root.settingsComponent.id,
+                        root.settingsComponent.packageDigest,
+                        settings
+                    );
+                    componentSettingsDialog.close();
+                }
+            }
+        }
+
+        onClosed: root.settingsComponent = null
+    }
+
+    Dialog {
+        id: componentRemovalDialog
+
+        objectName: "componentRemovalDialog"
+        title: qsTr("Remove third-party component?")
+        modal: true
+        width: Math.min(520, root.width - 48)
+        standardButtons: Dialog.NoButton
+
+        contentItem: ColumnLayout {
+            spacing: 12
+
+            Label {
+                Layout.fillWidth: true
+                text: root.removalComponent && root.removalComponent.name
+                    ? qsTr("Remove %1 from HyprShelld?").arg(
+                        root.removalComponent.name
+                    ) : qsTr("Remove this component from HyprShelld?")
+                color: root.palette.text
+                font.weight: Font.DemiBold
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("The installed package will be removed. Its saved choices and placements are preserved in case you install the same package again. This does not delete the original package file you selected.")
+                color: root.palette.placeholderText
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Item { Layout.fillWidth: true }
+
+                Button {
+                    objectName: "cancelComponentRemoval"
+                    text: qsTr("Cancel")
+                    enabled: !root.packageOperationBusy
+                    onClicked: componentRemovalDialog.close()
+                }
+
+                Button {
+                    objectName: "confirmComponentRemoval"
+                    text: root.packageOperationBusy
+                        ? qsTr("Removing…") : qsTr("Remove")
+                    enabled: root.removalComponent !== null
+                        && !root.packageOperationBusy
+                    highlighted: true
+                    onClicked: {
+                        const component = root.removalComponent;
+                        if (!component)
+                            return;
+                        root.packageRemovalRequested(
+                            component.id,
+                            component.packageDigest,
+                            root.managerCatalogDigest
+                        );
+                    }
+                }
+            }
+        }
+
+        onClosed: {
+            if (!root.packageOperationBusy)
+                root.removalComponent = null;
         }
     }
 }

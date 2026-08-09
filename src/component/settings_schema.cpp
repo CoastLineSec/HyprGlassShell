@@ -51,6 +51,17 @@ void rejectUnknownFields(
     }
 }
 
+[[nodiscard]] bool hasDisallowedControl(const QString &value)
+{
+    return std::ranges::any_of(value.toUcs4(), [](const auto codePoint) {
+        const auto category = QChar::category(
+            static_cast<char32_t>(codePoint)
+        );
+        return category == QChar::Other_Control
+            || category == QChar::Other_Format;
+    });
+}
+
 [[nodiscard]] bool hasControl(const QString &value)
 {
     return std::ranges::any_of(value, [](const QChar character) {
@@ -87,12 +98,16 @@ void rejectUnknownFields(
         QString::NormalizationForm_C
     );
     if (normalized.isEmpty() || normalized.size() > maximumLength
-        || normalized != normalized.trimmed() || hasControl(normalized)) {
+        || normalized != normalized.trimmed()
+        || hasDisallowedControl(normalized)) {
         addError(
             errors,
             valuePath,
             QStringLiteral("settings-schema.invalid-string"),
-            QStringLiteral("The string is empty, too long, or contains control characters.")
+            QStringLiteral(
+                "The string is empty, too long, or contains disallowed "
+                "control or format characters."
+            )
         );
         return {};
     }

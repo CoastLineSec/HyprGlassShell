@@ -135,6 +135,10 @@ private slots:
         slice_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/session-hyprshelld.slice")
         );
+        componentHelpersSlice_ = std::make_unique<IniFile>(
+            unitDirectory
+                + QStringLiteral("/session-hyprshelld-components.slice")
+        );
         coordinator_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/hyprshelld.service")
         );
@@ -157,6 +161,7 @@ private slots:
         for (const auto *file : {
                  target_.get(),
                  slice_.get(),
+                 componentHelpersSlice_.get(),
                  coordinator_.get(),
                  configd_.get(),
                  componentd_.get(),
@@ -272,6 +277,34 @@ private slots:
                 QStringLiteral("StopWhenUnneeded")
             ),
             QStringList{QStringLiteral("yes")}
+        );
+        QCOMPARE(
+            componentHelpersSlice_->values(
+                QStringLiteral("Unit"),
+                QStringLiteral("StopWhenUnneeded")
+            ),
+            QStringList{QStringLiteral("yes")}
+        );
+        QCOMPARE(
+            componentHelpersSlice_->values(
+                QStringLiteral("Slice"),
+                QStringLiteral("MemoryMax")
+            ),
+            QStringList{QStringLiteral("512M")}
+        );
+        QCOMPARE(
+            componentHelpersSlice_->values(
+                QStringLiteral("Slice"),
+                QStringLiteral("MemorySwapMax")
+            ),
+            QStringList{QStringLiteral("0")}
+        );
+        QCOMPARE(
+            componentHelpersSlice_->values(
+                QStringLiteral("Slice"),
+                QStringLiteral("TasksMax")
+            ),
+            QStringList{QStringLiteral("32")}
         );
     }
 
@@ -405,6 +438,7 @@ private slots:
 private:
     std::unique_ptr<IniFile> target_;
     std::unique_ptr<IniFile> slice_;
+    std::unique_ptr<IniFile> componentHelpersSlice_;
     std::unique_ptr<IniFile> coordinator_;
     std::unique_ptr<IniFile> configd_;
     std::unique_ptr<IniFile> componentd_;

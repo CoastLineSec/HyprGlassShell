@@ -17,14 +17,41 @@ file(REMOVE_RECURSE "${FIXTURE_DIRECTORY}")
 set(data_home "${FIXTURE_DIRECTORY}/data")
 set(config_home "${FIXTURE_DIRECTORY}/config")
 set(state_home "${FIXTURE_DIRECTORY}/state")
+set(runtime_home "${FIXTURE_DIRECTORY}/runtime")
 set(system_data "${FIXTURE_DIRECTORY}/system-data")
 set(service_directory "${data_home}/dbus-1/services")
 file(MAKE_DIRECTORY
     "${service_directory}"
     "${config_home}"
     "${state_home}"
+    "${runtime_home}"
     "${system_data}"
 )
+file(CHMOD "${runtime_home}"
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+)
+
+set(stale_data_staging
+    "${data_home}/hyprshelld/components/.staging/stale"
+)
+set(stale_data_trash
+    "${data_home}/hyprshelld/components/.trash/stale"
+)
+set(stale_state_trash
+    "${state_home}/hyprshelld/componentd/.trash/stale"
+)
+set(orphan_versions
+    "${data_home}/hyprshelld/components/org.example.orphan/versions/1.0.0"
+)
+foreach(stale IN ITEMS
+    "${stale_data_staging}"
+    "${stale_data_trash}"
+    "${stale_state_trash}"
+    "${orphan_versions}"
+)
+    file(MAKE_DIRECTORY "${stale}")
+    file(WRITE "${stale}/leftover" "stale\n")
+endforeach()
 
 file(READ "${SOURCE_ACTIVATION_FILE}" activation)
 set(expected "Exec=${INSTALL_COMPONENTD_EXECUTABLE}")
@@ -54,6 +81,7 @@ execute_process(
         "XDG_DATA_DIRS=${system_data}"
         "XDG_CONFIG_HOME=${config_home}"
         "XDG_STATE_HOME=${state_home}"
+        "XDG_RUNTIME_DIR=${runtime_home}"
         "${DBUS_RUN_SESSION}"
         --
         /bin/sh
@@ -75,6 +103,19 @@ if(NOT result EQUAL 0)
         "stderr:\n${error}"
     )
 endif()
+
+foreach(stale IN ITEMS
+    "${stale_data_staging}/leftover"
+    "${stale_data_trash}/leftover"
+    "${stale_state_trash}/leftover"
+    "${orphan_versions}"
+)
+    if(EXISTS "${stale}" OR IS_SYMLINK "${stale}")
+        message(FATAL_ERROR
+            "Activated componentd did not recover stale package state: ${stale}"
+        )
+    endif()
+endforeach()
 
 foreach(response_file IN ITEMS
     "${list_response_file}"

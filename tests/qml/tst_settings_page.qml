@@ -129,8 +129,89 @@ TestCase {
             origin: "system",
             removable: false,
             hasSettings: true,
+            activationSupported: true,
+            compatibilityReason: "",
+            settingsDefinitions: [],
             requestedCapabilities: []
         };
+    }
+
+    function thirdPartyServiceRecord() {
+        return {
+            id: "org.example.local-service",
+            type: "shell-service",
+            version: "1.2.3",
+            name: "Local Service",
+            description: "A locally installed test service.",
+            authors: [{ name: "Example Author" }],
+            license: "MIT",
+            packageDigest:
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            origin: "user",
+            removable: true,
+            hasSettings: true,
+            activationSupported: false,
+            compatibilityReason:
+                "Runtime activation for third-party components is not available yet.",
+            settingsDefinitions: [
+                {
+                    key: "logging",
+                    scope: "component",
+                    type: "boolean",
+                    label: "Enable logging",
+                    description: "Write diagnostic messages.",
+                    group: "behavior",
+                    order: 10,
+                    defaultValue: false,
+                    options: []
+                },
+                {
+                    key: "mode",
+                    scope: "component",
+                    type: "enum",
+                    label: "Logging mode",
+                    description: "Choose how much information is recorded.",
+                    group: "behavior",
+                    order: 20,
+                    defaultValue: "quiet",
+                    options: [
+                        { value: "quiet", label: "Quiet" },
+                        {
+                            value: "verbose",
+                            label: "Verbose <img src=https://example.invalid/x>"
+                        }
+                    ],
+                    visibleWhen: { key: "logging", equals: true }
+                },
+                {
+                    key: "instanceTitle",
+                    scope: "instance",
+                    type: "string",
+                    label: "Instance title",
+                    description: "A title for one placement.",
+                    group: "appearance",
+                    order: 10,
+                    defaultValue: "Widget",
+                    minimumLength: 1,
+                    maximumLength: 64,
+                    options: []
+                }
+            ],
+            requestedCapabilities: [
+                { id: "example.read", reason: "Read example state." }
+            ],
+            dependencies: []
+        };
+    }
+
+    function thirdPartyApplicationRecord() {
+        const record = thirdPartyServiceRecord();
+        record.id = "org.example.local-application";
+        record.type = "shell-application";
+        record.name = "Local Application";
+        record.packageDigest =
+            "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+        return record;
     }
 
     function configureSnapshotForComponent(component, enabled) {
@@ -145,6 +226,26 @@ TestCase {
             formatVersion: 1,
             revision: "4",
             components: components,
+            instances: {},
+            layouts: { bars: {}, desktops: {} }
+        };
+    }
+
+    function configureSnapshotForComponents(components, enabled) {
+        const records = {};
+        for (const component of components) {
+            records[component.id] = {
+                packageDigest: component.packageDigest,
+                enabled: enabled,
+                grantedCapabilities: [],
+                settings: component.origin === "user"
+                    ? { logging: false, mode: "quiet" } : {}
+            };
+        }
+        return {
+            formatVersion: 1,
+            revision: "4",
+            components: records,
             instances: {},
             layouts: { bars: {}, desktops: {} }
         };
@@ -297,9 +398,17 @@ TestCase {
         compare(origin.text, "Built-in");
         compare(toggle.checked, true);
         compare(toggle.enabled, true);
-        compare(findChild(page, "componentSettings-" + componentId), null);
-        compare(findChild(page, "componentRemove-" + componentId), null);
-        compare(findChild(page, "installComponent"), null);
+        compare(
+            findChild(page, "componentSettings-" + componentId).visible,
+            false
+        );
+        compare(
+            findChild(page, "componentRemove-" + componentId).visible,
+            false
+        );
+        const install = findChild(page, "installComponent");
+        verify(install !== null);
+        compare(install.enabled, true);
 
         let requested = [];
         let requestCount = 0;
@@ -395,6 +504,374 @@ TestCase {
 
         page.lastErrorComponentId = "org.example.some-other-component";
         compare(status.text, "Enabled");
+    }
+
+    function test_localPackagePickerAndReviewAreExplicit() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureComponentsPage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const install = findChild(page, "installComponent");
+        verify(install !== null);
+
+        let selectedUrl = "";
+        page.inspectPackageRequested.connect(function(packageUrl) {
+            selectedUrl = String(packageUrl);
+        });
+        page.inspectSelectedPackage(
+            "file:///tmp/example.hyprshelld-component"
+        );
+        compare(
+            selectedUrl,
+            "file:///tmp/example.hyprshelld-component"
+        );
+
+        page.inspectionToken = "0123456789abcdef0123456789abcdef";
+        wait(0);
+
+        const review = findChild(page, "componentReviewDialog");
+        verify(review !== null);
+        compare(review.opened, false);
+
+        page.inspectionReview = {
+            operation: "install",
+            id: "org.example.local-service",
+            name: "Local Service",
+            description: "A locally selected component.",
+            version: "1.2.3",
+            type: "shell-service",
+            authors: [{ name: "Example Author" }],
+            license: "MIT",
+            runtime: { kind: "process-v1" },
+            packageDigest:
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            activationSupported: false,
+            compatibilityReason: "Activation is not available yet.",
+            requestedCapabilities: [
+                { id: "example.read", reason: "Read example state." }
+            ],
+            dependencies: []
+        };
+        wait(0);
+
+        const warning = findChild(review, "componentUnverifiedWarning");
+        const name = findChild(review, "componentReviewName");
+        const capabilities = findChild(
+            review,
+            "componentReviewCapabilities"
+        );
+        const activation = findChild(
+            review,
+            "componentActivationNoticeText"
+        );
+        const confirm = findChild(
+            review,
+            "confirmComponentInstallation"
+        );
+        const cancel = findChild(
+            review,
+            "cancelComponentInstallation"
+        );
+        verify(review !== null);
+        verify(warning !== null);
+        verify(name !== null);
+        verify(capabilities !== null);
+        verify(activation !== null);
+        verify(confirm !== null);
+        verify(cancel !== null);
+        compare(review.opened, true);
+        compare(name.text, "Local Service");
+        verify(capabilities.text.includes("example.read"));
+        verify(activation.text.includes("installed disabled"));
+
+        let installRequests = 0;
+        page.installInspectedPackageRequested.connect(function() {
+            ++installRequests;
+            page.packageOperationBusy = true;
+        });
+        confirm.clicked();
+        compare(installRequests, 1);
+        compare(review.opened, true);
+        compare(confirm.enabled, false);
+
+        page.packageOperationBusy = false;
+        page.inspectionToken = "";
+        wait(0);
+        compare(review.opened, false);
+
+        page.inspectionToken = "0123456789abcdef0123456789abcdef";
+        wait(0);
+        compare(review.opened, true);
+
+        let cancelRequests = 0;
+        page.cancelInspectionRequested.connect(function() {
+            ++cancelRequests;
+        });
+        cancel.clicked();
+        compare(cancelRequests, 1);
+    }
+
+    function test_thirdPartyRowsExposeTrustedActionsOnly() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const service = thirdPartyServiceRecord();
+        const application = thirdPartyApplicationRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [workspaceCatalogRecord(), service, application];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        page.configSnapshot = configureSnapshotForComponents(
+            page.components,
+            false
+        );
+        waitForRendering(page);
+        wait(0);
+
+        const trust = findChild(page, "componentTrust-" + service.id);
+        const status = findChild(page, "componentStatus-" + service.id);
+        const toggle = findChild(page, "componentEnabled-" + service.id);
+        const configure = findChild(
+            page,
+            "componentSettings-" + service.id
+        );
+        const remove = findChild(page, "componentRemove-" + service.id);
+        verify(trust !== null);
+        verify(status !== null);
+        verify(toggle !== null);
+        verify(configure !== null);
+        verify(remove !== null);
+        compare(trust.text, "Unverified third-party code");
+        verify(status.text.includes("Installed disabled"));
+        verify(status.text.includes(service.compatibilityReason));
+        compare(page.toggleAvailable(service), false);
+        compare(toggle.enabled, false);
+        compare(configure.visible, true);
+        compare(remove.visible, true);
+        compare(remove.enabled, true);
+        page.managerAvailable = false;
+        wait(0);
+        compare(remove.enabled, false);
+        page.managerAvailable = true;
+        wait(0);
+        compare(remove.enabled, true);
+        compare(
+            findChild(page, "componentSettings-" + application.id).visible,
+            false
+        );
+
+        let removed = [];
+        page.packageRemovalRequested.connect(function(
+            componentId,
+            packageDigest,
+            catalogDigest
+        ) {
+            removed = [componentId, packageDigest, catalogDigest];
+        });
+        remove.clicked();
+        wait(0);
+        const removalDialog = findChild(page, "componentRemovalDialog");
+        verify(removalDialog !== null);
+        const confirmRemoval = findChild(
+            removalDialog,
+            "confirmComponentRemoval"
+        );
+        verify(confirmRemoval !== null);
+        compare(removalDialog.opened, true);
+        compare(removed.length, 0);
+        confirmRemoval.clicked();
+        compare(removed, [
+            service.id,
+            service.packageDigest,
+            page.managerCatalogDigest
+        ]);
+        page.packageRemovalCompleted(service.id);
+        wait(0);
+        compare(removalDialog.opened, false);
+    }
+
+    function test_unsupportedComponentStaysDisabledAfterSettingsRecord() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const service = thirdPartyServiceRecord();
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [service];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        page.configSnapshot = {
+            formatVersion: 1,
+            revision: "4",
+            components: {},
+            instances: {},
+            layouts: { bars: {}, desktops: {} }
+        };
+        waitForRendering(page);
+        wait(0);
+
+        const configure = findChild(
+            page,
+            "componentSettings-" + service.id
+        );
+        const toggle = findChild(
+            page,
+            "componentEnabled-" + service.id
+        );
+        const status = findChild(
+            page,
+            "componentStatus-" + service.id
+        );
+        verify(configure !== null);
+        verify(toggle !== null);
+        verify(status !== null);
+        compare(configure.enabled, true);
+        compare(page.configRecord(service), null);
+        compare(page.toggleAvailable(service), false);
+        compare(toggle.enabled, false);
+
+        configure.clicked();
+        wait(0);
+        const form = findChild(page, "genericComponentSettings");
+        verify(form !== null);
+        const save = findChild(form, "saveGenericComponentSettings");
+        const logging = findChild(
+            form,
+            "componentSettingBoolean-logging"
+        );
+        verify(save !== null);
+        verify(logging !== null);
+        logging.checked = true;
+        logging.clicked();
+        wait(0);
+        compare(save.enabled, true);
+        save.clicked();
+
+        page.configSnapshot = configureSnapshotForComponent(service, false);
+        wait(0);
+        verify(page.configRecord(service) !== null);
+        compare(page.toggleAvailable(service), false);
+        compare(toggle.enabled, false);
+        verify(status.text.includes("Installed disabled"));
+        verify(status.text.includes(service.compatibilityReason));
+    }
+
+    function test_genericSettingsRenderTrustedComponentScope() {
+        const testWindow = createTemporaryObject(
+            componentsPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const service = thirdPartyServiceRecord();
+        service.activationSupported = true;
+        service.compatibilityReason = "";
+        page.managerAvailable = true;
+        page.managerCatalogDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.components = [service];
+        page.configAvailable = true;
+        page.configCatalogAvailable = true;
+        page.configWritable = true;
+        page.configCatalogDigest = page.managerCatalogDigest;
+        page.configSnapshot = configureSnapshotForComponents([service], false);
+        waitForRendering(page);
+        wait(0);
+
+        const configure = findChild(
+            page,
+            "componentSettings-" + service.id
+        );
+        verify(configure !== null);
+        configure.clicked();
+        wait(0);
+
+        const dialog = findChild(page, "componentSettingsDialog");
+        const form = findChild(page, "genericComponentSettings");
+        verify(dialog !== null);
+        verify(form !== null);
+        const logging = findChild(
+            form,
+            "componentSettingBoolean-logging"
+        );
+        const modeRow = findChild(form, "componentSetting-mode");
+        const mode = findChild(form, "componentSettingEnum-mode");
+        const instanceNotice = findChild(
+            form,
+            "componentInstanceSettingsNotice"
+        );
+        const save = findChild(form, "saveGenericComponentSettings");
+        verify(logging !== null);
+        verify(modeRow !== null);
+        verify(mode !== null);
+        verify(instanceNotice !== null);
+        verify(save !== null);
+        compare(dialog.opened, true);
+        compare(logging.checked, false);
+        compare(modeRow.visible, false);
+        compare(instanceNotice.visible, true);
+        compare(save.enabled, false);
+        compare(mode.contentItem.textFormat, Text.PlainText);
+
+        logging.checked = true;
+        logging.clicked();
+        wait(0);
+        compare(modeRow.visible, true);
+        mode.popup.open();
+        wait(0);
+        const unsafeOption = mode.popup.contentItem.itemAtIndex(1);
+        verify(unsafeOption !== null);
+        compare(
+            unsafeOption.text,
+            "Verbose <img src=https://example.invalid/x>"
+        );
+        compare(unsafeOption.Accessible.name, unsafeOption.text);
+        compare(unsafeOption.contentItem.textFormat, Text.PlainText);
+        compare(unsafeOption.contentItem.Accessible.ignored, true);
+        compare(
+            unsafeOption.contentItem.text,
+            "Verbose <img src=https://example.invalid/x>"
+        );
+        mode.popup.close();
+        mode.activated(1);
+        compare(save.enabled, true);
+
+        let saved = [];
+        page.componentSettingsRequested.connect(function(
+            componentId,
+            packageDigest,
+            settings
+        ) {
+            saved = [componentId, packageDigest, settings];
+        });
+        save.clicked();
+        compare(saved[0], service.id);
+        compare(saved[1], service.packageDigest);
+        compare(saved[2].logging, true);
+        compare(saved[2].mode, "verbose");
+        verify(!Object.prototype.hasOwnProperty.call(
+            saved[2],
+            "instanceTitle"
+        ));
     }
 
     function test_requestsAreForwardedOnce() {

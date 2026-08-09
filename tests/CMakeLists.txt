@@ -160,7 +160,10 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentPill.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/ComponentReviewDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/GenericComponentSettings.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SchemaSettingRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceSwitcherSettings.qml"
 )
@@ -479,6 +482,24 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-user-package-store-test
+    user_package_store_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-user-package-store-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-componentd-core
+)
+
+add_test(
+    NAME user-package-store
+    COMMAND hyprshelld-user-package-store-test
+)
+
+qt_add_executable(
     hyprshelld-config-store-test
     config_store_test.cpp
 )
@@ -686,6 +707,7 @@ target_include_directories(
 target_compile_definitions(
     hyprshelld-componentd-activation-test-service
     PRIVATE
+        HYPRSHELLD_COMPONENT_INSPECTOR_EXECUTABLE="$<TARGET_FILE:hyprshelld-component-inspector>"
         HYPRSHELLD_SYSTEM_COMPONENT_DIR="${PROJECT_SOURCE_DIR}/data/components"
 )
 
@@ -1148,6 +1170,7 @@ add_test(
         "-DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
         "-DINSTALL_BINDIR=${CMAKE_INSTALL_FULL_BINDIR}"
         "-DINSTALL_LIBDIR=${CMAKE_INSTALL_FULL_LIBDIR}"
+        "-DINSTALL_LIBEXECDIR=${CMAKE_INSTALL_FULL_LIBEXECDIR}"
         "-DINSTALL_DATADIR=${CMAKE_INSTALL_FULL_DATADIR}"
         "-DINSTALL_QMLDIR=${HYPRSHELLD_INSTALL_QML_DIRECTORY}"
         "-DINSTALL_SYSTEMD_UNIT_DIR=${HYPRSHELLD_INSTALL_SYSTEMD_UNIT_DIRECTORY}"

@@ -457,6 +457,20 @@ ValidationResult<ComponentConfiguration> parseComponentConfiguration(
             const auto catalogEntry = catalog.entries.constFind(iterator.key());
             if (catalogEntry != catalog.entries.cend()
                 && desired.packageDigest == catalogEntry->packageDigest) {
+                // Community runtime hosts are deliberately not shipped yet.
+                // A structurally valid user package may be installed and
+                // configured while inert, but desired activation must remain
+                // impossible until the runtime-safety slice provides an
+                // enforced host for it.
+                if (catalogEntry->origin == ComponentOrigin::User
+                    && desired.enabled) {
+                    addError(
+                        result.errors,
+                        path + QStringLiteral(".enabled"),
+                        QStringLiteral("component-config.user-runtime-unavailable"),
+                        QStringLiteral("Third-party component runtimes are not available yet.")
+                    );
+                }
                 if (catalogEntry->origin == ComponentOrigin::System
                     && !desired.grantedCapabilities.isEmpty()) {
                     addError(

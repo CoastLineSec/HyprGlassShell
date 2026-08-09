@@ -339,7 +339,18 @@ bool ComponentConfigService::preservesDormantState(
         }
         dormantIds.insert(desired.key());
         const auto proposed = candidate.components.constFind(desired.key());
-        if (proposed == candidate.components.cend() || *proposed != *desired) {
+        const auto adoptsUpdatedUserPackage =
+            proposed != candidate.components.cend()
+            && live != catalog_.entries.cend()
+            && live->origin == Components::ComponentOrigin::User
+            && desired->packageDigest != live->packageDigest
+            && proposed->packageDigest == live->packageDigest
+            && !desired->enabled
+            && desired->grantedCapabilities.isEmpty()
+            && !proposed->enabled
+            && proposed->grantedCapabilities.isEmpty();
+        if (proposed == candidate.components.cend()
+            || (*proposed != *desired && !adoptsUpdatedUserPackage)) {
             error = QStringLiteral(
                 "Dormant component records must be preserved unchanged"
             );

@@ -22,6 +22,7 @@ set(
     hyprshelld_systemd_unit_sources
     hyprshelld.target
     session-hyprshelld.slice
+    session-hyprshelld-components.slice
     hyprshelld.service.in
     hyprshelld-configd.service.in
     hyprshelld-componentd.service.in
@@ -132,4 +133,9 @@ configure_file(
 install(
     FILES "${hyprshelld_settings_desktop_file}"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+)
+
+install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/mime/org.hyprshelld.component.xml"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/mime/packages"
 )

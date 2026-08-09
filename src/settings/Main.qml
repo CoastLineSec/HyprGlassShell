@@ -692,6 +692,7 @@ ApplicationWindow {
                 }
 
                 ComponentsPage {
+                    id: componentsPage
                     objectName: "componentsPage"
                     managerAvailable: ComponentManagerClient.available
                     managerBusy: ComponentManagerClient.busy
@@ -699,6 +700,15 @@ ApplicationWindow {
                         ComponentManagerClient.catalogDigest
                     components: ComponentManagerClient.components
                     managerError: ComponentManagerClient.lastError
+                    inspectionBusy:
+                        ComponentManagerClient.inspectionBusy
+                    packageOperationBusy:
+                        ComponentManagerClient.packageOperationBusy
+                    inspectionReview:
+                        ComponentManagerClient.inspectionReview
+                    inspectionToken:
+                        ComponentManagerClient.inspectionToken
+                    packageError: ComponentManagerClient.packageError
                     configAvailable: ComponentConfigClient.available
                     configCatalogAvailable:
                         ComponentConfigClient.catalogAvailable
@@ -725,8 +735,40 @@ ApplicationWindow {
                         packageDigest,
                         enabled
                     )
+                    onInspectPackageRequested: packageUrl =>
+                        ComponentManagerClient.inspectPackage(packageUrl)
+                    onCancelInspectionRequested:
+                        ComponentManagerClient.cancelInspection()
+                    onInstallInspectedPackageRequested:
+                        ComponentManagerClient.installInspectedPackage()
+                    onPackageRemovalRequested: (
+                        componentId,
+                        packageDigest,
+                        catalogDigest
+                    ) => ComponentManagerClient.removeComponent(
+                        componentId,
+                        packageDigest,
+                        catalogDigest
+                    )
+                    onComponentSettingsRequested: (
+                        componentId,
+                        packageDigest,
+                        settings
+                    ) => ComponentConfigClient.setComponentSettings(
+                        componentId,
+                        packageDigest,
+                        settings
+                    )
                 }
             }
+        }
+    }
+
+    Connections {
+        target: ComponentManagerClient
+
+        function onPackageRemoved(componentId) {
+            componentsPage.packageRemovalCompleted(componentId);
         }
     }
 }

@@ -16,6 +16,7 @@ endforeach()
 set(units
     hyprshelld.target
     session-hyprshelld.slice
+    session-hyprshelld-components.slice
     hyprshelld.service
     hyprshelld-configd.service
     hyprshelld-componentd.service

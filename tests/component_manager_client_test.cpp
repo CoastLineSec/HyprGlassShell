@@ -1,4 +1,6 @@
 #include "component/component_contract.h"
+#include "component/component_configuration.h"
+#include "component/package_inspection_report.h"
 #include "component_manager_client.h"
 
 #include <QCryptographicHash>
@@ -7,7 +9,12 @@
 #include <QDBusVirtualObject>
 #include <QHash>
 #include <QMap>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtEndian>
 #include <QtTest>
 
@@ -106,12 +113,15 @@ QVariantList workspaceRecord(
     };
 }
 
-QVariantList serviceRecord()
+QVariantList serviceRecord(
+    const QString &version = QStringLiteral("1.2.3"),
+    const QString &packageDigest = QString(64, QLatin1Char('b'))
+)
 {
     return {
         1U,
         QStringLiteral("shell-service"),
-        QStringLiteral("1.2.3"),
+        version,
         QStringLiteral("Background Service"),
         QStringLiteral("Performs an example background task."),
         QStringList{QStringLiteral("Example Author")},
@@ -131,10 +141,72 @@ QVariantList serviceRecord()
         QStringList{QStringLiteral("Read example state.")},
         QStringList(),
         QStringList(),
-        QString(64, QLatin1Char('b')),
+        packageDigest,
         QStringLiteral("user"),
         true,
     };
+}
+
+Components::PackageInspectionReport packageReport(
+    const QString &token,
+    const QString &version,
+    const QString &packageDigest
+)
+{
+    const QJsonObject manifestObject{
+        {QStringLiteral("manifestVersion"), 1},
+        {QStringLiteral("id"), serviceId},
+        {QStringLiteral("version"), version},
+        {QStringLiteral("type"), QStringLiteral("shell-service")},
+        {QStringLiteral("name"), QStringLiteral("Background Service")},
+        {QStringLiteral("description"),
+         QStringLiteral("Performs an example background task.")},
+        {QStringLiteral("authors"), QJsonArray{QJsonObject{
+             {QStringLiteral("name"), QStringLiteral("Example Author")},
+         }}},
+        {QStringLiteral("license"), QStringLiteral("MIT")},
+        {QStringLiteral("componentApiVersion"), QStringLiteral("1.0")},
+        {QStringLiteral("runtime"), QJsonObject{
+             {QStringLiteral("kind"), QStringLiteral("process-v1")},
+             {QStringLiteral("entrypoint"),
+              QStringLiteral("payload/bin/example-service")},
+             {QStringLiteral("arguments"),
+              QJsonArray{QStringLiteral("--user")}},
+         }},
+        {QStringLiteral("requestedCapabilities"), QJsonArray{QJsonObject{
+             {QStringLiteral("id"),
+              QStringLiteral("example.background.read")},
+             {QStringLiteral("reason"),
+              QStringLiteral("Read example state.")},
+         }}},
+    };
+    const auto manifestBytes = QJsonDocument(manifestObject)
+                                   .toJson(QJsonDocument::Compact);
+    const auto parsed = Components::parseComponentManifest(
+        QByteArrayView(manifestBytes),
+        Components::ComponentOrigin::User
+    );
+    Q_ASSERT(parsed);
+
+    Components::PackageInspectionReport report{
+        .inspectionToken = token,
+        .archiveSha256 = QString(64, QLatin1Char('d')),
+        .packageDigest = packageDigest,
+        .archiveSize = 3,
+        .expandedSize = 3,
+        .manifest = *parsed.value,
+        .normalizedManifest = manifestObject,
+        .normalizedSettingsSchema = std::nullopt,
+        .files = {
+            {QStringLiteral("integrity.json"), 1,
+             QString(64, QLatin1Char('1'))},
+            {QStringLiteral("manifest.json"), 1,
+             QString(64, QLatin1Char('2'))},
+            {QStringLiteral("payload/bin/example-service"), 1,
+             QString(64, QLatin1Char('3'))},
+        },
+    };
+    return report;
 }
 
 class FakeManager final : public QDBusVirtualObject {
@@ -159,6 +231,54 @@ public:
     {
         if (message.interface() != interfaceName) {
             return false;
+        }
+        if (message.member() == QStringLiteral("BeginPackageInspection")) {
+            ++beginCalls;
+            connection_.send(message.createReply(
+                QVariantList{inspectionToken}
+            ));
+            return true;
+        }
+        if (message.member() == QStringLiteral("CancelPackageInspection")) {
+            ++cancelCalls;
+            connection_.send(message.createReply());
+            return true;
+        }
+        if (message.member() == QStringLiteral("InstallInspectedPackage")) {
+            ++installCalls;
+            lastInstallCatalogDigest = message.arguments().value(2).toString();
+            if (failInstallOnce) {
+                failInstallOnce = false;
+                connection_.send(message.createErrorReply(
+                    QStringLiteral(
+                        "org.hyprshelld.ComponentManager1.Error.PackageTransactionFailed"
+                    ),
+                    QStringLiteral("injected install failure")
+                ));
+                return true;
+            }
+            const auto report = pendingReport.value();
+            auto records = records_;
+            records.insert(
+                report.manifest.id,
+                serviceRecord(report.manifest.version, report.packageDigest)
+            );
+            setRecords(std::move(records));
+            connection_.send(message.createReply({
+                report.manifest.id,
+                report.packageDigest,
+                digest_,
+            }));
+            return true;
+        }
+        if (message.member() == QStringLiteral("RemovePackage")) {
+            ++removeCalls;
+            const auto componentId = message.arguments().value(0).toString();
+            auto records = records_;
+            records.remove(componentId);
+            setRecords(std::move(records));
+            connection_.send(message.createReply(QVariantList{digest_}));
+            return true;
         }
         if (message.member() == QStringLiteral("ListComponents")) {
             ++listCalls;
@@ -247,6 +367,23 @@ public:
         QVERIFY(connection_.send(signal));
     }
 
+    void finishInspection(Components::PackageInspectionReport report)
+    {
+        pendingReport = report;
+        auto signal = QDBusMessage::createSignal(
+            objectPath,
+            interfaceName,
+            QStringLiteral("PackageInspectionFinished")
+        );
+        signal.setArguments({
+            report.inspectionToken,
+            Components::serializePackageInspectionReport(report),
+            QString(),
+            QString(),
+        });
+        QVERIFY(connection_.send(signal));
+    }
+
     void hold(const QString &componentId)
     {
         holdId_ = componentId;
@@ -274,10 +411,20 @@ public:
     bool malformedGetOnce = false;
     bool invalidSchemaOnce = false;
     bool staleGetOnce = false;
+    bool failInstallOnce = false;
     int listCalls = 0;
     int getCalls = 0;
     int invalidSchemaReplies = 0;
     int staleReplies = 0;
+    int beginCalls = 0;
+    int cancelCalls = 0;
+    int installCalls = 0;
+    int removeCalls = 0;
+    QString lastInstallCatalogDigest;
+    QString inspectionToken = QStringLiteral(
+        "00112233445566778899aabbccddeeff"
+    );
+    std::optional<Components::PackageInspectionReport> pendingReport;
 
 private:
     QDBusConnection connection_;
@@ -445,6 +592,125 @@ private slots:
 
         QVERIFY(serviceBus.unregisterService(serviceName));
         serviceBus.unregisterObject(objectPath);
+    }
+
+    void reviewsDowngradeAndReconcilesPackageLifecycleFailures()
+    {
+        const auto serviceConnectionName = QStringLiteral(
+            "component-manager-package-test-service"
+        );
+        const auto clientConnectionName = QStringLiteral(
+            "component-manager-package-test-client"
+        );
+        auto serviceBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus,
+            serviceConnectionName
+        );
+        auto clientBus = QDBusConnection::connectToBus(
+            QDBusConnection::SessionBus,
+            clientConnectionName
+        );
+        QVERIFY(serviceBus.isConnected());
+        QVERIFY(clientBus.isConnected());
+
+        FakeManager manager(serviceBus);
+        manager.setRecords({
+            {workspaceId, workspaceRecord()},
+            {serviceId, serviceRecord(
+                QStringLiteral("2.0.0"),
+                QString(64, QLatin1Char('b'))
+            )},
+        });
+        QVERIFY(serviceBus.registerVirtualObject(objectPath, &manager));
+        QVERIFY(serviceBus.registerService(serviceName));
+
+        ComponentManagerClient client(clientBus, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        const auto reviewedCatalogDigest = client.catalogDigest();
+        QVERIFY(Components::isFullSha256Digest(reviewedCatalogDigest));
+
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto packagePath = directory.filePath(
+            QStringLiteral("fixture.hyprshelld-component")
+        );
+        {
+            QFile package(packagePath);
+            QVERIFY(package.open(QIODevice::WriteOnly | QIODevice::NewOnly));
+            QCOMPARE(package.write("fixture\n"), 8LL);
+        }
+
+        const auto inspect = [&] {
+            client.inspectPackage(QUrl::fromLocalFile(packagePath));
+            QTRY_VERIFY_WITH_TIMEOUT(!client.inspectionToken().isEmpty(), 3000);
+            auto report = packageReport(
+                client.inspectionToken(),
+                QStringLiteral("1.0.0"),
+                QString(64, QLatin1Char('c'))
+            );
+            manager.finishInspection(std::move(report));
+            QTRY_VERIFY_WITH_TIMEOUT(
+                !client.inspectionReview().isEmpty(), 3000
+            );
+            QCOMPARE(
+                client.inspectionReview().value(
+                    QStringLiteral("operation")
+                ).toString(),
+                QStringLiteral("downgrade")
+            );
+        };
+
+        inspect();
+        client.inspectPackage(QUrl::fromLocalFile(packagePath));
+        QTRY_COMPARE_WITH_TIMEOUT(manager.cancelCalls, 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(manager.beginCalls, 2, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.inspectionToken().isEmpty(), 3000);
+        manager.finishInspection(packageReport(
+            client.inspectionToken(),
+            QStringLiteral("1.0.0"),
+            QString(64, QLatin1Char('c'))
+        ));
+        QTRY_VERIFY_WITH_TIMEOUT(
+            !client.inspectionReview().isEmpty(), 3000
+        );
+        manager.failInstallOnce = true;
+        client.installInspectedPackage();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.packageOperationBusy(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.packageError().isEmpty(), 3000);
+        QVERIFY(client.inspectionToken().isEmpty());
+        QVERIFY(client.inspectionReview().isEmpty());
+        QTRY_COMPARE_WITH_TIMEOUT(manager.cancelCalls, 2, 3000);
+
+        inspect();
+        QSignalSpy installed(&client, &ComponentManagerClient::packageInstalled);
+        client.installInspectedPackage();
+        QTRY_COMPARE_WITH_TIMEOUT(installed.size(), 1, 3000);
+        QCOMPARE(manager.lastInstallCatalogDigest, reviewedCatalogDigest);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.components().size(), 2, 3000);
+        QCOMPARE(
+            client.components().at(1).toMap().value(
+                QStringLiteral("packageDigest")
+            ).toString(),
+            QString(64, QLatin1Char('c'))
+        );
+
+        QSignalSpy removed(&client, &ComponentManagerClient::packageRemoved);
+        client.removeComponent(
+            serviceId,
+            QString(64, QLatin1Char('c')),
+            client.catalogDigest()
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(removed.size(), 1, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.components().size(), 1, 3000);
+        QCOMPARE(manager.installCalls, 2);
+        QCOMPARE(manager.removeCalls, 1);
+
+        QVERIFY(serviceBus.unregisterService(serviceName));
+        serviceBus.unregisterObject(objectPath);
+        QDBusConnection::disconnectFromBus(clientConnectionName);
+        QDBusConnection::disconnectFromBus(serviceConnectionName);
     }
 };
 

@@ -12,6 +12,9 @@ Frame {
     required property bool desiredStateAvailable
     required property bool toggleEnabled
     property bool pending: false
+    property bool packageOperationBusy: false
+    property bool configureEnabled: false
+    property bool removeEnabled: false
     property string statusText: ""
     property string errorText: ""
 
@@ -19,17 +22,38 @@ Frame {
         component && typeof component.id === "string" ? component.id : ""
     readonly property bool builtIn:
         component && component.origin === "system"
+    readonly property bool thirdParty: !root.builtIn
+    readonly property bool activationSupported:
+        root.builtIn || !root.component
+            || root.component.activationSupported !== false
+    readonly property bool configureVisible:
+        root.thirdParty
+        && root.component.type !== "shell-application"
+        && root.listValue(root.component.settingsDefinitions).length > 0
+    readonly property bool removeVisible:
+        root.thirdParty && root.component.removable === true
 
     signal componentEnabledRequested(
         string componentId,
         string packageDigest,
         bool enabled
     )
+    signal configureRequested(var component)
+    signal removeRequested(var component)
+
+    function listValue(value) {
+        if (Array.isArray(value))
+            return value.slice();
+        if (!value || typeof value.length !== "number")
+            return [];
+        const result = [];
+        for (let index = 0; index < value.length; ++index)
+            result.push(value[index]);
+        return result;
+    }
 
     function authorText(authors) {
-        if (!Array.isArray(authors))
-            return "";
-        return authors.map(author => author && author.name
+        return root.listValue(authors).map(author => author && author.name
             ? author.name : "").filter(name => name.length > 0).join(", ");
     }
 
@@ -97,6 +121,7 @@ Frame {
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
+                    textFormat: Text.PlainText
                 }
 
                 Rectangle {
@@ -131,6 +156,7 @@ Frame {
                             ? root.palette.text : "#ffd5a1"
                         font.pixelSize: 11
                         font.weight: Font.Medium
+                        textFormat: Text.PlainText
                     }
                 }
             }
@@ -142,6 +168,7 @@ Frame {
                 color: root.palette.placeholderText
                 font.pixelSize: 13
                 wrapMode: Text.Wrap
+                textFormat: Text.PlainText
             }
 
             Label {
@@ -163,6 +190,20 @@ Frame {
                 opacity: 0.78
                 font.pixelSize: 11
                 elide: Text.ElideRight
+                textFormat: Text.PlainText
+            }
+
+            Label {
+                Layout.fillWidth: true
+                objectName: "componentTrust-" + root.componentId
+                visible: root.thirdParty
+                text: qsTr("Unverified third-party code")
+                color: "#ffd5a1"
+                font.pixelSize: 11
+                font.weight: Font.Medium
+                textFormat: Text.PlainText
+                Accessible.role: Accessible.AlertMessage
+                Accessible.name: text
             }
 
             Label {
@@ -175,45 +216,81 @@ Frame {
                     ? "#ffb8c3" : root.palette.placeholderText
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
+                textFormat: Text.PlainText
                 Accessible.role: root.errorText.length > 0
                     ? Accessible.AlertMessage : Accessible.StaticText
                 Accessible.name: text
             }
         }
 
-        Switch {
-            id: enableControl
+        ColumnLayout {
+            spacing: 8
 
-            objectName: "componentEnabled-" + root.componentId
-            enabled: root.toggleEnabled
-            text: root.pending ? qsTr("Saving…") : ""
-            display: AbstractButton.TextBesideIcon
-            Accessible.name: root.component && root.component.name
-                ? qsTr("Enable %1").arg(root.component.name)
-                : qsTr("Enable component")
+            Switch {
+                id: enableControl
 
-            onToggled: {
-                if (!root.toggleEnabled
-                        || checked === root.desiredEnabled) {
-                    return;
+                objectName: "componentEnabled-" + root.componentId
+                enabled: root.toggleEnabled
+                    && root.activationSupported
+                    && !root.packageOperationBusy
+                text: root.pending ? qsTr("Saving…") : ""
+                display: AbstractButton.TextBesideIcon
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Enable %1").arg(root.component.name)
+                    : qsTr("Enable component")
+
+                onToggled: {
+                    if (!root.toggleEnabled
+                            || !root.activationSupported
+                            || checked === root.desiredEnabled) {
+                        return;
+                    }
+                    root.componentEnabledRequested(
+                        root.componentId,
+                        root.component.packageDigest,
+                        checked
+                    );
                 }
-                root.componentEnabledRequested(
-                    root.componentId,
-                    root.component.packageDigest,
-                    checked
-                );
+
+                Binding {
+                    target: enableControl
+                    property: "checked"
+                    value: {
+                        const operationError = root.errorText;
+                        return root.desiredStateAvailable
+                            && root.desiredEnabled;
+                    }
+                    when: !root.pending
+                    restoreMode: Binding.RestoreNone
+                }
             }
 
-            Binding {
-                target: enableControl
-                property: "checked"
-                value: {
-                    const operationError = root.errorText;
-                    return root.desiredStateAvailable
-                        && root.desiredEnabled;
-                }
-                when: !root.pending
-                restoreMode: Binding.RestoreNone
+            Button {
+                objectName: "componentSettings-" + root.componentId
+                Layout.fillWidth: true
+                visible: root.configureVisible
+                text: qsTr("Configure")
+                enabled: root.configureEnabled
+                    && !root.pending
+                    && !root.packageOperationBusy
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Configure %1").arg(root.component.name)
+                    : qsTr("Configure component")
+                onClicked: root.configureRequested(root.component)
+            }
+
+            Button {
+                objectName: "componentRemove-" + root.componentId
+                Layout.fillWidth: true
+                visible: root.removeVisible
+                text: qsTr("Remove")
+                enabled: root.removeEnabled
+                    && !root.pending
+                    && !root.packageOperationBusy
+                Accessible.name: root.component && root.component.name
+                    ? qsTr("Remove %1").arg(root.component.name)
+                    : qsTr("Remove component")
+                onClicked: root.removeRequested(root.component)
             }
         }
     }

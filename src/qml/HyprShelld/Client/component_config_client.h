@@ -48,6 +48,15 @@ public:
         const QString &expectedPackageDigest,
         bool enabled
     );
+    Q_INVOKABLE void setComponentSettings(
+        const QString &componentId,
+        const QString &expectedPackageDigest,
+        const QVariantMap &settings
+    );
+    Q_INVOKABLE void preparePackageChange(
+        const QString &componentId,
+        const QString &expectedPackageDigest
+    );
     Q_INVOKABLE void clearError();
 
 signals:

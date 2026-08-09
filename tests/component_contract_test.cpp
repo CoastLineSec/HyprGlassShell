@@ -169,6 +169,64 @@ private slots:
         QVERIFY(hasCode(result.errors, QStringLiteral("manifest.invalid-string")));
     }
 
+    void rejectsUnicodeFormatControlsInUserPresentationMetadata()
+    {
+        const auto userManifest = [](const QString &name) {
+            return QStringLiteral(R"({
+                "manifestVersion": 1,
+                "id": "org.example.review-safe",
+                "version": "1.0.0",
+                "type": "bar-widget",
+                "name": "%1",
+                "description": "A review-safe fixture.",
+                "authors": [{"name": "Fixture Author"}],
+                "license": "MIT",
+                "componentApiVersion": "1.0",
+                "runtime": {
+                    "kind": "declarative-v1",
+                    "entrypoint": "payload/widget.json"
+                },
+                "requestedCapabilities": []
+            })").arg(name).toUtf8();
+        };
+
+        const auto baseline = parseComponentManifest(
+            userManifest(QStringLiteral("Safe Name")),
+            ComponentOrigin::User
+        );
+        QVERIFY2(baseline.ok(), "The user manifest fixture must be valid");
+
+        const auto rightToLeftOverride = parseComponentManifest(
+            userManifest(QStringLiteral("Safe\u202Eeman")),
+            ComponentOrigin::User
+        );
+        QVERIFY(!rightToLeftOverride.ok());
+        QVERIFY(hasCode(
+            rightToLeftOverride.errors,
+            QStringLiteral("manifest.invalid-string")
+        ));
+
+        const auto zeroWidthJoiner = parseComponentManifest(
+            userManifest(QStringLiteral("Safe\u200DName")),
+            ComponentOrigin::User
+        );
+        QVERIFY(!zeroWidthJoiner.ok());
+        QVERIFY(hasCode(
+            zeroWidthJoiner.errors,
+            QStringLiteral("manifest.invalid-string")
+        ));
+
+        const auto supplementaryFormat = parseComponentManifest(
+            userManifest(QStringLiteral("Safe\U000E0001Name")),
+            ComponentOrigin::User
+        );
+        QVERIFY(!supplementaryFormat.ok());
+        QVERIFY(hasCode(
+            supplementaryFormat.errors,
+            QStringLiteral("manifest.invalid-string")
+        ));
+    }
+
     void supportGatePinsCapabilitiesAndDependencies()
     {
         auto unknownCapability = workspaceManifest();

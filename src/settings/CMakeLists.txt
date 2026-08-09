@@ -11,7 +11,10 @@ qt_add_qml_module(
         BarPreview.qml
         BarSettingsPage.qml
         ComponentPill.qml
+        ComponentReviewDialog.qml
         ComponentsPage.qml
+        GenericComponentSettings.qml
+        SchemaSettingRow.qml
         ShellHealthWarning.qml
         WorkspaceSwitcherSettings.qml
 )

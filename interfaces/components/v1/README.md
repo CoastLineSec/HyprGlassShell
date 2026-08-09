@@ -26,10 +26,13 @@ the built-in `workspace-switcher` factory; reserving a name does not mean the
 runtime has shipped.
 
 All JSON is UTF-8, has an object root, is limited to nesting depth 32, and must
-not contain duplicate object keys. Manifests are limited to 128 KiB and
-settings schemas to 256 KiB. Unknown fields are rejected. Presentation strings
-are NFC-normalized, outer whitespace and control characters are rejected, and
-Settings must render them as plain text.
+not contain duplicate object keys. Manifests are limited to 128 KiB,
+settings schemas to 256 KiB, and integrity metadata to 512 KiB. A package is
+limited to 32 MiB of archive bytes, 128 MiB expanded, 32 MiB per regular file,
+and 512 total ZIP entries. Unknown fields are rejected. Presentation strings
+are NFC-normalized; outer whitespace, control characters, and Unicode format
+controls such as bidi overrides and zero-width joiners are rejected. Settings
+must render them as plain text.
 Numeric lexemes must also survive parsing and canonical JSON serialization
 without changing their decimal value; lossy halfway, overflow, and underflow
 representations are rejected.

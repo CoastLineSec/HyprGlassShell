@@ -21,6 +21,32 @@ marked and can be enabled or disabled, but they cannot be removed. Their
 detailed choices remain in the natural Settings page for that feature rather
 than being duplicated on the Components page.
 
+Select **Install from file…** to inspect a local `*.hyprshelld-component`
+package. HyprShelld checks the package structure and integrity before showing
+its name, author, runtime, requested capabilities, dependencies, and digest.
+This does not make third-party code trusted or audited: the review clearly
+marks it as unverified, and you should install only code you have inspected and
+trust. A newly installed component remains disabled. Selecting another local
+package with the same component ID uses the same review flow for an update,
+reinstall, or downgrade; HyprShelld does not download packages automatically.
+
+Third-party bar widgets, desktop widgets, and services may provide a data-only
+settings schema. Settings renders those shared choices with trusted built-in
+controls; packages cannot supply QML or JavaScript for the Settings interface.
+Choices belonging to one widget instance are changed where that instance is
+placed. Shell applications keep their settings inside the application. Removing
+a third-party package preserves its saved choices and placements as dormant
+recovery data in case the same package is installed again, and never deletes
+the original package file you selected.
+
+If an installed package receipt or file tree is damaged, HyprShelld leaves that
+component out of the catalog while keeping healthy components available. Select
+the same trusted package file again to repair corrupt contents or a missing tree
+under the component store's safe directory structure. Unsafe symlinks or other
+non-directory storage entries are rejected and require manual removal. Component
+settings, including local file or directory choices, are stored in owner-only
+configuration files.
+
 ## Change the bar height
 
 Drag the **Bar height** slider to preview a new size. The preview updates while

@@ -7,6 +7,12 @@ qt_add_library(
         component_configuration.h
         component_contract.cpp
         component_contract.h
+        component_package_bundle.cpp
+        component_package_bundle.h
+        package_inspection_report.cpp
+        package_inspection_report.h
+        package_integrity.cpp
+        package_integrity.h
         settings_schema.cpp
         settings_schema.h
         strict_json.cpp
