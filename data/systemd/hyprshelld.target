@@ -1,6 +1,6 @@
 [Unit]
 Description=HyprShelld desktop shell
-Wants=hyprshelld.service hyprshelld-configd.service hyprshelld-componentd.service hyprshelld-surfaced.service
+Wants=hyprshelld.service hyprshelld-configd.service hyprshelld-componentd.service hyprshelld-compositord.service hyprshelld-surfaced.service
 After=graphical-session.target
 PartOf=graphical-session.target
 

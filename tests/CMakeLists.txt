@@ -212,6 +212,7 @@ qt_add_dbus_interface(
 set(HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES)
 set(HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES)
 set(HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES)
+set(HYPRSHELLD_COMPOSITOR_PROXY_SOURCES)
 
 qt_add_dbus_interface(
     HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES
@@ -231,6 +232,12 @@ qt_add_dbus_interface(
     component_runtime1_interface
 )
 
+qt_add_dbus_interface(
+    HYPRSHELLD_COMPOSITOR_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor1.xml"
+    compositor1_interface
+)
+
 qt_add_executable(
     hyprshelld-dbus-contract-test
     dbus_contract_test.cpp
@@ -239,6 +246,7 @@ qt_add_executable(
     ${HYPRSHELLD_COMPONENT_MANAGER_PROXY_SOURCES}
     ${HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES}
     ${HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES}
+    ${HYPRSHELLD_COMPOSITOR_PROXY_SOURCES}
 )
 
 target_compile_definitions(
@@ -249,6 +257,7 @@ target_compile_definitions(
         HYPRSHELLD_COMPONENT_MANAGER_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentManager1.xml"
         HYPRSHELLD_COMPONENT_CONFIG_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentConfig1.xml"
         HYPRSHELLD_COMPONENT_RUNTIME_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentRuntime1.xml"
+        HYPRSHELLD_COMPOSITOR_XML="${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor1.xml"
 )
 
 target_link_libraries(
@@ -497,6 +506,113 @@ target_link_libraries(
 add_test(
     NAME hyprland-configuration
     COMMAND hyprshelld-hyprland-configuration-test
+)
+
+find_program(HYPRSHELLD_LUAC_EXECUTABLE NAMES luac REQUIRED)
+find_program(HYPRSHELLD_LUA_EXECUTABLE NAMES lua REQUIRED)
+find_program(HYPRSHELLD_HYPRLAND_EXECUTABLE NAMES Hyprland REQUIRED)
+
+qt_add_executable(
+    hyprshelld-compositor-renderer-test
+    compositor_renderer_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-renderer-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_LUAC_EXECUTABLE="${HYPRSHELLD_LUAC_EXECUTABLE}"
+        HYPRSHELLD_LUA_EXECUTABLE="${HYPRSHELLD_LUA_EXECUTABLE}"
+        HYPRSHELLD_HYPRLAND_EXECUTABLE="${HYPRSHELLD_HYPRLAND_EXECUTABLE}"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-renderer-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+)
+
+add_test(
+    NAME compositor-renderer
+    COMMAND hyprshelld-compositor-renderer-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-service-test
+    compositor_service_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-service-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-compositord-service
+)
+
+add_test(
+    NAME compositor-service
+    COMMAND hyprshelld-compositor-service-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-store-test
+    compositor_store_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-store-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-store-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+)
+
+add_test(
+    NAME compositor-store
+    COMMAND hyprshelld-compositor-store-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-transaction-test
+    compositor_transaction_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-transaction-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-transaction-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-core
+)
+
+add_test(
+    NAME compositor-transaction
+    COMMAND hyprshelld-compositor-transaction-test
 )
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -1121,6 +1237,10 @@ set(
     HYPRSHELLD_GENERATED_COMPONENT_MANAGER1_ACTIVATION_FILE
     "${PROJECT_BINARY_DIR}/data/dbus/org.hyprshelld.ComponentManager1.service"
 )
+set(
+    HYPRSHELLD_GENERATED_COMPOSITOR1_ACTIVATION_FILE
+    "${PROJECT_BINARY_DIR}/data/dbus/org.hyprshelld.Compositor1.service"
+)
 
 if(IS_ABSOLUTE "${QT6_INSTALL_QML}")
     set(HYPRSHELLD_INSTALL_QML_DIRECTORY "${QT6_INSTALL_QML}")
@@ -1154,9 +1274,11 @@ target_compile_definitions(
         HYPRSHELLD_SYSTEMD_UNIT_DIR="${HYPRSHELLD_GENERATED_SYSTEMD_DIRECTORY}"
         HYPRSHELLD_CONFIG1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_CONFIG1_ACTIVATION_FILE}"
         HYPRSHELLD_COMPONENT_MANAGER1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_COMPONENT_MANAGER1_ACTIVATION_FILE}"
+        HYPRSHELLD_COMPOSITOR1_ACTIVATION_FILE="${HYPRSHELLD_GENERATED_COMPOSITOR1_ACTIVATION_FILE}"
         HYPRSHELLD_INSTALL_COORDINATOR="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld"
         HYPRSHELLD_INSTALL_CONFIGD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-configd"
         HYPRSHELLD_INSTALL_COMPONENTD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-componentd"
+        HYPRSHELLD_INSTALL_COMPOSITORD="${CMAKE_INSTALL_FULL_BINDIR}/hyprshelld-compositord"
         HYPRSHELLD_INSTALL_SURFACED="${CMAKE_INSTALL_FULL_DATADIR}/hyprshelld/surfaced"
         HYPRSHELLD_INSTALL_QML="${HYPRSHELLD_INSTALL_QML_DIRECTORY}"
         HYPRSHELLD_QUICKSHELL_EXECUTABLE="${QUICKSHELL_EXECUTABLE}"
@@ -1190,6 +1312,7 @@ add_test(
         "-DCOORDINATOR_EXECUTABLE=$<TARGET_FILE:hyprshelld>"
         "-DCONFIGD_EXECUTABLE=$<TARGET_FILE:hyprshelld-configd>"
         "-DCOMPONENTD_EXECUTABLE=$<TARGET_FILE:hyprshelld-componentd>"
+        "-DCOMPOSITORD_EXECUTABLE=$<TARGET_FILE:hyprshelld-compositord>"
         "-DQUICKSHELL_EXECUTABLE=${QUICKSHELL_EXECUTABLE}"
         "-DSURFACED_DIRECTORY=${PROJECT_SOURCE_DIR}/src/surfaced"
         -P

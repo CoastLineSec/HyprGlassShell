@@ -1,5 +1,6 @@
 add_subdirectory(component)
 add_subdirectory(hyprland)
+add_subdirectory(compositord)
 add_subdirectory(component-inspector)
 add_subdirectory(coordinator)
 add_subdirectory(configd)

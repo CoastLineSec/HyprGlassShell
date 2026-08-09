@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/hyprshelld/Compositor1">
+  <interface name="org.hyprshelld.Compositor1">
+    <!-- True only while one authoritative desired-state snapshot can be read. -->
+    <property name="Available" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      True only while the authoritative desired state can be replaced. Live
+      activation capability is reported separately by RequiredActivation and
+      the Apply result. A future-format snapshot may remain readable but not
+      writable.
+    -->
+    <property name="Writable" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="Revision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of normal, recovered, defaulted, unsupported, or unavailable. -->
+    <property name="LoadState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of unmanaged, managed, or conflict. Ownership is never implicit. -->
+    <property name="ManagementState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Exact SHA-256 of the current regular compositor entrypoint. Empty means
+      the entrypoint is absent or cannot safely be represented as regular bytes.
+    -->
+    <property name="EntrypointDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="CatalogDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ActionCatalogDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Zero when no managed generation has been activated, or when revision zero
+      itself is active. ApplyState and GenerationDigest disambiguate the tuple.
+    -->
+    <property name="AppliedRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of unavailable, inactive, current, retained, or failed. -->
+    <property name="ApplyState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of none, reload, restart, or session. -->
+    <property name="RequiredActivation" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Empty exactly when no managed generation has been activated. -->
+    <property name="GenerationDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Returns one complete canonical desired-state document and the revision
+      that owns those exact bytes.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+    -->
+    <method name="GetSnapshot">
+      <arg name="snapshot" type="ay" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+      <arg name="actionCatalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Replaces the complete desired state using a revision compare-and-swap.
+      The candidate embeds expectedRevision; compositord owns exactly one
+      monotonic increment. An exact retry with the immediately preceding token
+      after a lost successful response returns the already-committed revision;
+      it never increments twice. This operation does not activate or reload
+      Hyprland.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.ReadOnly
+        org.hyprshelld.Compositor1.Error.StaleRevision
+        org.hyprshelld.Compositor1.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor1.Error.InvalidSnapshot
+        org.hyprshelld.Compositor1.Error.RevisionExhausted
+        org.hyprshelld.Compositor1.Error.PersistenceFailed
+    -->
+    <method name="ReplaceSnapshot">
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="candidateSnapshot" type="ay" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Builds and atomically activates an immutable managed Lua generation for
+      exactly expectedRevision. An idempotent apply returns the current
+      generation without rebuilding it. The installed Slice-2 executor is
+      intentionally fail-closed and returns ActivationRequired; a later live
+      backend must prove the exact reload event and empty config errors.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.ReadOnly
+        org.hyprshelld.Compositor1.Error.StaleRevision
+        org.hyprshelld.Compositor1.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor1.Error.AdoptionRequired
+        org.hyprshelld.Compositor1.Error.EntrypointChanged
+        org.hyprshelld.Compositor1.Error.ActivationRequired
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.ApplyFailed
+    -->
+    <method name="Apply">
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Copies the last successfully applied snapshot into a new desired-state
+      revision, then prepares, verifies, and activates that exact content. The
+      new revision is expectedRevision + 1; an older revision is never restored
+      or reused. Recovery never adopts an unmanaged compositor entrypoint. The
+      installed Slice-2 executor returns ActivationRequired before publication.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.ReadOnly
+        org.hyprshelld.Compositor1.Error.StaleRevision
+        org.hyprshelld.Compositor1.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor1.Error.AdoptionRequired
+        org.hyprshelld.Compositor1.Error.EntrypointChanged
+        org.hyprshelld.Compositor1.Error.RecoveryUnavailable
+        org.hyprshelld.Compositor1.Error.ActivationRequired
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.RecoveryFailed
+    -->
+    <method name="Recover">
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Explicitly adopts the compositor entrypoint at one CAS-qualified desired
+      state. An empty expectedEntrypointDigest is valid only when the entrypoint
+      is absent. A non-empty value binds the exact existing regular-file bytes;
+      compositord preserves a recoverable original before it stages, verifies,
+      and atomically publishes its ownership marker and managed entrypoint.
+      This method is never invoked automatically during startup. The installed
+      Slice-2 executor defers this transition with ActivationRequired.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.ReadOnly
+        org.hyprshelld.Compositor1.Error.StaleRevision
+        org.hyprshelld.Compositor1.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor1.Error.EntrypointChanged
+        org.hyprshelld.Compositor1.Error.ActivationRequired
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.ApplyFailed
+    -->
+    <method name="AdoptManagedConfiguration">
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedEntrypointDigest" type="s" direction="in"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+      <arg name="entrypointDigest" type="s" direction="out"/>
+    </method>
+  </interface>
+</node>

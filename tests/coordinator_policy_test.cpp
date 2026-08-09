@@ -9,6 +9,7 @@ namespace {
 
 const QString configUnit = QStringLiteral("hyprshelld-configd.service");
 const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
+const QString compositorUnit = QStringLiteral("hyprshelld-compositord.service");
 const QString surfaceUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 } // namespace
@@ -21,10 +22,16 @@ private slots:
     {
         QCOMPARE(
             CoordinatorPolicy::allowedUnits(),
-            QStringList({configUnit, componentUnit, surfaceUnit})
+            QStringList({
+                configUnit,
+                componentUnit,
+                compositorUnit,
+                surfaceUnit,
+            })
         );
         QVERIFY(CoordinatorPolicy::isKnown(configUnit));
         QVERIFY(CoordinatorPolicy::isKnown(componentUnit));
+        QVERIFY(CoordinatorPolicy::isKnown(compositorUnit));
         QVERIFY(CoordinatorPolicy::isKnown(surfaceUnit));
         QVERIFY(!CoordinatorPolicy::isKnown(QStringLiteral("hyprshelld.service")));
         QVERIFY(!CoordinatorPolicy::isKnown(configUnit + QLatin1Char(' ')));
@@ -55,6 +62,7 @@ private slots:
         QVERIFY(policy.applySnapshot({
             {configUnit, QStringLiteral("failed")},
             {componentUnit, QStringLiteral("active")},
+            {compositorUnit, QStringLiteral("active")},
             {surfaceUnit, QStringLiteral("active")},
         }));
         QVERIFY(!policy.healthy());
@@ -92,9 +100,29 @@ private slots:
             QStringLiteral("3 HyprShelld components need attention.")
         );
 
+        QVERIFY(policy.applySnapshot({{compositorUnit, QStringLiteral("failed")}}));
+        QCOMPARE(
+            policy.failedUnits(),
+            QStringList({
+                componentUnit,
+                compositorUnit,
+                configUnit,
+                surfaceUnit,
+            })
+        );
+        QCOMPARE(
+            policy.failureSummary(),
+            QStringLiteral("4 HyprShelld components need attention.")
+        );
+
         QVERIFY(policy.applySnapshot({{configUnit, QStringLiteral("active")}}));
-        QCOMPARE(policy.failedUnits(), QStringList({componentUnit, surfaceUnit}));
+        QCOMPARE(
+            policy.failedUnits(),
+            QStringList({componentUnit, compositorUnit, surfaceUnit})
+        );
         QVERIFY(policy.applySnapshot({{componentUnit, QStringLiteral("active")}}));
+        QCOMPARE(policy.failedUnits(), QStringList({compositorUnit, surfaceUnit}));
+        QVERIFY(policy.applySnapshot({{compositorUnit, QStringLiteral("active")}}));
         QCOMPARE(policy.failedUnits(), QStringList({surfaceUnit}));
         QVERIFY(policy.applySnapshot({{surfaceUnit, QStringLiteral("active")}}));
         QVERIFY(policy.healthy());

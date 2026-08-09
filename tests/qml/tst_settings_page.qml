@@ -2257,6 +2257,28 @@ TestCase {
         ) !== null);
     }
 
+    function test_compositorAuthorityFailureHasDedicatedRow() {
+        const testWindow = createTemporaryObject(healthWarningComponent, this);
+        verify(testWindow !== null);
+        const warning = testWindow.warning;
+        verify(warning !== null);
+        warning.coordinatorHealthy = false;
+        warning.coordinatorFailedUnits = [
+            "hyprshelld-compositord.service"
+        ];
+        waitForRendering(warning);
+
+        compare(warning.failedComponentCount, 1);
+        compare(
+            warning.friendlyName("hyprshelld-compositord.service"),
+            "Compositor settings"
+        );
+        verify(findChild(
+            warning,
+            "restartButton-hyprshelld-compositord.service"
+        ) !== null);
+    }
+
     function test_systemdFallbackIsReadOnly() {
         const testWindow = createTemporaryObject(healthWarningComponent, this);
         verify(testWindow !== null);
@@ -2269,14 +2291,19 @@ TestCase {
         warning.coordinatorState = "failed";
         warning.configurationState = "active";
         warning.componentManagerState = "failed";
+        warning.compositorState = "failed";
         warning.surfaceState = "active";
         waitForRendering(warning);
         compare(warning.warningVisible, true);
-        compare(warning.failedComponentCount, 2);
+        compare(warning.failedComponentCount, 3);
         compare(warning.friendlyName("hyprshelld.service"), "Shell health");
         compare(
             warning.friendlyName("hyprshelld-componentd.service"),
             "Component manager"
+        );
+        compare(
+            warning.friendlyName("hyprshelld-compositord.service"),
+            "Compositor settings"
         );
 
         const restartButton = findChild(
@@ -2291,6 +2318,12 @@ TestCase {
         );
         verify(componentRestartButton !== null);
         compare(componentRestartButton.visible, false);
+        const compositorRestartButton = findChild(
+            warning,
+            "restartButton-hyprshelld-compositord.service"
+        );
+        verify(compositorRestartButton !== null);
+        compare(compositorRestartButton.visible, false);
         verify(warning.warningDescription.includes("directly from systemd"));
     }
 

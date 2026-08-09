@@ -5,6 +5,7 @@ foreach(required IN ITEMS
     COORDINATOR_EXECUTABLE
     CONFIGD_EXECUTABLE
     COMPONENTD_EXECUTABLE
+    COMPOSITORD_EXECUTABLE
     QUICKSHELL_EXECUTABLE
     SURFACED_DIRECTORY
 )
@@ -20,6 +21,7 @@ set(units
     hyprshelld.service
     hyprshelld-configd.service
     hyprshelld-componentd.service
+    hyprshelld-compositord.service
     hyprshelld-surfaced.service
 )
 
@@ -43,6 +45,7 @@ endfunction()
 quoted_systemd_argument(coordinator "${COORDINATOR_EXECUTABLE}")
 quoted_systemd_argument(configd "${CONFIGD_EXECUTABLE}")
 quoted_systemd_argument(componentd "${COMPONENTD_EXECUTABLE}")
+quoted_systemd_argument(compositord "${COMPOSITORD_EXECUTABLE}")
 quoted_systemd_argument(quickshell "${QUICKSHELL_EXECUTABLE}")
 quoted_systemd_argument(surfaced "${SURFACED_DIRECTORY}")
 
@@ -50,6 +53,7 @@ foreach(service IN ITEMS
     hyprshelld
     hyprshelld-configd
     hyprshelld-componentd
+    hyprshelld-compositord
     hyprshelld-surfaced
 )
     file(MAKE_DIRECTORY "${VERIFY_DIRECTORY}/${service}.service.d")
@@ -63,6 +67,9 @@ file(WRITE "${VERIFY_DIRECTORY}/hyprshelld-configd.service.d/verify.conf"
 )
 file(WRITE "${VERIFY_DIRECTORY}/hyprshelld-componentd.service.d/verify.conf"
     "[Service]\nExecStart=\nExecStart=${componentd}\n"
+)
+file(WRITE "${VERIFY_DIRECTORY}/hyprshelld-compositord.service.d/verify.conf"
+    "[Service]\nExecStart=\nExecStart=${compositord}\n"
 )
 file(WRITE "${VERIFY_DIRECTORY}/hyprshelld-surfaced.service.d/verify.conf"
     "[Service]\nExecStart=\nExecStart=${quickshell} --path ${surfaced}\n"

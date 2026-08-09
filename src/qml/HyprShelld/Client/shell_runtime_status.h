@@ -18,6 +18,7 @@ class ShellRuntimeStatus : public QObject {
     Q_PROPERTY(QString coordinatorState READ coordinatorState NOTIFY statesChanged)
     Q_PROPERTY(QString configurationState READ configurationState NOTIFY statesChanged)
     Q_PROPERTY(QString componentManagerState READ componentManagerState NOTIFY statesChanged)
+    Q_PROPERTY(QString compositorState READ compositorState NOTIFY statesChanged)
     Q_PROPERTY(QString surfaceState READ surfaceState NOTIFY statesChanged)
     Q_PROPERTY(QString lastErrorName READ lastErrorName NOTIFY lastErrorChanged)
     Q_PROPERTY(QString lastErrorMessage READ lastErrorMessage NOTIFY lastErrorChanged)
@@ -35,6 +36,7 @@ public:
     [[nodiscard]] QString coordinatorState() const;
     [[nodiscard]] QString configurationState() const;
     [[nodiscard]] QString componentManagerState() const;
+    [[nodiscard]] QString compositorState() const;
     [[nodiscard]] QString surfaceState() const;
     [[nodiscard]] QString lastErrorName() const;
     [[nodiscard]] QString lastErrorMessage() const;
@@ -64,6 +66,7 @@ private:
     QString coordinatorState_ = QStringLiteral("unknown");
     QString configurationState_ = QStringLiteral("unknown");
     QString componentManagerState_ = QStringLiteral("unknown");
+    QString compositorState_ = QStringLiteral("unknown");
     QString surfaceState_ = QStringLiteral("unknown");
     QString lastErrorName_;
     QString lastErrorMessage_;

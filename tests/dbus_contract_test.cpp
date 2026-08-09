@@ -304,6 +304,73 @@ private slots:
             }
         );
     }
+
+    void compositorContract()
+    {
+        compareContract(
+            QStringLiteral(HYPRSHELLD_COMPOSITOR_XML),
+            {
+                QStringLiteral("node=/org/hyprshelld/Compositor1"),
+                QStringLiteral("interface=org.hyprshelld.Compositor1"),
+                QStringLiteral("property=Available:b:read"),
+                QStringLiteral("annotation=property:Available:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=Writable:b:read"),
+                QStringLiteral("annotation=property:Writable:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=Revision:t:read"),
+                QStringLiteral("annotation=property:Revision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=LoadState:s:read"),
+                QStringLiteral("annotation=property:LoadState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ManagementState:s:read"),
+                QStringLiteral("annotation=property:ManagementState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=EntrypointDigest:s:read"),
+                QStringLiteral("annotation=property:EntrypointDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=CatalogDigest:s:read"),
+                QStringLiteral("annotation=property:CatalogDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ActionCatalogDigest:s:read"),
+                QStringLiteral("annotation=property:ActionCatalogDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=AppliedRevision:t:read"),
+                QStringLiteral("annotation=property:AppliedRevision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ApplyState:s:read"),
+                QStringLiteral("annotation=property:ApplyState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=RequiredActivation:s:read"),
+                QStringLiteral("annotation=property:RequiredActivation:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=GenerationDigest:s:read"),
+                QStringLiteral("annotation=property:GenerationDigest:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("method=GetSnapshot"),
+                QStringLiteral("arg=method:GetSnapshot:snapshot:ay:out"),
+                QStringLiteral("arg=method:GetSnapshot:revision:t:out"),
+                QStringLiteral("arg=method:GetSnapshot:catalogDigest:s:out"),
+                QStringLiteral("arg=method:GetSnapshot:actionCatalogDigest:s:out"),
+                QStringLiteral("method=ReplaceSnapshot"),
+                QStringLiteral("arg=method:ReplaceSnapshot:expectedRevision:t:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:expectedActionCatalogDigest:s:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:candidateSnapshot:ay:in"),
+                QStringLiteral("arg=method:ReplaceSnapshot:revision:t:out"),
+                QStringLiteral("method=Apply"),
+                QStringLiteral("arg=method:Apply:expectedRevision:t:in"),
+                QStringLiteral("arg=method:Apply:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:Apply:expectedActionCatalogDigest:s:in"),
+                QStringLiteral("arg=method:Apply:appliedRevision:t:out"),
+                QStringLiteral("arg=method:Apply:generationDigest:s:out"),
+                QStringLiteral("method=Recover"),
+                QStringLiteral("arg=method:Recover:expectedRevision:t:in"),
+                QStringLiteral("arg=method:Recover:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:Recover:expectedActionCatalogDigest:s:in"),
+                QStringLiteral("arg=method:Recover:revision:t:out"),
+                QStringLiteral("arg=method:Recover:appliedRevision:t:out"),
+                QStringLiteral("arg=method:Recover:generationDigest:s:out"),
+                QStringLiteral("method=AdoptManagedConfiguration"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:expectedRevision:t:in"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:expectedCatalogDigest:s:in"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:expectedActionCatalogDigest:s:in"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:expectedEntrypointDigest:s:in"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:appliedRevision:t:out"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:generationDigest:s:out"),
+                QStringLiteral("arg=method:AdoptManagedConfiguration:entrypointDigest:s:out"),
+            }
+        );
+    }
 };
 
 QTEST_APPLESS_MAIN(DbusContractTest)

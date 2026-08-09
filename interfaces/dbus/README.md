@@ -13,11 +13,12 @@ different types, field counts, or ordering.
 | Configuration | `org.hyprshelld.Config1` | `/org/hyprshelld/Config1` | `org.hyprshelld.Config1` |
 | Component configuration | `org.hyprshelld.Config1` | `/org/hyprshelld/Config1/Components` | `org.hyprshelld.ComponentConfig1` |
 | Component manager | `org.hyprshelld.ComponentManager1` | `/org/hyprshelld/ComponentManager1` | `org.hyprshelld.ComponentManager1` |
+| Compositor configuration | `org.hyprshelld.Compositor1` | `/org/hyprshelld/Compositor1` | `org.hyprshelld.Compositor1` |
 
-All services use the session bus. Configuration and the component manager may
-be D-Bus activated so Settings can remain independent when the shell target is
-stopped. Settings treats an absent coordinator bus name as coordinator
-unavailability.
+All services use the session bus. Configuration, compositor configuration, and
+the component manager may be D-Bus activated so Settings can remain independent
+when the shell target is stopped. Settings treats an absent coordinator bus
+name as coordinator unavailability.
 
 ## Coordinator
 
@@ -27,8 +28,9 @@ empty. Successful `RestartComponent` means the bounded recovery request was
 accepted; health changes only after systemd reports recovery.
 
 Coordinator1 accepts only `hyprshelld-configd.service`,
-`hyprshelld-componentd.service`, and `hyprshelld-surfaced.service`. The method
-cannot be used as a generic systemd restart endpoint.
+`hyprshelld-componentd.service`, `hyprshelld-compositord.service`, and
+`hyprshelld-surfaced.service`. The method cannot be used as a generic systemd
+restart endpoint.
 
 Restart errors have these meanings:
 
@@ -69,6 +71,110 @@ Configuration errors have these meanings:
   outside the accepted range; and
 - `org.hyprshelld.Config1.Error.PersistenceFailed`: the new state could not be
   persisted atomically, so the active value and revision remain unchanged.
+
+## Compositor configuration
+
+Compositor1 is the sole desired-state and generated-Lua authority. Its bus name
+is acquired before it opens the persistent store, takes its exclusive lease, or
+performs recovery. Until that reconciliation finishes, `Available` and
+`Writable` are false and every method fails `Unavailable`. Losing the D-Bus
+name race therefore cannot repair or mutate another instance's store.
+`Writable` describes only whether that desired-state authority accepts
+mutations; it does not imply that the installed activation executor can satisfy
+the activation reported by `RequiredActivation`.
+
+`GetSnapshot` returns one complete canonical Hyprland desired-state document,
+its revision, and the exact scalar and action catalog digests that own those
+bytes. `ReplaceSnapshot` compares all three tokens before parsing the candidate.
+The candidate embeds the current expected revision; a real change is assigned
+exactly the next revision and is made durable before one coherent property
+tuple is published. If that successful response is lost, an exact retry using
+the immediately preceding token returns the already-committed revision without
+incrementing twice. Replacement only changes desired state. It never generates
+Lua, changes the compositor entrypoint, or reloads Hyprland.
+
+The durable desired snapshot and recovery transaction records live below
+`$XDG_STATE_HOME/hyprshelld/compositor`; they are service authority, not Lua
+source. The generated tree and the user-owned customization file remain in the
+Hyprland configuration root.
+
+`ManagementState` is `unmanaged`, `managed`, or `conflict`. It is derived from
+the exact committed ownership record and entrypoint digest, never from a
+comment in a Lua file. The stable entrypoint is
+`$XDG_CONFIG_HOME/hypr/hyprland.lua`; generated immutable trees live below
+`$XDG_CONFIG_HOME/hypr/hyprshelld`. Startup never claims an existing entrypoint.
+`AdoptManagedConfiguration` is the only ownership transition. The caller must
+bind the exact bytes of an existing regular file, or assert actual absence with
+an empty digest. Unsafe, unreadable, non-regular, or concurrently changed paths
+fail closed. Before publishing the managed entrypoint and ownership record,
+compositord preserves a recoverable original and stages and verifies the entire
+managed generation. `user-custom.lua` remains outside generated generations and
+is created only when absent.
+
+`Apply` compares the revision and both catalog digests before rendering. It
+verifies every generated file and manifest, then asks an injected activation
+executor to satisfy the strongest required mode across the snapshot: `reload`,
+`restart`, or `session`. An executor that can only confirm a reload cannot claim
+restart or session convergence. Only a confirmed activation is committed as
+`AppliedRevision` and `GenerationDigest`; abort retains the prior managed
+entrypoint, generation, last-good snapshot, and applied tuple. Desired state
+remains saved, and `RequiredActivation` reports `none`, `reload`, `restart`, or
+`session` for the pending difference. Enabled broker-dependent bindings and UWSM
+environment changes remain fail-closed in this slice rather than being rendered
+as invented shell commands.
+
+If the `committing` marker definitely was not published, compositord rolls live
+activation back before aborting the prepared transaction. Once its atomic
+publication may be visible, compositord never guesses that it is absent: a
+parent-directory sync failure remains unavailable/conflict for startup
+reconciliation, just like a fully durable one-way marker. This prevents a
+rollback from contradicting a commit record that may survive a crash.
+
+`Recover` is an explicit rollback-as-new-state operation. At the caller's
+current revision it copies the last successfully applied content into exactly
+the next desired revision, prepares a new immutable generation, and activates
+that exact content. It never decrements or reuses a revision, never adopts an
+unmanaged entrypoint, and never silently discards current bytes. Startup
+recovery only reconciles an interrupted transaction; it does not invoke this
+public rollback operation.
+
+This slice installs a deliberately deferred activation backend. The complete
+CAS, preparation, verification, commit, abort, recovery, and injectable
+activation hooks are present, but the installed executor returns
+`ActivationRequired` before live adoption or activation. Consequently `Apply`,
+`Recover`, and `AdoptManagedConfiguration` cannot advance the applied tuple or
+modify/reload the user's live Hyprland configuration in this slice. Tests use a
+positive injected backend only to qualify the transaction boundary; a later
+slice must observe the exact generated `config.reloaded` nonce and empty
+`configerrors` before enabling production activation.
+
+`LoadState` is one of `normal`, `recovered`, `defaulted`, `unsupported`, or
+`unavailable`. `ApplyState` is one of `unavailable`, `inactive`, `current`,
+`retained`, or `failed`; in-progress staging is never published. An
+`AppliedRevision` of zero is interpreted only with `ApplyState` and
+`GenerationDigest`, because revision zero may itself be active. Unknown future
+values are treated as unsafe.
+`EntrypointDigest` is the exact digest of a safely read regular entrypoint and is
+empty when absent or unsafe. Every adoption call re-probes the path, so an empty
+property value is never treated by itself as proof of absence.
+
+Compositor errors have these meanings:
+
+- `Unavailable` or `ReadOnly`: no authoritative snapshot or writable leased
+  transaction is available;
+- `StaleRevision` or `StaleCatalogDigest`: a CAS authority changed;
+- `InvalidSnapshot`, `RevisionExhausted`, or `PersistenceFailed`: desired state
+  could not be validated or durably replaced;
+- `AdoptionRequired`: the caller tried to apply or recover before explicit
+  ownership;
+- `EntrypointChanged`: the stable entrypoint no longer matches the committed or
+  caller-supplied digest;
+- `ActivationRequired`: the executor cannot confirm the snapshot's required
+  reload, restart, or session transition;
+- `VerificationFailed` or `ReloadFailed`: staged bytes failed verification or
+  the injected executor did not confirm convergence; and
+- `ApplyFailed`, `RecoveryUnavailable`, or `RecoveryFailed`: the corresponding
+  bounded transaction could not complete without weakening its guarantees.
 
 ## Component configuration
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=HyprShelld compositor configuration authority
+PartOf=hyprshelld.target graphical-session.target
+After=graphical-session.target
+StartLimitIntervalSec=30s
+StartLimitBurst=5
+
+[Service]
+Type=dbus
+BusName=org.hyprshelld.Compositor1
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/hyprshelld-compositord
+Slice=session-hyprshelld.slice
+UMask=0077
+Restart=always
+RestartMode=direct
+RestartSec=1s
+TimeoutStopSec=5s

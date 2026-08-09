@@ -26,6 +26,7 @@ set(
     hyprshelld.service.in
     hyprshelld-configd.service.in
     hyprshelld-componentd.service.in
+    hyprshelld-compositord.service.in
     hyprshelld-surfaced.service.in
 )
 
@@ -72,10 +73,17 @@ configure_file(
     @ONLY
 )
 
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/dbus/org.hyprshelld.Compositor1.service.in"
+    "${hyprshelld_dbus_binary_dir}/org.hyprshelld.Compositor1.service"
+    @ONLY
+)
+
 install(
     FILES
         "${hyprshelld_dbus_binary_dir}/org.hyprshelld.Config1.service"
         "${hyprshelld_dbus_binary_dir}/org.hyprshelld.ComponentManager1.service"
+        "${hyprshelld_dbus_binary_dir}/org.hyprshelld.Compositor1.service"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/dbus-1/services"
 )
 
@@ -116,6 +124,7 @@ install(
 
 install(
     FILES
+        "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor1.xml"
         "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentRuntime1.xml"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/dbus"
 )

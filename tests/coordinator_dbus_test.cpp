@@ -35,6 +35,7 @@ const QString systemdUnitInterface = QStringLiteral("org.freedesktop.systemd1.Un
 
 const QString configdUnit = QStringLiteral("hyprshelld-configd.service");
 const QString componentdUnit = QStringLiteral("hyprshelld-componentd.service");
+const QString compositordUnit = QStringLiteral("hyprshelld-compositord.service");
 const QString surfacedUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 const QString unknownComponentError = QStringLiteral(
@@ -116,6 +117,12 @@ QString unitPathForName(const QString &unitName)
     if (unitName == componentdUnit) {
         return QStringLiteral(
             "/org/freedesktop/systemd1/unit/hyprshelld_2dcomponentd_2eservice"
+        );
+    }
+
+    if (unitName == compositordUnit) {
+        return QStringLiteral(
+            "/org/freedesktop/systemd1/unit/hyprshelld_2dcompositord_2eservice"
         );
     }
 
@@ -269,6 +276,7 @@ public:
         activeStates_.clear();
         activeStates_.insert(configdUnit, QStringLiteral("active"));
         activeStates_.insert(componentdUnit, QStringLiteral("active"));
+        activeStates_.insert(compositordUnit, QStringLiteral("active"));
         activeStates_.insert(surfacedUnit, QStringLiteral("active"));
         listRequests_.clear();
         callLog_.clear();
@@ -552,14 +560,20 @@ private slots:
 
         QDBusPendingReply<SystemdUnitRecordList> listed = manager.asyncCall(
             QStringLiteral("ListUnitsByNames"),
-            QStringList({configdUnit, componentdUnit, surfacedUnit})
+            QStringList({
+                configdUnit,
+                componentdUnit,
+                compositordUnit,
+                surfacedUnit,
+            })
         );
         QTRY_VERIFY_WITH_TIMEOUT(listed.isFinished(), 1000);
         QVERIFY2(!listed.isError(), qPrintable(listed.error().message()));
-        QCOMPARE(listed.value().size(), 3);
+        QCOMPARE(listed.value().size(), 4);
         QCOMPARE(listed.value().at(0).name, surfacedUnit);
-        QCOMPARE(listed.value().at(1).name, componentdUnit);
-        QCOMPARE(listed.value().at(2).name, configdUnit);
+        QCOMPARE(listed.value().at(1).name, compositordUnit);
+        QCOMPARE(listed.value().at(2).name, componentdUnit);
+        QCOMPARE(listed.value().at(3).name, configdUnit);
         QCOMPARE(listed.value().at(0).activeState, QStringLiteral("active"));
     }
 
@@ -594,6 +608,7 @@ private slots:
         const auto expectedUnits = sorted({
             configdUnit,
             componentdUnit,
+            compositordUnit,
             surfacedUnit,
         });
         for (auto request : fakeSystemd_.listRequests()) {
@@ -724,7 +739,7 @@ private slots:
         QCOMPARE(proxy.failureSummary(), QString());
     }
 
-    void componentManagerFailureIsRestartable()
+    void compositorAuthorityFailureIsRestartable()
     {
         QVERIFY2(startCoordinator(), qPrintable(processError_));
         QVERIFY(connectPropertiesSignal());
@@ -736,24 +751,24 @@ private slots:
         );
         QVERIFY(proxy.isValid());
 
-        fakeSystemd_.setActiveState(componentdUnit, QStringLiteral("failed"));
+        fakeSystemd_.setActiveState(compositordUnit, QStringLiteral("failed"));
         QTRY_COMPARE_WITH_TIMEOUT(changedHistory_.size(), 1, 1000);
-        QCOMPARE(proxy.failedUnits(), QStringList({componentdUnit}));
+        QCOMPARE(proxy.failedUnits(), QStringList({compositordUnit}));
         fakeSystemd_.clearCallLog();
 
-        auto restarted = proxy.RestartComponent(componentdUnit);
+        auto restarted = proxy.RestartComponent(compositordUnit);
         QTRY_VERIFY_WITH_TIMEOUT(restarted.isFinished(), 2000);
         QVERIFY2(!restarted.isError(), qPrintable(restarted.error().message()));
         QCOMPARE(
             fakeSystemd_.callLog(),
             QStringList({
-                QStringLiteral("reset:%1").arg(componentdUnit),
-                QStringLiteral("restart:%1:replace").arg(componentdUnit),
+                QStringLiteral("reset:%1").arg(compositordUnit),
+                QStringLiteral("restart:%1:replace").arg(compositordUnit),
             })
         );
-        QCOMPARE(proxy.failedUnits(), QStringList({componentdUnit}));
+        QCOMPARE(proxy.failedUnits(), QStringList({compositordUnit}));
 
-        fakeSystemd_.setActiveState(componentdUnit, QStringLiteral("active"));
+        fakeSystemd_.setActiveState(compositordUnit, QStringLiteral("active"));
         QTRY_COMPARE_WITH_TIMEOUT(changedHistory_.size(), 2, 1000);
         QVERIFY(proxy.healthy());
     }

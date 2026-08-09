@@ -21,6 +21,7 @@ const QString targetUnit = QStringLiteral("hyprshelld.target");
 const QString coordinatorUnit = QStringLiteral("hyprshelld.service");
 const QString configurationUnit = QStringLiteral("hyprshelld-configd.service");
 const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
+const QString compositorUnit = QStringLiteral("hyprshelld-compositord.service");
 const QString surfaceUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 const QStringList expectedUnits {
@@ -28,6 +29,7 @@ const QStringList expectedUnits {
     coordinatorUnit,
     configurationUnit,
     componentUnit,
+    compositorUnit,
     surfaceUnit,
 };
 
@@ -117,6 +119,7 @@ TestSystemdUnitRecords completeSnapshot()
         unitRecord(coordinatorUnit, QStringLiteral("active")),
         unitRecord(configurationUnit, QStringLiteral("inactive")),
         unitRecord(componentUnit, QStringLiteral("active")),
+        unitRecord(compositorUnit, QStringLiteral("active")),
         unitRecord(surfaceUnit, QStringLiteral("failed")),
     };
 }
@@ -248,6 +251,7 @@ private slots:
         QCOMPARE(status.coordinatorState(), QStringLiteral("unknown"));
         QCOMPARE(status.configurationState(), QStringLiteral("unknown"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("unknown"));
+        QCOMPARE(status.compositorState(), QStringLiteral("unknown"));
         QCOMPARE(status.surfaceState(), QStringLiteral("unknown"));
         QVERIFY(status.lastErrorName().isEmpty());
         QCOMPARE(manager_.requests().size(), 0);
@@ -265,6 +269,7 @@ private slots:
         QCOMPARE(status.coordinatorState(), QStringLiteral("active"));
         QCOMPARE(status.configurationState(), QStringLiteral("inactive"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("active"));
+        QCOMPARE(status.compositorState(), QStringLiteral("active"));
         QCOMPARE(status.surfaceState(), QStringLiteral("failed"));
         QVERIFY(status.lastErrorName().isEmpty());
         QVERIFY(status.lastErrorMessage().isEmpty());
@@ -282,7 +287,8 @@ private slots:
         auto updated = completeSnapshot();
         updated[2].activeState = QStringLiteral("failed");
         updated[3].activeState = QStringLiteral("failed");
-        updated[4].activeState = QStringLiteral("active");
+        updated[4].activeState = QStringLiteral("failed");
+        updated[5].activeState = QStringLiteral("active");
         manager_.setRecords(std::move(updated));
         QTRY_VERIFY_WITH_TIMEOUT(
             manager_.requests().size() > initialRequests,
@@ -294,6 +300,7 @@ private slots:
             1000
         );
         QCOMPARE(status.componentManagerState(), QStringLiteral("failed"));
+        QCOMPARE(status.compositorState(), QStringLiteral("failed"));
         QCOMPARE(status.surfaceState(), QStringLiteral("active"));
         QTRY_VERIFY_WITH_TIMEOUT(!status.busy(), 1000);
 
@@ -302,6 +309,7 @@ private slots:
         QVERIFY(!status.available());
         QCOMPARE(status.configurationState(), QStringLiteral("failed"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("failed"));
+        QCOMPARE(status.compositorState(), QStringLiteral("failed"));
         QCOMPARE(status.surfaceState(), QStringLiteral("active"));
 
         manager_.setRecords(completeSnapshot());
@@ -309,6 +317,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(status.available(), 1000);
         QCOMPARE(status.configurationState(), QStringLiteral("inactive"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("active"));
+        QCOMPARE(status.compositorState(), QStringLiteral("active"));
         QCOMPARE(status.surfaceState(), QStringLiteral("failed"));
 
         status.setActive(false);
@@ -326,6 +335,8 @@ private slots:
         records[3].activeState = QStringLiteral("inactive");
         records[4].loadState = QStringLiteral("masked");
         records[4].activeState = QStringLiteral("inactive");
+        records[5].loadState = QStringLiteral("masked");
+        records[5].activeState = QStringLiteral("inactive");
         manager_.setRecords(std::move(records));
 
         HyprShelld::ShellRuntimeStatus status(bus_, nullptr);
@@ -334,6 +345,7 @@ private slots:
 
         QCOMPARE(status.configurationState(), QStringLiteral("not-found"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("masked"));
+        QCOMPARE(status.compositorState(), QStringLiteral("masked"));
         QCOMPARE(status.surfaceState(), QStringLiteral("masked"));
     }
 
@@ -399,6 +411,7 @@ private slots:
         QCOMPARE(status.coordinatorState(), QStringLiteral("active"));
         QCOMPARE(status.configurationState(), QStringLiteral("inactive"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("active"));
+        QCOMPARE(status.compositorState(), QStringLiteral("active"));
         QCOMPARE(status.surfaceState(), QStringLiteral("failed"));
 
         manager_.setRecords(completeSnapshot());
@@ -423,6 +436,7 @@ private slots:
         QVERIFY(!status.lastErrorMessage().isEmpty());
         QCOMPARE(status.targetState(), QStringLiteral("active"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("active"));
+        QCOMPARE(status.compositorState(), QStringLiteral("active"));
         QCOMPARE(status.surfaceState(), QStringLiteral("failed"));
     }
 
@@ -443,6 +457,7 @@ private slots:
         QVERIFY(!status.available());
         QCOMPARE(status.targetState(), QStringLiteral("unknown"));
         QCOMPARE(status.componentManagerState(), QStringLiteral("unknown"));
+        QCOMPARE(status.compositorState(), QStringLiteral("unknown"));
         QCOMPARE(status.surfaceState(), QStringLiteral("unknown"));
     }
 

@@ -24,6 +24,7 @@ Frame {
     property string coordinatorState: "unknown"
     property string configurationState: "unknown"
     property string componentManagerState: "unknown"
+    property string compositorState: "unknown"
     property string surfaceState: "unknown"
 
     readonly property var failedComponentUnits: {
@@ -32,6 +33,7 @@ Frame {
             for (const unitName of coordinatorFailedUnits) {
                 if (unitName === "hyprshelld-configd.service"
                         || unitName === "hyprshelld-componentd.service"
+                        || unitName === "hyprshelld-compositord.service"
                         || unitName === "hyprshelld-surfaced.service")
                     units.push(unitName);
             }
@@ -47,6 +49,8 @@ Frame {
             units.push("hyprshelld-configd.service");
         if (componentManagerState === "failed")
             units.push("hyprshelld-componentd.service");
+        if (compositorState === "failed")
+            units.push("hyprshelld-compositord.service");
         if (surfaceState === "failed")
             units.push("hyprshelld-surfaced.service");
         return units;
@@ -91,6 +95,8 @@ Frame {
             return qsTr("Settings service");
         if (unitName === "hyprshelld-componentd.service")
             return qsTr("Component manager");
+        if (unitName === "hyprshelld-compositord.service")
+            return qsTr("Compositor settings");
         if (unitName === "hyprshelld-surfaced.service")
             return qsTr("Desktop shell");
         return qsTr("Shell component");
@@ -103,6 +109,8 @@ Frame {
             return qsTr("Saves and applies desktop settings.");
         if (unitName === "hyprshelld-componentd.service")
             return qsTr("Provides the installed component catalog.");
+        if (unitName === "hyprshelld-compositord.service")
+            return qsTr("Validates and applies managed compositor configuration.");
         if (unitName === "hyprshelld-surfaced.service")
             return qsTr("Displays the bar and other desktop surfaces.");
         return qsTr("Provides part of the HyprShelld desktop.");

@@ -23,11 +23,17 @@ const QString propertiesInterface = QStringLiteral(
 );
 const QString configUnit = QStringLiteral("hyprshelld-configd.service");
 const QString componentUnit = QStringLiteral("hyprshelld-componentd.service");
+const QString compositorUnit = QStringLiteral("hyprshelld-compositord.service");
 const QString surfacedUnit = QStringLiteral("hyprshelld-surfaced.service");
 
 const QStringList &allowedUnits()
 {
-    static const QStringList units {configUnit, componentUnit, surfacedUnit};
+    static const QStringList units {
+        configUnit,
+        componentUnit,
+        compositorUnit,
+        surfacedUnit,
+    };
     return units;
 }
 

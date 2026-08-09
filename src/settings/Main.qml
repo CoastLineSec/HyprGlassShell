@@ -606,6 +606,7 @@ ApplicationWindow {
                     configurationState: shellRuntimeStatus.configurationState
                     componentManagerState:
                         shellRuntimeStatus.componentManagerState
+                    compositorState: shellRuntimeStatus.compositorState
                     surfaceState: shellRuntimeStatus.surfaceState
 
                     onRestartRequested: unitName => {

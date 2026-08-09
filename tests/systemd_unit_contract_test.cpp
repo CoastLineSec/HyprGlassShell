@@ -148,6 +148,9 @@ private slots:
         componentd_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/hyprshelld-componentd.service")
         );
+        compositord_ = std::make_unique<IniFile>(
+            unitDirectory + QStringLiteral("/hyprshelld-compositord.service")
+        );
         surfaced_ = std::make_unique<IniFile>(
             unitDirectory + QStringLiteral("/hyprshelld-surfaced.service")
         );
@@ -157,6 +160,9 @@ private slots:
         componentActivation_ = std::make_unique<IniFile>(
             QStringLiteral(HYPRSHELLD_COMPONENT_MANAGER1_ACTIVATION_FILE)
         );
+        compositorActivation_ = std::make_unique<IniFile>(
+            QStringLiteral(HYPRSHELLD_COMPOSITOR1_ACTIVATION_FILE)
+        );
 
         for (const auto *file : {
                  target_.get(),
@@ -165,9 +171,11 @@ private slots:
                  coordinator_.get(),
                  configd_.get(),
                  componentd_.get(),
+                 compositord_.get(),
                  surfaced_.get(),
                  activation_.get(),
                  componentActivation_.get(),
+                 compositorActivation_.get(),
              }) {
             QVERIFY2(file->error().isEmpty(), qPrintable(file->error()));
         }
@@ -181,6 +189,7 @@ private slots:
                 QStringLiteral("hyprshelld.service"),
                 QStringLiteral("hyprshelld-configd.service"),
                 QStringLiteral("hyprshelld-componentd.service"),
+                QStringLiteral("hyprshelld-compositord.service"),
                 QStringLiteral("hyprshelld-surfaced.service"),
             })
         );
@@ -210,6 +219,7 @@ private slots:
                  coordinator_.get(),
                  configd_.get(),
                  componentd_.get(),
+                 compositord_.get(),
                  surfaced_.get(),
              }) {
             QCOMPARE(
@@ -271,6 +281,10 @@ private slots:
             QVERIFY(!service->hasSection(QStringLiteral("Install")));
             QVERIFY(service->values(QStringLiteral("Unit"), QStringLiteral("Requires")).isEmpty());
             QVERIFY(service->values(QStringLiteral("Unit"), QStringLiteral("Requisite")).isEmpty());
+            QVERIFY(!service->words(QStringLiteral("Unit"), QStringLiteral("After"))
+                         .contains(QStringLiteral("hyprshelld-surfaced.service")));
+            QVERIFY(!service->words(QStringLiteral("Unit"), QStringLiteral("Wants"))
+                         .contains(QStringLiteral("hyprshelld-surfaced.service")));
         }
 
         // A bad declarative process is quarantined after eight seconds. With
@@ -362,6 +376,23 @@ private slots:
         );
 
         QCOMPARE(
+            compositord_->values(QStringLiteral("Service"), QStringLiteral("Type")),
+            QStringList{QStringLiteral("dbus")}
+        );
+        QCOMPARE(
+            compositord_->values(QStringLiteral("Service"), QStringLiteral("BusName")),
+            QStringList{QStringLiteral("org.hyprshelld.Compositor1")}
+        );
+        QCOMPARE(
+            compositord_->words(QStringLiteral("Service"), QStringLiteral("ExecStart")),
+            QStringList{QStringLiteral(HYPRSHELLD_INSTALL_COMPOSITORD)}
+        );
+        QCOMPARE(
+            compositord_->values(QStringLiteral("Service"), QStringLiteral("UMask")),
+            QStringList{QStringLiteral("0077")}
+        );
+
+        QCOMPARE(
             surfaced_->values(QStringLiteral("Service"), QStringLiteral("Type")),
             QStringList{QStringLiteral("exec")}
         );
@@ -447,6 +478,36 @@ private slots:
         ).isEmpty());
     }
 
+    void compositorActivationMatchesServiceUnit()
+    {
+        QVERIFY(compositorActivation_->hasSection(QStringLiteral("D-BUS Service")));
+        QCOMPARE(
+            compositorActivation_->values(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("Name")
+            ),
+            compositord_->values(QStringLiteral("Service"), QStringLiteral("BusName"))
+        );
+        QCOMPARE(
+            compositorActivation_->values(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("SystemdService")
+            ),
+            QStringList{QStringLiteral("hyprshelld-compositord.service")}
+        );
+        QCOMPARE(
+            compositorActivation_->words(
+                QStringLiteral("D-BUS Service"),
+                QStringLiteral("Exec")
+            ),
+            compositord_->words(QStringLiteral("Service"), QStringLiteral("ExecStart"))
+        );
+        QVERIFY(compositorActivation_->values(
+                                             QStringLiteral("D-BUS Service"),
+                                             QStringLiteral("User")
+        ).isEmpty());
+    }
+
 private:
     std::unique_ptr<IniFile> target_;
     std::unique_ptr<IniFile> slice_;
@@ -454,9 +515,11 @@ private:
     std::unique_ptr<IniFile> coordinator_;
     std::unique_ptr<IniFile> configd_;
     std::unique_ptr<IniFile> componentd_;
+    std::unique_ptr<IniFile> compositord_;
     std::unique_ptr<IniFile> surfaced_;
     std::unique_ptr<IniFile> activation_;
     std::unique_ptr<IniFile> componentActivation_;
+    std::unique_ptr<IniFile> compositorActivation_;
 };
 
 QTEST_GUILESS_MAIN(SystemdUnitContractTest)
