@@ -4,14 +4,17 @@
 #include "configuration_authority.h"
 
 #include <QByteArray>
+#include <QDeadlineTimer>
 #include <QDBusConnection>
 #include <QDBusContext>
+#include <QDBusServiceWatcher>
 #include <QFileSystemWatcher>
 #include <QObject>
 #include <QString>
 #include <QTimer>
 #include <QVariantMap>
 
+#include <functional>
 #include <memory>
 
 namespace HyprShelld::Compositor {
@@ -31,12 +34,23 @@ class CompositorService final : public QObject, protected QDBusContext {
     Q_PROPERTY(QString ApplyState READ applyState)
     Q_PROPERTY(QString RequiredActivation READ requiredActivation)
     Q_PROPERTY(QString GenerationDigest READ generationDigest)
+    Q_PROPERTY(QString DisplayConfirmationState READ displayConfirmationState)
+    Q_PROPERTY(qulonglong DisplayConfirmationRevision READ displayConfirmationRevision)
+    Q_PROPERTY(qulonglong DisplayConfirmationDeadlineMs READ displayConfirmationDeadlineMs)
+    Q_PROPERTY(QString DisplayConfirmationGeneration READ displayConfirmationGeneration)
 
 public:
+    using DisplayDeadlineRemaining = std::function<qint64(
+        const QDeadlineTimer &
+    )>;
+    using DisplayOwnerPresent = std::function<bool(const QString &, int)>;
+
     CompositorService(
         std::unique_ptr<ActivationBackend> activationBackend,
         QDBusConnection connection,
-        QObject *parent = nullptr
+        QObject *parent = nullptr,
+        DisplayDeadlineRemaining displayDeadlineRemaining = {},
+        DisplayOwnerPresent displayOwnerPresent = {}
     );
 
     // Must be called only after the process owns org.hyprshelld.Compositor1.
@@ -58,6 +72,10 @@ public:
     [[nodiscard]] QString applyState() const;
     [[nodiscard]] QString requiredActivation() const;
     [[nodiscard]] QString generationDigest() const;
+    [[nodiscard]] QString displayConfirmationState() const;
+    [[nodiscard]] qulonglong displayConfirmationRevision() const;
+    [[nodiscard]] qulonglong displayConfirmationDeadlineMs() const;
+    [[nodiscard]] QString displayConfirmationGeneration() const;
 
 public slots:
     QByteArray GetSnapshot(
@@ -92,6 +110,29 @@ public slots:
         QString &generationDigest,
         QString &entrypointDigest
     );
+    QByteArray GetConnectedDisplays(qulonglong &observedAtMs);
+    qulonglong PreviewDisplayConfiguration(
+        qulonglong expectedRevision,
+        const QString &expectedCatalogDigest,
+        const QString &expectedActionCatalogDigest,
+        const QByteArray &profile,
+        uint timeoutSeconds,
+        QString &confirmationToken,
+        qulonglong &deadlineMs,
+        QString &generationDigest
+    );
+    QString GetPendingDisplayConfirmation(
+        qulonglong &previewRevision,
+        qulonglong &deadlineMs,
+        QString &generationDigest
+    );
+    qulonglong ConfirmDisplayConfiguration(
+        const QString &confirmationToken,
+        QString &generationDigest
+    );
+    qulonglong RevertDisplayConfiguration(
+        const QString &confirmationToken
+    );
 
 signals:
     // Mirrors the exact changed map sent on
@@ -100,6 +141,12 @@ signals:
     // entrypoint changes.
     void propertiesPublished(const QVariantMap &changed);
 
+private slots:
+    // Named slot keeps timeout ordering testable through QMetaObject without
+    // exposing the confirmation timer or adding a production-only clock API.
+    void handleDisplayConfirmationTimeout();
+    void handleDisplayOwnerLoss(const QString &owner);
+
 private:
     struct Completion final {
         bool success = false;
@@ -107,6 +154,39 @@ private:
         QString errorMessage;
         AuthoritySnapshot snapshot;
         ManagementStatus management;
+    };
+
+    struct DisplayConfirmation final {
+        QString token;
+        QString owner;
+        QString generation;
+        QString runtimeIdentity;
+        QString topologyDigest;
+        quint64 baseRevision = 0;
+        quint64 previewRevision = 0;
+        quint64 deadlineMs = 0;
+        QDeadlineTimer deadline;
+        ActivationReceipt receipt;
+        Hyprland::DisplayProfile profile;
+        QByteArray cachedTopologyDocument;
+        quint64 cachedTopologyObservedAtMs = 0;
+        bool liveRolledBack = false;
+        bool terminationStarted = false;
+        std::optional<ManagementStatus> rolledBackStatus;
+    };
+
+    enum class DisplayTerminalAction {
+        Confirmed,
+        Reverted,
+        Expired,
+    };
+
+    struct DisplayTerminal final {
+        QString token;
+        QString owner;
+        DisplayTerminalAction action = DisplayTerminalAction::Reverted;
+        quint64 revision = 0;
+        QString generation;
     };
 
     [[nodiscard]] bool checkMutationCatalogAuthority(
@@ -124,9 +204,38 @@ private:
         const QString &expectedEntrypointDigest = {},
         std::optional<ActivationRequirement> expectedRequirement = std::nullopt
     );
+    [[nodiscard]] bool hasDisplayConfirmation() const;
+    [[nodiscard]] QString callerIdentity() const;
+    [[nodiscard]] bool displayOwnerStillPresent(
+        const QString &owner,
+        int maximumWaitMilliseconds
+    ) const;
+    [[nodiscard]] bool checkNoDisplayConfirmation();
+    [[nodiscard]] bool validatePreparedGeneration(
+        const AuthorityResult &prepared,
+        QString &error
+    ) const;
+    [[nodiscard]] bool displayTopologyStillExact(
+        const DisplayConfirmation &confirmation,
+        QString &error,
+        int maximumWaitMilliseconds = -1,
+        Hyprland::ConnectedDisplayTopology *observedTopology = nullptr
+    );
+    [[nodiscard]] bool revertDisplayConfirmation(
+        DisplayTerminalAction action,
+        QString &error
+    );
+    void clearDisplayOwnerWatch();
+    void appendDisplayProperties(QVariantMap &changed) const;
+    void publishDisplayProperties();
+    void acceptUnreconciled(
+        const AuthoritySnapshot &snapshot,
+        ManagementStatus management
+    );
     void acceptState(
         const AuthoritySnapshot &snapshot,
-        const ManagementStatus &management
+        const ManagementStatus &management,
+        bool includeDisplayProperties = false
     );
     void configureManagementMonitoring();
     void rearmManagementWatch();
@@ -146,6 +255,13 @@ private:
     QFileSystemWatcher managementWatcher_;
     QTimer managementPollTimer_;
     QString managementWatchPath_;
+    QTimer displayConfirmationTimer_;
+    std::unique_ptr<QDBusServiceWatcher> displayOwnerWatcher_;
+    std::optional<DisplayConfirmation> displayConfirmation_;
+    std::optional<DisplayTerminal> displayTerminal_;
+    QString displayConfirmationState_ = QStringLiteral("idle");
+    DisplayDeadlineRemaining displayDeadlineRemaining_;
+    DisplayOwnerPresent displayOwnerPresent_;
 };
 
 } // namespace HyprShelld::Compositor

@@ -447,6 +447,102 @@ ApplicationWindow {
                 }
 
                 ItemDelegate {
+                    id: displaysNavigationItem
+
+                    objectName: "displaysNavigationItem"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    checkable: true
+                    checked: root.currentPage === "displays"
+                    autoExclusive: true
+                    focusPolicy: Qt.StrongFocus
+                    leftPadding: 18
+                    rightPadding: 12
+                    topPadding: 8
+                    bottomPadding: 8
+                    Accessible.role: Accessible.PageTab
+                    Accessible.name: qsTr("Display settings")
+                    Accessible.checked: checked
+
+                    onClicked: root.currentPage = "displays"
+
+                    background: Rectangle {
+                        radius: 12
+                        color: displaysNavigationItem.checked
+                            ? Qt.rgba(root.palette.highlight.r, root.palette.highlight.g, root.palette.highlight.b, 0.18)
+                            : displaysNavigationItem.hovered
+                                ? Qt.rgba(root.palette.text.r, root.palette.text.g, root.palette.text.b, 0.06)
+                                : "transparent"
+                        border.width: displaysNavigationItem.activeFocus ? 2 : 0
+                        border.color: root.palette.highlight
+
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                leftMargin: 5
+                                verticalCenter: parent.verticalCenter
+                            }
+                            width: 3
+                            height: 24
+                            radius: 2
+                            visible: displaysNavigationItem.checked
+                            color: root.palette.highlight
+                        }
+                    }
+
+                    contentItem: RowLayout {
+                        spacing: 11
+
+                        Item {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+
+                            Rectangle {
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                }
+                                height: 14
+                                radius: 3
+                                color: root.palette.text
+                                border.color: displaysNavigationItem.checked
+                                    ? root.palette.highlight : root.palette.mid
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: parent.width - 5
+                                    height: parent.height - 5
+                                    radius: 1
+                                    color: root.palette.base
+                                }
+                            }
+
+                            Rectangle {
+                                anchors {
+                                    horizontalCenter: parent.horizontalCenter
+                                    bottom: parent.bottom
+                                }
+                                width: 11
+                                height: 3
+                                radius: 2
+                                color: root.palette.placeholderText
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Displays")
+                            color: root.palette.text
+                            font.pixelSize: 14
+                            font.weight: displaysNavigationItem.checked
+                                ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                ItemDelegate {
                     id: componentsNavigationItem
 
                     objectName: "componentsNavigationItem"
@@ -618,7 +714,8 @@ ApplicationWindow {
             StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: root.currentPage === "components" ? 1 : 0
+                currentIndex: root.currentPage === "displays" ? 1
+                    : root.currentPage === "components" ? 2 : 0
 
                 BarSettingsPage {
                     barHeight: ConfigClient.barHeight
@@ -690,6 +787,52 @@ ApplicationWindow {
                     )
                     onResetWorkspaceSwitcherRequested:
                         root.resetWorkspaceSettings()
+                }
+
+                DisplaysPage {
+                    id: displaysPage
+
+                    objectName: "displaysPage"
+                    serviceAvailable: CompositorClient.available
+                    writable: CompositorClient.writable
+                    busy: CompositorClient.busy
+                    snapshot: CompositorClient.snapshot
+                    connectedDisplays: CompositorClient.connectedDisplays
+                    topologyDigest: CompositorClient.topologyDigest
+                    observedAtMs: CompositorClient.displaysObservedAtMs
+                    revision: CompositorClient.revision
+                    appliedRevision: CompositorClient.appliedRevision
+                    loadState: CompositorClient.loadState
+                    managementState: CompositorClient.managementState
+                    applyState: CompositorClient.applyState
+                    requiredActivation: CompositorClient.requiredActivation
+                    confirmationState:
+                        CompositorClient.displayConfirmationState
+                    confirmationRevision:
+                        CompositorClient.displayConfirmationRevision
+                    confirmationDeadlineMs:
+                        CompositorClient.displayConfirmationDeadlineMs
+                    confirmationGeneration:
+                        CompositorClient.displayConfirmationGeneration
+                    confirmationOwned:
+                        CompositorClient.displayConfirmationOwned
+                    errorName: CompositorClient.lastErrorName
+                    errorMessage: CompositorClient.lastErrorMessage
+                    contentTopMargin: shellHealthWarning.warningVisible ? 0 : 28
+
+                    onRefreshRequested: CompositorClient.refresh()
+                    onAdoptionRequested:
+                        CompositorClient.adoptManagedConfiguration()
+                    onApplyRequested: CompositorClient.applyConfiguration()
+                    onPreviewRequested: (outputs, timeoutSeconds) =>
+                        CompositorClient.previewDisplayConfiguration(
+                            outputs,
+                            timeoutSeconds
+                        )
+                    onConfirmRequested:
+                        CompositorClient.confirmDisplayConfiguration()
+                    onRevertRequested:
+                        CompositorClient.revertDisplayConfiguration()
                 }
 
                 ComponentsPage {

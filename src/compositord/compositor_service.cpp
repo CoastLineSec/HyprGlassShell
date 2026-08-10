@@ -1,16 +1,21 @@
 #include "compositor_service.h"
 
 #include <QDBusMessage>
+#include <QDBusReply>
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMetaType>
+#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QSet>
 #include <QUuid>
 
+#include <algorithm>
+#include <array>
+#include <climits>
 #include <utility>
 
 namespace HyprShelld::Compositor {
@@ -19,6 +24,7 @@ namespace {
 const QString interfaceName = QStringLiteral("org.hyprshelld.Compositor1");
 const QString objectPath = QStringLiteral("/org/hyprshelld/Compositor1");
 const QString errorPrefix = QStringLiteral("org.hyprshelld.Compositor1.Error.");
+constexpr int displayOwnerProbeMaximumMilliseconds = 250;
 
 QString
 requiredActivationName(const std::optional<ActivationRequirement> requirement) {
@@ -44,8 +50,36 @@ QString activationNonce() {
   return value;
 }
 
+QString displayConfirmationToken() {
+  std::array<quint32, 4> randomWords{};
+  QRandomGenerator::system()->fillRange(
+      randomWords.data(), randomWords.size()
+  );
+  return QString::fromLatin1(
+      QByteArray(
+          reinterpret_cast<const char *>(randomWords.data()),
+          static_cast<qsizetype>(sizeof(randomWords))
+      ).toHex()
+  );
+}
+
 ManagementStatus authorityBoundManagement(
-    const AuthoritySnapshot &authority, ManagementStatus management) {
+    const AuthoritySnapshot &authority,
+    ManagementStatus management,
+    const QStringView previewGeneration = {}) {
+  if (!previewGeneration.isEmpty()) {
+    const auto exactPreview = authority.available &&
+        management.state == ManagementState::Managed &&
+        management.managedGeneration == previewGeneration;
+    if (exactPreview) {
+      management.state = ManagementState::Preview;
+      return management;
+    }
+    management.state = ManagementState::Conflict;
+    management.managedGeneration.clear();
+    management.managedNonce.clear();
+    return management;
+  }
   const auto exactManagedAuthority =
       authority.available && !authority.generationDigest.isEmpty() &&
       management.state == ManagementState::Managed &&
@@ -66,18 +100,49 @@ ManagementStatus authorityBoundManagement(
 
 CompositorService::CompositorService(
     std::unique_ptr<ActivationBackend> activationBackend,
-    QDBusConnection connection, QObject *parent)
+    QDBusConnection connection, QObject *parent,
+    DisplayDeadlineRemaining displayDeadlineRemaining,
+    DisplayOwnerPresent displayOwnerPresent)
     : QObject(parent), activationBackend_(std::move(activationBackend)),
-      connection_(std::move(connection)) {
+      connection_(std::move(connection)),
+      displayDeadlineRemaining_(std::move(displayDeadlineRemaining)),
+      displayOwnerPresent_(std::move(displayOwnerPresent)) {
   Q_ASSERT(activationBackend_);
+  if (!displayDeadlineRemaining_) {
+    displayDeadlineRemaining_ = [](const QDeadlineTimer &deadline) {
+      return deadline.remainingTime();
+    };
+  }
   managementPollTimer_.setInterval(1000);
   managementPollTimer_.setSingleShot(false);
+  displayConfirmationTimer_.setSingleShot(true);
+  displayConfirmationTimer_.setTimerType(Qt::PreciseTimer);
   connect(&managementPollTimer_, &QTimer::timeout, this,
           &CompositorService::refreshManagementStatus);
   connect(&managementWatcher_, &QFileSystemWatcher::fileChanged, this,
           [this] { refreshManagementStatus(); });
   connect(&managementWatcher_, &QFileSystemWatcher::directoryChanged, this,
           [this] { refreshManagementStatus(); });
+  connect(
+      &displayConfirmationTimer_, &QTimer::timeout, this,
+      &CompositorService::handleDisplayConfirmationTimeout
+  );
+}
+
+void CompositorService::handleDisplayConfirmationTimeout() {
+  if (!displayConfirmation_) return;
+  QString error;
+  static_cast<void>(revertDisplayConfirmation(
+      DisplayTerminalAction::Expired, error
+  ));
+}
+
+void CompositorService::handleDisplayOwnerLoss(const QString &owner) {
+  if (!displayConfirmation_ || displayConfirmation_->owner != owner) return;
+  QString error;
+  static_cast<void>(revertDisplayConfirmation(
+      DisplayTerminalAction::Reverted, error
+  ));
 }
 
 bool CompositorService::initializeAuthority(
@@ -178,6 +243,28 @@ QString CompositorService::generationDigest() const {
   return snapshot_.generationDigest;
 }
 
+QString CompositorService::displayConfirmationState() const {
+  return displayConfirmationState_;
+}
+
+qulonglong CompositorService::displayConfirmationRevision() const {
+  return displayConfirmation_
+          && displayConfirmationState_ == QStringLiteral("awaiting-confirmation")
+      ? displayConfirmation_->previewRevision : 0;
+}
+
+qulonglong CompositorService::displayConfirmationDeadlineMs() const {
+  return displayConfirmation_
+          && displayConfirmationState_ == QStringLiteral("awaiting-confirmation")
+      ? displayConfirmation_->deadlineMs : 0;
+}
+
+QString CompositorService::displayConfirmationGeneration() const {
+  return displayConfirmation_
+          && displayConfirmationState_ == QStringLiteral("awaiting-confirmation")
+      ? displayConfirmation_->generation : QString();
+}
+
 QByteArray
 CompositorService::GetSnapshot(qulonglong &snapshotRevision,
                                QString &snapshotCatalogDigest,
@@ -201,6 +288,7 @@ CompositorService::ReplaceSnapshot(const qulonglong expectedRevision,
                                    const QString &expectedCatalogDigest,
                                    const QString &expectedActionCatalogDigest,
                                    const QByteArray &candidateSnapshot) {
+  if (!checkNoDisplayConfirmation()) return revision();
   // The current token and the immediately preceding token are delegated for
   // Replace. The authority distinguishes an exact lost-response retry from a
   // conflicting candidate. Other mutating methods require only the current
@@ -243,6 +331,7 @@ qulonglong CompositorService::Apply(const qulonglong expectedRevision,
                                     const QString &expectedActionCatalogDigest,
                                     QString &appliedGenerationDigest) {
   appliedGenerationDigest = snapshot_.generationDigest;
+  if (!checkNoDisplayConfirmation()) return appliedRevision();
   if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
                               expectedActionCatalogDigest)) {
     return appliedRevision();
@@ -303,6 +392,7 @@ qulonglong CompositorService::Recover(
     qulonglong &recoveredAppliedRevision, QString &recoveredGenerationDigest) {
   recoveredAppliedRevision = appliedRevision();
   recoveredGenerationDigest = snapshot_.generationDigest;
+  if (!checkNoDisplayConfirmation()) return revision();
   if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
                               expectedActionCatalogDigest)) {
     return revision();
@@ -353,6 +443,7 @@ qulonglong CompositorService::AdoptManagedConfiguration(
     QString &adoptedEntrypointDigest) {
   adoptedGenerationDigest = snapshot_.generationDigest;
   adoptedEntrypointDigest = management_.entrypointDigest;
+  if (!checkNoDisplayConfirmation()) return appliedRevision();
   if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
                               expectedActionCatalogDigest)) {
     return appliedRevision();
@@ -400,6 +491,649 @@ qulonglong CompositorService::AdoptManagedConfiguration(
   return appliedRevision();
 }
 
+QByteArray CompositorService::GetConnectedDisplays(
+    qulonglong &observedAtMs
+) {
+  observedAtMs = 0;
+  if (displayConfirmation_
+      && displayConfirmationState_ == QStringLiteral("awaiting-confirmation")) {
+    observedAtMs = displayConfirmation_->cachedTopologyObservedAtMs;
+    return displayConfirmation_->cachedTopologyDocument;
+  }
+  if (displayConfirmation_) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral("Display discovery is unavailable during reconciliation")
+    );
+    return {};
+  }
+  if (!snapshot_.available || !authority_) {
+    reportError(QStringLiteral("Unavailable"),
+                QStringLiteral("Compositor configuration is unavailable"));
+    return {};
+  }
+  const auto connected = activationBackend_->connectedDisplays();
+  if (!connected.success || !connected.topology) {
+    reportError(
+        boundedErrorCode(connected.errorCode,
+                         QStringLiteral("RuntimeUnavailable")),
+        connected.errorMessage
+    );
+    return {};
+  }
+  observedAtMs = static_cast<qulonglong>(
+      QDateTime::currentMSecsSinceEpoch()
+  );
+  return connected.topology->document;
+}
+
+qulonglong CompositorService::PreviewDisplayConfiguration(
+    const qulonglong expectedRevision,
+    const QString &expectedCatalogDigest,
+    const QString &expectedActionCatalogDigest,
+    const QByteArray &profileBytes,
+    const uint timeoutSeconds,
+    QString &confirmationToken,
+    qulonglong &deadlineMs,
+    QString &previewGenerationDigest
+) {
+  confirmationToken.clear();
+  deadlineMs = 0;
+  previewGenerationDigest.clear();
+  if (!checkNoDisplayConfirmation()) return revision();
+  if (timeoutSeconds < 10 || timeoutSeconds > 30) {
+    reportError(QStringLiteral("InvalidDisplayProfile"),
+                QStringLiteral("Display confirmation must last 10 to 30 seconds"));
+    return revision();
+  }
+  const auto owner = callerIdentity();
+  if (owner.isEmpty()) {
+    reportError(QStringLiteral("InvalidCaller"),
+                QStringLiteral("The display preview caller is unavailable"));
+    return revision();
+  }
+  if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
+                              expectedActionCatalogDigest)) {
+    return revision();
+  }
+
+  const auto liveManagement = activationBackend_->status();
+  if (liveManagement != management_) acceptState(snapshot_, liveManagement);
+  const auto exactBaseline = management_.state == ManagementState::Managed
+      && snapshot_.applyState == QStringLiteral("current")
+      && snapshot_.revision == snapshot_.appliedRevision
+      && !snapshot_.generationDigest.isEmpty()
+      && !snapshot_.requiredActivation.has_value();
+  if (!exactBaseline) {
+    reportError(
+        QStringLiteral("DisplayScopeConflict"),
+        QStringLiteral(
+            "A display preview requires the exact current managed baseline"
+        )
+    );
+    return revision();
+  }
+  const auto profile = Hyprland::parseDisplayProfile(
+      QByteArrayView(profileBytes)
+  );
+  if (!profile) {
+    reportError(QStringLiteral("InvalidDisplayProfile"),
+                QStringLiteral("The display profile is invalid or non-canonical"));
+    return revision();
+  }
+  const auto beforeTopology = activationBackend_->connectedDisplays();
+  if (!beforeTopology.success || !beforeTopology.topology
+      || beforeTopology.runtimeIdentity.isEmpty()) {
+    reportError(
+        boundedErrorCode(beforeTopology.errorCode,
+                         QStringLiteral("RuntimeUnavailable")),
+        beforeTopology.errorMessage
+    );
+    return revision();
+  }
+  const auto topologyErrors = Hyprland::validateDisplayProfileTopology(
+      *profile.value, *beforeTopology.topology
+  );
+  if (!topologyErrors.isEmpty()) {
+    reportError(QStringLiteral("DisplayTopologyChanged"),
+                topologyErrors.front().message);
+    return revision();
+  }
+
+  auto prepared = authority_->prepareDisplayApply(
+      expectedRevision, *profile.value, *beforeTopology.topology,
+      activationNonce(), QDateTime::currentDateTimeUtc()
+  );
+  QString verificationError;
+  if (!prepared.success) {
+    if (!prepared.snapshot.available
+        || prepared.snapshot.applyState == QStringLiteral("failed")) {
+      acceptUnreconciled(
+          prepared.snapshot, activationBackend_->status()
+      );
+    } else if (prepared.snapshot != snapshot_) {
+      acceptState(prepared.snapshot, activationBackend_->status());
+    }
+    reportError(
+        boundedErrorCode(prepared.errorCode,
+                         QStringLiteral("InvalidDisplayProfile")),
+        prepared.errorMessage
+    );
+    return revision();
+  }
+  if (!validatePreparedGeneration(prepared, verificationError)) {
+    AuthorityResult aborted;
+    const auto canAbort = prepared.prepared.has_value();
+    if (canAbort) {
+      aborted = authority_->abortApply(prepared.prepared->id);
+    }
+    if (canAbort && aborted.success) {
+      acceptState(aborted.snapshot, activationBackend_->status());
+    } else {
+      acceptUnreconciled(
+          canAbort ? aborted.snapshot : prepared.snapshot,
+          activationBackend_->status()
+      );
+    }
+    reportError(
+        canAbort && aborted.success
+            ? QStringLiteral("VerificationFailed")
+            : QStringLiteral("ApplyFailed"),
+        canAbort && !aborted.success && !aborted.errorMessage.isEmpty()
+            ? aborted.errorMessage : verificationError
+    );
+    return revision();
+  }
+  const auto generation = *prepared.prepared;
+  const auto abortPrepared = [this, &generation]() {
+    return authority_->abortApply(generation.id);
+  };
+  if (generation.requirement != ActivationRequirement::Reload
+      || !activationBackend_->canSatisfy(generation.requirement)) {
+    const auto aborted = abortPrepared();
+    if (aborted.success) {
+      acceptState(aborted.snapshot, activationBackend_->status());
+    } else {
+      acceptUnreconciled(aborted.snapshot, activationBackend_->status());
+    }
+    reportError(
+        aborted.success ? QStringLiteral("ActivationRequired")
+                        : QStringLiteral("ApplyFailed"),
+        aborted.success
+            ? QStringLiteral("Display preview requires exact reload activation")
+            : aborted.errorMessage
+    );
+    return revision();
+  }
+
+  auto activated = activationBackend_->activate(generation);
+  struct PreviewCleanup final {
+    bool success = false;
+    AuthoritySnapshot snapshot;
+    ManagementStatus management;
+    QString error;
+  };
+  const auto rollbackAndAbort = [this, &activated, &abortPrepared]() {
+    PreviewCleanup cleanup{
+        .snapshot = snapshot_,
+        .management = activated.status,
+    };
+    if (activated.activationMayHaveOccurred) {
+      const auto rolledBack = activationBackend_->rollback(activated.receipt);
+      cleanup.management = rolledBack.status;
+      if (!rolledBack.success) {
+        cleanup.error = rolledBack.errorMessage.isEmpty()
+            ? QStringLiteral("The display preview could not be rolled back")
+            : rolledBack.errorMessage;
+        return cleanup;
+      }
+    }
+    const auto aborted = abortPrepared();
+    cleanup.snapshot = aborted.snapshot;
+    if (!aborted.success) {
+      cleanup.error = aborted.errorMessage.isEmpty()
+          ? QStringLiteral("The display preview journal could not be aborted")
+          : aborted.errorMessage;
+      return cleanup;
+    }
+    cleanup.success = true;
+    return cleanup;
+  };
+  if (!activated.success || !activated.activationMayHaveOccurred
+      || activated.generation != generation.id
+      || activated.confirmedRequirement != ActivationRequirement::Reload
+      || activated.runtimeIdentity != beforeTopology.runtimeIdentity) {
+    const auto cleanup = rollbackAndAbort();
+    if (cleanup.success) {
+      acceptState(cleanup.snapshot, cleanup.management);
+    } else {
+      acceptUnreconciled(cleanup.snapshot, cleanup.management);
+    }
+    reportError(
+        cleanup.success
+            ? boundedErrorCode(activated.errorCode,
+                               QStringLiteral("VerificationFailed"))
+            : QStringLiteral("ApplyFailed"),
+        cleanup.success && !activated.errorMessage.isEmpty()
+            ? activated.errorMessage
+            : !cleanup.error.isEmpty()
+                ? cleanup.error
+                : QStringLiteral("The display preview could not be safely activated")
+    );
+    return revision();
+  }
+
+  DisplayConfirmation confirmation{
+      .owner = owner,
+      .generation = generation.id,
+      .runtimeIdentity = beforeTopology.runtimeIdentity,
+      .topologyDigest = beforeTopology.topology->topologyDigest,
+      .baseRevision = expectedRevision,
+      .previewRevision = generation.revision,
+      .receipt = activated.receipt,
+      .profile = *profile.value,
+  };
+  Hyprland::ConnectedDisplayTopology provedTopology;
+  if (!displayTopologyStillExact(
+          confirmation, verificationError, -1, &provedTopology
+      )) {
+    const auto cleanup = rollbackAndAbort();
+    if (cleanup.success) {
+      acceptState(cleanup.snapshot, cleanup.management);
+    } else {
+      acceptUnreconciled(cleanup.snapshot, cleanup.management);
+    }
+    reportError(
+        cleanup.success ? QStringLiteral("DisplayTopologyChanged")
+                        : QStringLiteral("ApplyFailed"),
+        cleanup.success ? verificationError
+                        : !cleanup.error.isEmpty()
+                            ? cleanup.error
+                            : QStringLiteral("The unsafe preview could not be rolled back")
+    );
+    return revision();
+  }
+  confirmation.cachedTopologyDocument = provedTopology.document;
+  confirmation.cachedTopologyObservedAtMs = static_cast<quint64>(
+      QDateTime::currentMSecsSinceEpoch()
+  );
+
+  // The confirmation capability and both deadlines are created only after
+  // target proof, fresh topology/realization proof, and receipt-bound target
+  // verification all succeed.
+  do {
+    confirmation.token = displayConfirmationToken();
+  } while (displayTerminal_
+           && displayTerminal_->token == confirmation.token);
+  confirmation.deadline = QDeadlineTimer(
+      static_cast<qint64>(timeoutSeconds) * 1000, Qt::PreciseTimer
+  );
+  confirmation.deadlineMs = static_cast<quint64>(
+      QDateTime::currentMSecsSinceEpoch()
+      + static_cast<qint64>(timeoutSeconds) * 1000
+  );
+  displayTerminal_.reset();
+  displayConfirmation_ = std::move(confirmation);
+  displayConfirmationState_ = QStringLiteral("awaiting-confirmation");
+  const auto installedToken = displayConfirmation_->token;
+  if (owner != QStringLiteral("in-process")) {
+    displayOwnerWatcher_ = std::make_unique<QDBusServiceWatcher>(
+        owner, connection_, QDBusServiceWatcher::WatchForUnregistration, this
+    );
+    connect(
+        displayOwnerWatcher_.get(),
+        &QDBusServiceWatcher::serviceUnregistered, this,
+        &CompositorService::handleDisplayOwnerLoss
+    );
+  }
+  const auto remainingForOwner = displayDeadlineRemaining_(
+      displayConfirmation_->deadline
+  );
+  if (remainingForOwner <= 0) {
+    QString rollbackError;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Expired, rollbackError
+    );
+    reportError(
+        reverted ? QStringLiteral("ConfirmationExpired")
+                 : QStringLiteral("ApplyFailed"),
+        reverted || rollbackError.isEmpty()
+            ? QStringLiteral("The display confirmation expired")
+            : rollbackError
+    );
+    return revision();
+  }
+  const auto ownerStillPresent = displayOwnerStillPresent(
+      owner,
+      static_cast<int>(std::min<qint64>(
+          remainingForOwner, displayOwnerProbeMaximumMilliseconds
+      ))
+  );
+  const auto capabilityStillInstalled = displayConfirmation_
+      && displayConfirmation_->token == installedToken
+      && !displayConfirmation_->terminationStarted;
+  if (!ownerStillPresent) {
+    QString rollbackError;
+    const auto reverted = capabilityStillInstalled
+        ? revertDisplayConfirmation(
+              DisplayTerminalAction::Reverted, rollbackError
+          )
+        : true;
+    reportError(
+        reverted ? QStringLiteral("InvalidCaller")
+                 : QStringLiteral("ApplyFailed"),
+        reverted
+            ? QStringLiteral("The display preview caller disconnected")
+            : rollbackError
+    );
+    return revision();
+  }
+  if (!capabilityStillInstalled) {
+    const auto expired = displayTerminal_
+        && displayTerminal_->token == installedToken
+        && displayTerminal_->action == DisplayTerminalAction::Expired;
+    reportError(
+        expired ? QStringLiteral("ConfirmationExpired")
+                : QStringLiteral("ApplyFailed"),
+        expired
+            ? QStringLiteral("The display confirmation expired")
+            : QStringLiteral(
+                  "The display preview ended during caller verification"
+              )
+    );
+    return revision();
+  }
+  const auto remainingForTimer = displayDeadlineRemaining_(
+      displayConfirmation_->deadline
+  );
+  if (remainingForTimer <= 0) {
+    QString rollbackError;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Expired, rollbackError
+    );
+    reportError(
+        reverted ? QStringLiteral("ConfirmationExpired")
+                 : QStringLiteral("ApplyFailed"),
+        reverted || rollbackError.isEmpty()
+            ? QStringLiteral("The display confirmation expired")
+            : rollbackError
+    );
+    return revision();
+  }
+  displayConfirmationTimer_.start(
+      static_cast<int>(std::min<qint64>(remainingForTimer, INT_MAX))
+  );
+  auto previewStatus = activated.status;
+  acceptState(prepared.snapshot, previewStatus, true);
+
+  confirmationToken = displayConfirmation_->token;
+  deadlineMs = displayConfirmation_->deadlineMs;
+  previewGenerationDigest = displayConfirmation_->generation;
+  return displayConfirmation_->previewRevision;
+}
+
+QString CompositorService::GetPendingDisplayConfirmation(
+    qulonglong &previewRevision,
+    qulonglong &deadlineMs,
+    QString &previewGenerationDigest
+) {
+  previewRevision = 0;
+  deadlineMs = 0;
+  previewGenerationDigest.clear();
+  const auto owner = callerIdentity();
+  if (!displayConfirmation_ || owner.isEmpty()
+      || displayConfirmation_->owner != owner) {
+    reportError(QStringLiteral("NoDisplayConfirmation"),
+                QStringLiteral("No display confirmation is available"));
+    return {};
+  }
+  previewRevision = displayConfirmation_->previewRevision;
+  deadlineMs = displayConfirmation_->deadlineMs;
+  previewGenerationDigest = displayConfirmation_->generation;
+  return displayConfirmation_->token;
+}
+
+qulonglong CompositorService::ConfirmDisplayConfiguration(
+    const QString &confirmationToken,
+    QString &confirmedGenerationDigest
+) {
+  confirmedGenerationDigest.clear();
+  const auto owner = callerIdentity();
+  if (displayTerminal_ && displayTerminal_->token == confirmationToken
+      && displayTerminal_->owner == owner
+      && displayTerminal_->action == DisplayTerminalAction::Confirmed) {
+    confirmedGenerationDigest = displayTerminal_->generation;
+    return displayTerminal_->revision;
+  }
+  if (!displayConfirmation_ || owner.isEmpty()
+      || displayConfirmation_->owner != owner
+      || displayConfirmation_->token != confirmationToken) {
+    reportError(QStringLiteral("NoDisplayConfirmation"),
+                QStringLiteral("No matching display confirmation is available"));
+    return revision();
+  }
+  if (displayConfirmation_->terminationStarted) {
+    reportError(
+        QStringLiteral("NoDisplayConfirmation"),
+        QStringLiteral("The display preview is already being reverted")
+    );
+    return revision();
+  }
+  if (displayDeadlineRemaining_(displayConfirmation_->deadline) <= 0) {
+    QString error;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Expired, error
+    );
+    reportError(
+        reverted ? QStringLiteral("ConfirmationExpired")
+                 : QStringLiteral("ApplyFailed"),
+        error.isEmpty() ? QStringLiteral("The display confirmation expired")
+                        : error
+    );
+    return revision();
+  }
+  QString verificationError;
+  const auto remainingForProof = displayDeadlineRemaining_(
+      displayConfirmation_->deadline
+  );
+  if (remainingForProof <= 0) {
+    QString error;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Expired, error
+    );
+    reportError(
+        reverted ? QStringLiteral("ConfirmationExpired")
+                 : QStringLiteral("ApplyFailed"),
+        error.isEmpty() ? QStringLiteral("The display confirmation expired")
+                        : error
+    );
+    return revision();
+  }
+  const auto topologyIsExact =
+      displayTopologyStillExact(
+          *displayConfirmation_, verificationError,
+          static_cast<int>(std::min<qint64>(remainingForProof, INT_MAX))
+      );
+  const auto remainingAfterProof = displayDeadlineRemaining_(
+      displayConfirmation_->deadline
+  );
+  const auto expiredAfterProof = remainingAfterProof <= 0;
+  if (!topologyIsExact || expiredAfterProof) {
+    const auto failureMessage = expiredAfterProof
+        ? QStringLiteral("The display confirmation expired")
+        : verificationError;
+    QString rollbackError;
+    const auto reverted = revertDisplayConfirmation(
+        expiredAfterProof ? DisplayTerminalAction::Expired
+                          : DisplayTerminalAction::Reverted,
+        rollbackError
+    );
+    reportError(
+        !reverted ? QStringLiteral("ApplyFailed")
+        : expiredAfterProof ? QStringLiteral("ConfirmationExpired")
+                            : QStringLiteral("DisplayTopologyChanged"),
+        !reverted && !rollbackError.isEmpty()
+            ? rollbackError
+            : !failureMessage.isEmpty() ? failureMessage : rollbackError
+    );
+    return revision();
+  }
+
+  // The synchronous topology proof can occupy the service thread, delaying
+  // QDBusServiceWatcher's owner-loss delivery. Re-query the unique name after
+  // proof and immediately before the one-way authority decision.
+  const auto installedToken = displayConfirmation_->token;
+  const auto ownerStillPresent = displayOwnerStillPresent(
+      owner,
+      static_cast<int>(std::min<qint64>(
+          remainingAfterProof, displayOwnerProbeMaximumMilliseconds
+      ))
+  );
+  const auto capabilityStillInstalled = displayConfirmation_
+      && displayConfirmation_->token == installedToken
+      && !displayConfirmation_->terminationStarted;
+  if (!capabilityStillInstalled) {
+    const auto expired = displayTerminal_
+        && displayTerminal_->token == installedToken
+        && displayTerminal_->action == DisplayTerminalAction::Expired;
+    const auto cleanupFailed = displayConfirmation_
+        && displayConfirmation_->token == installedToken
+        && displayConfirmation_->terminationStarted;
+    reportError(
+        cleanupFailed ? QStringLiteral("ApplyFailed")
+        : expired ? QStringLiteral("ConfirmationExpired")
+                  : QStringLiteral("NoDisplayConfirmation"),
+        cleanupFailed
+            ? QStringLiteral(
+                  "The display preview could not be safely reconciled"
+              )
+        : expired
+            ? QStringLiteral("The display confirmation expired")
+            : QStringLiteral("The display confirmation is no longer active")
+    );
+    return revision();
+  }
+  if (!ownerStillPresent) {
+    QString rollbackError;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Reverted, rollbackError
+    );
+    reportError(
+        reverted ? QStringLiteral("NoDisplayConfirmation")
+                 : QStringLiteral("ApplyFailed"),
+        reverted
+            ? QStringLiteral("The display preview caller disconnected")
+            : rollbackError
+    );
+    return revision();
+  }
+  if (displayDeadlineRemaining_(displayConfirmation_->deadline) <= 0) {
+    QString rollbackError;
+    const auto reverted = revertDisplayConfirmation(
+        DisplayTerminalAction::Expired, rollbackError
+    );
+    reportError(
+        reverted ? QStringLiteral("ConfirmationExpired")
+                 : QStringLiteral("ApplyFailed"),
+        rollbackError.isEmpty()
+            ? QStringLiteral("The display confirmation expired")
+            : rollbackError
+    );
+    return revision();
+  }
+
+  const auto confirmation = *displayConfirmation_;
+  auto committed = authority_->commitApply(confirmation.generation);
+  const auto commitDecisionMayExist =
+      committed.success || committed.commitDecisionMayExist
+      || committed.commitDecisionDurable;
+  if (commitDecisionMayExist) {
+    // commitApply is the one-way authority boundary. Once it succeeds, or
+    // even reports that its decision may be visible, startup reconciliation
+    // owns the target. Revoke every rollback path before finalization: a
+    // timer, owner-loss signal, late Revert call, or management poll must
+    // never contradict a possibly committed N+1 decision.
+    displayConfirmationTimer_.stop();
+    clearDisplayOwnerWatch();
+    displayConfirmation_.reset();
+    displayConfirmationState_ = QStringLiteral("committing");
+    publishDisplayProperties();
+  }
+
+  if (!committed.success) {
+    QString rollbackError;
+    bool reverted = true;
+    if (!commitDecisionMayExist) {
+      reverted = revertDisplayConfirmation(
+          DisplayTerminalAction::Reverted, rollbackError
+      );
+    } else {
+      displayConfirmationState_ = QStringLiteral("failed");
+      acceptUnreconciled(committed.snapshot, management_);
+    }
+    reportError(
+        QStringLiteral("ApplyFailed"),
+        !reverted && !rollbackError.isEmpty()
+            ? rollbackError
+            : committed.errorMessage.isEmpty()
+            ? QStringLiteral(
+                  "The confirmed display generation requires startup reconciliation"
+              )
+            : committed.errorMessage
+    );
+    return revision();
+  }
+  const auto finalized = activationBackend_->finalizeCommitted(
+      confirmation.receipt, confirmation.generation
+  );
+  if (!finalized.success
+      || finalized.status.state != ManagementState::Managed
+      || finalized.status.managedGeneration != confirmation.generation) {
+    displayConfirmationState_ = QStringLiteral("failed");
+    acceptUnreconciled(committed.snapshot, finalized.status);
+    reportError(QStringLiteral("ApplyFailed"),
+                finalized.errorMessage.isEmpty()
+                    ? QStringLiteral("The confirmed display generation requires startup reconciliation")
+                    : finalized.errorMessage);
+    return revision();
+  }
+
+  displayConfirmationState_ = QStringLiteral("idle");
+  displayTerminal_ = DisplayTerminal{
+      .token = confirmation.token,
+      .owner = confirmation.owner,
+      .action = DisplayTerminalAction::Confirmed,
+      .revision = committed.snapshot.revision,
+      .generation = confirmation.generation,
+  };
+  acceptState(committed.snapshot, finalized.status, true);
+  confirmedGenerationDigest = confirmation.generation;
+  return committed.snapshot.revision;
+}
+
+qulonglong CompositorService::RevertDisplayConfiguration(
+    const QString &confirmationToken
+) {
+  const auto owner = callerIdentity();
+  if (displayTerminal_ && displayTerminal_->token == confirmationToken
+      && displayTerminal_->owner == owner
+      && displayTerminal_->action == DisplayTerminalAction::Reverted) {
+    return displayTerminal_->revision;
+  }
+  if (!displayConfirmation_ || owner.isEmpty()
+      || displayConfirmation_->owner != owner
+      || displayConfirmation_->token != confirmationToken) {
+    reportError(QStringLiteral("NoDisplayConfirmation"),
+                QStringLiteral("No matching display confirmation is available"));
+    return revision();
+  }
+  QString error;
+  if (!revertDisplayConfirmation(DisplayTerminalAction::Reverted, error)) {
+    reportError(QStringLiteral("ApplyFailed"), error);
+  }
+  return revision();
+}
+
 bool CompositorService::checkMutationAuthority(
     const qulonglong expectedRevision, const QString &expectedCatalogDigest,
     const QString &expectedActionCatalogDigest) const {
@@ -437,6 +1171,243 @@ bool CompositorService::checkMutationCatalogAuthority(
     return false;
   }
   return true;
+}
+
+bool CompositorService::hasDisplayConfirmation() const {
+  return displayConfirmation_.has_value();
+}
+
+QString CompositorService::callerIdentity() const {
+  if (!calledFromDBus()) return QStringLiteral("in-process");
+  const auto service = message().service();
+  return service.startsWith(QLatin1Char(':')) ? service : QString();
+}
+
+bool CompositorService::displayOwnerStillPresent(
+    const QString &owner,
+    const int maximumWaitMilliseconds
+) const {
+  if (owner.isEmpty() || maximumWaitMilliseconds <= 0) return false;
+  const auto boundedWait = std::min(
+      maximumWaitMilliseconds, displayOwnerProbeMaximumMilliseconds
+  );
+  if (displayOwnerPresent_) {
+    try {
+      return displayOwnerPresent_(owner, boundedWait);
+    } catch (...) {
+      return false;
+    }
+  }
+  if (owner == QStringLiteral("in-process")) return true;
+  auto request = QDBusMessage::createMethodCall(
+      QStringLiteral("org.freedesktop.DBus"),
+      QStringLiteral("/org/freedesktop/DBus"),
+      QStringLiteral("org.freedesktop.DBus"),
+      QStringLiteral("NameHasOwner")
+  );
+  request.setArguments({owner});
+  const QDBusReply<bool> reply(
+      connection_.call(request, QDBus::Block, boundedWait)
+  );
+  return reply.isValid() && reply.value();
+}
+
+bool CompositorService::checkNoDisplayConfirmation() {
+  if (!hasDisplayConfirmation()) return true;
+  reportError(QStringLiteral("ConfirmationPending"),
+              QStringLiteral("A display confirmation is pending"));
+  return false;
+}
+
+bool CompositorService::validatePreparedGeneration(
+    const AuthorityResult &prepared,
+    QString &error
+) const {
+  static const QRegularExpression digestExpression(
+      QStringLiteral("^[0-9a-f]{64}$")
+  );
+  static const QRegularExpression nonceExpression(
+      QStringLiteral("^[0-9a-f]{32,128}$")
+  );
+  if (!prepared.prepared) {
+    error = QStringLiteral("The display preview generation is missing");
+    return false;
+  }
+  const auto &generation = *prepared.prepared;
+  QJsonObject manifest;
+  if (!generation.manifest.isEmpty()
+      && generation.manifest.size() <= Hyprland::maximumDesiredStateBytes) {
+    QJsonParseError parseError;
+    const auto document = QJsonDocument::fromJson(
+        generation.manifest, &parseError
+    );
+    if (parseError.error == QJsonParseError::NoError && document.isObject()) {
+      manifest = document.object();
+    }
+  }
+  const auto complete = digestExpression.match(generation.id).hasMatch()
+      && nonceExpression.match(generation.nonce).hasMatch()
+      && digestExpression.match(generation.snapshotDigest).hasMatch()
+      && generation.revision == prepared.snapshot.revision + 1
+      && QDir::isAbsolutePath(generation.directory)
+      && QDir::cleanPath(generation.directory) == generation.directory
+      && QFileInfo(generation.directory).fileName() == generation.nonce
+      && QFileInfo(generation.directory).dir().dirName()
+             == QStringLiteral("generations")
+      && generation.entrypoint
+             == QDir(generation.directory).filePath(
+                    QStringLiteral("hyprland.lua"))
+      && manifest.value(QStringLiteral("generation")).toString()
+             == generation.id
+      && manifest.value(QStringLiteral("activationNonce")).toString()
+             == generation.nonce
+      && manifest.value(QStringLiteral("snapshotDigest")).toString()
+             == generation.snapshotDigest
+      && manifest.value(QStringLiteral("revision")).toString()
+             == QString::number(generation.revision)
+      && manifest.value(QStringLiteral("entrypoint")).toString()
+             == QStringLiteral("hyprland.lua");
+  if (!complete) {
+    error = QStringLiteral("The display preview generation is incomplete");
+  }
+  return complete;
+}
+
+bool CompositorService::displayTopologyStillExact(
+    const DisplayConfirmation &confirmation,
+    QString &error,
+    const int maximumWaitMilliseconds,
+    Hyprland::ConnectedDisplayTopology *observedTopology
+) {
+  const auto connected = maximumWaitMilliseconds < 0
+      ? activationBackend_->connectedDisplays()
+      : activationBackend_->connectedDisplays(maximumWaitMilliseconds);
+  if (!connected.success || !connected.topology) {
+    error = connected.errorMessage.isEmpty()
+        ? QStringLiteral("The connected-display topology is unavailable")
+        : connected.errorMessage;
+    return false;
+  }
+  if (connected.runtimeIdentity != confirmation.runtimeIdentity
+      || connected.topology->topologyDigest != confirmation.topologyDigest) {
+    error = QStringLiteral(
+        "The compositor instance or connected-display topology changed"
+    );
+    return false;
+  }
+  const auto profileErrors = Hyprland::validateDisplayProfileTopology(
+      confirmation.profile, *connected.topology
+  );
+  if (!profileErrors.isEmpty()) {
+    error = profileErrors.front().message;
+    return false;
+  }
+  const auto realizationErrors = Hyprland::validateDisplayRealization(
+      confirmation.profile, *connected.topology
+  );
+  if (!realizationErrors.isEmpty()) {
+    error = realizationErrors.front().message;
+    return false;
+  }
+  const auto target = activationBackend_->verifyPendingTarget(
+      confirmation.receipt, confirmation.generation
+  );
+  if (!target.success) {
+    error = target.errorMessage.isEmpty()
+        ? QStringLiteral("The pending display target changed")
+        : target.errorMessage;
+    return false;
+  }
+  if (observedTopology) *observedTopology = *connected.topology;
+  return true;
+}
+
+bool CompositorService::revertDisplayConfirmation(
+    const DisplayTerminalAction action,
+    QString &error
+) {
+  error.clear();
+  if (!displayConfirmation_) {
+    error = QStringLiteral("No display confirmation is pending");
+    return false;
+  }
+  displayConfirmation_->terminationStarted = true;
+  displayConfirmationState_ = QStringLiteral("reverting");
+  publishDisplayProperties();
+  auto &pending = *displayConfirmation_;
+  ManagementStatus restoredStatus = pending.rolledBackStatus.value_or(
+      management_
+  );
+  if (!pending.liveRolledBack) {
+    const auto rolledBack = activationBackend_->rollback(pending.receipt);
+    restoredStatus = rolledBack.status;
+    if (!rolledBack.success) {
+      displayConfirmationState_ = QStringLiteral("failed");
+      error = rolledBack.errorMessage.isEmpty()
+          ? QStringLiteral("The display preview could not be rolled back")
+          : rolledBack.errorMessage;
+      acceptUnreconciled(snapshot_, rolledBack.status);
+      return false;
+    }
+    pending.liveRolledBack = true;
+    pending.rolledBackStatus = rolledBack.status;
+  }
+  const auto aborted = authority_->abortApply(pending.generation);
+  if (!aborted.success) {
+    displayConfirmationState_ = QStringLiteral("failed");
+    error = aborted.errorMessage.isEmpty()
+        ? QStringLiteral("The display preview journal could not be aborted")
+        : aborted.errorMessage;
+    acceptUnreconciled(aborted.snapshot, restoredStatus);
+    return false;
+  }
+
+  const auto terminal = DisplayTerminal{
+      .token = pending.token,
+      .owner = pending.owner,
+      .action = action,
+      .revision = aborted.snapshot.revision,
+      .generation = aborted.snapshot.generationDigest,
+  };
+  displayConfirmationTimer_.stop();
+  clearDisplayOwnerWatch();
+  displayConfirmation_.reset();
+  displayConfirmationState_ = QStringLiteral("idle");
+  displayTerminal_ = terminal;
+  acceptState(aborted.snapshot, restoredStatus, true);
+  return true;
+}
+
+void CompositorService::clearDisplayOwnerWatch() {
+  if (auto *watcher = displayOwnerWatcher_.release()) {
+    // Owner loss can call this from the watcher's own signal. Deferred
+    // destruction avoids deleting the signal sender on its active stack.
+    watcher->deleteLater();
+  }
+}
+
+void CompositorService::appendDisplayProperties(QVariantMap &changed) const {
+  changed.insert(
+      QStringLiteral("DisplayConfirmationState"), displayConfirmationState()
+  );
+  changed.insert(
+      QStringLiteral("DisplayConfirmationRevision"),
+      QVariant::fromValue<qulonglong>(displayConfirmationRevision())
+  );
+  changed.insert(
+      QStringLiteral("DisplayConfirmationDeadlineMs"),
+      QVariant::fromValue<qulonglong>(displayConfirmationDeadlineMs())
+  );
+  changed.insert(
+      QStringLiteral("DisplayConfirmationGeneration"),
+      displayConfirmationGeneration()
+  );
+}
+
+void CompositorService::publishDisplayProperties() {
+  QVariantMap changed;
+  appendDisplayProperties(changed);
+  publishProperties(changed);
 }
 
 CompositorService::Completion CompositorService::completePrepared(
@@ -680,10 +1651,33 @@ CompositorService::Completion CompositorService::completePrepared(
   return completion;
 }
 
+void CompositorService::acceptUnreconciled(
+    const AuthoritySnapshot &authoritySnapshot,
+    ManagementStatus liveStatus
+) {
+  auto unavailable = authoritySnapshot;
+  unavailable.available = false;
+  unavailable.writable = false;
+  unavailable.loadState = QStringLiteral("unavailable");
+  unavailable.applyState = QStringLiteral("failed");
+  liveStatus.state = ManagementState::Conflict;
+  liveStatus.entrypointKind = EntrypointKind::Unsafe;
+  liveStatus.entrypointDigest.clear();
+  liveStatus.managedGeneration.clear();
+  liveStatus.managedNonce.clear();
+  displayConfirmationState_ = QStringLiteral("failed");
+  acceptState(unavailable, liveStatus, true);
+}
+
 void CompositorService::acceptState(const AuthoritySnapshot &next,
-                                    const ManagementStatus &nextManagement) {
+                                    const ManagementStatus &nextManagement,
+                                    const bool includeDisplayProperties) {
   const auto boundManagement =
-      authorityBoundManagement(next, nextManagement);
+      authorityBoundManagement(
+          next, nextManagement,
+          displayConfirmation_
+              ? QStringView(displayConfirmation_->generation) : QStringView()
+      );
   QVariantMap changed;
   const auto insert = [&changed](const QString &name, const QVariant &value) {
     changed.insert(name, value);
@@ -736,6 +1730,7 @@ void CompositorService::acceptState(const AuthoritySnapshot &next,
   if (boundManagement.entrypointDigest != management_.entrypointDigest) {
     insert(QStringLiteral("EntrypointDigest"), boundManagement.entrypointDigest);
   }
+  if (includeDisplayProperties) appendDisplayProperties(changed);
 
   snapshot_ = next;
   management_ = boundManagement;
@@ -782,6 +1777,25 @@ void CompositorService::rearmManagementWatch() {
 
 void CompositorService::refreshManagementStatus() {
   if (!authority_) {
+    return;
+  }
+  if (displayConfirmation_) {
+    const auto target = activationBackend_->verifyPendingTarget(
+        displayConfirmation_->receipt, displayConfirmation_->generation
+    );
+    if (!target.success) {
+      QString error;
+      static_cast<void>(revertDisplayConfirmation(
+          DisplayTerminalAction::Reverted, error
+      ));
+      rearmManagementWatch();
+      return;
+    }
+    const auto live = authorityBoundManagement(
+        snapshot_, target.status, displayConfirmation_->generation
+    );
+    if (live != management_) acceptState(snapshot_, target.status);
+    rearmManagementWatch();
     return;
   }
   const auto live = authorityBoundManagement(
@@ -831,6 +1845,15 @@ QString CompositorService::boundedErrorCode(const QString &code,
       QStringLiteral("ApplyFailed"),
       QStringLiteral("RecoveryUnavailable"),
       QStringLiteral("RecoveryFailed"),
+      QStringLiteral("RuntimeUnavailable"),
+      QStringLiteral("UnsupportedVersion"),
+      QStringLiteral("InvalidDisplayProfile"),
+      QStringLiteral("DisplayScopeConflict"),
+      QStringLiteral("ConfirmationPending"),
+      QStringLiteral("DisplayTopologyChanged"),
+      QStringLiteral("InvalidCaller"),
+      QStringLiteral("NoDisplayConfirmation"),
+      QStringLiteral("ConfirmationExpired"),
   };
   return allowed.contains(code) ? code : fallback;
 }

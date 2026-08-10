@@ -37,7 +37,7 @@
     </property>
 
     <!--
-      One of unmanaged, managed, or conflict. Ownership is never implicit.
+      One of unmanaged, managed, preview, or conflict. Ownership is never implicit.
       The value is re-probed when the config root changes and before every
       live activation, adoption, or recovery operation; managed requires the
       entrypoint, ownership record, and authority GenerationDigest to identify
@@ -109,6 +109,40 @@
     </property>
 
     <!--
+      One of idle, awaiting-confirmation, reverting, committing, or failed. A
+      preview is a live, receipt-bound N+1 generation; durable desired/applied
+      authority remains N until the initiating caller confirms it. Committing
+      is non-actionable: the one-way authority decision may already exist and
+      neither timeout nor a caller may roll the live target back.
+    -->
+    <property name="DisplayConfirmationState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Transient N+1 while awaiting confirmation; zero otherwise. -->
+    <property name="DisplayConfirmationRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- UTC Unix milliseconds for presentation; zero otherwise. Enforcement uses a monotonic deadline. -->
+    <property name="DisplayConfirmationDeadlineMs" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Transient generation digest while awaiting confirmation; empty otherwise. -->
+    <property name="DisplayConfirmationGeneration" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
       Returns one complete canonical desired-state document and the revision
       that owns those exact bytes.
 
@@ -131,6 +165,7 @@
       Hyprland.
 
       Errors:
+        org.hyprshelld.Compositor1.Error.ConfirmationPending
         org.hyprshelld.Compositor1.Error.Unavailable
         org.hyprshelld.Compositor1.Error.ReadOnly
         org.hyprshelld.Compositor1.Error.StaleRevision
@@ -159,6 +194,7 @@
       ActivationRequired before entrypoint publication.
 
       Errors:
+        org.hyprshelld.Compositor1.Error.ConfirmationPending
         org.hyprshelld.Compositor1.Error.Unavailable
         org.hyprshelld.Compositor1.Error.ReadOnly
         org.hyprshelld.Compositor1.Error.StaleRevision
@@ -167,7 +203,10 @@
         org.hyprshelld.Compositor1.Error.EntrypointChanged
         org.hyprshelld.Compositor1.Error.ActivationRequired
         org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
         org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.PersistenceFailed
         org.hyprshelld.Compositor1.Error.ApplyFailed
     -->
     <method name="Apply">
@@ -188,6 +227,7 @@
       ActivationRequired before entrypoint publication.
 
       Errors:
+        org.hyprshelld.Compositor1.Error.ConfirmationPending
         org.hyprshelld.Compositor1.Error.Unavailable
         org.hyprshelld.Compositor1.Error.ReadOnly
         org.hyprshelld.Compositor1.Error.StaleRevision
@@ -197,7 +237,10 @@
         org.hyprshelld.Compositor1.Error.RecoveryUnavailable
         org.hyprshelld.Compositor1.Error.ActivationRequired
         org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
         org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.PersistenceFailed
         org.hyprshelld.Compositor1.Error.RecoveryFailed
     -->
     <method name="Recover">
@@ -222,6 +265,7 @@
       ActivationRequired before entrypoint publication.
 
       Errors:
+        org.hyprshelld.Compositor1.Error.ConfirmationPending
         org.hyprshelld.Compositor1.Error.Unavailable
         org.hyprshelld.Compositor1.Error.ReadOnly
         org.hyprshelld.Compositor1.Error.StaleRevision
@@ -229,7 +273,10 @@
         org.hyprshelld.Compositor1.Error.EntrypointChanged
         org.hyprshelld.Compositor1.Error.ActivationRequired
         org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
         org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.PersistenceFailed
         org.hyprshelld.Compositor1.Error.ApplyFailed
     -->
     <method name="AdoptManagedConfiguration">
@@ -240,6 +287,109 @@
       <arg name="appliedRevision" type="t" direction="out"/>
       <arg name="generationDigest" type="s" direction="out"/>
       <arg name="entrypointDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns a filtered canonical v1 topology and its UTC observation time.
+      Ordinarily this comes from a fresh authenticated `j/monitors all`
+      query. While awaiting display confirmation, it returns the cached exact
+      post-proof topology immediately so discovery cannot starve the monotonic
+      rollback deadline. Upstream JSON is never forwarded directly.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+    -->
+    <method name="GetConnectedDisplays">
+      <arg name="topology" type="ay" direction="out"/>
+      <arg name="observedAtMs" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Stages and proves a monitor-only transient N+1. The supplied canonical
+      profile is bound to a fresh topology fingerprint and must cover exactly
+      the connected connector names while leaving at least one usable output.
+      Desired, last-good, and activation authority remain N. After proof the
+      initiating unique bus owner receives a private 128-bit confirmation
+      token and a 10..30 second monotonic deadline. Owner disappearance,
+      timeout, topology/runtime change, or failed realization rolls live state
+      back and aborts N+1.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.ConfirmationPending
+        org.hyprshelld.Compositor1.Error.ConfirmationExpired
+        org.hyprshelld.Compositor1.Error.InvalidDisplayProfile
+        org.hyprshelld.Compositor1.Error.InvalidCaller
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.ReadOnly
+        org.hyprshelld.Compositor1.Error.StaleRevision
+        org.hyprshelld.Compositor1.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor1.Error.DisplayScopeConflict
+        org.hyprshelld.Compositor1.Error.DisplayTopologyChanged
+        org.hyprshelld.Compositor1.Error.ActivationRequired
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
+        org.hyprshelld.Compositor1.Error.ReloadFailed
+        org.hyprshelld.Compositor1.Error.PersistenceFailed
+        org.hyprshelld.Compositor1.Error.ApplyFailed
+    -->
+    <method name="PreviewDisplayConfiguration">
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="profile" type="ay" direction="in"/>
+      <arg name="timeoutSeconds" type="u" direction="in"/>
+      <arg name="previewRevision" type="t" direction="out"/>
+      <arg name="confirmationToken" type="s" direction="out"/>
+      <arg name="deadlineMs" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Recovers an ambiguous Preview reply only for its initiating unique bus
+      owner. Foreign and absent previews both return NoDisplayConfirmation so
+      token ownership cannot be probed.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.NoDisplayConfirmation
+    -->
+    <method name="GetPendingDisplayConfirmation">
+      <arg name="confirmationToken" type="s" direction="out"/>
+      <arg name="previewRevision" type="t" direction="out"/>
+      <arg name="deadlineMs" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Durably commits the exact receipt-bound preview, then finalizes ownership.
+      Once the commit decision may exist, the token becomes non-actionable and
+      no timeout, owner loss, retry, or opposite terminal action can roll back.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.NoDisplayConfirmation
+        org.hyprshelld.Compositor1.Error.ConfirmationExpired
+        org.hyprshelld.Compositor1.Error.DisplayTopologyChanged
+        org.hyprshelld.Compositor1.Error.ApplyFailed
+    -->
+    <method name="ConfirmDisplayConfiguration">
+      <arg name="confirmationToken" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Rolls the preview back with exact live proof, then aborts N+1.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.NoDisplayConfirmation
+        org.hyprshelld.Compositor1.Error.ApplyFailed
+    -->
+    <method name="RevertDisplayConfiguration">
+      <arg name="confirmationToken" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
     </method>
   </interface>
 </node>

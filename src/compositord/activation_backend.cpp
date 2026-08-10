@@ -639,6 +639,7 @@ ActivationResult LiveActivationBackend::publishAndActivate(
         .success = true,
         .activationMayHaveOccurred = true,
         .generation = prepared.id,
+        .runtimeIdentity = session.runtimeIdentity,
         .confirmedRequirement = prepared.requirement,
         .receipt = published.receipt,
         .status = exact.status,
@@ -801,6 +802,72 @@ BackendResult LiveActivationBackend::finalizeCommitted(
     return {.success = true, .status = current};
 }
 
+ConnectedDisplaysResult LiveActivationBackend::connectedDisplays()
+{
+    return connectedDisplays(-1);
+}
+
+ConnectedDisplaysResult LiveActivationBackend::connectedDisplays(
+    const int maximumWaitMilliseconds
+)
+{
+    if (!filesystemBound_ || !versionPolicyConfigured_
+        || finalizationFailed_) {
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "The live activation backend is unavailable"
+            ),
+        };
+    }
+    return maximumWaitMilliseconds < 0
+        ? runtime_->connectedDisplays()
+        : runtime_->connectedDisplays(maximumWaitMilliseconds);
+}
+
+BackendResult LiveActivationBackend::verifyPendingTarget(
+    const ActivationReceipt &receipt,
+    const QStringView generation
+) const
+{
+    if (!filesystemBound_ || receipt.rollbackToken.isEmpty()
+        || generation.isEmpty()) {
+        return backendFailure(
+            QStringLiteral("VerificationFailed"),
+            QStringLiteral("The pending display activation proof is incomplete"),
+            publisher_->status()
+        );
+    }
+    const auto pending = publisher_->pendingReconciliation();
+    if (!pending.success || !pending.value
+        || pending.value->receipt.rollbackToken != receipt.rollbackToken
+        || pending.value->targetGeneration != generation) {
+        return backendFailure(
+            pending.errorCode.isEmpty()
+                ? QStringLiteral("EntrypointChanged") : pending.errorCode,
+            pending.errorMessage.isEmpty()
+                ? QStringLiteral("The pending display activation bridge changed")
+                : pending.errorMessage,
+            publisher_->status()
+        );
+    }
+    const auto verified = publisher_->verifyTransition(receipt, true);
+    if (!verified.success
+        || verified.status.state != ManagementState::Managed
+        || verified.status.managedGeneration != generation) {
+        return backendFailure(
+            verified.errorCode.isEmpty()
+                ? QStringLiteral("VerificationFailed") : verified.errorCode,
+            verified.errorMessage.isEmpty()
+                ? QStringLiteral("The pending display target is not exact")
+                : verified.errorMessage,
+            verified.status
+        );
+    }
+    return {.success = true, .status = verified.status};
+}
+
 QString managementStateName(const ManagementState state)
 {
     switch (state) {
@@ -808,6 +875,8 @@ QString managementStateName(const ManagementState state)
         return QStringLiteral("unmanaged");
     case ManagementState::Managed:
         return QStringLiteral("managed");
+    case ManagementState::Preview:
+        return QStringLiteral("preview");
     case ManagementState::Conflict:
         return QStringLiteral("conflict");
     }

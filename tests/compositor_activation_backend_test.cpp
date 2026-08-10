@@ -212,10 +212,20 @@ public:
         },
     };
     RuntimeProofResult proofResult{.success = true};
+    ConnectedDisplaysResult connectedResult{
+        .success = true,
+        .runtimeIdentity = QStringLiteral("runtime-identity"),
+        .topology = HyprShelld::Hyprland::ConnectedDisplayTopology{
+            .topologyDigest = QString(64, QLatin1Char('d')),
+            .document = QByteArrayLiteral("{\"formatVersion\":1}\n"),
+        },
+    };
     int setPolicyCalls = 0;
     int prepareCalls = 0;
     int proofCalls = 0;
     int cancelCalls = 0;
+    int unboundedConnectedCalls = 0;
+    QVector<int> connectedMaximumWaits;
     HyprlandVersionPolicy lastPolicy;
     ActivationRequirement lastRequirement = ActivationRequirement::None;
     RuntimeActivationMode lastMode = RuntimeActivationMode::ManagedReload;
@@ -278,6 +288,22 @@ public:
     {
         ++cancelCalls;
         trace.append(QStringLiteral("runtime-cancel"));
+    }
+
+    ConnectedDisplaysResult connectedDisplays() override
+    {
+        ++unboundedConnectedCalls;
+        trace.append(QStringLiteral("runtime-connected-unbounded"));
+        return connectedResult;
+    }
+
+    ConnectedDisplaysResult connectedDisplays(
+        const int maximumWaitMilliseconds
+    ) override
+    {
+        connectedMaximumWaits.append(maximumWaitMilliseconds);
+        trace.append(QStringLiteral("runtime-connected-bounded"));
+        return connectedResult;
     }
 };
 
@@ -647,6 +673,117 @@ private slots:
         QCOMPARE(harness.publisher->rollbackCalls, 0);
         QCOMPARE(harness.backend->status().state, ManagementState::Conflict);
         QVERIFY(!harness.backend->canSatisfy(ActivationRequirement::Reload));
+    }
+
+    void connectedDisplaysRequiresBoundAuthorityAndPreservesDeadlineBound()
+    {
+        LiveHarness harness(managedStatus(QString::fromLatin1(oldGeneration)));
+        auto unavailable = harness.backend->connectedDisplays(41);
+        QVERIFY(!unavailable.success);
+        QCOMPARE(unavailable.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(harness.runtime->connectedMaximumWaits.isEmpty());
+        QCOMPARE(harness.runtime->unboundedConnectedCalls, 0);
+
+        QVERIFY(harness.start(QString::fromLatin1(oldGeneration)).success);
+        auto connected = harness.backend->connectedDisplays(41);
+        QVERIFY2(connected.success, qPrintable(connected.errorMessage));
+        QCOMPARE(connected.runtimeIdentity, QStringLiteral("runtime-identity"));
+        QCOMPARE(harness.runtime->connectedMaximumWaits, QVector<int>{41});
+        QCOMPARE(harness.runtime->unboundedConnectedCalls, 0);
+
+        connected = harness.backend->connectedDisplays(-1);
+        QVERIFY(connected.success);
+        QCOMPARE(harness.runtime->connectedMaximumWaits, QVector<int>{41});
+        QCOMPARE(harness.runtime->unboundedConnectedCalls, 1);
+
+        connected = harness.backend->connectedDisplays(0);
+        QVERIFY(connected.success);
+        QCOMPARE(harness.runtime->connectedMaximumWaits,
+                 (QVector<int>{41, 0}));
+    }
+
+    void pendingDisplayTargetIsBoundToExactBridgeReceiptAndGeneration()
+    {
+        LiveHarness harness(managedStatus(QString::fromLatin1(oldGeneration)));
+        QVERIFY(harness.start(QString::fromLatin1(oldGeneration)).success);
+        const auto target = managedStatus(
+            QString::fromLatin1(newGeneration), QString::fromLatin1(newNonce)
+        );
+        harness.publisher->statusValue = target;
+        harness.publisher->pendingResult = {
+            .success = true,
+            .value = pendingBridge(),
+        };
+        harness.publisher->verifyTargetResult = {
+            .success = true,
+            .status = target,
+        };
+
+        // The ordinary public status remains conflict while the durable
+        // authority still names the prior generation; only the private
+        // receipt-bound verifier may prove the transient target.
+        QCOMPARE(harness.backend->status().state, ManagementState::Conflict);
+        const ActivationReceipt receipt{
+            .rollbackToken = QByteArrayLiteral("bridge-token")
+        };
+        auto verified = harness.backend->verifyPendingTarget(
+            receipt, QString::fromLatin1(newGeneration)
+        );
+        QVERIFY2(verified.success, qPrintable(verified.errorMessage));
+        QCOMPARE(verified.status.managedGeneration,
+                 QString::fromLatin1(newGeneration));
+        QCOMPARE(harness.publisher->verifyCalls, 1);
+        QVERIFY(harness.publisher->lastVerifyTarget);
+        QCOMPARE(harness.backend->status().state, ManagementState::Conflict);
+
+        verified = harness.backend->verifyPendingTarget(
+            {.rollbackToken = QByteArrayLiteral("wrong-token")},
+            QString::fromLatin1(newGeneration)
+        );
+        QVERIFY(!verified.success);
+        QCOMPARE(verified.errorCode, QStringLiteral("EntrypointChanged"));
+        QCOMPARE(harness.publisher->verifyCalls, 1);
+
+        verified = harness.backend->verifyPendingTarget(
+            receipt, QString::fromLatin1(oldGeneration)
+        );
+        QVERIFY(!verified.success);
+        QCOMPARE(verified.errorCode, QStringLiteral("EntrypointChanged"));
+        QCOMPARE(harness.publisher->verifyCalls, 1);
+
+        auto corrupt = pendingBridge();
+        corrupt.targetGeneration = QString::fromLatin1(otherGeneration);
+        harness.publisher->pendingResult = {
+            .success = true,
+            .value = corrupt,
+        };
+        verified = harness.backend->verifyPendingTarget(
+            receipt, QString::fromLatin1(newGeneration)
+        );
+        QVERIFY(!verified.success);
+        QCOMPARE(verified.errorCode, QStringLiteral("EntrypointChanged"));
+        QCOMPARE(harness.publisher->verifyCalls, 1);
+
+        harness.publisher->pendingResult = {
+            .success = true,
+            .value = pendingBridge(),
+        };
+        harness.publisher->verifyTargetResult = {
+            .success = false,
+            .errorCode = QStringLiteral("VerificationFailed"),
+            .errorMessage = QStringLiteral("authority root changed"),
+            .status = {
+                .state = ManagementState::Conflict,
+                .entrypointKind = EntrypointKind::Unsafe,
+            },
+        };
+        verified = harness.backend->verifyPendingTarget(
+            receipt, QString::fromLatin1(newGeneration)
+        );
+        QVERIFY(!verified.success);
+        QCOMPARE(verified.errorCode, QStringLiteral("VerificationFailed"));
+        QCOMPARE(harness.publisher->verifyCalls, 2);
+        QCOMPARE(harness.backend->status().state, ManagementState::Conflict);
     }
 
     void unsupportedRequirementDoesNotPrepareOrPublish()

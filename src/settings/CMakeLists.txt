@@ -13,6 +13,9 @@ qt_add_qml_module(
         ComponentPill.qml
         ComponentReviewDialog.qml
         ComponentsPage.qml
+        DisplaysPage.qml
+        DisplaySettingsCard.qml
+        DisplayTopologyPreview.qml
         GenericComponentSettings.qml
         SchemaSettingRow.qml
         ShellHealthWarning.qml

@@ -2,6 +2,8 @@
 
 #include "renderer.h"
 
+#include "hyprland/monitor_profile.h"
+
 #include <QByteArray>
 #include <QDateTime>
 #include <QString>
@@ -156,6 +158,31 @@ public:
   [[nodiscard]] virtual AuthorityResult
   prepareRecovery(quint64 expectedRevision, const QString &activationNonce,
                   const QDateTime &createdAtUtc) = 0;
+  // Stages a monitor-only N+1 while durable Desired/LastGood/Activation remain
+  // the exact current N. Only a subsequent commitApply may publish N+1;
+  // abortApply leaves every authority mirror at N.
+  [[nodiscard]] virtual AuthorityResult prepareDisplayApply(
+      quint64 expectedRevision,
+      const Hyprland::DisplayProfile &profile,
+      const Hyprland::ConnectedDisplayTopology &topology,
+      const QString &activationNonce,
+      const QDateTime &createdAtUtc
+  )
+  {
+      Q_UNUSED(expectedRevision)
+      Q_UNUSED(profile)
+      Q_UNUSED(topology)
+      Q_UNUSED(activationNonce)
+      Q_UNUSED(createdAtUtc)
+      return {
+          .success = false,
+          .errorCode = QStringLiteral("InvalidDisplayProfile"),
+          .errorMessage = QStringLiteral(
+              "Display previews are unavailable for this authority"
+          ),
+          .snapshot = snapshot(),
+      };
+  }
   // prepareRecovery stages N+1 and its immutable generation without changing
   // authoritative desired/applied files. commitApply publishes both only
   // after an exact positive activation proof; abortApply leaves N unchanged.

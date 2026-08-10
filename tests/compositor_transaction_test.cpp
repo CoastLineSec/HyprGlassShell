@@ -178,6 +178,77 @@ struct StoreFixture final {
     ).addSecs(offset);
 }
 
+[[nodiscard]] ConnectedDisplayTopology oneDisplayTopology()
+{
+    return {
+        .outputs = QVector<ConnectedDisplay>{ConnectedDisplay{
+            .upstreamId = 7,
+            .selector = QStringLiteral("DP-1"),
+            .description = QStringLiteral("Acme Panel DP-1"),
+            .make = QStringLiteral("Acme"),
+            .model = QStringLiteral("Panel"),
+            .serial = QStringLiteral("serial-DP-1"),
+            .enabled = true,
+            .width = 2560,
+            .height = 1440,
+            .physicalWidthMm = 600,
+            .physicalHeightMm = 340,
+            .refreshRate = 144.0,
+            .x = 0,
+            .y = 0,
+            .reserved = {0, 0, 0, 0},
+            .scale = 1.25,
+            .transform = 0,
+            .modes = QVector<ConnectedDisplayMode>{ConnectedDisplayMode{
+                .width = 2560,
+                .height = 1440,
+                .refreshRate = 144.0,
+                .managedMode = QStringLiteral("2560x1440@144"),
+            }},
+            .colorManagement = QStringLiteral("srgb"),
+            .currentFormat = QStringLiteral("XRGB8888"),
+            .sdrBrightness = 1.0,
+            .sdrSaturation = 1.0,
+            .sdrMinLuminance = 0.2,
+            .sdrMaxLuminance = 80,
+        }},
+        .topologyDigest = QString(64, QLatin1Char('d')),
+    };
+}
+
+[[nodiscard]] DisplayProfile oneDisplayProfile(
+    const ConnectedDisplayTopology &topology
+)
+{
+    return {
+        .topologyDigest = topology.topologyDigest,
+        .outputs = QJsonArray{QJsonObject{
+            {QStringLiteral("selector"), QStringLiteral("DP-1")},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("mode"), QStringLiteral("2560x1440@144")},
+            {QStringLiteral("position"), QStringLiteral("0x0")},
+            {QStringLiteral("scale"), 1.25},
+            {QStringLiteral("reserved"), QJsonArray{0, 0, 0, 0}},
+            {QStringLiteral("transform"), 0},
+            {QStringLiteral("mirror"), QString()},
+            {QStringLiteral("bitdepth"), 8},
+            {QStringLiteral("cm"), QStringLiteral("srgb")},
+            {QStringLiteral("sdrEotf"), QStringLiteral("default")},
+            {QStringLiteral("sdrBrightness"), 1.0},
+            {QStringLiteral("sdrSaturation"), 1.0},
+            {QStringLiteral("vrr"), -1},
+            {QStringLiteral("icc"), QString()},
+            {QStringLiteral("supportsWideColor"), 0},
+            {QStringLiteral("supportsHdr"), 0},
+            {QStringLiteral("sdrMinLuminance"), 0.2},
+            {QStringLiteral("sdrMaxLuminance"), 80},
+            {QStringLiteral("minLuminance"), -1.0},
+            {QStringLiteral("maxLuminance"), -1},
+            {QStringLiteral("maxAvgLuminance"), -1},
+        }},
+    };
+}
+
 } // namespace
 
 class CompositorTransactionTest final : public QObject
@@ -800,6 +871,328 @@ private slots:
         QVERIFY(!QFileInfo::exists(QDir(fixture.paths.generationsPath()).filePath(
             QString::fromLatin1(nonceA)
         )));
+    }
+
+    void displayPreviewStagesOnlyMonitorsAtNPlusOne()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        auto authority = transaction(fixture.paths);
+        QVERIFY(initializeAppliedDefault(*authority));
+        const auto baseline = authority->snapshot();
+        QCOMPARE(baseline.revision, quint64(0));
+        QCOMPARE(baseline.appliedRevision, quint64(0));
+        QCOMPARE(baseline.applyState, QStringLiteral("current"));
+        const auto desiredBefore = readBytes(fixture.paths.desiredPath());
+        const auto desiredIdentity = metadata(fixture.paths.desiredPath());
+        const auto lastGoodBefore = readBytes(fixture.paths.lastGoodPath());
+        const auto activationBefore = readBytes(fixture.paths.activationPath());
+        const auto topology = oneDisplayTopology();
+        const auto profile = oneDisplayProfile(topology);
+
+        auto prepared = authority->prepareDisplayApply(
+            0, profile, topology, QString::fromLatin1(nonceB), fixedTime(1)
+        );
+        QVERIFY2(prepared.success, qPrintable(prepared.errorMessage));
+        QVERIFY(prepared.prepared.has_value());
+        QCOMPARE(prepared.prepared->revision, quint64(1));
+        QCOMPARE(prepared.prepared->requirement, ActivationRequirement::Reload);
+        QCOMPARE(prepared.snapshot.revision, quint64(0));
+        QCOMPARE(prepared.snapshot.appliedRevision, quint64(0));
+        QCOMPARE(prepared.snapshot.applyState, QStringLiteral("retained"));
+        QVERIFY(!prepared.snapshot.writable);
+        QCOMPARE(prepared.snapshot.desiredState, desiredBefore);
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        QVERIFY(sameIdentity(
+            desiredIdentity, metadata(fixture.paths.desiredPath())
+        ));
+        QCOMPARE(readBytes(fixture.paths.lastGoodPath()), lastGoodBefore);
+        QCOMPARE(readBytes(fixture.paths.activationPath()), activationBefore);
+
+        const auto pending = objectFromBytes(
+            readBytes(fixture.paths.pendingPath())
+        );
+        QCOMPARE(pending.value(QStringLiteral("kind")).toString(),
+                 QStringLiteral("display-preview"));
+        QCOMPARE(pending.value(QStringLiteral("phase")).toString(),
+                 QStringLiteral("prepared"));
+        QCOMPARE(pending.value(QStringLiteral("expectedRevision")).toString(),
+                 QStringLiteral("0"));
+        auto candidateRoot = pending.value(
+            QStringLiteral("candidateSnapshot")
+        ).toObject();
+        QCOMPARE(candidateRoot.value(QStringLiteral("revision")).toString(),
+                 QStringLiteral("1"));
+        QCOMPARE(candidateRoot.value(QStringLiteral("monitors")).toArray().size(),
+                 1);
+        QCOMPARE(
+            candidateRoot.value(QStringLiteral("monitors")).toArray().first()
+                .toObject().value(QStringLiteral("selector")).toString(),
+            QStringLiteral("DP-1")
+        );
+        auto baselineRoot = objectFromBytes(desiredBefore);
+        candidateRoot.remove(QStringLiteral("revision"));
+        candidateRoot.remove(QStringLiteral("monitors"));
+        baselineRoot.remove(QStringLiteral("revision"));
+        baselineRoot.remove(QStringLiteral("monitors"));
+        QCOMPARE(candidateRoot, baselineRoot);
+
+        const auto aborted = authority->abortApply(prepared.prepared->id);
+        QVERIFY2(aborted.success, qPrintable(aborted.errorMessage));
+        QCOMPARE(aborted.snapshot, baseline);
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        QVERIFY(sameIdentity(
+            desiredIdentity, metadata(fixture.paths.desiredPath())
+        ));
+        QCOMPARE(readBytes(fixture.paths.lastGoodPath()), lastGoodBefore);
+        QCOMPARE(readBytes(fixture.paths.activationPath()), activationBefore);
+
+        prepared = authority->prepareDisplayApply(
+            0, profile, topology, QString::fromLatin1(nonceC), fixedTime(2)
+        );
+        QVERIFY2(prepared.success, qPrintable(prepared.errorMessage));
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        const auto committed = authority->commitApply(prepared.prepared->id);
+        QVERIFY2(committed.success, qPrintable(committed.errorMessage));
+        QVERIFY(committed.commitDecisionDurable);
+        QVERIFY(committed.commitDecisionMayExist);
+        QCOMPARE(committed.snapshot.revision, quint64(1));
+        QCOMPARE(committed.snapshot.appliedRevision, quint64(1));
+        QCOMPARE(committed.snapshot.applyState, QStringLiteral("current"));
+        QVERIFY(committed.snapshot.writable);
+        const auto desiredAfter = parseDesiredState(
+            committed.snapshot.desiredState, catalog, actionCatalog
+        );
+        QVERIFY2(desiredAfter, qPrintable(describeErrors(desiredAfter.errors)));
+        QCOMPARE(desiredAfter.value->revision, quint64(1));
+        QCOMPARE(desiredAfter.value->monitors.size(), 1);
+        QCOMPARE(desiredAfter.value->monitors.front().selector,
+                 QStringLiteral("DP-1"));
+        QCOMPARE(readBytes(fixture.paths.desiredPath()),
+                 committed.snapshot.desiredState);
+        QCOMPARE(readBytes(fixture.paths.lastGoodPath()),
+                 committed.snapshot.desiredState);
+        QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+    }
+
+    void displayPreviewRequiresExactAppliedBaselineAndNoPending()
+    {
+        const auto topology = oneDisplayTopology();
+        const auto profile = oneDisplayProfile(topology);
+        {
+            StoreFixture fixture;
+            QVERIFY(fixture.temporary.isValid());
+            auto authority = transaction(fixture.paths);
+            QVERIFY(authority->initialize().success);
+            const auto rejected = authority->prepareDisplayApply(
+                0, profile, topology, QString::fromLatin1(nonceA), fixedTime()
+            );
+            QVERIFY(!rejected.success);
+            QCOMPARE(rejected.errorCode,
+                     QStringLiteral("DisplayScopeConflict"));
+            QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+        }
+        {
+            StoreFixture fixture;
+            QVERIFY(fixture.temporary.isValid());
+            auto authority = transaction(fixture.paths);
+            QVERIFY(initializeAppliedDefault(*authority));
+            const auto stale = authority->prepareDisplayApply(
+                1, profile, topology, QString::fromLatin1(nonceB), fixedTime(1)
+            );
+            QVERIFY(!stale.success);
+            QCOMPARE(stale.errorCode, QStringLiteral("StaleRevision"));
+            QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+
+            const auto ordinary = authority->prepareApply(
+                0, QString::fromLatin1(nonceB), fixedTime(1)
+            );
+            QVERIFY(ordinary.success);
+            const auto pending = authority->prepareDisplayApply(
+                0, profile, topology, QString::fromLatin1(nonceC), fixedTime(2)
+            );
+            QVERIFY(!pending.success);
+            QCOMPARE(pending.errorCode, QStringLiteral("ConfirmationPending"));
+            QVERIFY(authority->abortApply(ordinary.prepared->id).success);
+
+            const auto replaced = authority->replaceSnapshot(
+                0, serializeDesiredState(permissionState(0))
+            );
+            QVERIFY(replaced.success);
+            QCOMPARE(replaced.snapshot.revision, quint64(1));
+            const auto dirty = authority->prepareDisplayApply(
+                1, profile, topology, QString::fromLatin1(nonceD), fixedTime(3)
+            );
+            QVERIFY(!dirty.success);
+            QCOMPARE(dirty.errorCode,
+                     QStringLiteral("DisplayScopeConflict"));
+            QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+        }
+    }
+
+    void preparedDisplayPreviewCrashKeepsAuthorityAtN()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        QByteArray desiredBefore;
+        QByteArray lastGoodBefore;
+        QByteArray activationBefore;
+        QString baselineGeneration;
+        struct stat desiredIdentity {};
+        {
+            auto authority = transaction(fixture.paths);
+            QVERIFY(initializeAppliedDefault(*authority));
+            desiredBefore = readBytes(fixture.paths.desiredPath());
+            lastGoodBefore = readBytes(fixture.paths.lastGoodPath());
+            activationBefore = readBytes(fixture.paths.activationPath());
+            desiredIdentity = metadata(fixture.paths.desiredPath());
+            baselineGeneration = authority->snapshot().generationDigest;
+            const auto topology = oneDisplayTopology();
+            const auto prepared = authority->prepareDisplayApply(
+                0, oneDisplayProfile(topology), topology,
+                QString::fromLatin1(nonceB), fixedTime(1)
+            );
+            QVERIFY2(prepared.success, qPrintable(prepared.errorMessage));
+            QVERIFY(QFileInfo::exists(fixture.paths.pendingPath()));
+            QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        }
+
+        auto restarted = transaction(fixture.paths);
+        const auto initialized = restarted->initialize();
+        QVERIFY2(initialized.success, qPrintable(initialized.errorMessage));
+        QCOMPARE(initialized.snapshot.loadState, QStringLiteral("recovered"));
+        QCOMPARE(initialized.snapshot.revision, quint64(0));
+        QCOMPARE(initialized.snapshot.appliedRevision, quint64(0));
+        QCOMPARE(initialized.snapshot.applyState, QStringLiteral("current"));
+        QCOMPARE(initialized.snapshot.generationDigest, baselineGeneration);
+        QCOMPARE(initialized.snapshot.desiredState, desiredBefore);
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        QVERIFY(sameIdentity(
+            desiredIdentity, metadata(fixture.paths.desiredPath())
+        ));
+        QCOMPARE(readBytes(fixture.paths.lastGoodPath()), lastGoodBefore);
+        QCOMPARE(readBytes(fixture.paths.activationPath()), activationBefore);
+        QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+    }
+
+    void uncertainDisplayCommitCrashRollsAuthorityForward()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        QString previewGeneration;
+        QByteArray candidateBytes;
+        {
+            auto authority = transaction(fixture.paths);
+            QVERIFY(initializeAppliedDefault(*authority));
+        }
+        int pendingPublications = 0;
+        fixture.paths.faultHook = [&pendingPublications](
+            const StoreFaultPoint point, const StoreFile file
+        ) {
+            return file == StoreFile::Pending
+                && point
+                    == StoreFaultPoint::AfterPublishRenameBeforeDirectorySync
+                && ++pendingPublications == 2;
+        };
+        {
+            auto authority = transaction(fixture.paths);
+            const auto initialized = authority->initialize();
+            QVERIFY2(initialized.success, qPrintable(initialized.errorMessage));
+            const auto topology = oneDisplayTopology();
+            const auto prepared = authority->prepareDisplayApply(
+                0, oneDisplayProfile(topology), topology,
+                QString::fromLatin1(nonceB), fixedTime(1)
+            );
+            QVERIFY2(prepared.success, qPrintable(prepared.errorMessage));
+            previewGeneration = prepared.prepared->id;
+            auto pending = objectFromBytes(readBytes(fixture.paths.pendingPath()));
+            candidateBytes = canonicalObject(
+                pending.value(QStringLiteral("candidateSnapshot")).toObject()
+            );
+            const auto committed = authority->commitApply(previewGeneration);
+            QVERIFY(!committed.success);
+            QCOMPARE(committed.errorCode, QStringLiteral("PersistenceFailed"));
+            QVERIFY(!committed.commitDecisionDurable);
+            QVERIFY(committed.commitDecisionMayExist);
+            QVERIFY(!committed.snapshot.available);
+            pending = objectFromBytes(readBytes(fixture.paths.pendingPath()));
+            QCOMPARE(pending.value(QStringLiteral("kind")).toString(),
+                     QStringLiteral("display-preview"));
+            QCOMPARE(pending.value(QStringLiteral("phase")).toString(),
+                     QStringLiteral("committing"));
+            QCOMPARE(readBytes(fixture.paths.desiredPath()) == candidateBytes,
+                     false);
+        }
+
+        fixture.paths.faultHook = {};
+        auto restarted = transaction(fixture.paths);
+        const auto initialized = restarted->initialize();
+        QVERIFY2(initialized.success, qPrintable(initialized.errorMessage));
+        QCOMPARE(initialized.snapshot.loadState, QStringLiteral("recovered"));
+        QCOMPARE(initialized.snapshot.revision, quint64(1));
+        QCOMPARE(initialized.snapshot.appliedRevision, quint64(1));
+        QCOMPARE(initialized.snapshot.applyState, QStringLiteral("current"));
+        QCOMPARE(initialized.snapshot.generationDigest, previewGeneration);
+        QCOMPARE(initialized.snapshot.desiredState, candidateBytes);
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), candidateBytes);
+        QCOMPARE(readBytes(fixture.paths.lastGoodPath()), candidateBytes);
+        QVERIFY(!readBytes(fixture.paths.activationPath()).isEmpty());
+        QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
+    }
+
+    void displayPreparedJournalUncertaintyFailsClosedAndRestartsAtN()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        QByteArray desiredBefore;
+        QString baselineGeneration;
+        {
+            auto authority = transaction(fixture.paths);
+            QVERIFY(initializeAppliedDefault(*authority));
+            desiredBefore = authority->snapshot().desiredState;
+            baselineGeneration = authority->snapshot().generationDigest;
+        }
+        fixture.paths.faultHook = [](
+                const StoreFaultPoint point, const StoreFile file
+            ) {
+                return file == StoreFile::Pending
+                    && point
+                        == StoreFaultPoint::AfterPublishRenameBeforeDirectorySync;
+            };
+        {
+            auto authority = transaction(fixture.paths);
+            QVERIFY(authority->initialize().success);
+            const auto topology = oneDisplayTopology();
+            const auto prepared = authority->prepareDisplayApply(
+                0, oneDisplayProfile(topology), topology,
+                QString::fromLatin1(nonceB), fixedTime(1)
+            );
+            QVERIFY(!prepared.success);
+            QCOMPARE(prepared.errorCode, QStringLiteral("PersistenceFailed"));
+            QVERIFY(!prepared.snapshot.available);
+            QCOMPARE(prepared.snapshot.loadState, QStringLiteral("unavailable"));
+            const auto pending = objectFromBytes(
+                readBytes(fixture.paths.pendingPath())
+            );
+            QCOMPARE(pending.value(QStringLiteral("kind")).toString(),
+                     QStringLiteral("display-preview"));
+            QCOMPARE(pending.value(QStringLiteral("phase")).toString(),
+                     QStringLiteral("prepared"));
+            QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        }
+
+        fixture.paths.faultHook = {};
+        auto restarted = transaction(fixture.paths);
+        const auto initialized = restarted->initialize();
+        QVERIFY2(initialized.success, qPrintable(initialized.errorMessage));
+        QCOMPARE(initialized.snapshot.loadState, QStringLiteral("recovered"));
+        QCOMPARE(initialized.snapshot.revision, quint64(0));
+        QCOMPARE(initialized.snapshot.appliedRevision, quint64(0));
+        QCOMPARE(initialized.snapshot.applyState, QStringLiteral("current"));
+        QCOMPARE(initialized.snapshot.generationDigest, baselineGeneration);
+        QCOMPARE(initialized.snapshot.desiredState, desiredBefore);
+        QCOMPARE(readBytes(fixture.paths.desiredPath()), desiredBefore);
+        QVERIFY(!QFileInfo::exists(fixture.paths.pendingPath()));
     }
 
     void reloadOnlyLastGoodRecoversWithReloadRequirement()

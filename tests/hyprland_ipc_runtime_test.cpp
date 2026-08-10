@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -28,6 +29,28 @@ namespace {
 constexpr auto signature = "hyprshelld-ipc-test";
 constexpr auto nonce =
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+[[nodiscard]] QByteArray validMonitorReply()
+{
+    return QByteArrayLiteral(R"json([{
+        "id":7,"name":"DP-1","description":"Acme Panel DP-1",
+        "make":"Acme","model":"Panel","serial":"serial-DP-1",
+        "width":2560,"height":1440,"physicalWidth":600,
+        "physicalHeight":340,"refreshRate":143.9987,"x":0,"y":0,
+        "activeWorkspace":{"id":1,"name":"1"},
+        "specialWorkspace":{"id":0,"name":""},
+        "reserved":[0,0,0,0],"scale":1.25,"transform":0,
+        "focused":true,"dpmsStatus":true,"vrr":false,
+        "solitary":"0","solitaryBlockedBy":null,
+        "activelyTearing":false,"tearingBlockedBy":null,
+        "directScanoutTo":"0","directScanoutBlockedBy":null,
+        "disabled":false,"currentFormat":"XRGB8888","mirrorOf":"none",
+        "availableModes":["2560x1440@144.00Hz","1920x1080@60.00Hz"],
+        "colorManagementPreset":"srgb","sdrBrightness":1.0,
+        "sdrSaturation":1.0,"sdrMinLuminance":0.2,
+        "sdrMaxLuminance":80,"hardwareCursorsInUse":true
+    }])json");
+}
 
 [[nodiscard]] QByteArray environmentValue(
     const char *name,
@@ -240,6 +263,15 @@ void appendCommand(const QString &path, const QByteArrayView command)
     const auto reloadReply = environmentValue(
         "HYPRSHELLD_FAKE_RELOAD_REPLY", "ok"
     );
+    auto monitorsReply = environmentValue(
+        "HYPRSHELLD_FAKE_MONITORS", validMonitorReply()
+    );
+    const auto monitorReplyBytes = environmentValue(
+        "HYPRSHELLD_FAKE_MONITOR_BYTES", "0"
+    ).toInt();
+    if (monitorReplyBytes > 0) {
+        monitorsReply = QByteArray(monitorReplyBytes, 'x');
+    }
     const auto logPath = QFile::decodeName(qgetenv("HYPRSHELLD_FAKE_LOG"));
     const auto delay = environmentValue("HYPRSHELLD_FAKE_DELAY_MS", "0")
                            .toInt();
@@ -247,6 +279,7 @@ void appendCommand(const QString &path, const QByteArrayView command)
     const auto replaceEndpoint = environmentValue(
         "HYPRSHELLD_FAKE_REPLACE_ENDPOINT"
     );
+    const auto exitAfter = environmentValue("HYPRSHELLD_FAKE_EXIT_AFTER");
     int reloadCount = 0;
     int errorCount = 0;
     int statusCount = 0;
@@ -269,6 +302,8 @@ void appendCommand(const QString &path, const QByteArrayView command)
         bool preflightReload = false;
         if (command == "j/version") {
             reply = version;
+        } else if (command == "j/monitors all") {
+            reply = monitorsReply;
         } else if (command == "j/configerrors") {
             reply = errorCount++ == 0 ? baselineErrors : observedErrors;
         } else if (command == "j/status") {
@@ -301,7 +336,9 @@ void appendCommand(const QString &path, const QByteArrayView command)
 
         if (!endpointReplaced
             && ((replaceEndpoint == "control" && command == "j/version")
-                || (replaceEndpoint == "event" && preflightReload))) {
+                || (replaceEndpoint == "event" && preflightReload)
+                || (replaceEndpoint == "event-query"
+                    && command == "j/version"))) {
             auto &listener = replaceEndpoint == "control"
                 ? controlListener : eventListener;
             const auto &path = replaceEndpoint == "control"
@@ -310,9 +347,36 @@ void appendCommand(const QString &path, const QByteArrayView command)
             endpointReplaced = true;
         }
 
+        if (!endpointReplaced && replaceEndpoint == "lock"
+            && command == "j/monitors all") {
+            QFile replacement(lock.fileName());
+            if (!replacement.open(QIODevice::WriteOnly | QIODevice::Truncate)
+                || replacement.write(
+                       QByteArray::number(static_cast<qint64>(::getpid()) + 1)
+                       + QByteArrayLiteral("\nwayland-test\n")
+                   ) <= 0
+                || !replacement.flush()) {
+                break;
+            }
+            replacement.close();
+            endpointReplaced = true;
+        }
+        if (!endpointReplaced && replaceEndpoint == "instance"
+            && command == "j/monitors all") {
+            const auto moved = instanceRoot + QStringLiteral(".replaced");
+            if (!QDir().rename(instanceRoot, moved)
+                || !QDir().mkpath(instanceRoot)
+                || ::chmod(QFile::encodeName(instanceRoot).constData(), 0700)
+                    != 0) {
+                break;
+            }
+            endpointReplaced = true;
+        }
+
         const auto replied = writeAll(client, reply);
         ::shutdown(client, SHUT_WR);
         ::close(client);
+        if (command == exitAfter) break;
         if (eventMode == "eof" && reloadCount >= 2
             && (command == "reload" || command == "reload full-reset")) {
             ::shutdown(event, SHUT_RDWR);
@@ -336,8 +400,11 @@ struct FakeOptions final {
     QByteArray finalProvider = "lua";
     QByteArray finalEvents = "proper";
     QByteArray reloadReply = "ok";
+    QByteArray monitors = validMonitorReply();
+    int monitorReplyBytes = 0;
     QByteArray lock = "exact";
     QByteArray replaceEndpoint;
+    QByteArray exitAfter;
     bool stale = false;
     bool explicitEnvironmentConfig = false;
     bool safeMode = false;
@@ -417,6 +484,14 @@ public:
             QString::fromLatin1(options.reloadReply)
         );
         environment.insert(
+            QStringLiteral("HYPRSHELLD_FAKE_MONITORS"),
+            QString::fromUtf8(options.monitors)
+        );
+        environment.insert(
+            QStringLiteral("HYPRSHELLD_FAKE_MONITOR_BYTES"),
+            QString::number(options.monitorReplyBytes)
+        );
+        environment.insert(
             QStringLiteral("HYPRSHELLD_FAKE_LOCK"),
             QString::fromLatin1(options.lock)
         );
@@ -427,6 +502,10 @@ public:
         environment.insert(
             QStringLiteral("HYPRSHELLD_FAKE_REPLACE_ENDPOINT"),
             QString::fromLatin1(options.replaceEndpoint)
+        );
+        environment.insert(
+            QStringLiteral("HYPRSHELLD_FAKE_EXIT_AFTER"),
+            QString::fromLatin1(options.exitAfter)
         );
         environment.insert(
             QStringLiteral("HYPRSHELLD_FAKE_DELAY_MS"),
@@ -540,6 +619,178 @@ class HyprlandIpcRuntimeTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void connectedDisplaysUsesExactAuthenticatedRawIpc()
+    {
+        FakePeer peer;
+        QVERIFY2(peer.start(), qPrintable(peer.error));
+        auto runtime = peer.runtime();
+        const auto connected = runtime->connectedDisplays();
+        QVERIFY2(connected.success, qPrintable(connected.errorMessage));
+        QVERIFY(connected.topology.has_value());
+        QCOMPARE(connected.runtimeIdentity.size(), 64);
+        QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{64}$"))
+                    .match(connected.runtimeIdentity).hasMatch());
+        QCOMPARE(connected.topology->outputs.size(), 1);
+        const auto &output = connected.topology->outputs.front();
+        QCOMPARE(output.upstreamId, qint64(7));
+        QCOMPARE(output.selector, QStringLiteral("DP-1"));
+        QCOMPARE(output.width, qint32(2560));
+        QCOMPARE(output.height, qint32(1440));
+        QCOMPARE(output.scale, 1.25);
+        QCOMPARE(output.currentFormat, QStringLiteral("XRGB8888"));
+        QCOMPARE(output.modes.size(), 2);
+        QVERIFY(connected.topology->document.endsWith('\n'));
+        QVERIFY(connected.topology->document.contains(
+            QByteArrayLiteral("\"topologyDigest\"")
+        ));
+        QVERIFY(!connected.topology->document.contains(
+            QByteArrayLiteral("solitary")
+        ));
+        peer.stop();
+        QCOMPARE(peer.commands(), QStringList({
+            QStringLiteral("j/version"),
+            QStringLiteral("j/monitors all"),
+        }));
+    }
+
+    void connectedDisplaysRejectsMalformedAndOversizeReplies_data()
+    {
+        QTest::addColumn<QByteArray>("reply");
+        QTest::addColumn<int>("replyBytes");
+        QTest::addColumn<QString>("errorCode");
+        QTest::newRow("not-an-array")
+            << QByteArrayLiteral("{}")
+            << 0
+            << QStringLiteral("VerificationFailed");
+        QTest::newRow("malformed-json")
+            << QByteArrayLiteral("[{]")
+            << 0
+            << QStringLiteral("VerificationFailed");
+        auto missingPinnedField = validMonitorReply();
+        missingPinnedField.replace(
+            QByteArrayLiteral("\"reserved\":[0,0,0,0],"), QByteArray()
+        );
+        QTest::newRow("missing-pinned-field")
+            << missingPinnedField
+            << 0
+            << QStringLiteral("VerificationFailed");
+        QTest::newRow("reply-over-512-kib")
+            << QByteArray()
+            << (512 * 1024 + 1)
+            << QStringLiteral("RuntimeUnavailable");
+    }
+
+    void connectedDisplaysRejectsMalformedAndOversizeReplies()
+    {
+        QFETCH(QByteArray, reply);
+        QFETCH(int, replyBytes);
+        QFETCH(QString, errorCode);
+        FakePeer peer;
+        FakeOptions options;
+        options.monitors = reply;
+        options.monitorReplyBytes = replyBytes;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(1500);
+        const auto connected = runtime->connectedDisplays();
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, errorCode);
+        QVERIFY(!connected.topology.has_value());
+        QVERIFY(connected.runtimeIdentity.isEmpty());
+    }
+
+    void connectedDisplaysHonorsOneClampedDeadline()
+    {
+        FakePeer peer;
+        FakeOptions options;
+        options.delayMilliseconds = 80;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(2500);
+        QElapsedTimer elapsed;
+        elapsed.start();
+        const auto connected = runtime->connectedDisplays(120);
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(elapsed.elapsed() < 700);
+
+        elapsed.restart();
+        const auto expired = runtime->connectedDisplays(0);
+        QVERIFY(!expired.success);
+        QCOMPARE(expired.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(elapsed.elapsed() < 100);
+    }
+
+    void connectedDisplaysRevalidatesEveryPinnedIdentity_data()
+    {
+        QTest::addColumn<QByteArray>("lockMode");
+        QTest::addColumn<QByteArray>("replacement");
+        QTest::addColumn<QByteArray>("exitAfter");
+        QTest::newRow("lock-pid-mismatch")
+            << QByteArray("wrong-pid") << QByteArray() << QByteArray();
+        QTest::newRow("control-socket-replaced")
+            << QByteArray("exact") << QByteArray("control") << QByteArray();
+        QTest::newRow("event-socket-replaced")
+            << QByteArray("exact") << QByteArray("event-query") << QByteArray();
+        QTest::newRow("lock-pid-changed-after-query")
+            << QByteArray("exact") << QByteArray("lock") << QByteArray();
+        QTest::newRow("instance-directory-replaced")
+            << QByteArray("exact") << QByteArray("instance") << QByteArray();
+        QTest::newRow("peer-dies-after-version")
+            << QByteArray("exact") << QByteArray()
+            << QByteArray("j/version");
+        QTest::newRow("peer-dies-after-monitors")
+            << QByteArray("exact") << QByteArray()
+            << QByteArray("j/monitors all");
+    }
+
+    void connectedDisplaysRevalidatesEveryPinnedIdentity()
+    {
+        QFETCH(QByteArray, lockMode);
+        QFETCH(QByteArray, replacement);
+        QFETCH(QByteArray, exitAfter);
+        FakePeer peer;
+        FakeOptions options;
+        options.lock = lockMode;
+        options.replaceEndpoint = replacement;
+        options.exitAfter = exitAfter;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(1200);
+        const auto connected = runtime->connectedDisplays();
+        QVERIFY(!connected.success);
+        QVERIFY(
+            connected.errorCode == QStringLiteral("VerificationFailed")
+            || connected.errorCode == QStringLiteral("RuntimeUnavailable")
+        );
+        QVERIFY(!connected.topology.has_value());
+    }
+
+    void connectedDisplaysRejectsInvalidFreshInstanceSignature()
+    {
+        FakePeer peer;
+        QVERIFY2(peer.start(), qPrintable(peer.error));
+        for (const auto &provided : {
+                 QString(), QStringLiteral("first\nsecond"),
+                 QStringLiteral("../instance")}) {
+            HyprlandIpcRuntime runtime(
+                peer.runtimeRoot, QString::fromLatin1(signature),
+                peer.stableEntrypoint, 1000,
+                [provided](const int) {
+                    return HyprlandIpcRuntime::InstanceSignatureResult{
+                        .success = true,
+                        .signature = provided,
+                    };
+                }
+            );
+            runtime.setVersionPolicy({
+                .major = 0, .minor = 56, .minimumPatch = 1,
+                .maximumPatch = 9,
+            });
+            const auto connected = runtime.connectedDisplays();
+            QVERIFY(!connected.success);
+            QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        }
+        QVERIFY(peer.commands().isEmpty());
+    }
+
     void managedReloadProvesOrderedNonceBoundary()
     {
         FakePeer peer;

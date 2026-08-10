@@ -45,6 +45,13 @@ public:
         const QString &activationNonce,
         const QDateTime &createdAtUtc
     ) override;
+    [[nodiscard]] AuthorityResult prepareDisplayApply(
+        quint64 expectedRevision,
+        const Hyprland::DisplayProfile &profile,
+        const Hyprland::ConnectedDisplayTopology &topology,
+        const QString &activationNonce,
+        const QDateTime &createdAtUtc
+    ) override;
     [[nodiscard]] AuthorityResult commitApply(
         const QString &generation
     ) override;

@@ -16,6 +16,7 @@ namespace HyprShelld::Compositor {
 enum class ManagementState {
     Unmanaged,
     Managed,
+    Preview,
     Conflict,
 };
 
@@ -51,6 +52,7 @@ struct ActivationResult final {
     QString errorCode;
     QString errorMessage;
     QString generation;
+    QString runtimeIdentity;
     ActivationRequirement confirmedRequirement =
         ActivationRequirement::Reload;
     ActivationReceipt receipt;
@@ -78,6 +80,15 @@ struct RuntimeSession final {
     QByteArray token;
     QByteArray baselineConfigErrors;
     QString baselineProvider;
+    QString runtimeIdentity;
+};
+
+struct ConnectedDisplaysResult final {
+    bool success = false;
+    QString errorCode;
+    QString errorMessage;
+    QString runtimeIdentity;
+    std::optional<Hyprland::ConnectedDisplayTopology> topology;
 };
 
 enum class RuntimeActivationMode {
@@ -121,6 +132,26 @@ public:
         QStringView expectedProvider
     ) = 0;
     virtual void cancel(const RuntimeSession &session) noexcept = 0;
+    [[nodiscard]] virtual ConnectedDisplaysResult connectedDisplays()
+    {
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "Connected-display discovery is unavailable"
+            ),
+        };
+    }
+    // A positive bound caps the complete discovery operation. The fallback
+    // preserves source compatibility for test runtimes; production overrides
+    // it and enforces the bound with one monotonic operation deadline.
+    [[nodiscard]] virtual ConnectedDisplaysResult connectedDisplays(
+        int maximumWaitMilliseconds
+    )
+    {
+        Q_UNUSED(maximumWaitMilliseconds)
+        return connectedDisplays();
+    }
 };
 
 struct EntrypointPublishResult final {
@@ -251,6 +282,37 @@ public:
         const ActivationReceipt &,
         QStringView
     ) { return {.success = true, .status = status()}; }
+    [[nodiscard]] virtual ConnectedDisplaysResult connectedDisplays()
+    {
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "Connected-display discovery is unavailable"
+            ),
+        };
+    }
+    [[nodiscard]] virtual ConnectedDisplaysResult connectedDisplays(
+        int maximumWaitMilliseconds
+    )
+    {
+        Q_UNUSED(maximumWaitMilliseconds)
+        return connectedDisplays();
+    }
+    [[nodiscard]] virtual BackendResult verifyPendingTarget(
+        const ActivationReceipt &,
+        QStringView
+    ) const
+    {
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("VerificationFailed"),
+            .errorMessage = QStringLiteral(
+                "Pending activation verification is unavailable"
+            ),
+            .status = status(),
+        };
+    }
 };
 
 // The compatibility implementation remains available to narrow tests and
@@ -357,6 +419,10 @@ public:
         QStringView expectedProvider
     ) override;
     void cancel(const RuntimeSession &session) noexcept override;
+    [[nodiscard]] ConnectedDisplaysResult connectedDisplays() override;
+    [[nodiscard]] ConnectedDisplaysResult connectedDisplays(
+        int maximumWaitMilliseconds
+    ) override;
 
 private:
     struct Impl;
@@ -396,6 +462,14 @@ public:
         const ActivationReceipt &receipt,
         QStringView committedGeneration
     ) override;
+    [[nodiscard]] ConnectedDisplaysResult connectedDisplays() override;
+    [[nodiscard]] ConnectedDisplaysResult connectedDisplays(
+        int maximumWaitMilliseconds
+    ) override;
+    [[nodiscard]] BackendResult verifyPendingTarget(
+        const ActivationReceipt &receipt,
+        QStringView generation
+    ) const override;
 
 private:
     [[nodiscard]] ActivationResult publishAndActivate(

@@ -411,6 +411,36 @@
       "sha256": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"
     }
   ],
+  "monitorSources": [
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "17dddd63fca2d367f81eec5f0b6785cc7c971998fab5b786f908905b2327743d"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/output/Monitor.cpp",
+      "sha256": "5f6dc48a7cb6cda7b1c0859cbce72023c0102d865d7a67f5210b59587f2b5801"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/output/Monitor.cpp",
+      "sha256": "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927"
+    }
+  ],
   "documentation": [
     "https://wiki.hypr.land/0.56.0/Configuring/Start/",
     "https://wiki.hypr.land/0.56.0/Configuring/Basics/Variables/",

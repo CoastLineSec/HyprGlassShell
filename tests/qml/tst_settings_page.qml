@@ -115,6 +115,105 @@ TestCase {
         }
     }
 
+    Component {
+        id: displaysPageComponent
+
+        Window {
+            width: 820
+            height: 900
+            visible: true
+
+            property alias page: displaysPage
+
+            Settings.DisplaysPage {
+                id: displaysPage
+
+                anchors.fill: parent
+            }
+        }
+    }
+
+    function displayRecord(id, selector, enabled, mirror, vrr) {
+        return {
+            id: id,
+            selector: selector,
+            enabled: enabled,
+            mode: "1920x1080@60",
+            position: "0x0",
+            scale: 1,
+            reserved: [0, 0, 0, 0],
+            transform: 0,
+            mirror: mirror || "",
+            bitdepth: 8,
+            cm: "auto",
+            sdrEotf: "default",
+            sdrBrightness: 1,
+            sdrSaturation: 1,
+            vrr: vrr === undefined ? -1 : vrr,
+            icc: "",
+            supportsWideColor: -1,
+            supportsHdr: -1,
+            sdrMinLuminance: 0.2,
+            sdrMaxLuminance: 80,
+            minLuminance: -1,
+            maxLuminance: -1,
+            maxAvgLuminance: -1
+        };
+    }
+
+    function connectedDisplay(selector, enabled, x, format, sdrMinimum) {
+        return {
+            selector: selector,
+            description: selector + " test display",
+            make: "Example",
+            model: "Panel",
+            serial: selector + "-serial",
+            enabled: enabled,
+            width: 1920,
+            height: 1080,
+            physicalWidthMm: 520,
+            physicalHeightMm: 290,
+            refreshRate: 60,
+            x: x || 0,
+            y: 0,
+            scale: 1,
+            transform: 0,
+            focused: x === 0,
+            dpms: true,
+            vrrActive: false,
+            mirrorOf: "",
+            modes: [{
+                width: 1920,
+                height: 1080,
+                refreshRate: 60,
+                managedMode: "1920x1080@60"
+            }],
+            colorManagement: "srgb",
+            currentFormat: format || "XRGB8888",
+            sdrBrightness: 1,
+            sdrSaturation: 1,
+            sdrMinLuminance: sdrMinimum === undefined ? 0.2 : sdrMinimum,
+            sdrMaxLuminance: 80
+        };
+    }
+
+    function configureDisplaysPage(page, records, topology) {
+        page.serviceAvailable = true;
+        page.writable = true;
+        page.revision = 7;
+        page.appliedRevision = 7;
+        page.loadState = "normal";
+        page.managementState = "managed";
+        page.applyState = "current";
+        page.requiredActivation = "none";
+        page.confirmationState = "idle";
+        page.snapshot = { monitors: records };
+        page.connectedDisplays = topology;
+        page.topologyDigest =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        page.synchronizeDraft(false);
+    }
+
     function workspaceCatalogRecord() {
         return {
             id: "io.github.coastlinesec.hyprshelld.workspace-switcher",
@@ -2142,6 +2241,325 @@ TestCase {
         compare(activeWorkspace.workspaceActive, true);
         compare(urgentWorkspace.workspaceUrgent, true);
         compare(findChild(page, "workspaceIndicator-3"), null);
+    }
+
+    function test_displayDraftRequiresAChangeAndSafeMirrorGraph() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const outputs = [
+            displayRecord("display-a", "DP-1", true, "", -1),
+            displayRecord("display-b", "DP-2", false, "", -1),
+            displayRecord("display-c", "DP-3", true, "DP-1", -1),
+            displayRecord("display-d", "DP-4", true, "", -1)
+        ];
+        const topology = [
+            connectedDisplay("DP-1", true, 0),
+            connectedDisplay("DP-2", false, 1920),
+            connectedDisplay("DP-3", true, 3840),
+            connectedDisplay("DP-4", true, 5760)
+        ];
+        configureDisplaysPage(page, outputs, topology);
+        waitForRendering(page);
+        wait(0);
+
+        compare(page.draftDirty, false);
+        compare(page.previewEnabled, false);
+
+        const card = findChild(page, "displaySettingsCard");
+        verify(card !== null);
+        compare(card.availableMirrors.length, 2);
+        compare(card.availableMirrors[0].value, "");
+        compare(card.availableMirrors[1].value, "DP-4");
+
+        let changed = page.clone(page.outputById("display-a"));
+        changed.scale = 1.25;
+        page.replaceOutput(changed);
+        compare(page.draftDirty, true);
+        compare(page.draftValidationMessage, "");
+        compare(page.previewEnabled, true);
+
+        changed = page.clone(page.outputById("display-a"));
+        changed.scale = 1;
+        page.replaceOutput(changed);
+        compare(page.draftDirty, false);
+        compare(page.previewEnabled, false);
+
+        changed = page.clone(page.outputById("display-a"));
+        changed.mirror = "DP-2";
+        page.replaceOutput(changed);
+        verify(page.draftValidationMessage.includes("disabled"));
+        compare(page.previewEnabled, false);
+
+        changed = page.clone(page.outputById("display-a"));
+        changed.mirror = "DP-1";
+        page.replaceOutput(changed);
+        verify(page.draftValidationMessage.includes("itself"));
+        compare(page.previewEnabled, false);
+
+        changed = page.clone(page.outputById("display-a"));
+        changed.mirror = "DP-4";
+        page.replaceOutput(changed);
+        verify(page.draftValidationMessage.includes("chains"));
+        compare(page.previewEnabled, false);
+
+        let directTarget = page.clone(page.outputById("display-d"));
+        directTarget.mirror = "DP-1";
+        page.replaceOutput(directTarget);
+        verify(page.draftValidationMessage.includes("not a mirror"));
+        compare(page.previewEnabled, false);
+    }
+
+    function test_displayMirrorTracksTargetPosition() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const primary = displayRecord("display-a", "DP-1", true, "", -1);
+        const secondary = displayRecord("display-b", "DP-2", true, "", -1);
+        primary.position = "0x0";
+        secondary.position = "1920x0";
+        configureDisplaysPage(
+            page,
+            [primary, secondary],
+            [
+                connectedDisplay("DP-1", true, 0),
+                connectedDisplay("DP-2", true, 1920)
+            ]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        let mirrored = page.clone(page.outputById("display-b"));
+        mirrored.mirror = "DP-1";
+        page.replaceOutput(mirrored);
+        compare(page.outputById("display-b").position, "0x0");
+        compare(page.draftValidationMessage, "");
+
+        let movedTarget = page.clone(page.outputById("display-a"));
+        movedTarget.position = "320x180";
+        page.replaceOutput(movedTarget);
+        compare(page.outputById("display-a").position, "320x180");
+        compare(page.outputById("display-b").position, "320x180");
+        compare(page.draftValidationMessage, "");
+        compare(page.previewEnabled, true);
+    }
+
+    function test_displayAdvancedValuesAndNewConnectorSeeds() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", 3)],
+            [
+                connectedDisplay("DP-1", true, 0),
+                connectedDisplay(
+                    "DP-2",
+                    true,
+                    1920,
+                    "XRGB2101010",
+                    0.2
+                ),
+                connectedDisplay("DP-3", true, 3840, "XRGB8888", -20)
+            ]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        const vrr = findChild(page, "displayVrrComboBox");
+        verify(vrr !== null);
+        compare(vrr.currentValue, 3);
+
+        const tenBit = page.outputById("display-DP-2");
+        verify(tenBit !== null);
+        compare(tenBit.bitdepth, 10);
+        compare(tenBit.cm, "srgb");
+        compare(tenBit.sdrMinLuminance, 0.2);
+
+        const invalidMinimum = page.outputById("display-DP-3");
+        verify(invalidMinimum !== null);
+        compare(invalidMinimum.bitdepth, 8);
+        compare(invalidMinimum.sdrMinLuminance, 0.2);
+    }
+
+    function test_displayDraftUsesTheWinningExactConnectorRule() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const first = displayRecord(
+            "older-display-rule",
+            "DP-1",
+            true,
+            "",
+            0
+        );
+        const winning = displayRecord(
+            "winning-display-rule",
+            "DP-1",
+            true,
+            "",
+            3
+        );
+        winning.icc = "/profiles/winning.icc";
+        configureDisplaysPage(
+            page,
+            [first, winning],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        compare(page.draftOutputs.length, 1);
+        compare(page.draftOutputs[0].id, "winning-display-rule");
+        compare(page.draftOutputs[0].vrr, 3);
+        compare(page.draftOutputs[0].icc, "/profiles/winning.icc");
+    }
+
+    function test_displayHotplugRefreshesAndInvalidatesTheDraft() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        const changed = page.clone(page.outputById("display-a"));
+        changed.scale = 1.25;
+        page.replaceOutput(changed);
+        compare(page.draftDirty, true);
+        compare(page.previewEnabled, true);
+
+        page.connectedDisplays = [
+            connectedDisplay("DP-1", true, 0),
+            connectedDisplay("DP-2", true, 1920)
+        ];
+        page.topologyDigest =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        wait(0);
+
+        compare(page.draftDirty, false);
+        compare(page.previewEnabled, false);
+        compare(page.inventoryChangedWhileEditing, true);
+        compare(page.draftOutputs.length, 2);
+        compare(page.synchronizedTopologyDigest, page.topologyDigest);
+    }
+
+    function test_displaySavedRulesArePreservedWithoutOfflineClaim() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const descriptionRule = displayRecord(
+            "saved-projector",
+            "desc:Example Projector",
+            true,
+            "",
+            -1
+        );
+        configureDisplaysPage(
+            page,
+            [
+                displayRecord("display-a", "DP-1", true, "", -1),
+                descriptionRule
+            ],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        compare(page.offlineRecords.length, 1);
+        compare(page.offlineRecords[0].selector, "desc:Example Projector");
+        const label = findChild(page, "savedDisplayRulesLabel");
+        verify(label !== null);
+        compare(label.visible, true);
+        verify(String(label.text).includes("saved display rule"));
+        verify(!/offline/i.test(String(label.text)));
+    }
+
+    function test_displayOwnerLossProjectionUnlocksUnavailablePage() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        page.managementState = "preview";
+        page.confirmationState = "awaiting-confirmation";
+        page.confirmationRevision = 8;
+        // DeadlineMs is an informational UTC-epoch projection. The daemon's
+        // monotonic timer, rather than this countdown, owns automatic revert.
+        page.countdownNowMs = 100000;
+        page.confirmationDeadlineMs = 115000;
+        page.confirmationGeneration =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        page.confirmationOwned = true;
+        waitForRendering(page);
+        wait(0);
+
+        const overlay = findChild(page, "displayConfirmationOverlay");
+        const keep = findChild(page, "confirmDisplayConfigurationButton");
+        const title = findChild(page, "displayConfirmationTitle");
+        verify(overlay !== null);
+        verify(keep !== null);
+        verify(title !== null);
+        compare(overlay.visible, true);
+        compare(keep.visible, true);
+        compare(keep.enabled, true);
+        compare(page.confirmationSecondsRemaining, 15);
+
+        // The UTC projection drives presentation only. A wall-clock jump must
+        // not locally decide whether the daemon still accepts confirmation.
+        page.countdownNowMs = 120000;
+        compare(page.confirmationSecondsRemaining, 0);
+        compare(keep.enabled, true);
+
+        page.confirmationOwned = false;
+        wait(0);
+        compare(keep.visible, false);
+
+        page.serviceAvailable = false;
+        page.errorMessage = "Injected private recovery failure";
+        wait(0);
+        compare(title.text, "Display confirmation is unavailable");
+
+        // This is the projection CompositorClient publishes when its service
+        // owner disappears; stale global preview state must not pin the page.
+        page.managementState = "unmanaged";
+        page.confirmationState = "idle";
+        page.confirmationRevision = 0;
+        page.confirmationDeadlineMs = 0;
+        page.confirmationGeneration = "";
+        wait(0);
+        compare(overlay.visible, false);
+        compare(page.confirmationRevision, 0);
+        compare(page.confirmationDeadlineMs, 0);
+        compare(page.confirmationGeneration, "");
     }
 
     function test_healthWarningIsQuietWhenHealthy() {

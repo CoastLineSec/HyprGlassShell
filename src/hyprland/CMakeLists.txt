@@ -20,6 +20,8 @@ qt_add_library(
         action_catalog.h
         desired_state.cpp
         desired_state.h
+        monitor_profile.cpp
+        monitor_profile.h
         json_support.cpp
         json_support.h
         validation.h

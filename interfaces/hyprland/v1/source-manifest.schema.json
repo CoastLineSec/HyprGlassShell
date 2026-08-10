@@ -4,7 +4,7 @@
   "title": "HyprShelld qualified Hyprland source manifest v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["formatVersion", "repository", "reviewedOn", "versionFiles", "sources", "complexSources", "startupSources", "documentation"],
+  "required": ["formatVersion", "repository", "reviewedOn", "versionFiles", "sources", "complexSources", "startupSources", "monitorSources", "documentation"],
   "properties": {
     "formatVersion": {"const": 1},
     "repository": {"const": "https://github.com/hyprwm/Hyprland"},
@@ -28,6 +28,11 @@
       "type": "array", "minItems": 4, "maxItems": 4,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/startupSource"}
+    },
+    "monitorSources": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/monitorSource"}
     },
     "documentation": {
       "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
@@ -149,6 +154,23 @@
         {"properties": {"path": {"const": "src/config/lua/ConfigManager.cpp"}, "sha256": {"const": "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed"}}},
         {"properties": {"path": {"const": "src/config/shared/actions/ConfigActions.cpp"}, "sha256": {"const": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"}}},
         {"properties": {"path": {"const": "src/main.cpp"}, "sha256": {"const": "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645"}}}
+      ]
+    },
+    "monitorSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "tag", "commit", "path", "sha256"],
+      "properties": {
+        "version": {"enum": ["0.56.0", "0.56.1"]},
+        "tag": {"enum": ["v0.56.0", "v0.56.1"]},
+        "commit": {"$ref": "#/$defs/commit"},
+        "path": {"enum": ["src/debug/HyprCtl.cpp", "src/output/Monitor.cpp"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "oneOf": [
+        {"properties": {"version": {"const": "0.56.0"}, "tag": {"const": "v0.56.0"}, "commit": {"const": "36b2e0cfe0c6094dbc47bd42a437431315bb3087"}, "path": {"const": "src/debug/HyprCtl.cpp"}, "sha256": {"const": "17dddd63fca2d367f81eec5f0b6785cc7c971998fab5b786f908905b2327743d"}}},
+        {"properties": {"version": {"const": "0.56.0"}, "tag": {"const": "v0.56.0"}, "commit": {"const": "36b2e0cfe0c6094dbc47bd42a437431315bb3087"}, "path": {"const": "src/output/Monitor.cpp"}, "sha256": {"const": "5f6dc48a7cb6cda7b1c0859cbce72023c0102d865d7a67f5210b59587f2b5801"}}},
+        {"properties": {"version": {"const": "0.56.1"}, "tag": {"const": "v0.56.1"}, "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"}, "path": {"const": "src/debug/HyprCtl.cpp"}, "sha256": {"const": "7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1"}}},
+        {"properties": {"version": {"const": "0.56.1"}, "tag": {"const": "v0.56.1"}, "commit": {"const": "5c9377c15f85c50648f35ca5a213754f95b93ca0"}, "path": {"const": "src/output/Monitor.cpp"}, "sha256": {"const": "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927"}}}
       ]
     }
   }

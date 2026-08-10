@@ -282,7 +282,7 @@ parseAppliedBytes(const QByteArrayView bytes) {
   return record;
 }
 
-enum class PendingKind { Apply, Recovery };
+enum class PendingKind { Apply, Recovery, DisplayPreview };
 enum class PendingPhase { Prepared, Committing };
 
 struct PendingRecord final {
@@ -304,11 +304,14 @@ struct PendingRecord final {
 }
 
 [[nodiscard]] QByteArray pendingBytes(const PendingRecord &pending) {
+  const auto kindName = pending.kind == PendingKind::Apply
+      ? QStringLiteral("apply")
+      : pending.kind == PendingKind::Recovery
+          ? QStringLiteral("recovery")
+          : QStringLiteral("display-preview");
   QJsonObject object{
       {QStringLiteral("formatVersion"), 1},
-      {QStringLiteral("kind"), pending.kind == PendingKind::Apply
-                                   ? QStringLiteral("apply")
-                                   : QStringLiteral("recovery")},
+      {QStringLiteral("kind"), kindName},
       {QStringLiteral("phase"), pending.phase == PendingPhase::Prepared
                                     ? QStringLiteral("prepared")
                                     : QStringLiteral("committing")},
@@ -366,6 +369,8 @@ parsePendingBytes(const QByteArrayView bytes, const Hyprland::Catalog &catalog,
     kind = PendingKind::Apply;
   else if (kindName == QStringLiteral("recovery"))
     kind = PendingKind::Recovery;
+  else if (kindName == QStringLiteral("display-preview"))
+    kind = PendingKind::DisplayPreview;
   else
     return std::nullopt;
   PendingPhase phase;
@@ -401,7 +406,8 @@ parsePendingBytes(const QByteArrayView bytes, const Hyprland::Catalog &catalog,
   }
   if ((kind == PendingKind::Apply &&
        candidate.value->revision != expectedRevision) ||
-      (kind == PendingKind::Recovery &&
+      ((kind == PendingKind::Recovery ||
+        kind == PendingKind::DisplayPreview) &&
        (expectedRevision == std::numeric_limits<quint64>::max() ||
         candidate.value->revision != expectedRevision + 1))) {
     return std::nullopt;
@@ -869,6 +875,85 @@ struct ConfigurationTransaction::Impl final {
     return true;
   }
 
+  [[nodiscard]] AuthorityResult stageCandidate(
+      const quint64 expectedRevision,
+      const QString &nonce,
+      const QDateTime &createdAt,
+      const PendingKind kind,
+      DesiredState candidate,
+      QByteArray candidateBytes
+  ) {
+    const auto candidateDigest = hashBytes(candidateBytes);
+    auto requirement = deltaRequirement(appliedState, candidate, catalog);
+    const auto directory = generations.directoryForNonce(nonce);
+    auto rendered = renderGeneration(candidate, catalog, actions, directory,
+                                     paths.userCustomPath(), nonce, createdAt);
+    if (!rendered) {
+      const auto deferred =
+          std::ranges::any_of(rendered.errors, [](const auto &item) {
+            return item.code == QStringLiteral("renderer.broker-unavailable") ||
+                   item.code == QStringLiteral("renderer.uwsm-unavailable");
+          });
+      return fail(deferred ? QStringLiteral("ActivationRequired")
+                           : QStringLiteral("VerificationFailed"),
+                  describeErrors(rendered.errors));
+    }
+    // The renderer reports the strongest mode in the target in isolation.
+    // A transaction has a live applied baseline, so unchanged restart or
+    // session settings must not upgrade an otherwise reload-only delta.
+    rendered.value->activationRequirement = requirement;
+    const auto published = generations.publish(*rendered.value);
+    if (!published.success || !published.generation) {
+      return fail(QStringLiteral("VerificationFailed"), published.errorMessage);
+    }
+    PendingRecord transaction{
+        .kind = kind,
+        .phase = PendingPhase::Prepared,
+        .expectedRevision = expectedRevision,
+        .beforeDesiredDigest = desiredDigest,
+        .candidate = std::move(candidate),
+        .candidateBytes = std::move(candidateBytes),
+        .snapshotDigest = candidateDigest,
+        .after =
+            AppliedRecord{
+                .revision = published.generation->revision,
+                .snapshotDigest = candidateDigest,
+                .generation = published.generation->id,
+                .nonce = nonce,
+                .entrypoint = published.generation->entrypoint,
+                .requirement = requirement,
+            },
+        .before = applied,
+    };
+    QString verificationError;
+    if (!crossCheckGeneration(transaction, verificationError)) {
+      return fail(QStringLiteral("VerificationFailed"), verificationError);
+    }
+    const auto persisted =
+        store.write(StoreFile::Pending, pendingBytes(transaction));
+    if (!persisted.success) {
+      if (persisted.committedButNotDurable)
+        failed = true;
+      return fail(QStringLiteral("PersistenceFailed"), persisted.errorMessage);
+    }
+    pending = std::move(transaction);
+    return {
+        .success = true,
+        .snapshot = snapshot(),
+        .prepared =
+            ActivationGeneration{
+                .id = published.generation->id,
+                .nonce = nonce,
+                .snapshotDigest = published.generation->snapshotDigest,
+                .revision = published.generation->revision,
+                .directory = published.generation->directory,
+                .entrypoint = published.generation->entrypoint,
+                .manifest = published.generation->manifest,
+                .requirement = requirement,
+            },
+    };
+  }
+
   [[nodiscard]] AuthorityResult prepare(const quint64 expectedRevision,
                                         const QString &nonce,
                                         const QDateTime &createdAt,
@@ -899,78 +984,56 @@ struct ConfigurationTransaction::Impl final {
     DesiredState candidate = recovery ? *appliedState : desired;
     if (recovery)
       candidate.revision = expectedRevision + 1;
-    const auto candidateBytes = Hyprland::serializeDesiredState(candidate);
-    const auto candidateDigest = hashBytes(candidateBytes);
-    auto requirement = deltaRequirement(appliedState, candidate, catalog);
-    const auto directory = generations.directoryForNonce(nonce);
-    auto rendered = renderGeneration(candidate, catalog, actions, directory,
-                                     paths.userCustomPath(), nonce, createdAt);
-    if (!rendered) {
-      const auto deferred =
-          std::ranges::any_of(rendered.errors, [](const auto &item) {
-            return item.code == QStringLiteral("renderer.broker-unavailable") ||
-                   item.code == QStringLiteral("renderer.uwsm-unavailable");
-          });
-      return fail(deferred ? QStringLiteral("ActivationRequired")
-                           : QStringLiteral("VerificationFailed"),
-                  describeErrors(rendered.errors));
+    auto candidateBytes = Hyprland::serializeDesiredState(candidate);
+    return stageCandidate(
+        expectedRevision, nonce, createdAt,
+        recovery ? PendingKind::Recovery : PendingKind::Apply,
+        std::move(candidate), std::move(candidateBytes)
+    );
+  }
+
+  [[nodiscard]] AuthorityResult prepareDisplay(
+      const quint64 expectedRevision,
+      const Hyprland::DisplayProfile &profile,
+      const Hyprland::ConnectedDisplayTopology &topology,
+      const QString &nonce,
+      const QDateTime &createdAt
+  ) {
+    if (!initialized || failed)
+      return fail(QStringLiteral("Unavailable"),
+                  QStringLiteral("The compositor authority is unavailable"));
+    if (desired.readOnly)
+      return fail(QStringLiteral("ReadOnly"),
+                  QStringLiteral("The desired snapshot is read-only"));
+    if (pending)
+      return fail(QStringLiteral("ConfirmationPending"),
+                  QStringLiteral("A compositor transaction is already pending"));
+    if (expectedRevision != desired.revision)
+      return fail(QStringLiteral("StaleRevision"),
+                  QStringLiteral("The desired revision changed"));
+    const auto exactAppliedBaseline = applied && appliedState
+        && applied->revision == desired.revision
+        && applied->snapshotDigest == desiredDigest
+        && *appliedState == desired;
+    if (!exactAppliedBaseline) {
+      return fail(
+          QStringLiteral("DisplayScopeConflict"),
+          QStringLiteral(
+              "A display preview requires the exact current applied baseline"
+          )
+      );
     }
-    // The renderer reports the strongest mode in the target in isolation.
-    // A transaction has a live applied baseline, so unchanged restart or
-    // session settings must not upgrade an otherwise reload-only delta.
-    // deltaRequirement already uses the full target when no baseline exists.
-    rendered.value->activationRequirement = requirement;
-    const auto published = generations.publish(*rendered.value);
-    if (!published.success || !published.generation) {
-      return fail(QStringLiteral("VerificationFailed"), published.errorMessage);
+    const auto candidate = Hyprland::buildDisplayCandidate(
+        desired, profile, topology, catalog, actions
+    );
+    if (!candidate) {
+      return fail(QStringLiteral("InvalidDisplayProfile"),
+                  describeErrors(candidate.errors));
     }
-    PendingRecord transaction{
-        .kind = recovery ? PendingKind::Recovery : PendingKind::Apply,
-        .phase = PendingPhase::Prepared,
-        .expectedRevision = expectedRevision,
-        .beforeDesiredDigest = desiredDigest,
-        .candidate = candidate,
-        .candidateBytes = candidateBytes,
-        .snapshotDigest = candidateDigest,
-        .after =
-            AppliedRecord{
-                .revision = candidate.revision,
-                .snapshotDigest = candidateDigest,
-                .generation = published.generation->id,
-                .nonce = nonce,
-                .entrypoint = published.generation->entrypoint,
-                .requirement = requirement,
-            },
-        .before = applied,
-    };
-    QString verificationError;
-    if (!crossCheckGeneration(transaction, verificationError)) {
-      return fail(QStringLiteral("VerificationFailed"), verificationError);
-    }
-    const auto persisted =
-        store.write(StoreFile::Pending, pendingBytes(transaction));
-    if (!persisted.success) {
-      if (persisted.committedButNotDurable)
-        failed = true;
-      return fail(QStringLiteral("PersistenceFailed"), persisted.errorMessage);
-    }
-    pending = std::move(transaction);
-    AuthorityResult result{
-        .success = true,
-        .snapshot = snapshot(),
-        .prepared =
-            ActivationGeneration{
-                .id = published.generation->id,
-                .nonce = nonce,
-                .snapshotDigest = published.generation->snapshotDigest,
-                .revision = published.generation->revision,
-                .directory = published.generation->directory,
-                .entrypoint = published.generation->entrypoint,
-                .manifest = published.generation->manifest,
-                .requirement = requirement,
-            },
-    };
-    return result;
+    return stageCandidate(
+        expectedRevision, nonce, createdAt, PendingKind::DisplayPreview,
+        candidate.value->state, candidate.value->bytes
+    );
   }
 };
 
@@ -1070,6 +1133,11 @@ ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
   if (impl_->desired.readOnly)
     return impl_->fail(QStringLiteral("ReadOnly"),
                        QStringLiteral("The desired snapshot is read-only"));
+  if (impl_->pending)
+    return impl_->fail(
+        QStringLiteral("ConfirmationPending"),
+        QStringLiteral("A compositor transaction is already pending")
+    );
   const auto currentToken = expectedRevision == impl_->desired.revision;
   const auto possibleRetry =
       expectedRevision != std::numeric_limits<quint64>::max() &&
@@ -1147,6 +1215,18 @@ ConfigurationTransaction::prepareRecovery(const quint64 expectedRevision,
   return impl_->prepare(expectedRevision, nonce, createdAt, true);
 }
 
+AuthorityResult ConfigurationTransaction::prepareDisplayApply(
+    const quint64 expectedRevision,
+    const Hyprland::DisplayProfile &profile,
+    const Hyprland::ConnectedDisplayTopology &topology,
+    const QString &nonce,
+    const QDateTime &createdAt
+) {
+  return impl_->prepareDisplay(
+      expectedRevision, profile, topology, nonce, createdAt
+  );
+}
+
 AuthorityResult
 ConfigurationTransaction::commitApply(const QString &generation) {
   if (!impl_->initialized || impl_->failed || !impl_->pending)
@@ -1198,7 +1278,8 @@ ConfigurationTransaction::commitApply(const QString &generation) {
     return durableFailure(QStringLiteral("PersistenceFailed"),
                           verificationError);
   }
-  if (impl_->pending->kind == PendingKind::Recovery) {
+  if (impl_->pending->kind == PendingKind::Recovery ||
+      impl_->pending->kind == PendingKind::DisplayPreview) {
     persisted =
         impl_->store.write(StoreFile::Desired, impl_->pending->candidateBytes);
     if (!persisted.success) {
@@ -1221,6 +1302,9 @@ ConfigurationTransaction::commitApply(const QString &generation) {
     return durableFailure(QStringLiteral("PersistenceFailed"),
                           persisted.errorMessage);
   }
+  const auto publishesDesired =
+      impl_->pending->kind == PendingKind::Recovery ||
+      impl_->pending->kind == PendingKind::DisplayPreview;
   const auto recovery = impl_->pending->kind == PendingKind::Recovery;
   const auto committed = *impl_->pending;
   persisted = impl_->store.remove(StoreFile::Pending);
@@ -1230,11 +1314,12 @@ ConfigurationTransaction::commitApply(const QString &generation) {
                           persisted.errorMessage);
   }
   impl_->pending.reset();
-  if (recovery) {
+  if (publishesDesired) {
     impl_->desired = committed.candidate;
     impl_->desiredBytes = committed.candidateBytes;
     impl_->desiredDigest = committed.snapshotDigest;
-    impl_->loadState = QStringLiteral("recovered");
+    impl_->loadState = recovery ? QStringLiteral("recovered")
+                                : QStringLiteral("normal");
   } else {
     impl_->loadState = QStringLiteral("normal");
   }

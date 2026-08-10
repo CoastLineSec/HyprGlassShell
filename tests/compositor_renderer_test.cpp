@@ -646,7 +646,7 @@ private slots:
                 {QStringLiteral("mode"), QStringLiteral("preferred")},
                 {QStringLiteral("position"), QStringLiteral("auto")},
                 {QStringLiteral("scale"), 1.0},
-                {QStringLiteral("reserved"), QJsonArray{0, 0, 0, 0}},
+                {QStringLiteral("reserved"), QJsonArray{1, 2, 3, 4}},
                 {QStringLiteral("transform"), 0},
                 {QStringLiteral("mirror"), QString()},
                 {QStringLiteral("bitdepth"), 8},
@@ -704,7 +704,12 @@ private slots:
                 {QStringLiteral("persistent"), true},
                 {QStringLiteral("isDefault"), false},
                 {QStringLiteral("layout"), QStringLiteral("dwindle")},
-                {QStringLiteral("overrides"), QJsonObject{}},
+                {QStringLiteral("overrides"), QJsonObject{
+                    {QStringLiteral("gaps_in"), QJsonArray{5, 6, 7, 8}},
+                    {QStringLiteral("gaps_out"), QJsonArray{9, 10, 11, 12}},
+                    {QStringLiteral("float_gaps"),
+                     QJsonArray{13, 14, 15, 16}},
+                }},
             }}
         );
         representative.insert(
@@ -831,6 +836,28 @@ private slots:
             QVERIFY2(rendered.value->files.value(path).contents.contains(api),
                      qPrintable(path));
         }
+        const auto monitorModule = rendered.value->files
+                                       .value(QStringLiteral(
+                                           "modules/10-monitors.lua"
+                                       ))
+                                       .contents;
+        QVERIFY(monitorModule.contains(
+            "reserved = {bottom = 3, left = 4, right = 2, top = 1}"
+        ));
+        const auto workspaceModule = rendered.value->files
+                                         .value(QStringLiteral(
+                                             "modules/42-workspaces.lua"
+                                         ))
+                                         .contents;
+        QVERIFY(workspaceModule.contains(
+            "float_gaps = {bottom = 15, left = 16, right = 14, top = 13}"
+        ));
+        QVERIFY(workspaceModule.contains(
+            "gaps_in = {bottom = 7, left = 8, right = 6, top = 5}"
+        ));
+        QVERIFY(workspaceModule.contains(
+            "gaps_out = {bottom = 11, left = 12, right = 10, top = 9}"
+        ));
 
         QVERIFY(QDir().mkpath(root));
         for (auto iterator = rendered.value->files.constBegin();

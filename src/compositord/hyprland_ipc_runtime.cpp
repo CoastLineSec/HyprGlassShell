@@ -3,6 +3,7 @@
 #include "hyprland/json_support.h"
 
 #include <QByteArray>
+#include <QCryptographicHash>
 #include <QDeadlineTimer>
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -1056,6 +1057,36 @@ struct HyprlandIpcRuntime::Impl final {
             + QString::fromLatin1(name);
     }
 
+    [[nodiscard]] QString runtimeIdentity(const Session &session) const
+    {
+        if (!session.controlSocketNode) return {};
+        const auto node = [](const auto value) {
+            return QString::number(static_cast<qulonglong>(value));
+        };
+        const auto bytes = Hyprland::JsonSupport::canonicalJson(QJsonObject{
+            {QStringLiteral("instanceSignature"), session.instanceSignature},
+            {QStringLiteral("peerPid"),
+             QString::number(static_cast<qlonglong>(session.peer.pid))},
+            {QStringLiteral("processStartTime"),
+             QString::fromLatin1(session.processStartTime)},
+            {QStringLiteral("instanceDevice"),
+             node(session.trustedInstance.instanceMetadata.st_dev)},
+            {QStringLiteral("instanceInode"),
+             node(session.trustedInstance.instanceMetadata.st_ino)},
+            {QStringLiteral("eventDevice"),
+             node(session.eventSocketNode.st_dev)},
+            {QStringLiteral("eventInode"),
+             node(session.eventSocketNode.st_ino)},
+            {QStringLiteral("controlDevice"),
+             node(session.controlSocketNode->st_dev)},
+            {QStringLiteral("controlInode"),
+             node(session.controlSocketNode->st_ino)},
+        });
+        return QString::fromLatin1(
+            QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex()
+        );
+    }
+
     [[nodiscard]] bool openProcess(Session &session, QString &error) const
     {
         // SO_PEERCRED's effective UID is the local trust boundary. A
@@ -1594,6 +1625,206 @@ bool HyprlandIpcRuntime::canSatisfy(
     return requirement == ActivationRequirement::Reload;
 }
 
+ConnectedDisplaysResult HyprlandIpcRuntime::connectedDisplays()
+{
+    return connectedDisplays(impl_->timeoutMilliseconds);
+}
+
+ConnectedDisplaysResult HyprlandIpcRuntime::connectedDisplays(
+    const int maximumWaitMilliseconds
+)
+{
+    ConnectedDisplaysResult result;
+    const auto operationTimeout = std::min(
+        std::max(impl_->timeoutMilliseconds, 0),
+        std::max(maximumWaitMilliseconds, 0)
+    );
+    const QDeadlineTimer operationDeadline(
+        operationTimeout, Qt::PreciseTimer
+    );
+    const QMutexLocker prepareLocker(&impl_->prepareMutex);
+    HyprlandVersionPolicy versionPolicy;
+    InstanceSignatureProvider signatureProvider;
+    QString startupSignature;
+    {
+        const QMutexLocker stateLocker(&impl_->mutex);
+        if (!cleanAbsolutePath(impl_->runtimeRoot)
+            || !cleanAbsolutePath(impl_->stableEntrypoint)
+            || impl_->timeoutMilliseconds <= 0
+            || !impl_->versionPolicyConfigured
+            || (impl_->versionPolicy.maximumPatch
+                && *impl_->versionPolicy.maximumPatch
+                       < impl_->versionPolicy.minimumPatch)) {
+            result.errorCode = QStringLiteral("RuntimeUnavailable");
+            result.errorMessage = QStringLiteral(
+                "The Hyprland runtime configuration is invalid."
+            );
+            return result;
+        }
+        versionPolicy = impl_->versionPolicy;
+        signatureProvider = impl_->instanceSignatureProvider;
+        startupSignature = impl_->startupInstanceSignature;
+    }
+
+    auto session = std::make_shared<Impl::Session>();
+    session->deadline = operationDeadline;
+    if (session->deadline.hasExpired()) {
+        result.errorCode = QStringLiteral("RuntimeUnavailable");
+        result.errorMessage = QStringLiteral(
+            "The connected-display deadline is invalid or expired."
+        );
+        return result;
+    }
+
+    QString error;
+    QString resolvedSignature;
+    if (signatureProvider) {
+        InstanceSignatureResult provided;
+        try {
+            provided = signatureProvider(
+                remainingPollMilliseconds(session->deadline)
+            );
+        } catch (...) {
+            provided.errorMessage = QStringLiteral(
+                "The injected Hyprland instance provider failed."
+            );
+        }
+        if (!provided.success
+            || !validInstanceSignature(provided.signature)) {
+            result.errorCode = QStringLiteral("RuntimeUnavailable");
+            result.errorMessage = provided.errorMessage.isEmpty()
+                ? QStringLiteral(
+                    "The Hyprland instance provider returned an invalid signature."
+                ) : provided.errorMessage;
+            return result;
+        }
+        resolvedSignature = std::move(provided.signature);
+    } else {
+        const auto discovered = systemdInstanceSignature(
+            remainingPollMilliseconds(session->deadline)
+        );
+        if (discovered.state == SignatureLookupState::Invalid) {
+            result.errorCode = QStringLiteral("RuntimeUnavailable");
+            result.errorMessage = discovered.error;
+            return result;
+        }
+        resolvedSignature = discovered.state == SignatureLookupState::Resolved
+            ? discovered.signature : startupSignature;
+        if (!validInstanceSignature(resolvedSignature)) {
+            result.errorCode = QStringLiteral("RuntimeUnavailable");
+            result.errorMessage = discovered.error.isEmpty()
+                ? QStringLiteral(
+                    "No valid Hyprland instance signature is available."
+                ) : discovered.error;
+            return result;
+        }
+    }
+    session->instanceSignature = resolvedSignature;
+    auto trusted = openTrustedInstance(
+        impl_->runtimeRoot, session->instanceSignature, error
+    );
+    if (!trusted) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    session->trustedInstance = std::move(*trusted);
+
+    QByteArray initialLock;
+    if (!readStableRegularAt(
+            session->trustedInstance.instanceDirectory.get(), lockFileName,
+            maximumLockBytes, true, initialLock, error
+        )) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    const auto lockPid = parseLockFile(initialLock, error);
+    if (!lockPid) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    auto event = connectSocket(
+        session->trustedInstance.instanceDirectory.get(),
+        impl_->socketPath(session->instanceSignature, eventSocketName),
+        eventSocketName, *lockPid, session->deadline, error
+    );
+    if (!event) {
+        result.errorCode = QStringLiteral("RuntimeUnavailable");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    session->eventSocket = std::move(event->descriptor);
+    session->eventSocketNode = event->nodeMetadata;
+    if (!peerCredentials(session->eventSocket.get(), session->peer, error)
+        || session->peer.uid != ::geteuid()
+        || session->peer.pid != *lockPid) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = QStringLiteral(
+            "The event peer does not match hyprland.lock."
+        );
+        return result;
+    }
+    session->lockContents = initialLock;
+    if (!impl_->openProcess(*session, error)
+        || !impl_->readAndValidateProcessContext(*session, true, error)
+        || !impl_->verifyLock(*session, false, error)) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+
+    QByteArray reply;
+    if (!impl_->request(*session, QByteArrayLiteral("j/version"), reply, error)) {
+        result.errorCode = QStringLiteral("RuntimeUnavailable");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    if (!parseAndCheckVersion(reply, versionPolicy, error)) {
+        result.errorCode = QStringLiteral("UnsupportedVersion");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    if (!impl_->request(
+            *session, QByteArrayLiteral("j/monitors all"), reply, error
+        )) {
+        result.errorCode = QStringLiteral("RuntimeUnavailable");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    if (!impl_->verifyIdentity(*session, error)) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = std::move(error);
+        return result;
+    }
+    const auto topology = Hyprland::parseConnectedDisplayTopology(
+        QByteArrayView(reply)
+    );
+    if (!topology) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        QStringList messages;
+        for (const auto &item : topology.errors) {
+            messages.append(item.message);
+            if (messages.size() == 3) break;
+        }
+        result.errorMessage = messages.join(QStringLiteral("; "));
+        return result;
+    }
+    const auto identity = impl_->runtimeIdentity(*session);
+    if (identity.isEmpty()) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = QStringLiteral(
+            "The authenticated Hyprland runtime identity is incomplete."
+        );
+        return result;
+    }
+    result.success = true;
+    result.runtimeIdentity = identity;
+    result.topology = *topology.value;
+    return result;
+}
+
 RuntimeSessionResult HyprlandIpcRuntime::prepare(
     const ActivationRequirement requirement,
     const RuntimeActivationMode mode
@@ -1822,7 +2053,15 @@ RuntimeSessionResult HyprlandIpcRuntime::prepare(
         .token = QUuid::createUuid().toByteArray(QUuid::WithoutBraces),
         .baselineConfigErrors = *baselineErrors,
         .baselineProvider = *provider,
+        .runtimeIdentity = impl_->runtimeIdentity(*pending),
     };
+    if (publicSession.runtimeIdentity.isEmpty()) {
+        result.errorCode = QStringLiteral("VerificationFailed");
+        result.errorMessage = QStringLiteral(
+            "The authenticated Hyprland runtime identity is incomplete."
+        );
+        return result;
+    }
     {
         const QMutexLocker stateLocker(&impl_->mutex);
         while (impl_->sessions.contains(publicSession.token)) {

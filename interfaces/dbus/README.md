@@ -98,9 +98,10 @@ The durable desired snapshot and recovery transaction records live below
 source. The generated tree and the user-owned customization file remain in the
 Hyprland configuration root.
 
-`ManagementState` is `unmanaged`, `managed`, or `conflict`. It is derived from
-the exact committed ownership record and entrypoint digest, never from a
-comment in a Lua file. The stable entrypoint is
+`ManagementState` is `unmanaged`, `managed`, `preview`, or `conflict`.
+`preview` is reserved for a receipt-bound transient display target; the other
+states are derived from the exact committed ownership record and entrypoint
+digest, never from a comment in a Lua file. The stable entrypoint is
 `$XDG_CONFIG_HOME/hypr/hyprland.lua`; generated immutable trees live below
 `$XDG_CONFIG_HOME/hypr/hyprshelld`. Compositord watches the config root and its
 parent for entrypoint creation, deletion, replacement, and path invalidation,
@@ -210,6 +211,36 @@ transition: snapshots requiring compositor restart or a new session remain
 saved but return `ActivationRequired` without changing the stable entrypoint or
 applied tuple.
 
+Display discovery and preview use a narrower live contract.
+`GetConnectedDisplays` opens a fresh authenticated session and returns filtered,
+canonical topology JSON rather than forwarding Hyprland's reply. A display
+profile is bound to that topology digest, covers every connected connector
+exactly once, and leaves at least one enabled non-mirrored output. Compositord
+merges those exact connector records after untouched offline and
+description-selected desired records, so disconnected profiles are preserved
+and the live connector rules retain Hyprland's winning order.
+Hyprland 0.56 does not expose a reliable physical-versus-virtual classifier in
+this IPC reply, so the guarantee is deliberately an enabled connected output,
+not a claim that the output is a physical panel.
+During `awaiting-confirmation`, discovery returns the cached exact post-proof
+topology and its original observation time instead of opening another blocking
+runtime query; failed or reverting reconciliation is unavailable.
+
+`PreviewDisplayConfiguration` is permitted only from an exact current managed
+baseline. It stages a monitor-only N+1, activates and proves the realized
+topology, but leaves desired, applied, and last-good authority at N. The
+initiating unique bus owner alone receives the 128-bit token and may recover an
+ambiguous reply through `GetPendingDisplayConfirmation`; no readable property
+exposes the token. While the server-owned monotonic deadline is active,
+`ManagementState` is `preview`, ordinary mutations fail `ConfirmationPending`,
+and owner loss, timeout, runtime/topology drift, or explicit Revert restores N
+before aborting the prepared transaction. Confirm reopens a fresh authenticated
+runtime session and repeats the topology and realization proof. As soon as the
+authority commit may exist, the service revokes the rollback capability and
+publishes non-actionable `committing`; a finalization failure then remains
+unavailable/conflict for startup roll-forward and is never contradicted by a
+late timer or Revert.
+
 `LoadState` is one of `normal`, `recovered`, `defaulted`, `unsupported`, or
 `unavailable`. `ApplyState` is one of `unavailable`, `inactive`, `current`,
 `retained`, or `failed`; in-progress staging is never published. An
@@ -236,7 +267,15 @@ Compositor errors have these meanings:
   reload, restart, or session transition;
 - `VerificationFailed` or `ReloadFailed`: staged bytes failed verification or
   the live executor did not confirm the exact reload, rollback, or empty-error
-  proof; and
+  proof;
+- `RuntimeUnavailable` or `UnsupportedVersion`: the authenticated compositor
+  runtime could not be queried under the reviewed version contract;
+- `InvalidDisplayProfile`, `DisplayScopeConflict`, or
+  `DisplayTopologyChanged`: a display profile, its exact managed baseline, or
+  its fresh connected/realized topology failed the preview contract;
+- `ConfirmationPending`, `NoDisplayConfirmation`, `ConfirmationExpired`, or
+  `InvalidCaller`: the private display-confirmation capability cannot be used
+  for the requested operation; and
 - `ApplyFailed`, `RecoveryUnavailable`, or `RecoveryFailed`: the corresponding
   bounded transaction could not complete without weakening its guarantees.
 

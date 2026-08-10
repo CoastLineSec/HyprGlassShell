@@ -84,6 +84,49 @@ STARTUP_SOURCE_PATHS_0560 = (
     Path("src/config/shared/actions/ConfigActions.cpp"),
     Path("src/main.cpp"),
 )
+MONITOR_QUERY_SOURCE_PATHS = (
+    Path("src/debug/HyprCtl.cpp"),
+    Path("src/output/Monitor.cpp"),
+)
+MONITOR_QUERY_JSON_FIELDS = (
+    "id",
+    "name",
+    "description",
+    "make",
+    "model",
+    "serial",
+    "width",
+    "height",
+    "physicalWidth",
+    "physicalHeight",
+    "refreshRate",
+    "x",
+    "y",
+    "activeWorkspace",
+    "specialWorkspace",
+    "reserved",
+    "scale",
+    "transform",
+    "focused",
+    "dpmsStatus",
+    "vrr",
+    "solitary",
+    "solitaryBlockedBy",
+    "activelyTearing",
+    "tearingBlockedBy",
+    "directScanoutTo",
+    "directScanoutBlockedBy",
+    "disabled",
+    "currentFormat",
+    "mirrorOf",
+    "availableModes",
+    "colorManagementPreset",
+    "sdrBrightness",
+    "sdrSaturation",
+    "sdrMinLuminance",
+    "sdrMaxLuminance",
+    "hardwareCursorsInUse",
+)
 REPOSITORY = "https://github.com/hyprwm/Hyprland"
 REVIEWED_ON = "2026-08-09"
 WIKI_ROOT = "https://wiki.hypr.land/0.56.0"
@@ -148,6 +191,8 @@ QUALIFIED_SOURCE_HASHES: dict[str, dict[Path, str]] = {
         Path("src/helpers/MiscFunctions.hpp"): "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79",
         Path("src/helpers/TransferFunction.cpp"): "503eafd06a295b1ecbf0506d552db337f79498180f183c0bbc7a12f8855baeaf",
         Path("src/main.cpp"): "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645",
+        Path("src/debug/HyprCtl.cpp"): "7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1",
+        Path("src/output/Monitor.cpp"): "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927",
         Path("src/managers/fullscreen/FullscreenController.hpp"): "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378",
         Path("src/managers/KeybindManager.cpp"): "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40",
         Path("src/managers/input/InputManager.cpp"): "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e",
@@ -174,6 +219,8 @@ QUALIFIED_SOURCE_HASHES: dict[str, dict[Path, str]] = {
         Path("src/config/lua/ConfigManager.cpp"): "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed",
         Path("src/config/shared/actions/ConfigActions.cpp"): "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab",
         Path("src/main.cpp"): "98e5752cd485378c58c2a8cb0ba89265eaea27144925ea059e5564917dd3b645",
+        Path("src/debug/HyprCtl.cpp"): "17dddd63fca2d367f81eec5f0b6785cc7c971998fab5b786f908905b2327743d",
+        Path("src/output/Monitor.cpp"): "5f6dc48a7cb6cda7b1c0859cbce72023c0102d865d7a67f5210b59587f2b5801",
     },
 }
 
@@ -1446,6 +1493,99 @@ def _assert_monitor_contract(
         raise ValueError("reviewed monitor position regex accepts an excluded position")
 
 
+def _assert_monitor_query_contract(
+    monitor_sources: dict[str, dict[Path, bytes]],
+) -> None:
+    """Qualify the filtered `j/monitors all` wire contract for both patches."""
+    semantic_signatures: dict[str, tuple[str, ...]] = {}
+    for version in ("0.56.0", "0.56.1"):
+        sources = monitor_sources[version]
+        hyprctl = sources[Path("src/debug/HyprCtl.cpp")].decode("utf-8")
+        monitor = sources[Path("src/output/Monitor.cpp")].decode("utf-8")
+        normalized_hyprctl = re.sub(r"\s+", " ", hyprctl)
+        normalized_monitor = re.sub(r"\s+", " ", monitor)
+
+        json_template = re.search(
+            r'R"#\(\{\{\n(?P<body>.*?)\n\}\},\)#"',
+            hyprctl,
+            flags=re.DOTALL,
+        )
+        if json_template is None:
+            raise ValueError(
+                f"Hyprland {version} monitor JSON template is missing"
+            )
+        fields = tuple(
+            re.findall(r'^ {4}"([A-Za-z][A-Za-z0-9]*)":',
+                       json_template.group("body"), flags=re.MULTILINE)
+        )
+        if fields != MONITOR_QUERY_JSON_FIELDS:
+            raise ValueError(
+                f"Hyprland {version} monitor JSON field inventory changed: "
+                f"{fields!r}"
+            )
+
+        required_hyprctl_fragments = (
+            '"refreshRate": {:.5f}',
+            '"reserved": [{}, {}, {}, {}]',
+            '"scale": {:.2f}',
+            'result += std::format("\\"{}x{}@{:.2f}Hz\\",", '
+            'm->pixelSize.x, m->pixelSize.y, m->refreshRate / 1000.0);',
+            'escapeJSONStrings(m->m_name), '
+            'escapeJSONStrings(m->m_shortDescription), '
+            'escapeJSONStrings(m->m_output->make)',
+            'sc<int>(m->m_reservedArea.left()), '
+            'sc<int>(m->m_reservedArea.top()), '
+            'sc<int>(m->m_reservedArea.right()), '
+            'sc<int>(m->m_reservedArea.bottom())',
+            '(m->m_output->state->state().adaptiveSync ? "true" : "false")',
+            '(m->m_enabled ? "false" : "true")',
+            'm->m_mirrorOf ? std::format("{}", m->m_mirrorOf->m_id) : "none"',
+            'case DRM_FORMAT_XRGB2101010: return "XRGB2101010";',
+            'case DRM_FORMAT_XBGR2101010: return "XBGR2101010";',
+            'case DRM_FORMAT_XRGB8888: return "XRGB8888";',
+            'case DRM_FORMAT_XBGR8888: return "XBGR8888";',
+            'return "Invalid";',
+            'if (vars.size() == 2 && vars[1] == "all") allMonitors = true;',
+            'allMonitors ? State::monitorState()->allMonitors() '
+            ': State::monitorState()->monitors()',
+        )
+        missing_hyprctl = tuple(
+            fragment for fragment in required_hyprctl_fragments
+            if fragment not in normalized_hyprctl
+        )
+        if missing_hyprctl:
+            raise ValueError(
+                f"Hyprland {version} monitor query semantics changed near "
+                f"{missing_hyprctl!r}"
+            )
+
+        required_monitor_fragments = (
+            'm_shortDescription = trim(std::format("{} {} {}", '
+            'm_output->make, m_output->model, m_output->serial));',
+            "std::erase(m_shortDescription, ',');",
+        )
+        missing_monitor = tuple(
+            fragment for fragment in required_monitor_fragments
+            if fragment not in normalized_monitor
+        )
+        if missing_monitor:
+            raise ValueError(
+                f"Hyprland {version} monitor identity semantics changed near "
+                f"{missing_monitor!r}"
+            )
+
+        semantic_signatures[version] = (
+            *fields,
+            *required_hyprctl_fragments,
+            *required_monitor_fragments,
+        )
+
+    if semantic_signatures["0.56.0"] != semantic_signatures["0.56.1"]:
+        raise ValueError(
+            "Hyprland 0.56.0 and 0.56.1 monitor query contracts diverged"
+        )
+
+
 def _assert_dispatcher_action_bounds(
     complex_sources: dict[Path, bytes],
     config_schema: dict[str, Any],
@@ -2492,8 +2632,17 @@ def _sha256(data: bytes) -> str:
 def _validate_qualified_source_hashes() -> None:
     expected_paths = {
         "0.55.0": {Path("VERSION"), REGISTRY_PATH},
-        "0.56.0": {Path("VERSION"), *STARTUP_SOURCE_PATHS_0560},
-        "0.56.1": {Path("VERSION"), REGISTRY_PATH, *COMPLEX_SOURCE_PATHS},
+        "0.56.0": {
+            Path("VERSION"),
+            *STARTUP_SOURCE_PATHS_0560,
+            *MONITOR_QUERY_SOURCE_PATHS,
+        },
+        "0.56.1": {
+            Path("VERSION"),
+            REGISTRY_PATH,
+            *COMPLEX_SOURCE_PATHS,
+            *MONITOR_QUERY_SOURCE_PATHS,
+        },
     }
     if set(QUALIFIED_SOURCE_HASHES) != set(expected_paths):
         raise ValueError("qualified source hash table has an unexpected version set")
@@ -2703,6 +2852,37 @@ def _assert_source_manifest_schema(source_schema: dict[str, Any]) -> None:
     ]
     if actual_startup != expected_startup:
         raise ValueError("source manifest startup source inventory/pins are stale")
+
+    monitor_property = properties.get("monitorSources", {})
+    monitor_count = 2 * len(MONITOR_QUERY_SOURCE_PATHS)
+    if (
+        monitor_property.get("minItems") != monitor_count
+        or monitor_property.get("maxItems") != monitor_count
+    ):
+        raise ValueError("source manifest monitor-source count is stale")
+    monitor_branches = definitions.get("monitorSource", {}).get("oneOf")
+    if not isinstance(monitor_branches, list):
+        raise ValueError("source manifest has no closed monitor source inventory")
+    actual_monitor: list[tuple[str, str, str]] = []
+    for branch in monitor_branches:
+        branch_properties = branch.get("properties", {})
+        version = branch_properties.get("version", {}).get("const")
+        path = branch_properties.get("path", {}).get("const")
+        digest = branch_properties.get("sha256", {}).get("const")
+        if (
+            not isinstance(version, str)
+            or not isinstance(path, str)
+            or not isinstance(digest, str)
+        ):
+            raise ValueError("source manifest monitor source branch is malformed")
+        actual_monitor.append((version, path, digest))
+    expected_monitor = [
+        (version, path.as_posix(), QUALIFIED_SOURCE_HASHES[version][path])
+        for version in ("0.56.0", "0.56.1")
+        for path in sorted(MONITOR_QUERY_SOURCE_PATHS)
+    ]
+    if actual_monitor != expected_monitor:
+        raise ValueError("source manifest monitor source inventory/pins are stale")
 
     version_branches = definitions.get("versionSource", {}).get("oneOf")
     if not isinstance(version_branches, list) or len(version_branches) != 3:
@@ -3242,6 +3422,14 @@ def build_documents(
         path: _read_qualified_source(source_0560, "0.56.0", path)
         for path in STARTUP_SOURCE_PATHS_0560
     }
+    monitor_source_bytes = {
+        version: {
+            path: _read_qualified_source(source_roots[version], version, path)
+            for path in MONITOR_QUERY_SOURCE_PATHS
+        }
+        for version in ("0.56.0", "0.56.1")
+    }
+    _assert_monitor_query_contract(monitor_source_bytes)
     _assert_reload_event_runtime_order(
         startup_source_bytes_0560,
         complex_source_bytes,
@@ -3467,6 +3655,17 @@ def build_documents(
                 "sha256": _sha256(startup_source_bytes_0560[path]),
             }
             for path in sorted(STARTUP_SOURCE_PATHS_0560)
+        ],
+        "monitorSources": [
+            {
+                "version": version,
+                "tag": QUALIFIED_SOURCES[version]["tag"],
+                "commit": QUALIFIED_SOURCES[version]["commit"],
+                "path": path.as_posix(),
+                "sha256": _sha256(monitor_source_bytes[version][path]),
+            }
+            for version in ("0.56.0", "0.56.1")
+            for path in sorted(MONITOR_QUERY_SOURCE_PATHS)
         ],
         "documentation": [
             f"{WIKI_ROOT}/Configuring/Start/",

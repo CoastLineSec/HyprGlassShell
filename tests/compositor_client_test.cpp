@@ -1,0 +1,824 @@
+#include "compositor_client.h"
+
+#include <QDBusConnection>
+#include <QDBusContext>
+#include <QDBusMessage>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSignalSpy>
+#include <QTimer>
+#include <QtTest>
+
+#include <utility>
+
+namespace {
+
+const QString busName = QStringLiteral("org.hyprshelld.Compositor1");
+const QString objectPath = QStringLiteral("/org/hyprshelld/Compositor1");
+const QString interfaceName = QStringLiteral("org.hyprshelld.Compositor1");
+const QString propertiesInterface = QStringLiteral(
+    "org.freedesktop.DBus.Properties"
+);
+const QString catalogDigest(64, QLatin1Char('a'));
+const QString actionCatalogDigest(64, QLatin1Char('b'));
+const QString generationDigest(64, QLatin1Char('c'));
+const QString previewGeneration(64, QLatin1Char('d'));
+const QString topologyDigest(64, QLatin1Char('e'));
+const QString confirmationToken(32, QLatin1Char('f'));
+constexpr qulonglong baselineRevision = 7;
+constexpr qulonglong previewRevision = 8;
+constexpr qulonglong previewDeadlineMs = 4'102'444'800'000ULL;
+
+QByteArray snapshotBytes()
+{
+    auto bytes = QJsonDocument(QJsonObject{
+        {QStringLiteral("formatVersion"), 1},
+        {QStringLiteral("revision"), QString::number(baselineRevision)},
+        {QStringLiteral("catalogDigest"), catalogDigest},
+        {QStringLiteral("actionCatalogDigest"), actionCatalogDigest},
+        {QStringLiteral("monitors"), QJsonArray{}},
+    }).toJson(QJsonDocument::Compact);
+    bytes.append('\n');
+    return bytes;
+}
+
+QByteArray topologyBytes()
+{
+    auto bytes = QJsonDocument(QJsonObject{
+        {QStringLiteral("formatVersion"), 1},
+        {QStringLiteral("topologyDigest"), topologyDigest},
+        {
+            QStringLiteral("outputs"),
+            QJsonArray{
+                QJsonObject{
+                    {QStringLiteral("selector"), QStringLiteral("DP-1")},
+                    {QStringLiteral("enabled"), true},
+                    {QStringLiteral("modes"), QJsonArray{}},
+                },
+            }
+        },
+    }).toJson(QJsonDocument::Compact);
+    bytes.append('\n');
+    return bytes;
+}
+
+QVariantList validSnapshotReply()
+{
+    return {
+        snapshotBytes(),
+        QVariant::fromValue<qulonglong>(baselineRevision),
+        catalogDigest,
+        actionCatalogDigest,
+    };
+}
+
+QVariantList validPreviewReply()
+{
+    return {
+        QVariant::fromValue<qulonglong>(previewRevision),
+        confirmationToken,
+        QVariant::fromValue<qulonglong>(previewDeadlineMs),
+        previewGeneration,
+    };
+}
+
+class FakeCompositor final : public QObject, protected QDBusContext {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.hyprshelld.Compositor1")
+    Q_PROPERTY(bool Available READ available)
+    Q_PROPERTY(bool Writable READ writable)
+    Q_PROPERTY(qulonglong Revision READ revision)
+    Q_PROPERTY(QString LoadState READ loadState)
+    Q_PROPERTY(QString ManagementState READ managementState)
+    Q_PROPERTY(QString EntrypointDigest READ entrypointDigest)
+    Q_PROPERTY(QString CatalogDigest READ currentCatalogDigest)
+    Q_PROPERTY(QString ActionCatalogDigest READ currentActionCatalogDigest)
+    Q_PROPERTY(qulonglong AppliedRevision READ appliedRevision)
+    Q_PROPERTY(QString ApplyState READ applyState)
+    Q_PROPERTY(QString RequiredActivation READ requiredActivation)
+    Q_PROPERTY(QString GenerationDigest READ currentGenerationDigest)
+    Q_PROPERTY(QString DisplayConfirmationState READ confirmationState)
+    Q_PROPERTY(qulonglong DisplayConfirmationRevision READ confirmationRevision)
+    Q_PROPERTY(qulonglong DisplayConfirmationDeadlineMs READ confirmationDeadlineMs)
+    Q_PROPERTY(QString DisplayConfirmationGeneration READ confirmationGeneration)
+
+public:
+    enum class PendingBehavior {
+        Success,
+        NoDisplayConfirmation,
+        UnexpectedError,
+    };
+
+    explicit FakeCompositor(QDBusConnection connection)
+        : connection_(std::move(connection))
+    {
+        reset();
+    }
+
+    [[nodiscard]] bool available() const { return true; }
+    [[nodiscard]] bool writable() const { return true; }
+    [[nodiscard]] qulonglong revision() const { return baselineRevision; }
+    [[nodiscard]] QString loadState() const
+    {
+        return QStringLiteral("normal");
+    }
+    [[nodiscard]] QString managementState() const
+    {
+        return managementState_;
+    }
+    [[nodiscard]] QString entrypointDigest() const
+    {
+        return QString(64, QLatin1Char('9'));
+    }
+    [[nodiscard]] QString currentCatalogDigest() const
+    {
+        return catalogDigest;
+    }
+    [[nodiscard]] QString currentActionCatalogDigest() const
+    {
+        return actionCatalogDigest;
+    }
+    [[nodiscard]] qulonglong appliedRevision() const
+    {
+        return baselineRevision;
+    }
+    [[nodiscard]] QString applyState() const
+    {
+        return QStringLiteral("current");
+    }
+    [[nodiscard]] QString requiredActivation() const
+    {
+        return QStringLiteral("none");
+    }
+    [[nodiscard]] QString currentGenerationDigest() const
+    {
+        return generationDigest;
+    }
+    [[nodiscard]] QString confirmationState() const
+    {
+        return confirmationState_;
+    }
+    [[nodiscard]] qulonglong confirmationRevision() const
+    {
+        return confirmationRevision_;
+    }
+    [[nodiscard]] qulonglong confirmationDeadlineMs() const
+    {
+        return confirmationDeadlineMs_;
+    }
+    [[nodiscard]] QString confirmationGeneration() const
+    {
+        return confirmationGeneration_;
+    }
+    [[nodiscard]] qsizetype pendingCallCount() const
+    {
+        return pendingCallCount_;
+    }
+    [[nodiscard]] qsizetype heldSnapshotCount() const
+    {
+        return heldSnapshots_.size();
+    }
+    [[nodiscard]] qsizetype heldPreviewCount() const
+    {
+        return heldPreviews_.size();
+    }
+
+    bool start()
+    {
+        if (running_) return true;
+        running_ = connection_.registerService(busName);
+        return running_;
+    }
+
+    void stop()
+    {
+        if (!running_) return;
+        connection_.unregisterService(busName);
+        running_ = false;
+    }
+
+    void reset()
+    {
+        running_ = false;
+        managementState_ = QStringLiteral("managed");
+        confirmationState_ = QStringLiteral("idle");
+        confirmationRevision_ = 0;
+        confirmationDeadlineMs_ = 0;
+        confirmationGeneration_.clear();
+        pendingBehavior_ = PendingBehavior::NoDisplayConfirmation;
+        pendingCallCount_ = 0;
+        holdSnapshots_ = false;
+        heldSnapshots_.clear();
+        holdPreviews_ = false;
+        heldPreviews_.clear();
+        previewReply_ = validPreviewReply();
+        projectPreviewReply_ = false;
+    }
+
+    void setPendingBehavior(const PendingBehavior behavior)
+    {
+        pendingBehavior_ = behavior;
+    }
+
+    void setAwaitingConfirmation(const bool publish = false)
+    {
+        managementState_ = QStringLiteral("preview");
+        confirmationState_ = QStringLiteral("awaiting-confirmation");
+        confirmationRevision_ = previewRevision;
+        confirmationDeadlineMs_ = previewDeadlineMs;
+        confirmationGeneration_ = previewGeneration;
+        if (publish) publishConfirmation();
+    }
+
+    void replaceAwaitingConfirmationWithForeignTuple()
+    {
+        confirmationDeadlineMs_ = previewDeadlineMs + 1000;
+        confirmationGeneration_ = QString(64, QLatin1Char('1'));
+        publishConfirmation();
+    }
+
+    void setHoldSnapshots(const bool hold)
+    {
+        holdSnapshots_ = hold;
+    }
+
+    bool releaseNextSnapshot(
+        QVariantList reply = {},
+        const bool duplicate = false
+    )
+    {
+        if (heldSnapshots_.isEmpty()) return false;
+        const auto call = heldSnapshots_.takeFirst();
+        if (reply.isEmpty()) reply = validSnapshotReply();
+        const auto response = call.createReply(reply);
+        const auto sent = connection_.send(response);
+        if (duplicate) connection_.send(response);
+        return sent;
+    }
+
+    void setPreviewReply(QVariantList reply, const bool project)
+    {
+        previewReply_ = std::move(reply);
+        projectPreviewReply_ = project;
+    }
+
+    void setHoldPreviews(const bool hold)
+    {
+        holdPreviews_ = hold;
+    }
+
+    bool releaseNextPreview(const bool duplicate = false)
+    {
+        if (heldPreviews_.isEmpty()) return false;
+        const auto held = heldPreviews_.takeFirst();
+        if (held.project) projectPreview(held.reply);
+        const auto response = held.call.createReply(held.reply);
+        const auto sent = connection_.send(response);
+        if (duplicate) connection_.send(response);
+        return sent;
+    }
+
+public slots:
+    QByteArray GetSnapshot(
+        qulonglong &snapshotRevision,
+        QString &snapshotCatalogDigest,
+        QString &snapshotActionCatalogDigest
+    )
+    {
+        if (holdSnapshots_ && calledFromDBus()) {
+            setDelayedReply(true);
+            heldSnapshots_.append(message());
+            return {};
+        }
+        snapshotRevision = baselineRevision;
+        snapshotCatalogDigest = catalogDigest;
+        snapshotActionCatalogDigest = actionCatalogDigest;
+        return snapshotBytes();
+    }
+
+    QByteArray GetConnectedDisplays(qulonglong &observedAtMs)
+    {
+        observedAtMs = 1'800'000'000'000ULL;
+        return topologyBytes();
+    }
+
+    QString GetPendingDisplayConfirmation(
+        qulonglong &pendingRevision,
+        qulonglong &pendingDeadlineMs,
+        QString &pendingGeneration
+    )
+    {
+        ++pendingCallCount_;
+        if (pendingBehavior_ == PendingBehavior::NoDisplayConfirmation) {
+            sendErrorReply(
+                QStringLiteral(
+                    "org.hyprshelld.Compositor1.Error.NoDisplayConfirmation"
+                ),
+                QStringLiteral("No display confirmation belongs to this caller")
+            );
+            return {};
+        }
+        if (pendingBehavior_ == PendingBehavior::UnexpectedError) {
+            sendErrorReply(
+                QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"),
+                QStringLiteral("Injected pending-confirmation failure")
+            );
+            return {};
+        }
+        pendingRevision = confirmationRevision_;
+        pendingDeadlineMs = confirmationDeadlineMs_;
+        pendingGeneration = confirmationGeneration_;
+        return confirmationToken;
+    }
+
+    qulonglong PreviewDisplayConfiguration(
+        qulonglong expectedRevision,
+        const QString &expectedCatalogDigest,
+        const QString &expectedActionCatalogDigest,
+        const QByteArray &profile,
+        uint timeoutSeconds,
+        QString &token,
+        qulonglong &deadlineMs,
+        QString &previewGenerationDigest
+    )
+    {
+        Q_UNUSED(expectedRevision)
+        Q_UNUSED(expectedCatalogDigest)
+        Q_UNUSED(expectedActionCatalogDigest)
+        Q_UNUSED(profile)
+        Q_UNUSED(timeoutSeconds)
+        Q_UNUSED(token)
+        Q_UNUSED(deadlineMs)
+        Q_UNUSED(previewGenerationDigest)
+        if (!calledFromDBus()) return 0;
+        setDelayedReply(true);
+        heldPreviews_.append({
+            .call = message(),
+            .reply = previewReply_,
+            .project = projectPreviewReply_,
+        });
+        if (!holdPreviews_) {
+            QTimer::singleShot(0, this, [this] {
+                releaseNextPreview();
+            });
+        }
+        return 0;
+    }
+
+    qulonglong ConfirmDisplayConfiguration(
+        const QString &token,
+        QString &confirmedGeneration
+    )
+    {
+        Q_UNUSED(token)
+        Q_UNUSED(confirmedGeneration)
+        if (!calledFromDBus()) return 0;
+        setDelayedReply(true);
+        const auto call = message();
+        QTimer::singleShot(0, this, [this, call] {
+            managementState_ = QStringLiteral("preview");
+            confirmationState_ = QStringLiteral("committing");
+            clearConfirmationTuple();
+            publishConfirmation();
+            managementState_ = QStringLiteral("managed");
+            confirmationState_ = QStringLiteral("idle");
+            publishConfirmation();
+            connection_.send(call.createReply({
+                QVariant::fromValue<qulonglong>(previewRevision),
+                previewGeneration,
+            }));
+        });
+        return 0;
+    }
+
+    qulonglong RevertDisplayConfiguration(const QString &token)
+    {
+        Q_UNUSED(token)
+        if (!calledFromDBus()) return 0;
+        setDelayedReply(true);
+        const auto call = message();
+        QTimer::singleShot(0, this, [this, call] {
+            managementState_ = QStringLiteral("preview");
+            confirmationState_ = QStringLiteral("reverting");
+            clearConfirmationTuple();
+            publishConfirmation();
+            managementState_ = QStringLiteral("managed");
+            confirmationState_ = QStringLiteral("idle");
+            publishConfirmation();
+            connection_.send(call.createReply({
+                QVariant::fromValue<qulonglong>(baselineRevision),
+            }));
+        });
+        return 0;
+    }
+
+private:
+    struct HeldPreview final {
+        QDBusMessage call;
+        QVariantList reply;
+        bool project = false;
+    };
+
+    void projectPreview(const QVariantList &reply)
+    {
+        if (reply.size() != 4) return;
+        managementState_ = QStringLiteral("preview");
+        confirmationState_ = QStringLiteral("awaiting-confirmation");
+        confirmationRevision_ = reply.at(0).toULongLong();
+        confirmationDeadlineMs_ = reply.at(2).toULongLong();
+        confirmationGeneration_ = reply.at(3).toString();
+    }
+
+    void clearConfirmationTuple()
+    {
+        confirmationRevision_ = 0;
+        confirmationDeadlineMs_ = 0;
+        confirmationGeneration_.clear();
+    }
+
+    bool publishConfirmation()
+    {
+        auto signal = QDBusMessage::createSignal(
+            objectPath,
+            propertiesInterface,
+            QStringLiteral("PropertiesChanged")
+        );
+        signal.setArguments({
+            interfaceName,
+            QVariantMap{
+                {QStringLiteral("ManagementState"), managementState_},
+                {QStringLiteral("DisplayConfirmationState"), confirmationState_},
+                {
+                    QStringLiteral("DisplayConfirmationRevision"),
+                    QVariant::fromValue<qulonglong>(confirmationRevision_)
+                },
+                {
+                    QStringLiteral("DisplayConfirmationDeadlineMs"),
+                    QVariant::fromValue<qulonglong>(confirmationDeadlineMs_)
+                },
+                {
+                    QStringLiteral("DisplayConfirmationGeneration"),
+                    confirmationGeneration_
+                },
+            },
+            QStringList{},
+        });
+        return connection_.send(signal);
+    }
+
+    QDBusConnection connection_;
+    QString managementState_;
+    QString confirmationState_;
+    qulonglong confirmationRevision_ = 0;
+    qulonglong confirmationDeadlineMs_ = 0;
+    QString confirmationGeneration_;
+    PendingBehavior pendingBehavior_ = PendingBehavior::NoDisplayConfirmation;
+    qsizetype pendingCallCount_ = 0;
+    bool holdSnapshots_ = false;
+    QList<QDBusMessage> heldSnapshots_;
+    bool holdPreviews_ = false;
+    QList<HeldPreview> heldPreviews_;
+    QVariantList previewReply_;
+    bool projectPreviewReply_ = false;
+    bool running_ = false;
+};
+
+} // namespace
+
+class CompositorClientTest final : public QObject {
+    Q_OBJECT
+
+private slots:
+    void initTestCase()
+    {
+        QVERIFY2(bus_.isConnected(), qPrintable(bus_.lastError().message()));
+        QVERIFY2(
+            serviceBus_.isConnected(),
+            qPrintable(serviceBus_.lastError().message())
+        );
+        QVERIFY(serviceBus_.registerObject(
+            objectPath,
+            &service_,
+            QDBusConnection::ExportAllProperties
+                | QDBusConnection::ExportAllSlots
+        ));
+    }
+
+    void cleanup()
+    {
+        service_.stop();
+        serviceBus_.unregisterService(busName);
+        service_.reset();
+        QCoreApplication::processEvents();
+    }
+
+    void cleanupTestCase()
+    {
+        serviceBus_.unregisterObject(objectPath);
+        QDBusConnection::disconnectFromBus(
+            QStringLiteral("compositor-client-test")
+        );
+        QDBusConnection::disconnectFromBus(
+            QStringLiteral("compositor-service-test")
+        );
+    }
+
+    void recoversOnlyTheCallingClientsPendingConfirmation()
+    {
+        service_.setPendingBehavior(FakeCompositor::PendingBehavior::Success);
+        service_.setAwaitingConfirmation();
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.pendingCallCount(), 1, 3000);
+        QCOMPARE(
+            client.displayConfirmationState(),
+            QStringLiteral("awaiting-confirmation")
+        );
+        QCOMPARE(client.displayConfirmationRevision(), previewRevision);
+        QCOMPARE(client.displayConfirmationDeadlineMs(), previewDeadlineMs);
+        QCOMPARE(client.displayConfirmationGeneration(), previewGeneration);
+        QCOMPARE(client.displayConfirmationOwned(), true);
+
+        service_.setPendingBehavior(
+            FakeCompositor::PendingBehavior::NoDisplayConfirmation
+        );
+        service_.replaceAwaitingConfirmationWithForeignTuple();
+        QTRY_COMPARE_WITH_TIMEOUT(service_.pendingCallCount(), 2, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.displayConfirmationOwned(), false);
+        QCOMPARE(
+            client.displayConfirmationGeneration(),
+            QString(64, QLatin1Char('1'))
+        );
+
+        service_.stop();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QCOMPARE(client.displayConfirmationState(), QStringLiteral("idle"));
+        QCOMPARE(client.displayConfirmationRevision(), 0ULL);
+        QCOMPARE(client.displayConfirmationDeadlineMs(), 0ULL);
+        QVERIFY(client.displayConfirmationGeneration().isEmpty());
+        QCOMPARE(client.displayConfirmationOwned(), false);
+        QCOMPARE(client.managementState(), QStringLiteral("unmanaged"));
+    }
+
+    void keepsForeignPendingConfirmationLockedAndAvailable()
+    {
+        service_.setPendingBehavior(
+            FakeCompositor::PendingBehavior::NoDisplayConfirmation
+        );
+        service_.setAwaitingConfirmation();
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.pendingCallCount(), 1, 3000);
+        QCOMPARE(
+            client.displayConfirmationState(),
+            QStringLiteral("awaiting-confirmation")
+        );
+        QCOMPARE(client.displayConfirmationOwned(), false);
+        QCOMPARE(client.managementState(), QStringLiteral("preview"));
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void failsHydrationOnUnexpectedPendingLookupErrors()
+    {
+        service_.setPendingBehavior(
+            FakeCompositor::PendingBehavior::UnexpectedError
+        );
+        service_.setAwaitingConfirmation();
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.pendingCallCount(), 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.lastErrorName(),
+            QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"),
+            3000
+        );
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.displayConfirmationOwned(), false);
+    }
+
+    void rejectsMalformedPreviewRepliesAndAcceptsTheExactTuple()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QSignalSpy failures(
+            &client,
+            &HyprShelld::CompositorClient::operationFailed
+        );
+        QVERIFY(failures.isValid());
+
+        const QVariantList output{
+            QVariantMap{
+                {QStringLiteral("id"), QStringLiteral("display-DP-1")},
+                {QStringLiteral("selector"), QStringLiteral("DP-1")},
+                {QStringLiteral("enabled"), true},
+            }
+        };
+        const QList<QVariantList> malformedReplies{
+            {
+                QVariant::fromValue<qulonglong>(previewRevision),
+                QString{},
+                QVariant::fromValue<qulonglong>(previewDeadlineMs),
+                previewGeneration,
+            },
+            {
+                QVariant::fromValue<qulonglong>(previewRevision),
+                QString(32, QLatin1Char('F')),
+                QVariant::fromValue<qulonglong>(previewDeadlineMs),
+                previewGeneration,
+            },
+            {
+                QVariant::fromValue<qulonglong>(baselineRevision),
+                confirmationToken,
+                QVariant::fromValue<qulonglong>(previewDeadlineMs),
+                previewGeneration,
+            },
+            {
+                QVariant::fromValue<qulonglong>(previewRevision + 1),
+                confirmationToken,
+                QVariant::fromValue<qulonglong>(previewDeadlineMs),
+                previewGeneration,
+            },
+            {
+                QVariant::fromValue<qulonglong>(previewRevision),
+                confirmationToken,
+                QVariant::fromValue<qulonglong>(0),
+                previewGeneration,
+            },
+            {
+                QVariant::fromValue<qulonglong>(previewRevision),
+                confirmationToken,
+                QVariant::fromValue<qulonglong>(previewDeadlineMs),
+                QStringLiteral("not-a-generation-digest"),
+            },
+            {
+                QVariant::fromValue<qulonglong>(previewRevision),
+                confirmationToken,
+            },
+        };
+
+        for (const auto &reply : malformedReplies) {
+            const auto expectedFailures = failures.size() + 1;
+            service_.setPreviewReply(reply, false);
+            client.previewDisplayConfiguration(output, 15);
+            QVERIFY(client.busy());
+            QTRY_COMPARE_WITH_TIMEOUT(failures.size(), expectedFailures, 3000);
+            QCOMPARE(
+                failures.last().at(0).toString(),
+                QStringLiteral(
+                    "org.hyprshelld.Client.Compositor.Error.InvalidReply"
+                )
+            );
+            QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+            QCOMPARE(client.displayConfirmationOwned(), false);
+        }
+
+        service_.setPreviewReply(validPreviewReply(), true);
+        client.previewDisplayConfiguration(output, 15);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.displayConfirmationState(),
+            QStringLiteral("awaiting-confirmation"),
+            3000
+        );
+        QCOMPARE(client.displayConfirmationRevision(), previewRevision);
+        QCOMPARE(client.displayConfirmationDeadlineMs(), previewDeadlineMs);
+        QCOMPARE(client.displayConfirmationGeneration(), previewGeneration);
+        QCOMPARE(client.displayConfirmationOwned(), true);
+    }
+
+    void ignoresLateAndDuplicateAsyncReplies()
+    {
+        service_.setHoldSnapshots(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.heldSnapshotCount(), 1, 3000);
+
+        client.refresh();
+        QTRY_COMPARE_WITH_TIMEOUT(service_.heldSnapshotCount(), 2, 3000);
+        QVERIFY(service_.releaseNextSnapshot(
+            {QByteArrayLiteral("malformed")},
+            true
+        ));
+        QTest::qWait(50);
+        QCOMPARE(client.available(), false);
+
+        QVERIFY(service_.releaseNextSnapshot({}, true));
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.revision(), baselineRevision);
+
+        service_.setHoldSnapshots(false);
+        service_.setHoldPreviews(true);
+        service_.setPreviewReply(validPreviewReply(), false);
+        const QVariantList output{
+            QVariantMap{
+                {QStringLiteral("id"), QStringLiteral("display-DP-1")},
+                {QStringLiteral("selector"), QStringLiteral("DP-1")},
+                {QStringLiteral("enabled"), true},
+            }
+        };
+        QSignalSpy failures(
+            &client,
+            &HyprShelld::CompositorClient::operationFailed
+        );
+        client.previewDisplayConfiguration(output, 15);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.heldPreviewCount(), 1, 3000);
+        QCOMPARE(client.busy(), true);
+
+        service_.stop();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QCOMPARE(client.busy(), false);
+        QCOMPARE(client.displayConfirmationState(), QStringLiteral("idle"));
+        QCOMPARE(client.displayConfirmationOwned(), false);
+
+        QVERIFY(service_.start());
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QVERIFY(service_.releaseNextPreview(true));
+        QTest::qWait(100);
+        QCOMPARE(client.displayConfirmationState(), QStringLiteral("idle"));
+        QCOMPARE(client.displayConfirmationOwned(), false);
+        QCOMPARE(failures.size(), 0);
+    }
+
+    void acceptsConfirmReplyAfterCommittingAndIdleProperties()
+    {
+        service_.setPendingBehavior(FakeCompositor::PendingBehavior::Success);
+        service_.setAwaitingConfirmation();
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayConfirmationOwned(), 3000);
+        QSignalSpy failures(
+            &client,
+            &HyprShelld::CompositorClient::operationFailed
+        );
+        QVERIFY(failures.isValid());
+
+        client.confirmDisplayConfiguration();
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.displayConfirmationState(),
+            QStringLiteral("idle"),
+            3000
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(failures.size(), 0);
+        QVERIFY(client.lastErrorName().isEmpty());
+        QCOMPARE(client.displayConfirmationOwned(), false);
+    }
+
+    void acceptsRevertReplyAfterRevertingAndIdleProperties()
+    {
+        service_.setPendingBehavior(FakeCompositor::PendingBehavior::Success);
+        service_.setAwaitingConfirmation();
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayConfirmationOwned(), 3000);
+        QSignalSpy failures(
+            &client,
+            &HyprShelld::CompositorClient::operationFailed
+        );
+        QVERIFY(failures.isValid());
+
+        client.revertDisplayConfiguration();
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.displayConfirmationState(),
+            QStringLiteral("idle"),
+            3000
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(failures.size(), 0);
+        QVERIFY(client.lastErrorName().isEmpty());
+        QCOMPARE(client.displayConfirmationOwned(), false);
+        QCOMPARE(client.revision(), baselineRevision);
+    }
+
+private:
+    QDBusConnection bus_ = QDBusConnection::connectToBus(
+        QDBusConnection::SessionBus,
+        QStringLiteral("compositor-client-test")
+    );
+    QDBusConnection serviceBus_ = QDBusConnection::connectToBus(
+        QDBusConnection::SessionBus,
+        QStringLiteral("compositor-service-test")
+    );
+    FakeCompositor service_{serviceBus_};
+};
+
+QTEST_GUILESS_MAIN(CompositorClientTest)
+
+#include "compositor_client_test.moc"

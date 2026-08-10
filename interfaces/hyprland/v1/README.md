@@ -99,7 +99,11 @@ The source inventories and provenance are under `tests/fixtures/hyprland/`.
 `source-manifest.schema.json` pins all three `VERSION` files, the two scalar
 registries, all tagged source files used to qualify the complex grammar, and
 the focused `0.56.0` startup sources needed to qualify the loader readiness
-guard across the full supported patch range.
+guard across the full supported patch range. It separately pins
+`src/debug/HyprCtl.cpp` and `src/output/Monitor.cpp` at both `0.56.0` and
+`0.56.1`; extraction also asserts the exact `j/monitors all` JSON field
+inventory, mode formatting, mirror/disabled semantics, reserved-edge order,
+and short-description construction consumed by display discovery.
 They can be reproduced without network access from official tagged source trees:
 
 ```sh
@@ -114,9 +118,9 @@ Use `--check` in qualification jobs to reject source drift, stale generated
 files, unexpected option additions/removals, or unversioned Hyprland wiki links.
 Before reading an inventory, the extractor verifies `VERSION`, both scalar
 registries, every complex-surface source, and the focused startup sources
-against immutable SHA-256 pins for the reviewed tags. A caller-supplied or
-locally modified tree is rejected before trusted tag and commit provenance can
-be emitted.
+and monitor-query sources against immutable SHA-256 pins for the reviewed tags.
+A caller-supplied or locally modified tree is rejected before trusted tag and
+commit provenance can be emitted.
 
 After extraction, validate all five Draft 2020-12 schemas, their checked-in
 instances, cross-file references, and catalog digests with:

@@ -25,6 +25,8 @@ qt_add_qml_module(
         component_manager_client.h
         component_runtime_client.cpp
         component_runtime_client.h
+        compositor_client.cpp
+        compositor_client.h
         coordinator_client.cpp
         coordinator_client.h
         config_client.cpp

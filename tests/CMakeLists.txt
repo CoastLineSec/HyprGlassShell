@@ -162,6 +162,9 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentPill.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentReviewDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/DisplaysPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/DisplaySettingsCard.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/DisplayTopologyPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/GenericComponentSettings.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/SchemaSettingRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
@@ -506,6 +509,33 @@ target_link_libraries(
 add_test(
     NAME hyprland-configuration
     COMMAND hyprshelld-hyprland-configuration-test
+)
+
+qt_add_executable(
+    hyprshelld-hyprland-monitor-profile-test
+    hyprland_monitor_profile_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-hyprland-monitor-profile-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-hyprland-monitor-profile-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-hyprland-core
+)
+
+add_test(
+    NAME hyprland-monitor-profile
+    COMMAND hyprshelld-hyprland-monitor-profile-test
 )
 
 find_program(HYPRSHELLD_LUAC_EXECUTABLE NAMES luac REQUIRED)
@@ -1155,6 +1185,35 @@ add_test(
 
 set_tests_properties(
     config-client
+    PROPERTIES
+        TIMEOUT 30
+)
+
+add_executable(
+    hyprshelld-compositor-client-test
+    compositor_client_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-client
+)
+
+add_test(
+    NAME compositor-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
+        --
+        "$<TARGET_FILE:hyprshelld-compositor-client-test>"
+)
+
+set_tests_properties(
+    compositor-client
     PROPERTIES
         TIMEOUT 30
 )

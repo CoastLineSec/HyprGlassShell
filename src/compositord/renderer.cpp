@@ -313,10 +313,15 @@ void includeSurfaceRequirement(
     const Hyprland::MonitorConfiguration &record
 )
 {
-    QJsonArray reserved;
-    for (const auto value : record.reserved) {
-        reserved.append(value);
-    }
+    // CLuaConfigCssGap consumes named fields only. Desired state stores CSS
+    // order (top, right, bottom, left); a positional Lua table would be
+    // silently read as four zeroes by the tagged 0.56.x binding.
+    const QJsonObject reserved{
+        {QStringLiteral("top"), record.reserved.at(0)},
+        {QStringLiteral("right"), record.reserved.at(1)},
+        {QStringLiteral("bottom"), record.reserved.at(2)},
+        {QStringLiteral("left"), record.reserved.at(3)},
+    };
     QJsonObject object{
         {QStringLiteral("output"), record.selector},
         {QStringLiteral("disabled"), !record.enabled},
@@ -353,6 +358,22 @@ void includeSurfaceRequirement(
         );
     }
     return object;
+}
+
+void normalizeWorkspaceCssGap(QJsonObject &object, const QString &field)
+{
+    if (!object.contains(field)) return;
+    const auto values = object.value(field).toArray();
+    // Desired state validates these fields as exact CSS-order arrays. The
+    // tagged CLuaConfigCssGap parser reads named fields only; numeric Lua
+    // table keys otherwise silently resolve to zero.
+    Q_ASSERT(values.size() == 4);
+    object.insert(field, QJsonObject{
+        {QStringLiteral("top"), values.at(0)},
+        {QStringLiteral("right"), values.at(1)},
+        {QStringLiteral("bottom"), values.at(2)},
+        {QStringLiteral("left"), values.at(3)},
+    });
 }
 
 [[nodiscard]] QString modifierString(const QStringList &modifiers)
@@ -786,6 +807,9 @@ RenderResult renderGeneration(
     auto &workspaces = moduleBodies[QStringLiteral("modules/42-workspaces.lua")];
     for (const auto &record : state.workspaceRules) {
         auto object = record.overrides;
+        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_in"));
+        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_out"));
+        normalizeWorkspaceCssGap(object, QStringLiteral("float_gaps"));
         object.insert(QStringLiteral("workspace"), record.selector);
         object.insert(QStringLiteral("enabled"), record.enabled);
         object.insert(QStringLiteral("monitor"), record.monitor);

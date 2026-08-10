@@ -1215,6 +1215,49 @@ private slots:
             QStringLiteral("src/main.cpp"),
         }));
 
+    const auto monitorSources =
+        manifest.value(QStringLiteral("monitorSources")).toArray();
+    QCOMPARE(monitorSources.size(), 4);
+    const QMap<QString, QString> expectedMonitorTags{
+        {QStringLiteral("0.56.0"), QStringLiteral("v0.56.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedMonitorCommits{
+        {QStringLiteral("0.56.0"),
+         QStringLiteral("36b2e0cfe0c6094dbc47bd42a437431315bb3087")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedMonitorHashes{
+        {QStringLiteral("0.56.0|src/debug/HyprCtl.cpp"),
+         QStringLiteral("17dddd63fca2d367f81eec5f0b6785cc7c971998fab5b786f908905b2327743d")},
+        {QStringLiteral("0.56.0|src/output/Monitor.cpp"),
+         QStringLiteral("5f6dc48a7cb6cda7b1c0859cbce72023c0102d865d7a67f5210b59587f2b5801")},
+        {QStringLiteral("0.56.1|src/debug/HyprCtl.cpp"),
+         QStringLiteral("7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1")},
+        {QStringLiteral("0.56.1|src/output/Monitor.cpp"),
+         QStringLiteral("9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927")},
+    };
+    QSet<QString> monitorSourceKeys;
+    for (const auto &value : monitorSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedMonitorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!monitorSourceKeys.contains(key), qPrintable(key));
+      monitorSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedMonitorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedMonitorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedMonitorHashes.value(key)));
+    }
+    QCOMPARE(monitorSourceKeys,
+             QSet<QString>(expectedMonitorHashes.keyBegin(),
+                           expectedMonitorHashes.keyEnd()));
+
     const auto complexSources =
         manifest.value(QStringLiteral("complexSources")).toArray();
     QCOMPARE(complexSources.size(), 48);
