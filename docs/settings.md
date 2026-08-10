@@ -1,7 +1,8 @@
 # Settings
 
 HyprShelld Settings provides one place to adjust the bar and its workspace
-switcher, and to choose which shell components are enabled.
+switcher, change common window appearance and behavior, configure connected
+displays, and choose which shell components are enabled.
 
 ## Open Settings
 
@@ -12,7 +13,30 @@ information without the bar running.
 
 Select **Bar** in the left sidebar to see a desktop preview and change the bar
 height or workspace switcher. The preview uses illustrative workspaces and
-applications rather than reading or controlling your current session.
+applications rather than reading or controlling your current session. It
+remains visible while the Bar setting cards scroll beneath it.
+
+Select **Appearance** to prepare a draft for the reviewed border, corner,
+effect, layout, resize, and snapping choices. Its preview is also illustrative;
+when animations are enabled, it loops through a layout-specific window opening
+and closing demonstration that can be paused or played. The preview remains
+visible while the setting cards scroll beneath it. **Save & apply** first
+persists one validated desired-state revision, then reloads and verifies that
+exact revision. The page preserves a draft if the authority changes elsewhere
+and never silently rebases it. Appearance requires the compositor takeover
+described below, but never starts takeover itself. See
+[Appearance and behavior](appearance.md) for the complete choices, retry, and
+whole-compositor recovery behavior.
+
+Select **Displays** to inspect the connected-output topology and prepare changes
+to resolution, refresh rate, scale, orientation, arrangement, mirroring, and
+advanced display properties. This page reads the live topology. It does not
+change the running session until you select **Test changes**. Each live test
+lasts 15 seconds and must be kept explicitly or it is reverted automatically.
+Before the first change, Settings asks for explicit permission to replace the
+Hyprland entrypoint with HyprShelld's managed loader. The existing entrypoint is
+preserved for recovery but is not imported. Read [Displays](displays.md) before
+selecting **Take control**.
 
 Select **Components** to manage installed shell features. The page keeps four
 categories in a stable order: **Bar Widgets**, **Desktop Widgets**,
@@ -81,9 +105,9 @@ Select **Reset** to return to the default height. Reset is available only when
 the current height differs from the default.
 
 While the new height is being saved, the size control is briefly unavailable.
-If the save fails, Settings displays a bar-size warning above the preview and
-keeps the last successfully saved value. Workspace controls remain independent
-of a bar-size save or error.
+If the save fails, Settings displays a bar-size warning in the scrolling
+settings area beneath the pinned preview and keeps the last successfully saved
+value. Workspace controls remain independent of a bar-size save or error.
 
 ## Customize the workspace switcher
 
@@ -216,12 +240,30 @@ On a standard Linux setup, core settings use
 `~/.local/state/hyprshelld/components.last-good.json`. Systems with custom XDG
 paths may store them elsewhere.
 
+Compositor and display settings use a third, independent recovery domain. Their
+desired and last-known-good documents normally live at
+`~/.local/state/hyprshelld/compositor/desired.json` and
+`~/.local/state/hyprshelld/compositor/last-good.json`. The managed Hyprland
+loader, immutable generations, ownership record, preserved pre-takeover
+entrypoint, and `user-custom.lua` are deliberately not stored in the core or
+component settings files. See [Displays](displays.md) for their roles and
+locations.
+
+Appearance shares this compositor recovery domain. If an Appearance save is
+persisted but cannot be activated, **Retry apply** targets the exact saved
+revision. **Restore last working configuration** is broader: after a separate
+cancel-first confirmation it can replace all pending compositor settings, not
+only Appearance. See [Appearance and behavior](appearance.md) before using that
+recovery action.
+
 If a recovery message keeps returning, close Settings and preserve the active
 and last-known-good file named above for the affected area before seeking help.
 Do not delete or edit either file as a first troubleshooting step; doing so can
 remove the copy HyprShelld would otherwise use to recover your choices.
 
 See [Bar](bar.md) for its current layout, workspace behavior, spacing, and
-complete height range.
+complete height range. See [Appearance and behavior](appearance.md) for window
+settings and recovery. See [Displays](displays.md) before allowing HyprShelld
+to manage the compositor entrypoint.
 
 Return to the [HyprShelld User Guide](index.md).

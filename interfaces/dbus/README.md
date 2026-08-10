@@ -85,7 +85,13 @@ the activation reported by `RequiredActivation`.
 
 `GetSnapshot` returns one complete canonical Hyprland desired-state document,
 its revision, and the exact scalar and action catalog digests that own those
-bytes. `ReplaceSnapshot` compares all three tokens before parsing the candidate.
+bytes. `GetOptionCatalog` returns the authority's already parsed scalar-option
+catalog as its exact canonical JSON plus the digest that owns those bytes. The
+reply is bounded to 4 MiB and fails `Unavailable` unless its SHA-256 equals the
+current `CatalogDigest`; the service never reopens a catalog path to answer the
+request. This is a read-only authority view and does not change desired state,
+the persistent store, or live Hyprland configuration. `ReplaceSnapshot`
+compares all three tokens before parsing the candidate.
 The candidate embeds the current expected revision; a real change is assigned
 exactly the next revision and is made durable before one coherent property
 tuple is published. If that successful response is lost, an exact retry using

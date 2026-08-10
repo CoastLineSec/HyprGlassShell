@@ -466,6 +466,61 @@ private slots:
         QVERIFY(first.value->generation != later.value->generation);
     }
 
+    void curatedAppearanceOverridesUsePinnedModules()
+    {
+        auto stateObject = defaults;
+        stateObject.insert(
+            QStringLiteral("overrides"),
+            QJsonObject{
+                {QStringLiteral("hyprland.animations.enabled"), false},
+                {QStringLiteral("hyprland.decoration.blur.enabled"), false},
+                {QStringLiteral("hyprland.decoration.rounding"), 7},
+                {QStringLiteral("hyprland.decoration.shadow.enabled"), false},
+                {QStringLiteral("hyprland.general.border_size"), 4},
+                {QStringLiteral("hyprland.general.layout"),
+                 QStringLiteral("master")},
+                {QStringLiteral("hyprland.general.resize_on_border"), true},
+                {QStringLiteral("hyprland.general.snap.enabled"), true},
+            }
+        );
+        const auto parsed = parseState(stateObject);
+        QVERIFY2(parsed, qPrintable(describeErrors(parsed.errors)));
+
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        const auto rendered = render(
+            *parsed.value,
+            QDir(temporary.path()).filePath(QString::fromLatin1(nonceA)),
+            QDir(temporary.path()).filePath(
+                QStringLiteral("user-custom.lua"))
+        );
+        QVERIFY2(rendered, qPrintable(describeErrors(rendered.errors)));
+        QCOMPARE(rendered.value->activationRequirement,
+                 ActivationRequirement::Reload);
+
+        const auto general = rendered.value->files
+                                 .value(QStringLiteral("modules/40-general.lua"))
+                                 .contents;
+        QVERIFY(general.contains("border_size = 4"));
+        QVERIFY(general.contains("layout = \"master\""));
+        QVERIFY(general.contains("resize_on_border = true"));
+        QVERIFY(general.contains("snap = {enabled = true}"));
+
+        const auto decorations = rendered.value->files
+                                     .value(QStringLiteral(
+                                         "modules/50-decorations.lua"))
+                                     .contents;
+        QVERIFY(decorations.contains("blur = {enabled = false}"));
+        QVERIFY(decorations.contains("rounding = 7"));
+        QVERIFY(decorations.contains("shadow = {enabled = false}"));
+
+        const auto animations = rendered.value->files
+                                    .value(QStringLiteral(
+                                        "modules/51-animations.lua"))
+                                    .contents;
+        QVERIFY(animations.contains("animations = {enabled = false}"));
+    }
+
     void rejectsUnsafeOrAmbiguousPaths()
     {
         const auto parsed = parseState(defaults);

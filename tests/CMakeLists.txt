@@ -157,11 +157,14 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/BarHeightControl.qml"
         "${PROJECT_SOURCE_DIR}/src/qml/HyprShelld/UI/WorkspaceSwitcher.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/Main.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/AppearancePage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/AppearancePreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentPill.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentReviewDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/DisplayAdoptionDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/DisplaysPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/DisplaySettingsCard.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/DisplayTopologyPreview.qml"
@@ -1194,6 +1197,39 @@ add_executable(
     compositor_client_test.cpp
 )
 
+target_compile_definitions(
+    hyprshelld-compositor-client-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+)
+
+add_executable(
+    hyprshelld-compositor-appearance-helpers-test
+    compositor_appearance_helpers_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-appearance-helpers-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-appearance-helpers-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-client
+        hyprshelld-hyprland-core
+)
+
+add_test(
+    NAME compositor-appearance-helpers
+    COMMAND hyprshelld-compositor-appearance-helpers-test
+)
+
 target_link_libraries(
     hyprshelld-compositor-client-test
     PRIVATE
@@ -1201,6 +1237,7 @@ target_link_libraries(
         Qt6::DBus
         Qt6::Test
         hyprshelld-client
+        hyprshelld-hyprland-core
 )
 
 add_test(

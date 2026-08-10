@@ -68,7 +68,9 @@ circle design.
 
 Changes are saved automatically as one workspace-switcher update and apply to
 every bar. The Settings preview uses illustrative workspaces and applications;
-it is not a live view of your session.
+it is not a live view of your session. The preview remains at the top of the
+Bar page while the Size and Workspaces settings scroll beneath it, so each
+change stays visible while you configure the bar.
 
 The workspace switcher itself can be disabled from **Settings → Components →
 Bar Widgets**. Disabling it removes the switcher without discarding its saved
@@ -97,7 +99,7 @@ but the persistent warning remains available in Settings.
 
 1. Open **HyprShelld Settings** and select **Bar** in the sidebar.
 2. Drag the **Bar height** slider to the size you want.
-3. Use the desktop preview to see the new height while you drag.
+3. Use the pinned desktop preview to see the new height while you drag.
 4. Release the slider to save the change and apply it to every bar.
 
 Changes are saved automatically. Select **Reset** to return every bar to the

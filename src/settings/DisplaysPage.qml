@@ -39,6 +39,8 @@ Page {
     property double countdownNowMs: Date.now()
     property string previousConfirmationState: "idle"
 
+    readonly property real minimumTargetSize: 44
+
     signal refreshRequested()
     signal adoptionRequested()
     signal applyRequested()
@@ -54,6 +56,11 @@ Page {
     readonly property bool confirmationActive:
         root.confirmationState !== "idle"
         || (root.serviceAvailable && root.managementState === "preview")
+    readonly property bool adoptionAvailable:
+        root.serviceAvailable && root.writable
+        && root.managementState === "unmanaged"
+    readonly property bool adoptionEligible:
+        root.adoptionAvailable && !root.busy && !root.confirmationActive
     readonly property bool controlsEnabled:
         root.serviceAvailable && root.writable && !root.busy
         && root.baselineCurrent && !root.confirmationActive
@@ -514,10 +521,9 @@ Page {
                     spacing: 14
 
                     Label {
+                        objectName: "displayStatusMessage"
                         Layout.fillWidth: true
                         text: {
-                            if (root.errorMessage.length > 0)
-                                return qsTr("The display operation failed. %1").arg(root.errorMessage);
                             if (!root.serviceAvailable)
                                 return qsTr("Display settings are unavailable. The compositor settings service may be restarting.");
                             if (!root.writable)
@@ -526,10 +532,15 @@ Page {
                                 return qsTr("Compositor settings were restored from the last known good copy. Review the display layout before changing it.");
                             if (root.loadState === "defaulted")
                                 return qsTr("Compositor settings could not be recovered, so safe defaults are in use. Review them before continuing.");
-                            if (root.managementState === "unmanaged")
-                                return qsTr("HyprShelld is not managing your compositor entrypoint yet. Take control before changing displays; your current file is preserved for recovery.");
                             if (root.managementState === "conflict")
-                                return qsTr("The managed compositor entrypoint changed unexpectedly. Display changes are locked until the conflict is resolved.");
+                                return qsTr("The managed compositor entrypoint or its ownership state changed unexpectedly. Display changes are locked to preserve it. If the desktop health warning reports Compositor settings, you can restart it there; otherwise preserve the unexpected files and seek recovery guidance.");
+                            if (root.managementState === "unmanaged"
+                                    && root.busy)
+                                return qsTr("HyprShelld is preparing to manage your compositor entrypoint. Display changes remain locked until the takeover is verified.");
+                            if (root.errorMessage.length > 0)
+                                return qsTr("The display operation failed. %1").arg(root.errorMessage);
+                            if (root.managementState === "unmanaged")
+                                return qsTr("HyprShelld is not managing your compositor entrypoint yet. Takeover does not import its settings. If hyprland.lua exists, the exact original is preserved privately for recovery when you confirm; if it does not exist, that absence is recorded. Nothing changes until you confirm.");
                             if (!root.baselineCurrent)
                                 return qsTr("Other compositor settings are waiting to be applied. Apply that exact baseline before testing a display layout.");
                             if (root.inventoryChangedWhileEditing)
@@ -546,13 +557,19 @@ Page {
 
                     Button {
                         objectName: "adoptCompositorButton"
-                        visible: root.serviceAvailable && root.writable
-                            && root.managementState === "unmanaged"
-                            && root.errorMessage.length === 0
-                        text: qsTr("Take control")
-                        enabled: !root.busy
+                        implicitHeight: Math.max(
+                            root.minimumTargetSize,
+                            implicitBackgroundHeight,
+                            implicitContentHeight + topPadding + bottomPadding
+                        )
+                        visible: root.adoptionAvailable
+                        text: root.busy
+                            ? qsTr("Starting management…")
+                            : qsTr("Take control")
+                        enabled: root.adoptionEligible
+                        Accessible.name: qsTr("Review compositor management takeover")
 
-                        onClicked: root.adoptionRequested()
+                        onClicked: displayAdoptionDialog.open()
                     }
 
                     Button {
@@ -560,7 +577,6 @@ Page {
                         visible: root.serviceAvailable && root.writable
                             && root.managementState === "managed"
                             && !root.baselineCurrent
-                            && root.errorMessage.length === 0
                         text: qsTr("Apply pending changes")
                         enabled: !root.busy
                             && root.confirmationState === "idle"
@@ -719,6 +735,21 @@ Page {
         }
     }
 
+    DisplayAdoptionDialog {
+        id: displayAdoptionDialog
+
+        eligible: root.adoptionEligible
+        operationBusy: root.busy
+
+        onAdoptionConfirmed: {
+            // Recheck the live projection at the final boundary. The dialog
+            // also checks this before emitting, but this keeps the mutation
+            // signal safe if the page state changes in the same event turn.
+            if (root.adoptionEligible)
+                root.adoptionRequested();
+        }
+    }
+
     Rectangle {
         id: confirmationScrim
 
@@ -772,6 +803,7 @@ Page {
                 }
 
                 Label {
+                    objectName: "displayConfirmationMessage"
                     Layout.fillWidth: true
                     text: {
                         if (!root.serviceAvailable) {
@@ -785,7 +817,7 @@ Page {
                         if (root.confirmationState === "committing")
                             return qsTr("The display layout is confirmed and is being committed. It can no longer be reverted from this prompt.");
                         if (root.confirmationState === "failed")
-                            return qsTr("The automatic revert could not be verified. Avoid changing more compositor settings and restart Compositor settings from the health banner.");
+                            return qsTr("The automatic revert could not be verified. Avoid changing more compositor settings. If the desktop health warning reports Compositor settings, you can restart it there; otherwise preserve the current state and seek recovery guidance.");
                         if (!root.confirmationOwned)
                             return qsTr("This window does not own the test, so it cannot keep or revert it. The initiating session or the daemon timeout remains in control.");
                         if (root.confirmationSecondsRemaining <= 0)

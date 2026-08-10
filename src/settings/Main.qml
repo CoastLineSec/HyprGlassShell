@@ -447,6 +447,91 @@ ApplicationWindow {
                 }
 
                 ItemDelegate {
+                    id: appearanceNavigationItem
+
+                    objectName: "appearanceNavigationItem"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+                    checkable: true
+                    checked: root.currentPage === "appearance"
+                    autoExclusive: true
+                    focusPolicy: Qt.StrongFocus
+                    leftPadding: 18
+                    rightPadding: 12
+                    topPadding: 8
+                    bottomPadding: 8
+                    Accessible.role: Accessible.PageTab
+                    Accessible.name: qsTr("Appearance settings")
+                    Accessible.checked: checked
+
+                    onClicked: root.currentPage = "appearance"
+
+                    background: Rectangle {
+                        radius: 12
+                        color: appearanceNavigationItem.checked
+                            ? Qt.rgba(root.palette.highlight.r, root.palette.highlight.g, root.palette.highlight.b, 0.18)
+                            : appearanceNavigationItem.hovered
+                                ? Qt.rgba(root.palette.text.r, root.palette.text.g, root.palette.text.b, 0.06)
+                                : "transparent"
+                        border.width:
+                            appearanceNavigationItem.activeFocus ? 2 : 0
+                        border.color: root.palette.highlight
+
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                leftMargin: 5
+                                verticalCenter: parent.verticalCenter
+                            }
+                            width: 3
+                            height: 24
+                            radius: 2
+                            visible: appearanceNavigationItem.checked
+                            color: root.palette.highlight
+                        }
+                    }
+
+                    contentItem: RowLayout {
+                        spacing: 11
+
+                        Item {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 20
+                                height: 16
+                                radius: 5
+                                color: "transparent"
+                                border.width: 2
+                                border.color: root.palette.text
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 7
+                                    height: 7
+                                    radius: 3
+                                    color: appearanceNavigationItem.checked
+                                        ? root.palette.highlight
+                                        : root.palette.placeholderText
+                                }
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Appearance")
+                            color: root.palette.text
+                            font.pixelSize: 14
+                            font.weight: appearanceNavigationItem.checked
+                                ? Font.DemiBold : Font.Normal
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                ItemDelegate {
                     id: displaysNavigationItem
 
                     objectName: "displaysNavigationItem"
@@ -714,8 +799,9 @@ ApplicationWindow {
             StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: root.currentPage === "displays" ? 1
-                    : root.currentPage === "components" ? 2 : 0
+                currentIndex: root.currentPage === "appearance" ? 1
+                    : root.currentPage === "displays" ? 2
+                    : root.currentPage === "components" ? 3 : 0
 
                 BarSettingsPage {
                     barHeight: ConfigClient.barHeight
@@ -789,11 +875,54 @@ ApplicationWindow {
                         root.resetWorkspaceSettings()
                 }
 
+                AppearancePage {
+                    id: appearancePage
+
+                    objectName: "appearancePage"
+                    serviceAvailable: CompositorClient.available
+                    writable: CompositorClient.writable
+                    catalogAvailable: CompositorClient.catalogAvailable
+                    appearanceAvailable: CompositorClient.appearanceAvailable
+                    busy: CompositorClient.busy
+                    busyOperation: CompositorClient.busyOperation
+                    appearanceOptions: CompositorClient.appearanceOptions
+                    appearanceValues: CompositorClient.appearanceValues
+                    revisionToken: CompositorClient.revisionToken
+                    appliedRevision: CompositorClient.appliedRevision
+                    loadState: CompositorClient.loadState
+                    managementState: CompositorClient.managementState
+                    applyState: CompositorClient.applyState
+                    requiredActivation: CompositorClient.requiredActivation
+                    confirmationState:
+                        CompositorClient.displayConfirmationState
+                    catalogErrorName:
+                        CompositorClient.appearanceErrorName
+                    catalogErrorMessage:
+                        CompositorClient.appearanceErrorMessage
+                    errorName: CompositorClient.lastErrorName
+                    errorMessage: CompositorClient.lastErrorMessage
+                    retryApplyAvailable:
+                        CompositorClient.retryApplyAvailable
+                    recoveryAvailable: CompositorClient.recoveryAvailable
+                    contentTopMargin:
+                        shellHealthWarning.warningVisible ? 0 : 28
+
+                    onRefreshRequested: CompositorClient.refresh()
+                    onOpenDisplaysRequested:
+                        root.currentPage = "displays"
+                    onSaveRequested: values =>
+                        CompositorClient.saveAppearance(values)
+                    onRetryApplyRequested: CompositorClient.retryApply()
+                    onRecoveryRequested:
+                        CompositorClient.recoverConfiguration()
+                }
+
                 DisplaysPage {
                     id: displaysPage
 
                     objectName: "displaysPage"
                     serviceAvailable: CompositorClient.available
+                        && CompositorClient.displayDiscoveryAvailable
                     writable: CompositorClient.writable
                     busy: CompositorClient.busy
                     snapshot: CompositorClient.snapshot

@@ -157,6 +157,20 @@
     </method>
 
     <!--
+      Returns the exact canonical scalar-option catalog retained by the
+      desired-state authority. The document is bounded to 4 MiB and its
+      SHA-256 digest must equal the current CatalogDigest property and the
+      digest returned here.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+    -->
+    <method name="GetOptionCatalog">
+      <arg name="optionCatalog" type="ay" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
       Replaces the complete desired state using a revision compare-and-swap.
       The candidate embeds expectedRevision; compositord owns exactly one
       monotonic increment. An exact retry with the immediately preceding token

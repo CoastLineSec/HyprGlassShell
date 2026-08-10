@@ -401,6 +401,23 @@ private slots:
         QVERIFY(!QFileInfo::exists(fixture.paths.stableEntrypointPath()));
     }
 
+    void optionCatalogIsTheRetainedCanonicalAuthority()
+    {
+        StoreFixture fixture;
+        QVERIFY(fixture.temporary.isValid());
+        auto authority = transaction(fixture.paths);
+
+        const auto expected = canonicalCatalogJson(catalog);
+        QVERIFY(!expected.isEmpty());
+        QCOMPARE(authority->optionCatalog(), expected);
+        QVERIFY(!QFileInfo::exists(fixture.paths.stateRoot));
+
+        const auto initialized = authority->initialize();
+        QVERIFY2(initialized.success, qPrintable(initialized.errorMessage));
+        QCOMPARE(authority->optionCatalog(), expected);
+        QCOMPARE(sha256(expected), initialized.snapshot.catalogDigest);
+    }
+
     void activationFilesystemContextDuplicatesExactAuthorityRoots()
     {
         StoreFixture fixture;

@@ -1123,6 +1123,10 @@ AuthoritySnapshot ConfigurationTransaction::snapshot() const {
   return impl_->snapshot();
 }
 
+QByteArray ConfigurationTransaction::optionCatalog() const {
+  return Hyprland::canonicalCatalogJson(impl_->catalog);
+}
+
 AuthorityResult
 ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
                                           const QByteArray &candidateBytes) {

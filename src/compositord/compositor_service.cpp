@@ -1,5 +1,8 @@
 #include "compositor_service.h"
 
+#include "hyprland/catalog.h"
+
+#include <QCryptographicHash>
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QDateTime>
@@ -281,6 +284,36 @@ CompositorService::GetSnapshot(qulonglong &snapshotRevision,
   snapshotCatalogDigest = snapshot_.catalogDigest;
   snapshotActionCatalogDigest = snapshot_.actionCatalogDigest;
   return snapshot_.desiredState;
+}
+
+QByteArray CompositorService::GetOptionCatalog(
+    QString &optionCatalogDigest
+) const {
+  optionCatalogDigest.clear();
+  if (!snapshot_.available || !authority_) {
+    reportError(QStringLiteral("Unavailable"),
+                QStringLiteral("Compositor configuration is unavailable"));
+    return {};
+  }
+
+  const auto catalog = authority_->optionCatalog();
+  if (catalog.isEmpty() || catalog.size() > Hyprland::maximumCatalogBytes) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral("The compositor option catalog is unavailable"));
+    return {};
+  }
+  const auto digest = QString::fromLatin1(
+      QCryptographicHash::hash(catalog, QCryptographicHash::Sha256).toHex());
+  if (digest != snapshot_.catalogDigest) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral("The compositor option catalog is unavailable"));
+    return {};
+  }
+
+  optionCatalogDigest = snapshot_.catalogDigest;
+  return catalog;
 }
 
 qulonglong

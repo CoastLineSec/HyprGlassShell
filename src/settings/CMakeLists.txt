@@ -8,11 +8,14 @@ qt_add_qml_module(
     URI HyprShelld.Settings
     QML_FILES
         Main.qml
+        AppearancePage.qml
+        AppearancePreview.qml
         BarPreview.qml
         BarSettingsPage.qml
         ComponentPill.qml
         ComponentReviewDialog.qml
         ComponentsPage.qml
+        DisplayAdoptionDialog.qml
         DisplaysPage.qml
         DisplaySettingsCard.qml
         DisplayTopologyPreview.qml

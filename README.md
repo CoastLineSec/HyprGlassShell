@@ -7,7 +7,10 @@ desktop from unrelated components.
 
 HyprShelld is in early development and does not yet provide a supported complete
 desktop package. The current source includes an installable development runtime,
-a floating bar, its Settings application, and the supporting services.
+a floating bar, a Settings application for the bar, common window appearance,
+displays, and shell components, and the supporting services. Appearance uses a
+validated draft and verified compositor reload. Display changes use an explicit
+compositor-takeover step and a timed live test before they are saved.
 
 User documentation begins in [docs/index.md](docs/index.md).
 

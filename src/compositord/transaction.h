@@ -31,6 +31,7 @@ public:
     [[nodiscard]] FilesystemContextResult
     duplicateActivationFilesystemContext() const override;
     [[nodiscard]] AuthoritySnapshot snapshot() const override;
+    [[nodiscard]] QByteArray optionCatalog() const override;
     [[nodiscard]] AuthorityResult replaceSnapshot(
         quint64 expectedRevision,
         const QByteArray &candidate

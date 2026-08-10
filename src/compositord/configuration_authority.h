@@ -150,6 +150,11 @@ public:
         return {.success = true};
     }
   [[nodiscard]] virtual AuthoritySnapshot snapshot() const = 0;
+  // Returns the canonical scalar-option catalog retained by this authority.
+  // Implementations must derive these bytes from their already parsed catalog;
+  // callers must still bind them to AuthoritySnapshot::catalogDigest before
+  // publishing them across a trust boundary.
+  [[nodiscard]] virtual QByteArray optionCatalog() const = 0;
   [[nodiscard]] virtual AuthorityResult
   replaceSnapshot(quint64 expectedRevision, const QByteArray &candidate) = 0;
   [[nodiscard]] virtual AuthorityResult

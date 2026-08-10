@@ -1,5 +1,10 @@
 #include "compositor_client.h"
 
+#include "compositor_option_catalog.h"
+#include "compositor_snapshot_editor.h"
+#include "hyprland/desired_state.h"
+#include "hyprland/json_support.h"
+
 #include <QDBusError>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -29,6 +34,9 @@ const QString propertiesInterface = QStringLiteral(
 );
 constexpr int ordinaryCallTimeoutMs = 15000;
 constexpr int previewCallTimeoutMs = 45000;
+const QString clientErrorPrefix = QStringLiteral(
+    "org.hyprshelld.Client.Compositor.Error."
+);
 
 [[nodiscard]] bool isDigest(const QString &value)
 {
@@ -55,12 +63,16 @@ constexpr int previewCallTimeoutMs = 45000;
     const qulonglong expected
 )
 {
-    bool valid = false;
-    const auto parsed = value.toString().toULongLong(&valid);
-    return valid && parsed == expected;
+    return value.isString()
+        && value.toString() == QString::number(expected);
 }
 
-[[nodiscard]] std::optional<QVariantMap> parseSnapshot(
+struct ParsedSnapshot final {
+    QVariantMap values;
+    QJsonObject object;
+};
+
+[[nodiscard]] std::optional<ParsedSnapshot> parseSnapshot(
     const QByteArray &bytes,
     const qulonglong revision,
     const QString &catalogDigest,
@@ -74,16 +86,55 @@ constexpr int previewCallTimeoutMs = 45000;
         return std::nullopt;
     }
     const auto object = document.object();
+    auto canonical = Hyprland::JsonSupport::canonicalJson(object);
+    canonical.append('\n');
     if (object.value(QStringLiteral("formatVersion")).toInt(-1) != 1
         || !isStringRevision(object.value(QStringLiteral("revision")), revision)
         || object.value(QStringLiteral("catalogDigest")).toString()
             != catalogDigest
         || object.value(QStringLiteral("actionCatalogDigest")).toString()
             != actionCatalogDigest
-        || !object.value(QStringLiteral("monitors")).isArray()) {
+        || canonical != bytes
+        || !CompositorSnapshotEditor::isExactV1Envelope(
+            object,
+            revision,
+            catalogDigest,
+            actionCatalogDigest
+        )) {
         return std::nullopt;
     }
-    return object.toVariantMap();
+    return ParsedSnapshot{
+        .values = object.toVariantMap(),
+        .object = object,
+    };
+}
+
+[[nodiscard]] bool isAmbiguousReplyError(const QString &name)
+{
+    return name == QStringLiteral("org.freedesktop.DBus.Error.NoReply")
+        || name == QStringLiteral("org.freedesktop.DBus.Error.Timeout")
+        || name == QStringLiteral("org.qtproject.QtDBus.Error.NoReply")
+        || name == QStringLiteral("org.qtproject.QtDBus.Error.Timeout");
+}
+
+[[nodiscard]] std::optional<QByteArray> candidateAtRevision(
+    const QByteArray &candidate,
+    const qulonglong revision
+)
+{
+    QJsonParseError error;
+    auto document = QJsonDocument::fromJson(candidate, &error);
+    if (error.error != QJsonParseError::NoError || !document.isObject()) {
+        return std::nullopt;
+    }
+    auto object = document.object();
+    object.insert(QStringLiteral("revision"), QString::number(revision));
+    auto bytes = Hyprland::JsonSupport::canonicalJson(object);
+    bytes.append('\n');
+    if (bytes.size() > Hyprland::maximumDesiredStateBytes) {
+        return std::nullopt;
+    }
+    return bytes;
 }
 
 struct ParsedTopology final {
@@ -157,10 +208,17 @@ CompositorClient::CompositorClient(
     refresh();
 }
 
+CompositorClient::~CompositorClient() = default;
+
 bool CompositorClient::available() const { return available_; }
 bool CompositorClient::writable() const { return writable_; }
 bool CompositorClient::busy() const { return busy_; }
+QString CompositorClient::busyOperation() const { return busyOperation_; }
 qulonglong CompositorClient::revision() const { return revision_; }
+QString CompositorClient::revisionToken() const
+{
+    return QString::number(revision_);
+}
 QString CompositorClient::loadState() const { return loadState_; }
 QString CompositorClient::managementState() const { return managementState_; }
 QString CompositorClient::entrypointDigest() const { return entrypointDigest_; }
@@ -177,6 +235,63 @@ QString CompositorClient::requiredActivation() const
 }
 QString CompositorClient::generationDigest() const { return generationDigest_; }
 QVariantMap CompositorClient::snapshot() const { return snapshot_; }
+bool CompositorClient::catalogAvailable() const { return catalogAvailable_; }
+bool CompositorClient::displayDiscoveryAvailable() const
+{
+    return displayDiscoveryAvailable_;
+}
+bool CompositorClient::appearanceAvailable() const
+{
+    return available_ && catalogAvailable_ && appearanceProjectionValid_
+        && writable_ && !busy_
+        && revision_ != std::numeric_limits<qulonglong>::max()
+        && managementState_ == QStringLiteral("managed")
+        && displayConfirmationState_ == QStringLiteral("idle")
+        && applyState_ == QStringLiteral("current")
+        && appliedRevision_ == revision_
+        && requiredActivation_ == QStringLiteral("none");
+}
+bool CompositorClient::retryApplyAvailable() const
+{
+    return available_ && writable_ && !busy_
+        && managementState_ == QStringLiteral("managed")
+        && displayConfirmationState_ == QStringLiteral("idle")
+        && (applyState_ == QStringLiteral("retained")
+            || applyState_ == QStringLiteral("failed"))
+        && appliedRevision_ != revision_
+        && requiredActivation_ == QStringLiteral("reload");
+}
+bool CompositorClient::recoveryAvailable() const
+{
+    return available_ && writable_ && !busy_
+        && revision_ != std::numeric_limits<qulonglong>::max()
+        && managementState_ == QStringLiteral("managed")
+        && displayConfirmationState_ == QStringLiteral("idle")
+        && isDigest(generationDigest_)
+        && appliedRevision_ != revision_
+        && (applyState_ == QStringLiteral("retained")
+            || applyState_ == QStringLiteral("failed"));
+}
+QVariantList CompositorClient::appearanceOptions() const
+{
+    return catalogAvailable_ && optionCatalog_
+        ? optionCatalog_->appearanceOptions()
+        : QVariantList{};
+}
+QVariantMap CompositorClient::appearanceValues() const
+{
+    return catalogAvailable_ && appearanceProjectionValid_
+        ? appearanceValues_
+        : QVariantMap{};
+}
+QString CompositorClient::appearanceErrorName() const
+{
+    return appearanceErrorName_;
+}
+QString CompositorClient::appearanceErrorMessage() const
+{
+    return appearanceErrorMessage_;
+}
 QVariantList CompositorClient::connectedDisplays() const
 {
     return connectedDisplays_;
@@ -217,6 +332,8 @@ void CompositorClient::refresh()
     }
     refreshQueued_ = false;
     setAvailable(false);
+    setCatalogAvailable(false);
+    setDisplayDiscoveryAvailable(false);
     const auto generation = ++refreshGeneration_;
     auto message = QDBusMessage::createMethodCall(
         serviceName,
@@ -297,6 +414,98 @@ void CompositorClient::applyConfiguration()
     beginMutation(Mutation::Apply, message, previewCallTimeoutMs);
 }
 
+void CompositorClient::saveAppearance(const QVariantMap &values)
+{
+    if (!appearanceAvailable() || optionCatalog_ == nullptr) {
+        setError(
+            clientErrorPrefix + QStringLiteral("Unavailable"),
+            QStringLiteral("The appearance configuration cannot be saved right now")
+        );
+        return;
+    }
+    QString error;
+    const auto edit = CompositorSnapshotEditor::replaceAppearance(
+        snapshotObject_,
+        revision_,
+        catalogDigest_,
+        actionCatalogDigest_,
+        *optionCatalog_,
+        values,
+        error
+    );
+    if (!edit) {
+        setError(
+            clientErrorPrefix + QStringLiteral("InvalidAppearance"),
+            error
+        );
+        return;
+    }
+    if (!edit->changed) {
+        setError(
+            clientErrorPrefix + QStringLiteral("NoChanges"),
+            QStringLiteral("The appearance configuration has not changed")
+        );
+        return;
+    }
+    clearError();
+    setBusy(true);
+    setBusyOperation(QStringLiteral("appearance-save"));
+    sendAppearanceReplace(
+        {
+            .candidate = edit->candidate,
+            .expectedRevision = revision_,
+            .catalogDigest = catalogDigest_,
+            .actionCatalogDigest = actionCatalogDigest_,
+        },
+        false
+    );
+}
+
+void CompositorClient::retryApply()
+{
+    if (!retryApplyAvailable()) {
+        setError(
+            clientErrorPrefix + QStringLiteral("Unavailable"),
+            QStringLiteral("There is no saved compositor configuration to apply")
+        );
+        return;
+    }
+    clearError();
+    setBusy(true);
+    setBusyOperation(QStringLiteral("appearance-apply"));
+    sendApplyRequest(
+        {
+            .revision = revision_,
+            .catalogDigest = catalogDigest_,
+            .actionCatalogDigest = actionCatalogDigest_,
+        },
+        false
+    );
+}
+
+void CompositorClient::recoverConfiguration()
+{
+    if (!recoveryAvailable()) {
+        setError(
+            clientErrorPrefix + QStringLiteral("Unavailable"),
+            QStringLiteral("There is no last working compositor configuration to restore")
+        );
+        return;
+    }
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        interfaceName,
+        QStringLiteral("Recover")
+    );
+    message.setArguments({
+        QVariant::fromValue<qulonglong>(revision_),
+        catalogDigest_,
+        actionCatalogDigest_,
+    });
+    beginMutation(Mutation::Recover, message, previewCallTimeoutMs);
+}
+
 void CompositorClient::previewDisplayConfiguration(
     const QVariantList &outputs,
     const uint timeoutSeconds
@@ -304,6 +513,7 @@ void CompositorClient::previewDisplayConfiguration(
 {
     if (!available_ || !writable_ || busy_
         || managementState_ != QStringLiteral("managed")
+        || !displayDiscoveryAvailable_
         || displayConfirmationState_ != QStringLiteral("idle")
         || applyState_ != QStringLiteral("current")
         || appliedRevision_ != revision_
@@ -476,6 +686,13 @@ void CompositorClient::serviceOwnerChanged(
     advertisedAvailable_ = false;
     advertisedCatalogDigest_.clear();
     advertisedActionCatalogDigest_.clear();
+    optionCatalog_.reset();
+    catalogOwnerGeneration_ = 0;
+    appearanceProjectionValid_ = false;
+    appearanceValues_.clear();
+    setAppearanceError({}, {});
+    setCatalogAvailable(false);
+    setDisplayDiscoveryAvailable(false);
     const auto confirmationChanged = displayConfirmationOwned_
         || displayConfirmationState_ != QStringLiteral("idle")
         || displayConfirmationRevision_ != 0
@@ -491,6 +708,7 @@ void CompositorClient::serviceOwnerChanged(
     if (managementState_ == QStringLiteral("preview")) {
         managementState_ = QStringLiteral("unmanaged");
         emit managementStateChanged();
+        emit appearanceChanged();
     }
     refreshQueued_ = false;
     setAvailable(false);
@@ -543,14 +761,90 @@ void CompositorClient::fetchSnapshot(const quint64 generation)
                 finishHydration(false);
                 return;
             }
-            const auto changed = snapshot_ != *parsed
+            const auto changed = snapshot_ != parsed->values
                 || revision_ != snapshotRevision;
-            snapshot_ = *parsed;
+            snapshot_ = parsed->values;
+            snapshotObject_ = parsed->object;
             revision_ = snapshotRevision;
             catalogDigest_ = snapshotCatalog;
             actionCatalogDigest_ = snapshotActionCatalog;
             if (changed) emit snapshotChanged();
+            updateAppearanceProjection();
+            setAvailable(true);
+            fetchOptionCatalog(generation);
             fetchConnectedDisplays(generation);
+        }
+    );
+}
+
+void CompositorClient::fetchOptionCatalog(const quint64 generation)
+{
+    if (optionCatalog_ != nullptr
+        && catalogOwnerGeneration_ == ownerGeneration_
+        && optionCatalog_->digest() == catalogDigest_) {
+        setCatalogAvailable(true);
+        updateAppearanceProjection();
+        return;
+    }
+
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        interfaceName,
+        QStringLiteral("GetOptionCatalog")
+    );
+    auto *watcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(message, ordinaryCallTimeoutMs),
+        this
+    );
+    connect(
+        watcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [this, watcher, generation] {
+            const auto reply = watcher->reply();
+            watcher->deleteLater();
+            if (generation != refreshGeneration_) return;
+            const auto arguments = reply.arguments();
+            if (reply.type() == QDBusMessage::ErrorMessage
+                || arguments.size() != 2
+                || arguments.at(0).metaType().id() != QMetaType::QByteArray
+                || arguments.at(1).metaType().id() != QMetaType::QString) {
+                optionCatalog_.reset();
+                setCatalogAvailable(false);
+                setAppearanceError(
+                    reply.type() == QDBusMessage::ErrorMessage
+                        ? reply.errorName()
+                        : clientErrorPrefix + QStringLiteral("InvalidCatalogReply"),
+                    reply.type() == QDBusMessage::ErrorMessage
+                        ? reply.errorMessage()
+                        : QStringLiteral("The compositor service returned an invalid option catalog reply")
+                );
+                return;
+            }
+            QString error;
+            auto parsed = CompositorOptionCatalog::fromBytes(
+                arguments.at(0).toByteArray(),
+                arguments.at(1).toString(),
+                catalogDigest_,
+                error
+            );
+            if (!parsed) {
+                optionCatalog_.reset();
+                setCatalogAvailable(false);
+                setAppearanceError(
+                    clientErrorPrefix + QStringLiteral("InvalidCatalog"),
+                    error
+                );
+                return;
+            }
+            optionCatalog_ = std::make_unique<CompositorOptionCatalog>(
+                std::move(*parsed)
+            );
+            catalogOwnerGeneration_ = ownerGeneration_;
+            setCatalogAvailable(true);
+            setAppearanceError({}, {});
+            updateAppearanceProjection();
         }
     );
 }
@@ -580,12 +874,12 @@ void CompositorClient::fetchConnectedDisplays(const quint64 generation)
                 || arguments.size() != 2
                 || arguments.at(0).metaType().id() != QMetaType::QByteArray
                 || arguments.at(1).metaType().id() != QMetaType::ULongLong) {
-                finishHydration(false);
+                setDisplayDiscoveryAvailable(false);
                 return;
             }
             const auto topology = parseTopology(arguments.at(0).toByteArray());
             if (!topology) {
-                finishHydration(false);
+                setDisplayDiscoveryAvailable(false);
                 return;
             }
             const auto observedAtMs = arguments.at(1).toULongLong();
@@ -597,6 +891,7 @@ void CompositorClient::fetchConnectedDisplays(const quint64 generation)
                 displaysObservedAtMs_ = observedAtMs;
                 emit connectedDisplaysChanged();
             }
+            setDisplayDiscoveryAvailable(true);
             if (displayConfirmationState_
                     == QStringLiteral("awaiting-confirmation")
                 && displayConfirmationToken_.isEmpty()) {
@@ -635,7 +930,7 @@ void CompositorClient::fetchPendingDisplayConfirmation(
                         "org.hyprshelld.Compositor1.Error.NoDisplayConfirmation"
                     )) {
                     setError(reply.errorName(), reply.errorMessage());
-                    finishHydration(false);
+                    setDisplayDiscoveryAvailable(false);
                     return;
                 }
                 const auto changed = displayConfirmationOwned_
@@ -659,7 +954,7 @@ void CompositorClient::fetchPendingDisplayConfirmation(
                     != displayConfirmationDeadlineMs_
                 || arguments.at(3).toString()
                     != displayConfirmationGeneration_) {
-                finishHydration(false);
+                setDisplayDiscoveryAvailable(false);
                 return;
             }
             displayConfirmationToken_ = arguments.at(0).toString();
@@ -813,6 +1108,7 @@ bool CompositorClient::applyProperties(
     if (nextWritable != writable_) {
         writable_ = nextWritable;
         emit writableChanged();
+        emit appearanceChanged();
     }
     if (nextLoadState != loadState_) {
         loadState_ = nextLoadState;
@@ -823,12 +1119,17 @@ bool CompositorClient::applyProperties(
         managementState_ = nextManagementState;
         entrypointDigest_ = nextEntrypointDigest;
         emit managementStateChanged();
+        emit appearanceChanged();
     }
     if (advertisedCatalogDigest_ != catalogDigest_
         || advertisedActionCatalogDigest_ != actionCatalogDigest_) {
+        const auto optionAuthorityChanged =
+            advertisedCatalogDigest_ != catalogDigest_;
         catalogDigest_ = advertisedCatalogDigest_;
         actionCatalogDigest_ = advertisedActionCatalogDigest_;
+        if (optionAuthorityChanged) setCatalogAvailable(false);
         emit catalogDigestChanged();
+        emit appearanceChanged();
     }
     if (nextAppliedRevision != appliedRevision_
         || nextApplyState != applyState_
@@ -839,6 +1140,7 @@ bool CompositorClient::applyProperties(
         requiredActivation_ = nextRequiredActivation;
         generationDigest_ = nextGenerationDigest;
         emit applyStateChanged();
+        emit appearanceChanged();
     }
     if (nextConfirmationState != displayConfirmationState_
         || nextConfirmationRevision != displayConfirmationRevision_
@@ -860,6 +1162,7 @@ bool CompositorClient::applyProperties(
             displayConfirmationOwned_ = false;
         }
         emit displayConfirmationChanged();
+        emit appearanceChanged();
     }
     return !advertisedAvailable_
         || (isDigest(advertisedCatalogDigest_)
@@ -874,6 +1177,14 @@ void CompositorClient::beginMutation(
 {
     clearError();
     setBusy(true);
+    setBusyOperation(
+        mutation == Mutation::Adopt ? QStringLiteral("adopt")
+        : mutation == Mutation::Apply ? QStringLiteral("apply")
+        : mutation == Mutation::Preview ? QStringLiteral("display-preview")
+        : mutation == Mutation::Confirm ? QStringLiteral("display-confirm")
+        : mutation == Mutation::Revert ? QStringLiteral("display-revert")
+        : QStringLiteral("recover")
+    );
     const auto ownerGeneration = ownerGeneration_;
     // PropertiesChanged for the durable transition can be delivered before
     // the method reply on the same bus connection. Validate that reply against
@@ -927,6 +1238,9 @@ void CompositorClient::beginMutation(
                         && stringAt(1) && unsignedAt(2) && stringAt(3)
                     : mutation == Mutation::Confirm
                         ? arguments.size() == 2 && unsignedAt(0) && stringAt(1)
+                    : mutation == Mutation::Recover
+                        ? arguments.size() == 3 && unsignedAt(0)
+                            && unsignedAt(1) && stringAt(2)
                         : arguments.size() == 1 && unsignedAt(0);
             const auto replyValid = structuralReplyValid
                 && (mutation != Mutation::Adopt
@@ -948,7 +1262,15 @@ void CompositorClient::beginMutation(
                         && arguments.at(1).toString()
                             == requestedConfirmationGeneration))
                 && (mutation != Mutation::Revert
-                    || arguments.at(0).toULongLong() == requestedRevision);
+                    || arguments.at(0).toULongLong() == requestedRevision)
+                && (mutation != Mutation::Recover
+                    || (requestedRevision
+                            != std::numeric_limits<qulonglong>::max()
+                        && arguments.at(0).toULongLong()
+                            == requestedRevision + 1
+                        && arguments.at(1).toULongLong()
+                            == requestedRevision + 1
+                        && isDigest(arguments.at(2).toString())));
             if (!replyValid) {
                 if (mutation == Mutation::Preview) {
                     displayConfirmationToken_.clear();
@@ -989,8 +1311,350 @@ void CompositorClient::beginMutation(
     );
 }
 
+void CompositorClient::sendAppearanceReplace(
+    const AppearanceSaveRequest &request,
+    const bool retry
+)
+{
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        interfaceName,
+        QStringLiteral("ReplaceSnapshot")
+    );
+    message.setArguments({
+        QVariant::fromValue<qulonglong>(request.expectedRevision),
+        request.catalogDigest,
+        request.actionCatalogDigest,
+        request.candidate,
+    });
+    const auto ownerGeneration = ownerGeneration_;
+    auto *watcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(message, ordinaryCallTimeoutMs),
+        this
+    );
+    connect(
+        watcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [this, watcher, ownerGeneration, request, retry] {
+            const auto reply = watcher->reply();
+            watcher->deleteLater();
+            if (ownerGeneration != ownerGeneration_) return;
+            if (reply.type() == QDBusMessage::ErrorMessage) {
+                if (isAmbiguousReplyError(reply.errorName())) {
+                    if (!retry) {
+                        sendAppearanceReplace(request, true);
+                    } else {
+                        // Re-read the exact authority tuple. If the first or
+                        // retry call committed, verification proceeds to Apply;
+                        // otherwise it fails without another increment attempt.
+                        verifyAppearanceReplacement(request);
+                    }
+                    return;
+                }
+                finishMutation();
+                setError(reply.errorName(), reply.errorMessage());
+                refresh();
+                return;
+            }
+            const auto arguments = reply.arguments();
+            const auto expectedRevision = request.expectedRevision
+                == std::numeric_limits<qulonglong>::max()
+                ? request.expectedRevision
+                : request.expectedRevision + 1;
+            if (arguments.size() != 1
+                || arguments.at(0).metaType().id() != QMetaType::ULongLong
+                || arguments.at(0).toULongLong() != expectedRevision) {
+                finishMutation();
+                setError(
+                    clientErrorPrefix + QStringLiteral("InvalidReply"),
+                    QStringLiteral("The compositor service returned an invalid replacement reply")
+                );
+                refresh();
+                return;
+            }
+            verifyAppearanceReplacement(request);
+        }
+    );
+}
+
+void CompositorClient::verifyAppearanceReplacement(
+    const AppearanceSaveRequest &request
+)
+{
+    const auto ownerGeneration = ownerGeneration_;
+    auto propertiesMessage = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        propertiesInterface,
+        QStringLiteral("GetAll")
+    );
+    propertiesMessage.setArguments({interfaceName});
+    auto *propertiesWatcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(propertiesMessage, ordinaryCallTimeoutMs),
+        this
+    );
+    connect(
+        propertiesWatcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [this, propertiesWatcher, ownerGeneration, request] {
+            const QDBusPendingReply<QVariantMap> reply = *propertiesWatcher;
+            propertiesWatcher->deleteLater();
+            if (ownerGeneration != ownerGeneration_) return;
+            const auto nextRevision = request.expectedRevision
+                == std::numeric_limits<qulonglong>::max()
+                ? request.expectedRevision
+                : request.expectedRevision + 1;
+            if (reply.isError() || !applyProperties(reply.value(), true)
+                || !advertisedAvailable_
+                || advertisedRevision_ != nextRevision
+                || advertisedCatalogDigest_ != request.catalogDigest
+                || advertisedActionCatalogDigest_
+                    != request.actionCatalogDigest
+                || !writable_
+                || managementState_ != QStringLiteral("managed")
+                || displayConfirmationState_ != QStringLiteral("idle")) {
+                finishMutation();
+                setError(
+                    clientErrorPrefix + QStringLiteral("ReplacementUnconfirmed"),
+                    QStringLiteral("The saved compositor configuration could not be confirmed")
+                );
+                refresh();
+                return;
+            }
+
+            auto snapshotMessage = QDBusMessage::createMethodCall(
+                serviceName,
+                objectPath,
+                interfaceName,
+                QStringLiteral("GetSnapshot")
+            );
+            auto *snapshotWatcher = new QDBusPendingCallWatcher(
+                connection_.asyncCall(snapshotMessage, ordinaryCallTimeoutMs),
+                this
+            );
+            connect(
+                snapshotWatcher,
+                &QDBusPendingCallWatcher::finished,
+                this,
+                [this, snapshotWatcher, ownerGeneration, request,
+                 nextRevision] {
+                    const auto snapshotReply = snapshotWatcher->reply();
+                    snapshotWatcher->deleteLater();
+                    if (ownerGeneration != ownerGeneration_) return;
+                    const auto arguments = snapshotReply.arguments();
+                    const auto expected = candidateAtRevision(
+                        request.candidate, nextRevision
+                    );
+                    if (snapshotReply.type() == QDBusMessage::ErrorMessage
+                        || arguments.size() != 4
+                        || arguments.at(0).metaType().id()
+                            != QMetaType::QByteArray
+                        || arguments.at(1).metaType().id()
+                            != QMetaType::ULongLong
+                        || arguments.at(2).metaType().id()
+                            != QMetaType::QString
+                        || arguments.at(3).metaType().id()
+                            != QMetaType::QString
+                        || arguments.at(1).toULongLong() != nextRevision
+                        || arguments.at(2).toString()
+                            != request.catalogDigest
+                        || arguments.at(3).toString()
+                            != request.actionCatalogDigest
+                        || !expected
+                        || arguments.at(0).toByteArray() != *expected) {
+                        finishMutation();
+                        setError(
+                            clientErrorPrefix + QStringLiteral("ReplacementUnconfirmed"),
+                            QStringLiteral("The saved compositor snapshot did not match the requested appearance configuration")
+                        );
+                        refresh();
+                        return;
+                    }
+                    const auto parsed = parseSnapshot(
+                        arguments.at(0).toByteArray(),
+                        nextRevision,
+                        request.catalogDigest,
+                        request.actionCatalogDigest
+                    );
+                    if (!parsed) {
+                        finishMutation();
+                        setError(
+                            clientErrorPrefix + QStringLiteral("InvalidSnapshot"),
+                            QStringLiteral("The saved compositor snapshot is invalid")
+                        );
+                        refresh();
+                        return;
+                    }
+                    const auto changed = snapshot_ != parsed->values
+                        || revision_ != nextRevision;
+                    snapshot_ = parsed->values;
+                    snapshotObject_ = parsed->object;
+                    revision_ = nextRevision;
+                    catalogDigest_ = request.catalogDigest;
+                    actionCatalogDigest_ = request.actionCatalogDigest;
+                    if (changed) emit snapshotChanged();
+                    updateAppearanceProjection();
+
+                    if (applyState_ == QStringLiteral("current")
+                        && appliedRevision_ == nextRevision
+                        && requiredActivation_ == QStringLiteral("none")) {
+                        finishMutation();
+                        refresh();
+                        return;
+                    }
+                    if (requiredActivation_ != QStringLiteral("reload")
+                        || (applyState_ != QStringLiteral("retained")
+                            && applyState_ != QStringLiteral("failed"))) {
+                        finishMutation();
+                        setError(
+                            clientErrorPrefix + QStringLiteral("ActivationRequired"),
+                            QStringLiteral("The appearance configuration was saved but cannot be reloaded automatically")
+                        );
+                        refresh();
+                        return;
+                    }
+                    setBusyOperation(QStringLiteral("appearance-apply"));
+                    sendApplyRequest(
+                        {
+                            .revision = nextRevision,
+                            .catalogDigest = request.catalogDigest,
+                            .actionCatalogDigest =
+                                request.actionCatalogDigest,
+                        },
+                        false
+                    );
+                }
+            );
+        }
+    );
+}
+
+void CompositorClient::sendApplyRequest(
+    const ApplyRequest &request,
+    const bool retry
+)
+{
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        interfaceName,
+        QStringLiteral("Apply")
+    );
+    message.setArguments({
+        QVariant::fromValue<qulonglong>(request.revision),
+        request.catalogDigest,
+        request.actionCatalogDigest,
+    });
+    const auto ownerGeneration = ownerGeneration_;
+    auto *watcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(message, previewCallTimeoutMs),
+        this
+    );
+    connect(
+        watcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [this, watcher, ownerGeneration, request, retry] {
+            const auto reply = watcher->reply();
+            watcher->deleteLater();
+            if (ownerGeneration != ownerGeneration_) return;
+            if (reply.type() == QDBusMessage::ErrorMessage) {
+                if (isAmbiguousReplyError(reply.errorName())) {
+                    const auto alreadyCurrent =
+                        advertisedRevision_ == request.revision
+                        && advertisedCatalogDigest_ == request.catalogDigest
+                        && advertisedActionCatalogDigest_
+                            == request.actionCatalogDigest
+                        && appliedRevision_ == request.revision
+                        && applyState_ == QStringLiteral("current")
+                        && requiredActivation_ == QStringLiteral("none")
+                        && isDigest(generationDigest_);
+                    if (alreadyCurrent) {
+                        finishMutation();
+                        refresh();
+                    } else if (!retry) {
+                        sendApplyRequest(request, true);
+                    } else {
+                        reconcileApplyOutcome(request);
+                    }
+                    return;
+                }
+                finishMutation();
+                setError(reply.errorName(), reply.errorMessage());
+                refresh();
+                return;
+            }
+            const auto arguments = reply.arguments();
+            if (arguments.size() != 2
+                || arguments.at(0).metaType().id() != QMetaType::ULongLong
+                || arguments.at(1).metaType().id() != QMetaType::QString
+                || arguments.at(0).toULongLong() != request.revision
+                || !isDigest(arguments.at(1).toString())) {
+                finishMutation();
+                setError(
+                    clientErrorPrefix + QStringLiteral("InvalidReply"),
+                    QStringLiteral("The compositor service returned an invalid apply reply")
+                );
+                refresh();
+                return;
+            }
+            finishMutation();
+            refresh();
+        }
+    );
+}
+
+void CompositorClient::reconcileApplyOutcome(const ApplyRequest &request)
+{
+    const auto ownerGeneration = ownerGeneration_;
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        propertiesInterface,
+        QStringLiteral("GetAll")
+    );
+    message.setArguments({interfaceName});
+    auto *watcher = new QDBusPendingCallWatcher(
+        connection_.asyncCall(message, ordinaryCallTimeoutMs),
+        this
+    );
+    connect(
+        watcher,
+        &QDBusPendingCallWatcher::finished,
+        this,
+        [this, watcher, ownerGeneration, request] {
+            const QDBusPendingReply<QVariantMap> reply = *watcher;
+            watcher->deleteLater();
+            if (ownerGeneration != ownerGeneration_) return;
+            const auto confirmed = !reply.isError()
+                && applyProperties(reply.value(), true)
+                && advertisedAvailable_
+                && advertisedRevision_ == request.revision
+                && advertisedCatalogDigest_ == request.catalogDigest
+                && advertisedActionCatalogDigest_
+                    == request.actionCatalogDigest
+                && appliedRevision_ == request.revision
+                && applyState_ == QStringLiteral("current")
+                && requiredActivation_ == QStringLiteral("none")
+                && isDigest(generationDigest_);
+            finishMutation();
+            if (!confirmed) {
+                setError(
+                    clientErrorPrefix + QStringLiteral("ApplyUnconfirmed"),
+                    QStringLiteral("The compositor reload outcome could not be confirmed")
+                );
+            }
+            refresh();
+        }
+    );
+}
+
 void CompositorClient::finishMutation()
 {
+    setBusyOperation({});
     setBusy(false);
 }
 
@@ -1004,14 +1668,80 @@ void CompositorClient::setAvailable(const bool available)
     if (available == available_) return;
     available_ = available;
     emit availableChanged();
-    if (available_) clearError();
+    emit appearanceChanged();
+}
+
+void CompositorClient::setCatalogAvailable(const bool available)
+{
+    if (available == catalogAvailable_) return;
+    catalogAvailable_ = available;
+    emit appearanceChanged();
+}
+
+void CompositorClient::setDisplayDiscoveryAvailable(const bool available)
+{
+    if (available == displayDiscoveryAvailable_) return;
+    displayDiscoveryAvailable_ = available;
+    emit displayDiscoveryAvailableChanged();
 }
 
 void CompositorClient::setBusy(const bool busy)
 {
+    if (!busy) setBusyOperation({});
     if (busy == busy_) return;
     busy_ = busy;
     emit busyChanged();
+    emit appearanceChanged();
+}
+
+void CompositorClient::setBusyOperation(const QString &operation)
+{
+    if (operation == busyOperation_) return;
+    busyOperation_ = operation;
+    emit busyOperationChanged();
+}
+
+void CompositorClient::setAppearanceError(
+    const QString &name,
+    const QString &message
+)
+{
+    if (name == appearanceErrorName_ && message == appearanceErrorMessage_) {
+        return;
+    }
+    appearanceErrorName_ = name;
+    appearanceErrorMessage_ = message;
+    emit appearanceChanged();
+}
+
+void CompositorClient::updateAppearanceProjection()
+{
+    QVariantMap nextValues;
+    auto nextValid = false;
+    QString error;
+    if (catalogAvailable_ && optionCatalog_ != nullptr
+        && optionCatalog_->digest() == catalogDigest_) {
+        const auto values = optionCatalog_->appearanceValues(
+            snapshotObject_, error
+        );
+        if (values) {
+            nextValues = *values;
+            nextValid = true;
+            setAppearanceError({}, {});
+        } else {
+            setAppearanceError(
+                clientErrorPrefix + QStringLiteral("InvalidAppearanceSnapshot"),
+                error
+            );
+        }
+    }
+    if (nextValid == appearanceProjectionValid_
+        && nextValues == appearanceValues_) {
+        return;
+    }
+    appearanceProjectionValid_ = nextValid;
+    appearanceValues_ = std::move(nextValues);
+    emit appearanceChanged();
 }
 
 void CompositorClient::setError(

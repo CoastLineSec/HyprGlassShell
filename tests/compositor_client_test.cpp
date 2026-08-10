@@ -1,8 +1,11 @@
 #include "compositor_client.h"
 
+#include "hyprland/catalog.h"
+
 #include <QDBusConnection>
 #include <QDBusContext>
 #include <QDBusMessage>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -10,6 +13,7 @@
 #include <QTimer>
 #include <QtTest>
 
+#include <limits>
 #include <utility>
 
 namespace {
@@ -20,8 +24,12 @@ const QString interfaceName = QStringLiteral("org.hyprshelld.Compositor1");
 const QString propertiesInterface = QStringLiteral(
     "org.freedesktop.DBus.Properties"
 );
-const QString catalogDigest(64, QLatin1Char('a'));
-const QString actionCatalogDigest(64, QLatin1Char('b'));
+const QString catalogDigest = QString::fromLatin1(
+    HyprShelld::Hyprland::reviewedCatalogDigest
+);
+const QString actionCatalogDigest = QStringLiteral(
+    "72e063a5476308cefdd2771367ffeed9a8e553b3a2d7141f4e08c3e105a5deb2"
+);
 const QString generationDigest(64, QLatin1Char('c'));
 const QString previewGeneration(64, QLatin1Char('d'));
 const QString topologyDigest(64, QLatin1Char('e'));
@@ -30,15 +38,32 @@ constexpr qulonglong baselineRevision = 7;
 constexpr qulonglong previewRevision = 8;
 constexpr qulonglong previewDeadlineMs = 4'102'444'800'000ULL;
 
-QByteArray snapshotBytes()
+QByteArray readBytes(const QString &path)
 {
-    auto bytes = QJsonDocument(QJsonObject{
-        {QStringLiteral("formatVersion"), 1},
-        {QStringLiteral("revision"), QString::number(baselineRevision)},
-        {QStringLiteral("catalogDigest"), catalogDigest},
-        {QStringLiteral("actionCatalogDigest"), actionCatalogDigest},
-        {QStringLiteral("monitors"), QJsonArray{}},
-    }).toJson(QJsonDocument::Compact);
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    return file.readAll();
+}
+
+QByteArray optionCatalogBytes()
+{
+    const auto document = QJsonDocument::fromJson(
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_CATALOG_FILE))
+    );
+    return document.toJson(QJsonDocument::Compact);
+}
+
+QByteArray snapshotBytes(const qulonglong revision = baselineRevision)
+{
+    auto object = QJsonDocument::fromJson(
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_DEFAULTS_FILE))
+    ).object();
+    object.insert(QStringLiteral("revision"), QString::number(revision));
+    object.insert(QStringLiteral("catalogDigest"), catalogDigest);
+    object.insert(
+        QStringLiteral("actionCatalogDigest"), actionCatalogDigest
+    );
+    auto bytes = QJsonDocument(object).toJson(QJsonDocument::Compact);
     bytes.append('\n');
     return bytes;
 }
@@ -118,7 +143,7 @@ public:
 
     [[nodiscard]] bool available() const { return true; }
     [[nodiscard]] bool writable() const { return true; }
-    [[nodiscard]] qulonglong revision() const { return baselineRevision; }
+    [[nodiscard]] qulonglong revision() const { return authorityRevision_; }
     [[nodiscard]] QString loadState() const
     {
         return QStringLiteral("normal");
@@ -141,19 +166,19 @@ public:
     }
     [[nodiscard]] qulonglong appliedRevision() const
     {
-        return baselineRevision;
+        return appliedRevision_;
     }
     [[nodiscard]] QString applyState() const
     {
-        return QStringLiteral("current");
+        return applyState_;
     }
     [[nodiscard]] QString requiredActivation() const
     {
-        return QStringLiteral("none");
+        return requiredActivation_;
     }
     [[nodiscard]] QString currentGenerationDigest() const
     {
-        return generationDigest;
+        return authorityGenerationDigest_;
     }
     [[nodiscard]] QString confirmationState() const
     {
@@ -179,6 +204,7 @@ public:
     {
         return heldSnapshots_.size();
     }
+    [[nodiscard]] int snapshotCallCount() const { return snapshotCallCount_; }
     [[nodiscard]] qsizetype heldPreviewCount() const
     {
         return heldPreviews_.size();
@@ -210,10 +236,30 @@ public:
         pendingCallCount_ = 0;
         holdSnapshots_ = false;
         heldSnapshots_.clear();
+        snapshotCallCount_ = 0;
         holdPreviews_ = false;
         heldPreviews_.clear();
         previewReply_ = validPreviewReply();
         projectPreviewReply_ = false;
+        authorityRevision_ = baselineRevision;
+        appliedRevision_ = baselineRevision;
+        applyState_ = QStringLiteral("current");
+        requiredActivation_ = QStringLiteral("none");
+        authorityGenerationDigest_ = generationDigest;
+        snapshotBytes_ = snapshotBytes(baselineRevision);
+        replaceCallCount_ = 0;
+        applyCallCount_ = 0;
+        recoverCallCount_ = 0;
+        ambiguousFirstReplace_ = false;
+        failNextApply_ = false;
+        ambiguousFirstApplyWithoutProperties_ = false;
+        ambiguousFirstApplyWithProperties_ = false;
+        ambiguousRecover_ = false;
+        holdReplaces_ = false;
+        heldReplaces_.clear();
+        optionCatalog_ = optionCatalogBytes();
+        optionCatalogDigest_ = catalogDigest;
+        connectedDisplaysFail_ = false;
     }
 
     void setPendingBehavior(const PendingBehavior behavior)
@@ -241,6 +287,67 @@ public:
     void setHoldSnapshots(const bool hold)
     {
         holdSnapshots_ = hold;
+    }
+
+    void setOptionCatalogReply(QByteArray bytes, QString digest)
+    {
+        optionCatalog_ = std::move(bytes);
+        optionCatalogDigest_ = std::move(digest);
+    }
+
+    void setConnectedDisplaysFail(const bool fail)
+    {
+        connectedDisplaysFail_ = fail;
+    }
+
+    void setRevision(const qulonglong revision)
+    {
+        authorityRevision_ = revision;
+        appliedRevision_ = revision;
+        snapshotBytes_ = snapshotBytes(revision);
+    }
+
+    void setSnapshotBytes(QByteArray bytes)
+    {
+        snapshotBytes_ = std::move(bytes);
+    }
+
+    void setAmbiguousFirstReplace(const bool enabled)
+    {
+        ambiguousFirstReplace_ = enabled;
+    }
+
+    void setFailNextApply(const bool enabled)
+    {
+        failNextApply_ = enabled;
+    }
+
+    void setAmbiguousFirstApplyWithoutProperties(const bool enabled)
+    {
+        ambiguousFirstApplyWithoutProperties_ = enabled;
+    }
+
+    void setAmbiguousFirstApplyWithProperties(const bool enabled)
+    {
+        ambiguousFirstApplyWithProperties_ = enabled;
+    }
+
+    void setHoldReplaces(const bool hold)
+    {
+        holdReplaces_ = hold;
+    }
+
+    void setAmbiguousRecover(const bool enabled)
+    {
+        ambiguousRecover_ = enabled;
+    }
+
+    [[nodiscard]] int replaceCallCount() const { return replaceCallCount_; }
+    [[nodiscard]] int applyCallCount() const { return applyCallCount_; }
+    [[nodiscard]] int recoverCallCount() const { return recoverCallCount_; }
+    [[nodiscard]] qsizetype heldReplaceCount() const
+    {
+        return heldReplaces_.size();
     }
 
     bool releaseNextSnapshot(
@@ -280,25 +387,39 @@ public:
     }
 
 public slots:
+    QByteArray GetOptionCatalog(QString &replyCatalogDigest)
+    {
+        replyCatalogDigest = optionCatalogDigest_;
+        return optionCatalog_;
+    }
+
     QByteArray GetSnapshot(
         qulonglong &snapshotRevision,
         QString &snapshotCatalogDigest,
         QString &snapshotActionCatalogDigest
     )
     {
+        ++snapshotCallCount_;
         if (holdSnapshots_ && calledFromDBus()) {
             setDelayedReply(true);
             heldSnapshots_.append(message());
             return {};
         }
-        snapshotRevision = baselineRevision;
+        snapshotRevision = authorityRevision_;
         snapshotCatalogDigest = catalogDigest;
         snapshotActionCatalogDigest = actionCatalogDigest;
-        return snapshotBytes();
+        return snapshotBytes_;
     }
 
     QByteArray GetConnectedDisplays(qulonglong &observedAtMs)
     {
+        if (connectedDisplaysFail_) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.RuntimeUnavailable"),
+                QStringLiteral("Injected display discovery failure")
+            );
+            return {};
+        }
         observedAtMs = 1'800'000'000'000ULL;
         return topologyBytes();
     }
@@ -330,6 +451,164 @@ public slots:
         pendingDeadlineMs = confirmationDeadlineMs_;
         pendingGeneration = confirmationGeneration_;
         return confirmationToken;
+    }
+
+    qulonglong ReplaceSnapshot(
+        const qulonglong expectedRevision,
+        const QString &expectedCatalogDigest,
+        const QString &expectedActionCatalogDigest,
+        const QByteArray &candidateSnapshot
+    )
+    {
+        ++replaceCallCount_;
+        if (holdReplaces_ && calledFromDBus()) {
+            setDelayedReply(true);
+            heldReplaces_.append(message());
+            return authorityRevision_;
+        }
+        if (expectedCatalogDigest != catalogDigest
+            || expectedActionCatalogDigest != actionCatalogDigest) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.StaleCatalogDigest"),
+                QStringLiteral("Injected stale catalog")
+            );
+            return authorityRevision_;
+        }
+        auto object = QJsonDocument::fromJson(candidateSnapshot).object();
+        if (object.isEmpty()) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.InvalidSnapshot"),
+                QStringLiteral("Injected invalid candidate")
+            );
+            return authorityRevision_;
+        }
+        object.insert(
+            QStringLiteral("revision"),
+            QString::number(authorityRevision_)
+        );
+        auto exactCurrent = QJsonDocument(object).toJson(
+            QJsonDocument::Compact
+        );
+        exactCurrent.append('\n');
+        if (expectedRevision + 1 == authorityRevision_
+            && exactCurrent == snapshotBytes_) {
+            publishAuthority();
+            return authorityRevision_;
+        }
+        if (expectedRevision != authorityRevision_) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.StaleRevision"),
+                QStringLiteral("Injected stale revision")
+            );
+            return authorityRevision_;
+        }
+        object.insert(
+            QStringLiteral("revision"),
+            QString::number(authorityRevision_ + 1)
+        );
+        snapshotBytes_ = QJsonDocument(object).toJson(QJsonDocument::Compact);
+        snapshotBytes_.append('\n');
+        ++authorityRevision_;
+        applyState_ = QStringLiteral("retained");
+        requiredActivation_ = QStringLiteral("reload");
+        publishAuthority();
+        if (ambiguousFirstReplace_ && replaceCallCount_ == 1) {
+            sendErrorReply(
+                QStringLiteral("org.freedesktop.DBus.Error.NoReply"),
+                QStringLiteral("Injected lost replacement reply")
+            );
+        }
+        return authorityRevision_;
+    }
+
+    qulonglong Apply(
+        const qulonglong expectedRevision,
+        const QString &expectedCatalogDigest,
+        const QString &expectedActionCatalogDigest,
+        QString &appliedGenerationDigest
+    )
+    {
+        ++applyCallCount_;
+        appliedGenerationDigest = authorityGenerationDigest_;
+        if (expectedRevision != authorityRevision_
+            || expectedCatalogDigest != catalogDigest
+            || expectedActionCatalogDigest != actionCatalogDigest) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.StaleRevision"),
+                QStringLiteral("Injected stale apply")
+            );
+            return appliedRevision_;
+        }
+        if (failNextApply_) {
+            failNextApply_ = false;
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.ApplyFailed"),
+                QStringLiteral("Injected apply failure")
+            );
+            return appliedRevision_;
+        }
+        appliedRevision_ = authorityRevision_;
+        applyState_ = QStringLiteral("current");
+        requiredActivation_ = QStringLiteral("none");
+        authorityGenerationDigest_ = QString(64, QLatin1Char('8'));
+        appliedGenerationDigest = authorityGenerationDigest_;
+        if (ambiguousFirstApplyWithProperties_ && applyCallCount_ == 1) {
+            publishAuthority();
+            sendErrorReply(
+                QStringLiteral("org.freedesktop.DBus.Error.NoReply"),
+                QStringLiteral("Injected lost apply reply after properties")
+            );
+            return appliedRevision_;
+        }
+        if (ambiguousFirstApplyWithoutProperties_ && applyCallCount_ == 1) {
+            sendErrorReply(
+                QStringLiteral("org.freedesktop.DBus.Error.NoReply"),
+                QStringLiteral("Injected lost apply reply")
+            );
+            return appliedRevision_;
+        }
+        publishAuthority();
+        return appliedRevision_;
+    }
+
+    qulonglong Recover(
+        const qulonglong expectedRevision,
+        const QString &expectedCatalogDigest,
+        const QString &expectedActionCatalogDigest,
+        qulonglong &recoveredAppliedRevision,
+        QString &recoveredGenerationDigest
+    )
+    {
+        ++recoverCallCount_;
+        if (expectedRevision != authorityRevision_
+            || expectedCatalogDigest != catalogDigest
+            || expectedActionCatalogDigest != actionCatalogDigest
+            || appliedRevision_ == authorityRevision_) {
+            sendErrorReply(
+                QStringLiteral("org.hyprshelld.Compositor1.Error.RecoveryUnavailable"),
+                QStringLiteral("Injected recovery unavailable")
+            );
+            recoveredAppliedRevision = appliedRevision_;
+            recoveredGenerationDigest = authorityGenerationDigest_;
+            return authorityRevision_;
+        }
+        ++authorityRevision_;
+        appliedRevision_ = authorityRevision_;
+        snapshotBytes_ = snapshotBytes(authorityRevision_);
+        applyState_ = QStringLiteral("current");
+        requiredActivation_ = QStringLiteral("none");
+        authorityGenerationDigest_ = QString(64, QLatin1Char('7'));
+        recoveredAppliedRevision = appliedRevision_;
+        recoveredGenerationDigest = authorityGenerationDigest_;
+        if (ambiguousRecover_) {
+            sendErrorReply(
+                QStringLiteral("org.freedesktop.DBus.Error.NoReply"),
+                QStringLiteral("Injected lost recovery reply")
+            );
+            return authorityRevision_;
+        }
+        publishAuthority();
+        return authorityRevision_;
     }
 
     qulonglong PreviewDisplayConfiguration(
@@ -437,6 +716,36 @@ private:
         confirmationGeneration_.clear();
     }
 
+    bool publishAuthority()
+    {
+        auto signal = QDBusMessage::createSignal(
+            objectPath,
+            propertiesInterface,
+            QStringLiteral("PropertiesChanged")
+        );
+        signal.setArguments({
+            interfaceName,
+            QVariantMap{
+                {
+                    QStringLiteral("Revision"),
+                    QVariant::fromValue<qulonglong>(authorityRevision_)
+                },
+                {
+                    QStringLiteral("AppliedRevision"),
+                    QVariant::fromValue<qulonglong>(appliedRevision_)
+                },
+                {QStringLiteral("ApplyState"), applyState_},
+                {QStringLiteral("RequiredActivation"), requiredActivation_},
+                {
+                    QStringLiteral("GenerationDigest"),
+                    authorityGenerationDigest_
+                },
+            },
+            QStringList{},
+        });
+        return connection_.send(signal);
+    }
+
     bool publishConfirmation()
     {
         auto signal = QDBusMessage::createSignal(
@@ -477,11 +786,31 @@ private:
     qsizetype pendingCallCount_ = 0;
     bool holdSnapshots_ = false;
     QList<QDBusMessage> heldSnapshots_;
+    int snapshotCallCount_ = 0;
     bool holdPreviews_ = false;
     QList<HeldPreview> heldPreviews_;
     QVariantList previewReply_;
     bool projectPreviewReply_ = false;
+    QByteArray optionCatalog_;
+    QString optionCatalogDigest_;
+    bool connectedDisplaysFail_ = false;
     bool running_ = false;
+    qulonglong authorityRevision_ = baselineRevision;
+    qulonglong appliedRevision_ = baselineRevision;
+    QString applyState_ = QStringLiteral("current");
+    QString requiredActivation_ = QStringLiteral("none");
+    QString authorityGenerationDigest_ = generationDigest;
+    QByteArray snapshotBytes_ = snapshotBytes();
+    int replaceCallCount_ = 0;
+    int applyCallCount_ = 0;
+    int recoverCallCount_ = 0;
+    bool ambiguousFirstReplace_ = false;
+    bool failNextApply_ = false;
+    bool ambiguousFirstApplyWithoutProperties_ = false;
+    bool ambiguousFirstApplyWithProperties_ = false;
+    bool ambiguousRecover_ = false;
+    bool holdReplaces_ = false;
+    QList<QDBusMessage> heldReplaces_;
 };
 
 } // namespace
@@ -522,6 +851,406 @@ private slots:
         QDBusConnection::disconnectFromBus(
             QStringLiteral("compositor-service-test")
         );
+    }
+
+    void hydratesTheTrustedAppearanceCatalogAndValues()
+    {
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.catalogAvailable(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayDiscoveryAvailable(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appearanceOptions().size(), 8);
+        QCOMPARE(client.appearanceValues().size(), 8);
+        QCOMPARE(
+            client.appearanceValues().value(
+                QStringLiteral("hyprland.general.border_size")
+            ).toInt(),
+            1
+        );
+        QCOMPARE(
+            client.appearanceValues().value(
+                QStringLiteral("hyprland.general.layout")
+            ).toString(),
+            QStringLiteral("dwindle")
+        );
+        QVERIFY(client.appearanceErrorName().isEmpty());
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void catalogFailureDisablesOnlyAppearance()
+    {
+        service_.setOptionCatalogReply(
+            optionCatalogBytes(),
+            QString(64, QLatin1Char('a'))
+        );
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayDiscoveryAvailable(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.appearanceErrorName().isEmpty(), 3000);
+        QCOMPARE(client.catalogAvailable(), false);
+        QCOMPARE(client.appearanceAvailable(), false);
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void displayDiscoveryFailureDoesNotDisableAppearance()
+    {
+        service_.setConnectedDisplaysFail(true);
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.catalogAvailable(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.displayDiscoveryAvailable(), false);
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void displayPreviewCannotUseStaleTopologyAfterDiscoveryFails()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayDiscoveryAvailable(), 3000);
+        QCOMPARE(client.connectedDisplays().size(), 1);
+        QVERIFY(!client.topologyDigest().isEmpty());
+
+        service_.setConnectedDisplaysFail(true);
+        client.refresh();
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.displayDiscoveryAvailable(), 3000);
+        const QVariantList output{
+            QVariantMap{
+                {QStringLiteral("id"), QStringLiteral("display-DP-1")},
+                {QStringLiteral("selector"), QStringLiteral("DP-1")},
+                {QStringLiteral("enabled"), true},
+            }
+        };
+        client.previewDisplayConfiguration(output, 15);
+        QCOMPARE(client.busy(), false);
+        QCOMPARE(service_.heldPreviewCount(), 0);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral(
+                "org.hyprshelld.Client.Compositor.Error.Unavailable"
+            )
+        );
+    }
+
+    void exposesAnExactRevisionTokenBeyondQmlIntegerPrecision()
+    {
+        constexpr qulonglong exactRevision = 9'007'199'254'740'993ULL;
+        service_.setRevision(exactRevision);
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.revision(), exactRevision);
+        QCOMPARE(
+            client.revisionToken(),
+            QStringLiteral("9007199254740993")
+        );
+    }
+
+    void rejectsANonCanonicalSnapshotRevisionDuringHydration()
+    {
+        auto object = QJsonDocument::fromJson(snapshotBytes()).object();
+        object.insert(QStringLiteral("revision"), QStringLiteral("07"));
+        auto bytes = QJsonDocument(object).toJson(QJsonDocument::Compact);
+        bytes.append('\n');
+        service_.setSnapshotBytes(bytes);
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.snapshotCallCount(), 1, 3000);
+        QTest::qWait(20);
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.catalogAvailable(), false);
+        QCOMPARE(client.appearanceAvailable(), false);
+    }
+
+    void rejectsAPartialV1SnapshotDuringHydration()
+    {
+        auto object = QJsonDocument::fromJson(snapshotBytes()).object();
+        object.remove(QStringLiteral("devices"));
+        auto bytes = QJsonDocument(object).toJson(QJsonDocument::Compact);
+        bytes.append('\n');
+        service_.setSnapshotBytes(bytes);
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.snapshotCallCount(), 1, 3000);
+        QTest::qWait(20);
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.catalogAvailable(), false);
+        QCOMPARE(client.appearanceAvailable(), false);
+    }
+
+    void rejectsNonCanonicalSnapshotBytes_data()
+    {
+        QTest::addColumn<QByteArray>("bytes");
+        const auto object = QJsonDocument::fromJson(snapshotBytes()).object();
+        QTest::newRow("pretty-printed")
+            << QJsonDocument(object).toJson(QJsonDocument::Indented);
+        auto trailing = snapshotBytes();
+        trailing.append(' ');
+        QTest::newRow("trailing-byte") << trailing;
+        auto duplicate = snapshotBytes();
+        const QByteArray revision = QByteArrayLiteral("\"revision\":\"7\"");
+        const auto position = duplicate.indexOf(revision);
+        QVERIFY(position >= 0);
+        duplicate.replace(
+            position,
+            revision.size(),
+            QByteArrayLiteral("\"revision\":\"7\",\"revision\":\"7\"")
+        );
+        QTest::newRow("duplicate-key") << duplicate;
+    }
+
+    void rejectsNonCanonicalSnapshotBytes()
+    {
+        QFETCH(QByteArray, bytes);
+        service_.setSnapshotBytes(bytes);
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.snapshotCallCount(), 1, 3000);
+        QTest::qWait(20);
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.catalogAvailable(), false);
+        QCOMPARE(client.appearanceAvailable(), false);
+    }
+
+    void revisionExhaustionDisablesNewAppearanceAndRecoveryMutations()
+    {
+        service_.setRevision(std::numeric_limits<qulonglong>::max());
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.catalogAvailable(), 3000);
+        QCOMPARE(client.appearanceAvailable(), false);
+        QCOMPARE(client.recoveryAvailable(), false);
+        QCOMPARE(
+            client.revisionToken(),
+            QStringLiteral("18446744073709551615")
+        );
+    }
+
+    void savesAndAppliesAppearanceAcrossPropertiesBeforeReplies()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.general.border_size"), 6);
+        QStringList observedOperations;
+        connect(
+            &client,
+            &HyprShelld::CompositorClient::busyOperationChanged,
+            this,
+            [&client, &observedOperations] {
+                observedOperations.append(client.busyOperation());
+            }
+        );
+
+        client.saveAppearance(values);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 8ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appliedRevision(), 8ULL);
+        QCOMPARE(client.applyState(), QStringLiteral("current"));
+        QCOMPARE(client.requiredActivation(), QStringLiteral("none"));
+        QCOMPARE(
+            client.appearanceValues().value(
+                QStringLiteral("hyprland.general.border_size")
+            ).toInt(),
+            6
+        );
+        QCOMPARE(service_.replaceCallCount(), 1);
+        QCOMPARE(service_.applyCallCount(), 1);
+        QVERIFY(observedOperations.contains(QStringLiteral("appearance-save")));
+        QVERIFY(observedOperations.contains(QStringLiteral("appearance-apply")));
+        QCOMPARE(client.busyOperation(), QString{});
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void retriesAnExactLostReplaceWithoutIncrementingTwice()
+    {
+        service_.setAmbiguousFirstReplace(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.decoration.rounding"), 9);
+
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 8ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(service_.replaceCallCount(), 2);
+        QCOMPARE(service_.applyCallCount(), 1);
+        QCOMPARE(client.appliedRevision(), 8ULL);
+    }
+
+    void retriesAnAmbiguousApplyOnlyForTheExactSavedRevision()
+    {
+        service_.setAmbiguousFirstApplyWithoutProperties(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(
+            QStringLiteral("hyprland.decoration.shadow.enabled"), false
+        );
+
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.revision(), 8ULL);
+        QCOMPARE(client.appliedRevision(), 8ULL);
+        QCOMPARE(service_.applyCallCount(), 2);
+    }
+
+    void acceptsExactCurrentPropertiesBeforeAnAmbiguousApplyReply()
+    {
+        service_.setAmbiguousFirstApplyWithProperties(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(
+            QStringLiteral("hyprland.decoration.blur.enabled"), false
+        );
+
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.revision(), 8ULL);
+        QCOMPARE(client.appliedRevision(), 8ULL);
+        QCOMPARE(service_.applyCallCount(), 1);
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void retainsSavedAppearanceAfterApplyFailureAndRetriesExplicitly()
+    {
+        service_.setFailNextApply(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.animations.enabled"), false);
+
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 8ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.retryApplyAvailable(), 3000);
+        QCOMPARE(client.appliedRevision(), baselineRevision);
+        QCOMPARE(client.applyState(), QStringLiteral("retained"));
+        QCOMPARE(client.requiredActivation(), QStringLiteral("reload"));
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral("org.hyprshelld.Compositor1.Error.ApplyFailed")
+        );
+        QVERIFY(client.recoveryAvailable());
+
+        client.retryApply();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appliedRevision(), 8ULL);
+        QCOMPARE(service_.applyCallCount(), 2);
+        QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void recoversTheWholeLastWorkingConfigurationAsANewRevision()
+    {
+        service_.setFailNextApply(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.general.resize_on_border"), true);
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(client.recoveryAvailable(), 3000);
+
+        client.recoverConfiguration();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 9ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appliedRevision(), 9ULL);
+        QCOMPARE(service_.recoverCallCount(), 1);
+        QCOMPARE(
+            client.appearanceValues().value(
+                QStringLiteral("hyprland.general.resize_on_border")
+            ).toBool(),
+            false
+        );
+    }
+
+    void neverRetriesAnAmbiguousRecoveryReply()
+    {
+        service_.setFailNextApply(true);
+        service_.setAmbiguousRecover(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.general.snap.enabled"), true);
+        client.saveAppearance(values);
+        QTRY_VERIFY_WITH_TIMEOUT(client.recoveryAvailable(), 3000);
+
+        client.recoverConfiguration();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 9ULL, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.appliedRevision(), 9ULL);
+        QCOMPARE(client.applyState(), QStringLiteral("current"));
+        QCOMPARE(service_.recoverCallCount(), 1);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral("org.freedesktop.DBus.Error.NoReply")
+        );
+    }
+
+    void rejectsPartialAppearanceMapsWithoutCallingTheService()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.remove(QStringLiteral("hyprland.animations.enabled"));
+
+        client.saveAppearance(values);
+        QCOMPARE(client.busy(), false);
+        QCOMPARE(service_.replaceCallCount(), 0);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral(
+                "org.hyprshelld.Client.Compositor.Error.InvalidAppearance"
+            )
+        );
+    }
+
+    void ownerLossClearsAppearanceBusyStateAndOperation()
+    {
+        service_.setHoldReplaces(true);
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        auto values = client.appearanceValues();
+        values.insert(QStringLiteral("hyprland.general.snap.enabled"), true);
+        client.saveAppearance(values);
+        QTRY_COMPARE_WITH_TIMEOUT(service_.heldReplaceCount(), 1, 3000);
+        QCOMPARE(client.busy(), true);
+        QCOMPARE(client.busyOperation(), QStringLiteral("appearance-save"));
+
+        service_.stop();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(client.busyOperation(), QString{});
+        QCOMPARE(client.available(), false);
     }
 
     void recoversOnlyTheCallingClientsPendingConfirmation()
@@ -599,7 +1328,8 @@ private slots:
             QStringLiteral("org.freedesktop.DBus.Error.UnknownMethod"),
             3000
         );
-        QCOMPARE(client.available(), false);
+        QCOMPARE(client.available(), true);
+        QCOMPARE(client.displayDiscoveryAvailable(), false);
         QCOMPARE(client.displayConfirmationOwned(), false);
     }
 
@@ -608,6 +1338,7 @@ private slots:
         QVERIFY(service_.start());
         HyprShelld::CompositorClient client(bus_, nullptr);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.displayDiscoveryAvailable(), 3000);
         QSignalSpy failures(
             &client,
             &HyprShelld::CompositorClient::operationFailed

@@ -83,6 +83,7 @@ public slots:
         QString &catalogDigest,
         QString &actionCatalogDigest
     ) const;
+    QByteArray GetOptionCatalog(QString &catalogDigest) const;
     qulonglong ReplaceSnapshot(
         qulonglong expectedRevision,
         const QString &expectedCatalogDigest,

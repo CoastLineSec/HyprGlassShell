@@ -27,6 +27,10 @@ qt_add_qml_module(
         component_runtime_client.h
         compositor_client.cpp
         compositor_client.h
+        compositor_option_catalog.cpp
+        compositor_option_catalog.h
+        compositor_snapshot_editor.cpp
+        compositor_snapshot_editor.h
         coordinator_client.cpp
         coordinator_client.h
         config_client.cpp
@@ -53,6 +57,7 @@ target_link_libraries(
         Qt6::DBus
         Qt6::Qml
         hyprshelld-component-core
+        hyprshelld-hyprland-core
 )
 
 qt_query_qml_module(

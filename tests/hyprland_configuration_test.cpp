@@ -2106,6 +2106,77 @@ private slots:
     QVERIFY2(hasCode(parsed.errors, code), qPrintable(code));
   }
 
+  void curatedAppearanceOptionsRemainSafeAndReloadOnly() {
+    const auto catalogResult = shippedCatalog();
+    QVERIFY(catalogResult);
+    const auto &catalog = *catalogResult.value;
+
+    struct ExpectedOption final {
+      const char *id;
+      OptionType type;
+      ControlKind control;
+      QJsonValue defaultValue;
+    };
+    const std::array expected{
+        ExpectedOption{"hyprland.animations.enabled", OptionType::Boolean,
+                       ControlKind::Toggle, true},
+        ExpectedOption{"hyprland.decoration.blur.enabled",
+                       OptionType::Boolean, ControlKind::Toggle, true},
+        ExpectedOption{"hyprland.decoration.rounding", OptionType::Integer,
+                       ControlKind::SpinBox, 0},
+        ExpectedOption{"hyprland.decoration.shadow.enabled",
+                       OptionType::Boolean, ControlKind::Toggle, true},
+        ExpectedOption{"hyprland.general.border_size", OptionType::Integer,
+                       ControlKind::SpinBox, 1},
+        ExpectedOption{"hyprland.general.layout", OptionType::Enumeration,
+                       ControlKind::Select, QStringLiteral("dwindle")},
+        ExpectedOption{"hyprland.general.resize_on_border",
+                       OptionType::Boolean, ControlKind::Toggle, false},
+        ExpectedOption{"hyprland.general.snap.enabled", OptionType::Boolean,
+                       ControlKind::Toggle, false},
+    };
+
+    for (const auto &entry : expected) {
+      const auto id = QString::fromLatin1(entry.id);
+      const auto *option = findOption(catalog, id);
+      QVERIFY2(option != nullptr, qPrintable(id));
+      QVERIFY(option->type == entry.type);
+      QVERIFY(option->control == entry.control);
+      QCOMPARE(option->defaultValue, entry.defaultValue);
+      QVERIFY(option->defaultPolicy == DefaultPolicy::Hyprland);
+      QVERIFY(option->writable);
+      QVERIFY(option->uiTier == UiTier::Common);
+      QVERIFY(option->applyMode == ApplyMode::Reload);
+      QVERIFY(option->risk == RiskLevel::Safe);
+      QVERIFY(!option->inheritedDefaultFrom.has_value());
+    }
+
+    for (const auto *id : {"hyprland.decoration.rounding",
+                           "hyprland.general.border_size"}) {
+      const auto *option = findOption(catalog, QString::fromLatin1(id));
+      QVERIFY(option != nullptr);
+      QVERIFY(option->constraints.minimum.has_value());
+      QVERIFY(option->constraints.maximum.has_value());
+      QCOMPARE(option->constraints.minimum->toInt(), 0);
+      QCOMPARE(option->constraints.maximum->toInt(), 20);
+    }
+
+    const auto *layout = findOption(
+        catalog, QStringLiteral("hyprland.general.layout"));
+    QVERIFY(layout != nullptr);
+    QStringList choices;
+    for (const auto &choiceValue : layout->constraints.choices) {
+      choices.append(choiceValue.toObject()
+                         .value(QStringLiteral("value"))
+                         .toString());
+    }
+    QCOMPARE(choices,
+             QStringList({QStringLiteral("dwindle"),
+                          QStringLiteral("master"),
+                          QStringLiteral("scrolling"),
+                          QStringLiteral("monocle")}));
+  }
+
   void validatesExplicitScalarOverrides() {
     const auto catalogResult = shippedCatalog();
     QVERIFY(catalogResult);

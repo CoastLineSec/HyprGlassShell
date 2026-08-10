@@ -133,6 +133,135 @@ TestCase {
         }
     }
 
+    Component {
+        id: appearancePageComponent
+
+        Window {
+            width: 820
+            height: 900
+            visible: true
+
+            property alias page: appearancePage
+
+            Settings.AppearancePage {
+                id: appearancePage
+
+                anchors.fill: parent
+            }
+        }
+    }
+
+    Component {
+        id: appearancePreviewComponent
+
+        Window {
+            width: 720
+            height: 420
+            visible: true
+
+            property alias preview: appearancePreview
+
+            Settings.AppearancePreview {
+                id: appearancePreview
+
+                anchors.fill: parent
+            }
+        }
+    }
+
+    function appearanceDefinitions() {
+        return [
+            {
+                id: "hyprland.general.border_size",
+                type: "integer",
+                control: "spinBox",
+                defaultValue: 1,
+                min: 0,
+                max: 20
+            },
+            {
+                id: "hyprland.decoration.rounding",
+                type: "integer",
+                control: "spinBox",
+                defaultValue: 0,
+                min: 0,
+                max: 20
+            },
+            {
+                id: "hyprland.decoration.blur.enabled",
+                type: "boolean",
+                control: "toggle",
+                defaultValue: true
+            },
+            {
+                id: "hyprland.decoration.shadow.enabled",
+                type: "boolean",
+                control: "toggle",
+                defaultValue: true
+            },
+            {
+                id: "hyprland.animations.enabled",
+                type: "boolean",
+                control: "toggle",
+                defaultValue: true
+            },
+            {
+                id: "hyprland.general.layout",
+                type: "enum",
+                control: "select",
+                defaultValue: "dwindle",
+                choices: [
+                    { label: "dwindle", value: "dwindle" },
+                    { label: "master", value: "master" },
+                    { label: "scrolling", value: "scrolling" },
+                    { label: "monocle", value: "monocle" }
+                ]
+            },
+            {
+                id: "hyprland.general.resize_on_border",
+                type: "boolean",
+                control: "toggle",
+                defaultValue: false
+            },
+            {
+                id: "hyprland.general.snap.enabled",
+                type: "boolean",
+                control: "toggle",
+                defaultValue: false
+            }
+        ];
+    }
+
+    function appearanceDefaults() {
+        return {
+            "hyprland.general.border_size": 1,
+            "hyprland.decoration.rounding": 0,
+            "hyprland.decoration.blur.enabled": true,
+            "hyprland.decoration.shadow.enabled": true,
+            "hyprland.animations.enabled": true,
+            "hyprland.general.layout": "dwindle",
+            "hyprland.general.resize_on_border": false,
+            "hyprland.general.snap.enabled": false
+        };
+    }
+
+    function configureAppearancePage(page, values) {
+        page.serviceAvailable = true;
+        page.writable = true;
+        page.catalogAvailable = true;
+        page.appearanceOptions = appearanceDefinitions();
+        page.appearanceValues = values || appearanceDefaults();
+        page.revisionToken = "7";
+        page.appliedRevision = 7;
+        page.loadState = "normal";
+        page.managementState = "managed";
+        page.applyState = "current";
+        page.requiredActivation = "none";
+        page.confirmationState = "idle";
+        page.appearanceAvailable = true;
+        page.reviewProjection();
+    }
+
     function displayRecord(id, selector, enabled, mirror, vrr) {
         return {
             id: id,
@@ -1583,7 +1712,7 @@ TestCase {
         page.workspaceMaximumApplications = 5;
         page.workspaceOccupiedOnly = true;
         page.workspaceScrollMode = "reversed";
-        const scrollView = findChild(page, "barSettingsScrollView");
+        const scrollView = findChild(page, "barOptionsScrollView");
         verify(scrollView !== null);
         scrollView.contentItem.contentY = scrollView.contentItem.contentHeight
             - scrollView.contentItem.height;
@@ -2185,27 +2314,121 @@ TestCase {
         compare(preview.previewWorkspaces[2].workspaceId, 4);
     }
 
+    function test_barPreviewStaysStickyWhileOptionsScroll() {
+        const page = createTemporaryObject(pageComponent, this, {
+            width: 820,
+            height: 900
+        });
+        verify(page !== null);
+        enableCoreSettings(page);
+        enableWorkspaceSettings(page);
+        waitForRendering(page);
+        wait(0);
+
+        const sticky = findChild(page, "barStickyPreview");
+        const scroll = findChild(page, "barOptionsScrollView");
+        const content = findChild(page, "barOptionsContent");
+        const preview = findChild(page, "barPreview");
+        const heightSlider = findChild(page, "barHeightSlider");
+        verify(sticky !== null);
+        verify(scroll !== null);
+        verify(content !== null);
+        verify(preview !== null);
+        verify(heightSlider !== null);
+        compare(page.compactPreview, false);
+        compare(preview.height, 286);
+        compare(preview.implicitHeight, 286);
+        compare(preview.scale, 1);
+        verify(Math.abs(preview.width - sticky.width) <= 0.01);
+        verify(scroll.contentWidth <= scroll.availableWidth + 0.01);
+        verify(content.x >= 0);
+        verify(content.x + content.width <= scroll.contentWidth + 0.01);
+
+        const maximumContentY = scroll.contentItem.contentHeight
+            - scroll.contentItem.height;
+        verify(maximumContentY > 0);
+        const stickyBefore = sticky.mapToItem(page, 0, 0);
+        const previewBefore = preview.mapToItem(page, 0, 0);
+        const contentBefore = content.mapToItem(page, 0, 0);
+        const targetContentY = Math.min(180, maximumContentY);
+        verify(targetContentY > 0);
+
+        scroll.contentItem.contentY = targetContentY;
+        tryCompare(scroll.contentItem, "contentY", targetContentY);
+        const stickyAfter = sticky.mapToItem(page, 0, 0);
+        const previewAfter = preview.mapToItem(page, 0, 0);
+        const contentAfter = content.mapToItem(page, 0, 0);
+        verify(Math.abs(stickyAfter.x - stickyBefore.x) <= 0.01);
+        verify(Math.abs(stickyAfter.y - stickyBefore.y) <= 0.01);
+        verify(Math.abs(previewAfter.x - previewBefore.x) <= 0.01);
+        verify(Math.abs(previewAfter.y - previewBefore.y) <= 0.01);
+        verify(contentAfter.y < contentBefore.y);
+
+        heightSlider.value = 64;
+        wait(0);
+        compare(preview.barHeight, 64);
+    }
+
     function test_minimumSizeCanReachWorkspaceReset() {
+        // Main's 620-pixel minimum width leaves 423 pixels for this page
+        // after the fixed sidebar and separator.
         const page = createTemporaryObject(pageComponent, this, {
             width: 423,
             height: 480
         });
         verify(page !== null);
-        const scrollView = findChild(page, "barSettingsScrollView");
+        const sticky = findChild(page, "barStickyPreview");
+        const scrollView = findChild(page, "barOptionsScrollView");
+        const content = findChild(page, "barOptionsContent");
+        const preview = findChild(page, "barPreview");
         const reset = findChild(page, "resetWorkspaceSwitcher");
+        verify(sticky !== null);
         verify(scrollView !== null);
+        verify(content !== null);
+        verify(preview !== null);
         verify(reset !== null);
         waitForRendering(page);
         wait(0);
+        compare(page.compactPreview, true);
+        compare(preview.height, 286);
+        compare(preview.implicitHeight, 286);
+        compare(preview.scale, 1);
+        verify(Math.abs(preview.width - sticky.width) <= 0.01);
+        verify(scrollView.height >= 100);
         verify(scrollView.contentItem.contentHeight > scrollView.height);
+        verify(scrollView.contentWidth
+            <= scrollView.availableWidth + 0.01);
+        verify(content.x >= 0);
+        verify(content.x + content.width
+            <= scrollView.contentWidth + 0.01);
 
-        scrollView.contentItem.contentY = Math.max(
+        const stickyBefore = sticky.mapToItem(page, 0, 0);
+        const previewBefore = preview.mapToItem(page, 0, 0);
+        const contentBefore = content.mapToItem(page, 0, 0);
+        verify(stickyBefore.x >= 0);
+        verify(stickyBefore.x + sticky.width <= page.width + 0.01);
+        verify(stickyBefore.y >= 0);
+        verify(stickyBefore.y + sticky.height <= page.height + 0.01);
+
+        const maximumContentY = Math.max(
             0,
             scrollView.contentItem.contentHeight
                 - scrollView.contentItem.height
         );
-        wait(0);
+        verify(maximumContentY > 0);
+        scrollView.contentItem.contentY = maximumContentY;
+        tryCompare(scrollView.contentItem, "contentY", maximumContentY);
+        const stickyAfter = sticky.mapToItem(page, 0, 0);
+        const previewAfter = preview.mapToItem(page, 0, 0);
+        const contentAfter = content.mapToItem(page, 0, 0);
+        verify(Math.abs(stickyAfter.x - stickyBefore.x) <= 0.01);
+        verify(Math.abs(stickyAfter.y - stickyBefore.y) <= 0.01);
+        verify(Math.abs(previewAfter.x - previewBefore.x) <= 0.01);
+        verify(Math.abs(previewAfter.y - previewBefore.y) <= 0.01);
+        verify(contentAfter.y < contentBefore.y);
         const resetPosition = reset.mapToItem(page, 0, 0);
+        verify(resetPosition.x >= 0);
+        verify(resetPosition.x + reset.width <= page.width);
         verify(resetPosition.y >= 0);
         verify(resetPosition.y + reset.height <= page.height);
     }
@@ -2525,9 +2748,11 @@ TestCase {
         const overlay = findChild(page, "displayConfirmationOverlay");
         const keep = findChild(page, "confirmDisplayConfigurationButton");
         const title = findChild(page, "displayConfirmationTitle");
+        const message = findChild(page, "displayConfirmationMessage");
         verify(overlay !== null);
         verify(keep !== null);
         verify(title !== null);
+        verify(message !== null);
         compare(overlay.visible, true);
         compare(keep.visible, true);
         compare(keep.enabled, true);
@@ -2542,6 +2767,17 @@ TestCase {
         page.confirmationOwned = false;
         wait(0);
         compare(keep.visible, false);
+
+        page.confirmationState = "failed";
+        wait(0);
+        compare(title.text, "Display recovery needs attention");
+        verify(String(message.text).includes(
+            "If the desktop health warning reports Compositor settings"
+        ));
+        verify(String(message.text).includes(
+            "preserve the current state and seek recovery guidance"
+        ));
+        compare(message.Accessible.role, Accessible.AlertMessage);
 
         page.serviceAvailable = false;
         page.errorMessage = "Injected private recovery failure";
@@ -2560,6 +2796,456 @@ TestCase {
         compare(page.confirmationRevision, 0);
         compare(page.confirmationDeadlineMs, 0);
         compare(page.confirmationGeneration, "");
+    }
+
+    function test_displayAdoptionRequiresExplicitConfirmation() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        page.managementState = "unmanaged";
+        page.applyState = "unavailable";
+        page.errorName = "org.hyprshelld.Error.OperationFailed";
+        page.errorMessage = "The previous takeover attempt was rejected.";
+        waitForRendering(page);
+        wait(0);
+
+        const takeControl = findChild(page, "adoptCompositorButton");
+        const status = findChild(page, "displayStatusMessage");
+        const dialog = findChild(page, "displayAdoptionDialog");
+        const explanation = findChild(
+            dialog,
+            "displayAdoptionExplanation"
+        );
+        const cancel = findChild(
+            dialog,
+            "cancelDisplayAdoptionButton"
+        );
+        const confirm = findChild(
+            dialog,
+            "confirmDisplayAdoptionButton"
+        );
+        verify(takeControl !== null);
+        verify(status !== null);
+        verify(dialog !== null);
+        verify(explanation !== null);
+        verify(cancel !== null);
+        verify(confirm !== null);
+        compare(page.serviceAvailable, true);
+        compare(page.writable, true);
+        compare(page.busy, false);
+        compare(page.confirmationState, "idle");
+        compare(dialog.opened, false);
+        compare(dialog.modal, true);
+        compare(takeControl.visible, true);
+        compare(takeControl.enabled, true);
+        verify(String(status.text).includes("display operation failed"));
+        verify(String(status.text).includes(
+            "previous takeover attempt was rejected"
+        ));
+        compare(takeControl.Accessible.name,
+            "Review compositor management takeover");
+        compare(cancel.Accessible.name,
+            "Cancel without changing Hyprland");
+        compare(confirm.Accessible.name,
+            "Confirm and let HyprShelld manage Hyprland");
+        compare(explanation.Accessible.name, explanation.text);
+        verify(takeControl.implicitHeight >= 44);
+        verify(cancel.implicitHeight >= 44);
+        verify(confirm.implicitHeight >= 44);
+
+        let adoptionRequests = 0;
+        page.adoptionRequested.connect(function() {
+            ++adoptionRequests;
+        });
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        compare(adoptionRequests, 0);
+        tryCompare(cancel, "activeFocus", true);
+
+        const copy = String(explanation.text).toLowerCase();
+        verify(copy.includes("replace the active hyprland entrypoint"));
+        verify(copy.includes("reload hyprland"));
+        verify(copy.includes("not imported"));
+        verify(copy.includes("if hyprland.lua exists"));
+        verify(copy.includes("exact original"));
+        verify(copy.includes("preserved privately for recovery"));
+        verify(copy.includes("if it does not exist"));
+        verify(copy.includes("that absence is recorded"));
+        verify(copy.includes("legacy configuration files stay where they are"));
+        verify(copy.includes("no longer selects them"));
+        verify(copy.includes("preserves an existing user-custom.lua"));
+        verify(copy.includes("if that file is absent"));
+        verify(copy.includes("creates it"));
+        verify(copy.includes("loaded last"));
+        verify(copy.includes("no user-facing action to stop managing"));
+        verify(copy.includes("canceling leaves your files"));
+        verify(copy.includes("running compositor unchanged"));
+
+        cancel.clicked();
+        tryCompare(dialog, "opened", false);
+        compare(adoptionRequests, 0);
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        keyClick(Qt.Key_Escape);
+        tryCompare(dialog, "opened", false);
+        compare(adoptionRequests, 0);
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        confirm.clicked();
+        tryCompare(dialog, "opened", false);
+        compare(adoptionRequests, 1);
+        compare(confirm.enabled, false);
+
+        // A stale callback after the dialog closes cannot submit twice.
+        dialog.confirmAdoption();
+        compare(adoptionRequests, 1);
+    }
+
+    function test_displayPendingBaselineActionSurvivesTransientError() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        page.applyState = "retained";
+        page.requiredActivation = "reload";
+        page.appliedRevision = 6;
+        page.errorName = "org.hyprshelld.Error.OperationFailed";
+        page.errorMessage = "The previous apply attempt was interrupted.";
+        waitForRendering(page);
+        wait(0);
+
+        const apply = findChild(
+            page,
+            "applyCompositorBaselineButton"
+        );
+        const status = findChild(page, "displayStatusMessage");
+        verify(apply !== null);
+        verify(status !== null);
+        compare(page.managementState, "managed");
+        compare(page.baselineCurrent, false);
+        compare(page.busy, false);
+        compare(page.confirmationState, "idle");
+        compare(apply.visible, true);
+        compare(apply.enabled, true);
+        verify(String(status.text).includes("display operation failed"));
+        verify(String(status.text).includes(
+            "previous apply attempt was interrupted"
+        ));
+
+        let applyRequests = 0;
+        page.applyRequested.connect(function() { ++applyRequests; });
+        apply.clicked();
+        compare(applyRequests, 1);
+
+        page.busy = true;
+        compare(apply.visible, true);
+        compare(apply.enabled, false);
+        compare(applyRequests, 1);
+
+        page.busy = false;
+        page.confirmationState = "awaiting-confirmation";
+        compare(apply.visible, true);
+        compare(apply.enabled, false);
+        compare(applyRequests, 1);
+    }
+
+    function test_displayAuthorityOverridesStaleOperationError() {
+        const rows = [
+            {
+                serviceAvailable: false,
+                writable: true,
+                managementState: "unmanaged",
+                expectedStatus: "settings are unavailable"
+            },
+            {
+                serviceAvailable: true,
+                writable: false,
+                managementState: "unmanaged",
+                expectedStatus: "read-only"
+            },
+            {
+                serviceAvailable: true,
+                writable: true,
+                managementState: "conflict",
+                expectedStatus: "changed unexpectedly"
+            }
+        ];
+        const staleDetail = "Stale transient operation detail.";
+
+        for (const row of rows) {
+            const testWindow = createTemporaryObject(
+                displaysPageComponent,
+                this
+            );
+            verify(testWindow !== null);
+            const page = testWindow.page;
+            configureDisplaysPage(
+                page,
+                [displayRecord("display-a", "DP-1", true, "", -1)],
+                [connectedDisplay("DP-1", true, 0)]
+            );
+            page.serviceAvailable = row.serviceAvailable;
+            page.writable = row.writable;
+            page.managementState = row.managementState;
+            page.applyState = "retained";
+            page.requiredActivation = "reload";
+            page.errorName = "org.hyprshelld.Error.OperationFailed";
+            page.errorMessage = staleDetail;
+            waitForRendering(page);
+            wait(0);
+
+            const takeControl = findChild(
+                page,
+                "adoptCompositorButton"
+            );
+            const apply = findChild(
+                page,
+                "applyCompositorBaselineButton"
+            );
+            const card = findChild(page, "displayStatusCard");
+            const status = findChild(page, "displayStatusMessage");
+            verify(takeControl !== null);
+            verify(apply !== null);
+            verify(card !== null);
+            verify(status !== null);
+            compare(takeControl.visible, false);
+            compare(apply.visible, false);
+            compare(card.visible, true);
+            verify(String(status.text).includes(row.expectedStatus));
+            verify(!String(status.text).includes(staleDetail));
+        }
+    }
+
+    function test_displayAdoptionDialogFitsTheMinimumWindow() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this,
+            { width: 423, height: 480 }
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        page.managementState = "unmanaged";
+        page.applyState = "unavailable";
+        waitForRendering(page);
+        wait(0);
+
+        const takeControl = findChild(page, "adoptCompositorButton");
+        const dialog = findChild(page, "displayAdoptionDialog");
+        const scroll = findChild(page, "displayAdoptionScrollView");
+        const content = findChild(page, "displayAdoptionContent");
+        const explanation = findChild(
+            page,
+            "displayAdoptionExplanation"
+        );
+        const cancel = findChild(
+            page,
+            "cancelDisplayAdoptionButton"
+        );
+        const confirm = findChild(
+            page,
+            "confirmDisplayAdoptionButton"
+        );
+        verify(takeControl !== null);
+        verify(dialog !== null);
+        verify(scroll !== null);
+        verify(content !== null);
+        verify(explanation !== null);
+        verify(cancel !== null);
+        verify(confirm !== null);
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        verify(dialog.width <= page.width);
+        verify(dialog.height <= page.height);
+        verify(scroll.width > 0);
+        verify(scroll.height > 0);
+        verify(content.width <= scroll.availableWidth + 1);
+
+        // A shorter temporary viewport forces the bounded dialog onto its
+        // scrolling path without moving the confirmation actions offscreen.
+        testWindow.height = 360;
+        wait(0);
+        verify(dialog.height <= page.height);
+        verify(scroll.contentItem.contentHeight
+            > scroll.contentItem.height);
+
+        const maximumContentY = scroll.contentItem.contentHeight
+            - scroll.contentItem.height;
+        verify(maximumContentY > 0);
+        scroll.contentItem.contentY = maximumContentY;
+        tryCompare(scroll.contentItem, "contentY", maximumContentY);
+
+        const explanationPosition = explanation.mapToItem(scroll, 0, 0);
+        verify(explanationPosition.y + explanation.height
+            <= scroll.height + 1);
+
+        const cancelPosition = cancel.mapToItem(page, 0, 0);
+        const confirmPosition = confirm.mapToItem(page, 0, 0);
+        verify(cancelPosition.x >= 0);
+        verify(cancelPosition.x + cancel.width <= page.width);
+        verify(cancelPosition.y >= 0);
+        verify(cancelPosition.y + cancel.height <= page.height);
+        verify(confirmPosition.x >= 0);
+        verify(confirmPosition.x + confirm.width <= page.width);
+        verify(confirmPosition.y >= 0);
+        verify(confirmPosition.y + confirm.height <= page.height);
+    }
+
+    function test_displayAdoptionDialogClosesWhenEligibilityIsLost() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        page.managementState = "unmanaged";
+        page.applyState = "unavailable";
+        waitForRendering(page);
+        wait(0);
+
+        const takeControl = findChild(page, "adoptCompositorButton");
+        const dialog = findChild(page, "displayAdoptionDialog");
+        const confirm = findChild(
+            dialog,
+            "confirmDisplayAdoptionButton"
+        );
+        verify(takeControl !== null);
+        verify(dialog !== null);
+        verify(confirm !== null);
+
+        let adoptionRequests = 0;
+        page.adoptionRequested.connect(function() {
+            ++adoptionRequests;
+        });
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        page.busy = true;
+        tryCompare(dialog, "opened", false);
+        compare(confirm.enabled, false);
+        compare(adoptionRequests, 0);
+        page.busy = false;
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        page.serviceAvailable = false;
+        tryCompare(dialog, "opened", false);
+        compare(confirm.enabled, false);
+        compare(adoptionRequests, 0);
+        page.serviceAvailable = true;
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        page.writable = false;
+        tryCompare(dialog, "opened", false);
+        compare(confirm.enabled, false);
+        compare(adoptionRequests, 0);
+        page.writable = true;
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        page.managementState = "conflict";
+        tryCompare(dialog, "opened", false);
+        compare(confirm.enabled, false);
+        compare(adoptionRequests, 0);
+        page.managementState = "unmanaged";
+
+        takeControl.clicked();
+        tryCompare(dialog, "opened", true);
+        page.confirmationState = "awaiting-confirmation";
+        tryCompare(dialog, "opened", false);
+        compare(confirm.enabled, false);
+        compare(adoptionRequests, 0);
+    }
+
+    function test_displayStatusMessagesDescribeAuthoritativeState() {
+        const testWindow = createTemporaryObject(
+            displaysPageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureDisplaysPage(
+            page,
+            [displayRecord("display-a", "DP-1", true, "", -1)],
+            [connectedDisplay("DP-1", true, 0)]
+        );
+        waitForRendering(page);
+        wait(0);
+
+        const card = findChild(page, "displayStatusCard");
+        const status = findChild(page, "displayStatusMessage");
+        verify(card !== null);
+        verify(status !== null);
+        compare(status.Accessible.role, Accessible.AlertMessage);
+        compare(card.visible, false);
+
+        page.loadState = "recovered";
+        wait(0);
+        compare(card.visible, true);
+        verify(String(status.text).includes("last known good"));
+        verify(String(status.text).includes("Review"));
+        compare(status.Accessible.name, status.text);
+
+        page.loadState = "defaulted";
+        wait(0);
+        verify(String(status.text).includes("safe defaults"));
+        verify(String(status.text).includes("Review"));
+        compare(status.Accessible.name, status.text);
+
+        page.loadState = "normal";
+        page.managementState = "unmanaged";
+        wait(0);
+        verify(String(status.text).includes("not managing"));
+        verify(String(status.text).includes("does not import"));
+        verify(String(status.text).includes("If hyprland.lua exists"));
+        verify(String(status.text).includes("exact original"));
+        verify(String(status.text).includes("preserved privately for recovery"));
+        verify(String(status.text).includes("absence is recorded"));
+        compare(status.Accessible.name, status.text);
+
+        page.managementState = "conflict";
+        wait(0);
+        verify(String(status.text).includes("changed unexpectedly"));
+        verify(String(status.text).includes("locked"));
+        verify(String(status.text).includes(
+            "ownership state"
+        ));
+        verify(String(status.text).includes(
+            "If the desktop health warning reports Compositor settings"
+        ));
+        verify(String(status.text).includes(
+            "preserve the unexpected files and seek recovery guidance"
+        ));
+        compare(status.Accessible.name, status.text);
     }
 
     function test_healthWarningIsQuietWhenHealthy() {
@@ -2743,6 +3429,1224 @@ TestCase {
         verify(compositorRestartButton !== null);
         compare(compositorRestartButton.visible, false);
         verify(warning.warningDescription.includes("directly from systemd"));
+    }
+
+    function test_appearanceUsesExactTrustedDefinitions() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        compare(page.trustedDefinitionsValid, true);
+        compare(page.trustedValuesValid, true);
+        compare(page.controlsEnabled, true);
+
+        const border = findChild(page, "appearanceBorderSize");
+        const rounding = findChild(page, "appearanceRounding");
+        const blur = findChild(page, "appearanceBlurEnabled");
+        const shadow = findChild(page, "appearanceShadowEnabled");
+        const animations = findChild(page, "appearanceAnimationsEnabled");
+        const layout = findChild(page, "appearanceLayout");
+        const resize = findChild(page, "appearanceResizeOnBorder");
+        const snap = findChild(page, "appearanceSnapEnabled");
+        const preview = findChild(page, "appearancePreview");
+        const previewStage = findChild(page, "appearancePreviewStage");
+        const summary = findChild(page, "appearancePreviewSummary");
+        const motionToggle = findChild(
+            page,
+            "toggleAppearanceMotionButton"
+        );
+        verify(border !== null);
+        verify(rounding !== null);
+        verify(blur !== null);
+        verify(shadow !== null);
+        verify(animations !== null);
+        verify(layout !== null);
+        verify(resize !== null);
+        verify(snap !== null);
+        verify(preview !== null);
+        verify(previewStage !== null);
+        verify(summary !== null);
+        verify(motionToggle !== null);
+
+        compare(border.from, 0);
+        compare(border.to, 20);
+        compare(border.value, 1);
+        compare(rounding.from, 0);
+        compare(rounding.to, 20);
+        compare(rounding.value, 0);
+        compare(blur.checked, true);
+        compare(shadow.checked, true);
+        compare(animations.checked, true);
+        compare(layout.currentText, "Dwindle");
+        compare(resize.checked, false);
+        compare(snap.checked, false);
+        compare(previewStage.Accessible.ignored, true);
+        compare(summary.Accessible.name, summary.text);
+        verify(String(summary.text).includes("Dwindle layout"));
+        compare(motionToggle.enabled, true);
+        compare(motionToggle.text, "Pause motion");
+        compare(
+            motionToggle.Accessible.name,
+            "Pause the illustrative window motion"
+        );
+        compare(preview.motionRunning, true);
+        compare(preview.motionPaused, false);
+        compare(preview.motionStory, "dwindle-split");
+        verify(String(summary.text).includes("Motion playing"));
+
+        const targetIds = [
+            "refreshAppearanceButton",
+            "appearanceOpenDisplaysButton",
+            "loadCurrentAppearanceButton",
+            "retryApplyAppearanceButton",
+            "recoverAppearanceButton",
+            "appearanceBorderSize",
+            "appearanceRounding",
+            "appearanceBlurEnabled",
+            "appearanceShadowEnabled",
+            "appearanceAnimationsEnabled",
+            "appearanceLayout",
+            "appearanceResizeOnBorder",
+            "appearanceSnapEnabled",
+            "discardAppearanceDraftButton",
+            "resetAppearanceDefaultsButton",
+            "saveAppearanceButton",
+            "toggleAppearanceMotionButton",
+            "cancelAppearanceRecoveryButton",
+            "confirmAppearanceRecoveryButton"
+        ];
+        for (const objectName of targetIds) {
+            const target = findChild(page, objectName);
+            verify(target !== null, "Missing target " + objectName);
+            verify(
+                target.implicitHeight >= 44,
+                objectName + " must provide a 44px interaction target"
+            );
+        }
+
+        page.setDraftValue(page.animationsId, false);
+        page.setDraftValue(page.layoutId, "master");
+        page.setDraftValue(page.snapId, true);
+        wait(0);
+        compare(motionToggle.enabled, false);
+        compare(motionToggle.text, "Motion off");
+        compare(
+            motionToggle.Accessible.name,
+            "Illustrative window motion is off"
+        );
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "off");
+        verify(String(summary.text).includes("Master layout"));
+        verify(String(summary.text).includes("Animations off"));
+        compare(
+            findChild(page, "appearancePreviewSnapGuide").visible,
+            true
+        );
+    }
+
+    function test_appearanceMotionAutoRunsAndTogglesDeterministically() {
+        const testWindow = createTemporaryObject(
+            appearancePreviewComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const preview = testWindow.preview;
+        waitForRendering(preview);
+        wait(0);
+
+        const toggle = findChild(
+            preview,
+            "toggleAppearanceMotionButton"
+        );
+        const summary = findChild(preview, "appearancePreviewSummary");
+        verify(toggle !== null);
+        verify(summary !== null);
+
+        compare(preview.animationsEnabled, true);
+        compare(preview.motionPaused, false);
+        compare(preview.motionRunning, true);
+        compare(preview.motionStatus, "playing");
+        verify(preview.motionPhase !== "off");
+        compare(toggle.enabled, true);
+        compare(toggle.text, "Pause motion");
+        compare(
+            toggle.Accessible.name,
+            "Pause the illustrative window motion"
+        );
+        verify(toggle.implicitHeight >= 44);
+        compare(summary.Accessible.name, summary.text);
+        verify(String(summary.text).includes("Motion playing"));
+
+        toggle.clicked();
+        compare(preview.motionPaused, true);
+        compare(preview.motionRunning, false);
+        compare(preview.motionStatus, "paused");
+        compare(toggle.text, "Play motion");
+        compare(
+            toggle.Accessible.name,
+            "Play the illustrative window motion"
+        );
+        verify(String(summary.text).includes("Motion paused"));
+
+        const pausedPhase = preview.motionPhase;
+        const pausedProgress = preview.motionProgress;
+        preview.synchronizeMotion(false);
+        wait(0);
+        compare(preview.motionRunning, false);
+        compare(preview.motionPhase, pausedPhase);
+        compare(preview.motionProgress, pausedProgress);
+
+        toggle.clicked();
+        compare(preview.motionPaused, false);
+        compare(preview.motionRunning, true);
+        compare(preview.motionStatus, "playing");
+        compare(toggle.text, "Pause motion");
+        verify(preview.motionPhase !== "off");
+        verify(String(summary.text).includes("Motion playing"));
+    }
+
+    function test_appearanceMotionStoriesUseDistinctGeometry() {
+        const testWindow = createTemporaryObject(
+            appearancePreviewComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const preview = testWindow.preview;
+        waitForRendering(preview);
+        wait(0);
+
+        const stage = findChild(preview, "appearancePreviewStage");
+        const active = findChild(
+            preview,
+            "appearancePreviewActiveWindow"
+        );
+        const secondary = findChild(
+            preview,
+            "appearancePreviewSecondaryWindow"
+        );
+        const spawned = findChild(
+            preview,
+            "appearancePreviewSpawnedWindow"
+        );
+        verify(stage !== null);
+        verify(active !== null);
+        verify(secondary !== null);
+        verify(spawned !== null);
+
+        preview.motionPaused = true;
+        const layouts = [
+            { mode: "dwindle", story: "dwindle-split" },
+            { mode: "master", story: "master-stack" },
+            { mode: "scrolling", story: "scrolling-strip" },
+            { mode: "monocle", story: "monocle-replace" }
+        ];
+        const stories = [];
+
+        for (const layout of layouts) {
+            preview.layoutMode = layout.mode;
+            preview.synchronizeMotion(true);
+            wait(0);
+
+            compare(preview.motionRunning, false);
+            compare(preview.motionPhase, "resting");
+            compare(preview.motionProgress, 0);
+            compare(preview.motionStory, layout.story);
+            compare(stories.indexOf(preview.motionStory), -1);
+            stories.push(preview.motionStory);
+
+            const before = {
+                activeX: active.x,
+                activeY: active.y,
+                activeWidth: active.width,
+                activeHeight: active.height,
+                activeOpacity: active.opacity,
+                secondaryX: secondary.x,
+                secondaryY: secondary.y,
+                secondaryWidth: secondary.width,
+                secondaryHeight: secondary.height,
+                spawnedX: spawned.x,
+                spawnedY: spawned.y,
+                spawnedWidth: spawned.width,
+                spawnedHeight: spawned.height,
+                spawnedOpacity: spawned.opacity
+            };
+
+            preview.motionProgress = 1;
+            wait(0);
+            const after = {
+                activeX: active.x,
+                activeY: active.y,
+                activeWidth: active.width,
+                activeHeight: active.height,
+                activeOpacity: active.opacity,
+                secondaryX: secondary.x,
+                secondaryY: secondary.y,
+                secondaryWidth: secondary.width,
+                secondaryHeight: secondary.height,
+                spawnedX: spawned.x,
+                spawnedY: spawned.y,
+                spawnedWidth: spawned.width,
+                spawnedHeight: spawned.height,
+                spawnedOpacity: spawned.opacity,
+                spawnedScale: spawned.scale
+            };
+
+            compare(before.spawnedOpacity, 0);
+            compare(after.spawnedOpacity, 1);
+            const tolerance = 0.01;
+
+            if (layout.mode === "dwindle") {
+                compare(secondary.visible, false);
+                verify(Math.abs(
+                    stage.dwindleAreaLeft - stage.width * 0.07
+                ) <= tolerance);
+                verify(Math.abs(
+                    stage.dwindleAreaRight - stage.width * 0.93
+                ) <= tolerance);
+                compare(
+                    stage.dwindleGap,
+                    Math.max(8, Math.round(stage.width * 0.02))
+                );
+                verify(Math.abs(
+                    before.activeX - stage.dwindleAreaLeft
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeWidth - stage.dwindleAreaWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeX + before.activeWidth
+                        - stage.dwindleAreaRight
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.spawnedX - before.activeX
+                        - before.activeWidth - stage.dwindleGap
+                ) <= tolerance);
+
+                verify(Math.abs(
+                    after.activeX - before.activeX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeY - before.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeHeight - before.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeWidth - stage.dwindleTileWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedWidth - stage.dwindleTileWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeWidth - after.spawnedWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedY - after.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedHeight - after.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX - after.activeX
+                        - after.activeWidth - stage.dwindleGap
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX + after.spawnedWidth
+                        - stage.dwindleAreaRight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX + after.spawnedWidth
+                        - before.activeX - before.activeWidth
+                ) <= tolerance);
+            } else if (layout.mode === "master") {
+                compare(secondary.visible, true);
+                verify(Math.abs(
+                    stage.masterWidth
+                        - (stage.windowAreaWidth - stage.windowGap) * 0.55
+                ) <= tolerance);
+                verify(Math.abs(
+                    stage.masterStackWidth
+                        - (stage.windowAreaWidth - stage.windowGap) * 0.45
+                ) <= tolerance);
+
+                verify(Math.abs(
+                    before.activeX - stage.windowAreaLeft
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeY - stage.windowAreaTop
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeWidth - stage.masterWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeHeight - stage.windowAreaHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryX - before.activeX
+                        - before.activeWidth - stage.windowGap
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryY - stage.windowAreaTop
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryWidth - stage.masterStackWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryHeight - stage.windowAreaHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryX + before.secondaryWidth
+                        - stage.windowAreaRight
+                ) <= tolerance);
+
+                verify(Math.abs(
+                    after.activeX - before.activeX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeY - before.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeWidth - before.activeWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeHeight - before.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryX - before.secondaryX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryY - before.secondaryY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryWidth - before.secondaryWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX - after.secondaryX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedWidth - after.secondaryWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryHeight - stage.masterStackTileHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedHeight - after.secondaryHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedY - after.secondaryY
+                        - after.secondaryHeight - stage.windowGap
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedY + after.spawnedHeight
+                        - before.secondaryY - before.secondaryHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX + after.spawnedWidth
+                        - before.secondaryX - before.secondaryWidth
+                ) <= tolerance);
+            } else if (layout.mode === "scrolling") {
+                compare(secondary.visible, true);
+                verify(Math.abs(
+                    stage.scrollingTravel
+                        - stage.halfWindowWidth - stage.windowGap
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryX - before.activeX
+                        - stage.scrollingTravel
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.spawnedX - before.secondaryX
+                        - stage.scrollingTravel
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeWidth - stage.halfWindowWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryWidth - before.activeWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.spawnedWidth - before.activeWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeY - stage.scrollingAreaTop
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryY - before.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.spawnedY - before.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeHeight - stage.scrollingAreaHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.secondaryHeight - before.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.spawnedHeight - before.activeHeight
+                ) <= tolerance);
+
+                verify(Math.abs(
+                    after.activeX
+                        - (before.activeX - stage.scrollingTravel)
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryX - before.activeX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX - before.secondaryX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeWidth - stage.halfWindowWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryWidth - after.activeWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedWidth - after.activeWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryY - after.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedY - after.activeY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.secondaryHeight - after.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedHeight - after.activeHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedX + after.spawnedWidth
+                        - stage.windowAreaRight
+                ) <= tolerance);
+                verify(after.spawnedX >= stage.windowAreaLeft - tolerance);
+                verify(after.spawnedX + after.spawnedWidth
+                    <= stage.windowAreaRight + tolerance);
+                compare(after.activeOpacity, 0);
+            } else {
+                compare(secondary.visible, false);
+                verify(Math.abs(
+                    before.activeX - before.spawnedX
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeY - before.spawnedY
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeWidth - before.spawnedWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    before.activeHeight - before.spawnedHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeX - after.spawnedX
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeY - after.spawnedY
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeWidth - after.spawnedWidth
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.activeHeight - after.spawnedHeight
+                ) <= tolerance);
+                verify(Math.abs(
+                    after.spawnedScale - 1
+                ) <= tolerance);
+                compare(after.activeOpacity, 0);
+                compare(after.spawnedOpacity, 1);
+            }
+        }
+
+        compare(stories.length, 4);
+    }
+
+    function test_appearanceMotionResetsAcrossStateAndLifecycleChanges() {
+        const testWindow = createTemporaryObject(
+            appearancePreviewComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const preview = testWindow.preview;
+        waitForRendering(preview);
+        wait(0);
+
+        const toggle = findChild(
+            preview,
+            "toggleAppearanceMotionButton"
+        );
+        const summary = findChild(preview, "appearancePreviewSummary");
+        verify(toggle !== null);
+        verify(summary !== null);
+        compare(preview.motionRunning, true);
+
+        preview.motionProgress = 0.72;
+        preview.motionPhase = "settled";
+        preview.animationsEnabled = false;
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "off");
+        compare(preview.motionStatus, "off");
+        compare(toggle.enabled, false);
+        compare(toggle.text, "Motion off");
+        compare(
+            toggle.Accessible.name,
+            "Illustrative window motion is off"
+        );
+        verify(String(summary.text).includes("Animations off"));
+        verify(String(summary.text).includes("Motion off"));
+
+        preview.synchronizeMotion(false);
+        wait(0);
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "off");
+
+        preview.animationsEnabled = true;
+        compare(preview.motionRunning, true);
+        verify(preview.motionPhase !== "off");
+
+        toggle.clicked();
+        compare(preview.motionPaused, true);
+        compare(preview.motionRunning, false);
+        preview.motionProgress = 0.64;
+        preview.motionPhase = "closing";
+        preview.layoutMode = "master";
+        compare(preview.motionStory, "master-stack");
+        compare(preview.motionPaused, true);
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "resting");
+
+        toggle.clicked();
+        compare(preview.motionPaused, false);
+        compare(preview.motionRunning, true);
+        verify(preview.motionPhase !== "closing");
+
+        preview.visible = false;
+        compare(preview.motionPaused, false);
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "resting");
+
+        preview.visible = true;
+        compare(preview.motionPaused, false);
+        compare(preview.motionRunning, true);
+        verify(preview.motionPhase !== "off");
+
+        toggle.clicked();
+        compare(preview.motionPaused, true);
+        preview.motionProgress = 0.48;
+        preview.motionPhase = "settled";
+        preview.visible = false;
+        compare(preview.motionPaused, true);
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "resting");
+
+        preview.visible = true;
+        compare(preview.motionPaused, true);
+        compare(preview.motionRunning, false);
+        compare(preview.motionProgress, 0);
+        compare(preview.motionPhase, "resting");
+        compare(toggle.text, "Play motion");
+        verify(String(summary.text).includes("Motion paused"));
+    }
+
+    function test_appearanceCatalogMismatchFailsClosed() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const definitions = appearanceDefinitions();
+        definitions[0].max = 21;
+        page.appearanceOptions = definitions;
+        wait(0);
+
+        compare(page.catalogAvailable, true);
+        compare(page.trustedDefinitionsValid, false);
+        compare(page.controlsEnabled, false);
+        compare(findChild(page, "appearanceBorderSize").enabled, false);
+        compare(findChild(page, "saveAppearanceButton").enabled, false);
+        const status = findChild(page, "appearanceStatusMessage");
+        verify(status !== null);
+        compare(status.visible, true);
+        verify(String(status.text).includes(
+            "trusted Appearance contract does not match"
+        ));
+
+        page.appearanceOptions = appearanceDefinitions();
+        const invalidValues = appearanceDefaults();
+        invalidValues["hyprland.general.border_size"] = 21;
+        page.appearanceValues = invalidValues;
+        wait(0);
+        compare(page.trustedDefinitionsValid, true);
+        compare(page.trustedValuesValid, false);
+        compare(page.controlsEnabled, false);
+
+        page.appearanceValues = appearanceDefaults();
+        page.catalogAvailable = false;
+        wait(0);
+        compare(page.controlsEnabled, false);
+        verify(String(status.text).includes("catalog is unavailable"));
+    }
+
+    function test_appearanceDraftActionsAreExplicitAndExact() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const baseline = appearanceDefaults();
+        baseline["hyprland.general.border_size"] = 3;
+        baseline["hyprland.general.layout"] = "master";
+        configureAppearancePage(page, baseline);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.borderSizeId, 7);
+        page.setDraftValue(page.roundingId, 5);
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftDirty, true);
+
+        let saveCount = 0;
+        let submitted = null;
+        page.saveRequested.connect(function(values) {
+            ++saveCount;
+            submitted = values;
+        });
+        const save = findChild(page, "saveAppearanceButton");
+        verify(save !== null);
+        compare(save.enabled, true);
+        save.clicked();
+        compare(saveCount, 1);
+        verify(submitted !== null);
+        compare(Object.keys(submitted).length, 8);
+        compare(submitted[page.borderSizeId], 7);
+        compare(submitted[page.roundingId], 5);
+        compare(submitted[page.blurId], false);
+        compare(submitted[page.layoutId], "master");
+
+        // A second submission is blocked until the first request resolves.
+        save.clicked();
+        compare(saveCount, 1);
+
+        // A fresh page proves Discard and catalog-default reset are local.
+        const secondWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(secondWindow !== null);
+        const secondPage = secondWindow.page;
+        configureAppearancePage(secondPage, baseline);
+        waitForRendering(secondPage);
+        wait(0);
+        secondPage.setDraftValue(secondPage.borderSizeId, 9);
+        compare(secondPage.draftDirty, true);
+        findChild(secondPage, "discardAppearanceDraftButton").clicked();
+        compare(secondPage.draftDirty, false);
+        compare(secondPage.draftValue(secondPage.borderSizeId), 3);
+
+        findChild(secondPage, "resetAppearanceDefaultsButton").clicked();
+        compare(secondPage.draftDirty, true);
+        compare(secondPage.draftValue(secondPage.borderSizeId), 1);
+        compare(secondPage.draftValue(secondPage.layoutId), "dwindle");
+        compare(secondPage.draftValue(secondPage.blurId), true);
+    }
+
+    function test_appearanceExternalRevisionPreservesDraft() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.borderSizeId, 8);
+        compare(page.draftDirty, true);
+        compare(page.draftValue(page.borderSizeId), 8);
+
+        const newerValues = appearanceDefaults();
+        newerValues["hyprland.general.border_size"] = 2;
+        newerValues["hyprland.decoration.rounding"] = 4;
+        page.appearanceValues = newerValues;
+        page.revisionToken = "8";
+        page.appliedRevision = 8;
+        wait(0);
+
+        compare(page.externalChangeWhileEditing, true);
+        compare(page.draftValue(page.borderSizeId), 8);
+        compare(page.synchronizedRevisionToken, "7");
+        compare(findChild(page, "saveAppearanceButton").enabled, false);
+        const status = findChild(page, "appearanceStatusMessage");
+        verify(String(status.text).includes("draft is preserved"));
+
+        const loadCurrent = findChild(
+            page,
+            "loadCurrentAppearanceButton"
+        );
+        verify(loadCurrent !== null);
+        compare(loadCurrent.visible, true);
+        loadCurrent.clicked();
+        compare(page.externalChangeWhileEditing, false);
+        compare(page.draftDirty, false);
+        compare(page.draftValue(page.borderSizeId), 2);
+        compare(page.draftValue(page.roundingId), 4);
+        compare(page.synchronizedRevisionToken, "8");
+    }
+
+    function test_appearanceRevisionTokenRemainsExactAboveJsIntegerLimit() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        page.revisionToken = "9007199254740992";
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+        compare(
+            page.synchronizedRevisionToken,
+            "9007199254740992"
+        );
+
+        page.setDraftValue(page.borderSizeId, 8);
+        compare(page.draftDirty, true);
+
+        // An unrelated option changes authority N -> N+1 while the eight
+        // projected Appearance values remain byte-for-byte equivalent. These
+        // adjacent revisions collapse to one JavaScript Number, so conflict
+        // detection must use the client's exact canonical string token.
+        page.appearanceValues = appearanceDefaults();
+        page.revisionToken = "9007199254740993";
+        wait(0);
+
+        compare(page.externalChangeWhileEditing, true);
+        compare(page.draftValue(page.borderSizeId), 8);
+        compare(
+            page.synchronizedRevisionToken,
+            "9007199254740992"
+        );
+        compare(findChild(page, "saveAppearanceButton").enabled, false);
+    }
+
+    function test_appearanceSynchronousRejectionKeepsRetryableDraft() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.borderSizeId, 6);
+        let requestCount = 0;
+        page.saveRequested.connect(function() {
+            ++requestCount;
+            // Model a same-turn client authorization failure: no busy state
+            // is entered and the authoritative projection does not change.
+            page.errorName = "org.hyprshelld.Error.StaleRevision";
+            page.errorMessage = "The compositor revision changed.";
+        });
+
+        const save = findChild(page, "saveAppearanceButton");
+        verify(save !== null);
+        save.clicked();
+        compare(requestCount, 1);
+        wait(0);
+        compare(page.saveSubmitted, false);
+        compare(page.draftDirty, true);
+        compare(page.draftValue(page.borderSizeId), 6);
+        compare(save.enabled, true);
+    }
+
+    function test_appearanceRetainedRevisionHasBoundedActions() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        page.appearanceAvailable = false;
+        page.appliedRevision = 6;
+        page.applyState = "retained";
+        page.requiredActivation = "reload";
+        page.retryApplyAvailable = true;
+        page.recoveryAvailable = true;
+        wait(0);
+
+        let retryCount = 0;
+        let recoveryCount = 0;
+        page.retryApplyRequested.connect(function() { ++retryCount; });
+        page.recoveryRequested.connect(function() { ++recoveryCount; });
+
+        const retry = findChild(page, "retryApplyAppearanceButton");
+        const recover = findChild(page, "recoverAppearanceButton");
+        const dialog = findChild(page, "appearanceRecoveryDialog");
+        const cancel = findChild(page, "cancelAppearanceRecoveryButton");
+        const confirm = findChild(page, "confirmAppearanceRecoveryButton");
+        const warning = findChild(page, "appearanceRecoveryWarning");
+        verify(retry !== null);
+        verify(recover !== null);
+        verify(dialog !== null);
+        verify(cancel !== null);
+        verify(confirm !== null);
+        verify(warning !== null);
+        compare(retry.visible, true);
+        compare(recover.visible, true);
+        page.busyOperation = "appearance-apply";
+        page.busy = true;
+        wait(0);
+        verify(String(findChild(page, "appearanceStatusMessage").text)
+            .includes("Applying and verifying"));
+        compare(retry.enabled, false);
+        compare(recover.enabled, false);
+        page.busy = false;
+        page.busyOperation = "";
+        wait(0);
+        retry.clicked();
+        compare(retryCount, 1);
+
+        recover.clicked();
+        tryCompare(dialog, "opened", true);
+        tryCompare(cancel, "activeFocus", true);
+        compare(recoveryCount, 0);
+        verify(String(warning.text).includes(
+            "not limited to Appearance"
+        ));
+        verify(String(warning.text).includes("every pending compositor"));
+        keyClick(Qt.Key_Escape);
+        tryCompare(dialog, "opened", false);
+        compare(recoveryCount, 0);
+
+        recover.clicked();
+        tryCompare(dialog, "opened", true);
+        cancel.clicked();
+        tryCompare(dialog, "opened", false);
+        compare(recoveryCount, 0);
+
+        recover.clicked();
+        tryCompare(dialog, "opened", true);
+        confirm.clicked();
+        tryCompare(dialog, "opened", false);
+        compare(recoveryCount, 1);
+        compare(confirm.enabled, false);
+
+        // A stale signal cannot bypass the final live eligibility check.
+        confirm.clicked();
+        compare(recoveryCount, 1);
+    }
+
+    function test_appearanceStatusMatrixLocksUnsafeStates() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+        const status = findChild(page, "appearanceStatusMessage");
+        verify(status !== null);
+
+        page.appearanceAvailable = false;
+        wait(0);
+        compare(status.visible, true);
+        verify(String(status.text).includes(
+            "waiting for a current, verified compositor baseline"
+        ));
+
+        page.managementState = "unmanaged";
+        wait(0);
+        verify(String(status.text).includes("takeover from Displays"));
+        compare(page.controlsEnabled, false);
+        const openDisplays = findChild(
+            page,
+            "appearanceOpenDisplaysButton"
+        );
+        verify(openDisplays !== null);
+        compare(openDisplays.visible, true);
+        let routeCount = 0;
+        page.openDisplaysRequested.connect(function() { ++routeCount; });
+        openDisplays.clicked();
+        compare(routeCount, 1);
+
+        page.managementState = "managed";
+        page.confirmationState = "awaiting-confirmation";
+        wait(0);
+        verify(String(status.text).includes("display test is active"));
+
+        page.confirmationState = "idle";
+        page.loadState = "recovered";
+        page.appearanceAvailable = true;
+        wait(0);
+        verify(String(status.text).includes("last known good"));
+        compare(page.controlsEnabled, true);
+
+        page.loadState = "defaulted";
+        wait(0);
+        verify(String(status.text).includes("safe desired-state defaults"));
+
+        page.loadState = "normal";
+        page.revisionToken = "";
+        page.appearanceAvailable = true;
+        wait(0);
+        verify(String(status.text).includes("exact compositor revision token"));
+        compare(page.controlsEnabled, false);
+
+        page.revisionToken = "7";
+        page.managementState = "conflict";
+        page.appearanceAvailable = false;
+        wait(0);
+        verify(String(status.text).includes("changed unexpectedly"));
+        compare(page.statusIsDanger, true);
+    }
+
+    function test_appearanceDangerRevealsWithoutResettingOrdinaryScroll() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const sticky = findChild(page, "appearanceStickyPreview");
+        const scroll = findChild(page, "appearanceOptionsScrollView");
+        const statusCard = findChild(page, "appearanceStatusCard");
+        const status = findChild(page, "appearanceStatusMessage");
+        verify(sticky !== null);
+        verify(scroll !== null);
+        verify(statusCard !== null);
+        verify(status !== null);
+        compare(page.statusIsDanger, false);
+
+        const maximumContentY = scroll.contentItem.contentHeight
+            - scroll.contentItem.height;
+        verify(maximumContentY > 0);
+        scroll.contentItem.contentY = maximumContentY;
+        tryCompare(scroll.contentItem, "contentY", maximumContentY);
+        const stickyBefore = sticky.mapToItem(page, 0, 0);
+
+        page.setDraftValue(page.borderSizeId, 4);
+        wait(0);
+        compare(page.draftDirty, true);
+        compare(page.statusIsDanger, false);
+        compare(scroll.contentItem.contentY, maximumContentY);
+
+        page.loadState = "recovered";
+        wait(0);
+        compare(page.statusVisible, true);
+        compare(page.statusIsDanger, false);
+        compare(scroll.contentItem.contentY, maximumContentY);
+
+        page.loadState = "normal";
+        wait(0);
+        compare(page.statusIsDanger, false);
+        compare(scroll.contentItem.contentY, maximumContentY);
+
+        page.managementState = "conflict";
+        tryCompare(scroll.contentItem, "contentY", 0);
+        compare(page.statusIsDanger, true);
+        compare(statusCard.visible, true);
+        verify(String(status.text).includes("changed unexpectedly"));
+        const statusPosition = statusCard.mapToItem(scroll, 0, 0);
+        verify(statusPosition.y >= 0);
+        verify(statusPosition.y + statusCard.height <= scroll.height);
+        const stickyAfter = sticky.mapToItem(page, 0, 0);
+        verify(Math.abs(stickyAfter.x - stickyBefore.x) <= 0.01);
+        verify(Math.abs(stickyAfter.y - stickyBefore.y) <= 0.01);
+
+        scroll.contentItem.contentY = maximumContentY;
+        tryCompare(scroll.contentItem, "contentY", maximumContentY);
+        page.managementState = "managed";
+        wait(0);
+        compare(page.statusIsDanger, false);
+        compare(scroll.contentItem.contentY, maximumContentY);
+
+        page.managementState = "conflict";
+        page.managementState = "managed";
+        wait(0);
+        compare(page.statusIsDanger, false);
+        compare(scroll.contentItem.contentY, maximumContentY);
+    }
+
+    function test_appearancePreviewStaysStickyWhileOptionsScroll() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const sticky = findChild(page, "appearanceStickyPreview");
+        const scroll = findChild(page, "appearanceOptionsScrollView");
+        const content = findChild(page, "appearanceOptionsContent");
+        const preview = findChild(page, "appearancePreview");
+        const motionToggle = findChild(
+            page,
+            "toggleAppearanceMotionButton"
+        );
+        verify(sticky !== null);
+        verify(scroll !== null);
+        verify(content !== null);
+        verify(preview !== null);
+        verify(motionToggle !== null);
+        compare(page.compactPreview, false);
+        compare(preview.scale, 1);
+        verify(Math.abs(
+            preview.width - sticky.availableWidth
+        ) <= 0.01);
+        verify(Math.abs(
+            preview.height - preview.implicitHeight
+        ) <= 0.01);
+        verify(motionToggle.height >= page.minimumTargetSize);
+
+        const maximumContentY = scroll.contentItem.contentHeight
+            - scroll.contentItem.height;
+        verify(maximumContentY > 0);
+        const stickyBefore = sticky.mapToItem(page, 0, 0);
+        const contentBefore = content.mapToItem(page, 0, 0);
+        const targetContentY = Math.min(180, maximumContentY);
+        verify(targetContentY > 0);
+
+        scroll.contentItem.contentY = targetContentY;
+        tryCompare(scroll.contentItem, "contentY", targetContentY);
+        const stickyAfter = sticky.mapToItem(page, 0, 0);
+        const contentAfter = content.mapToItem(page, 0, 0);
+        verify(Math.abs(stickyAfter.x - stickyBefore.x) <= 0.01);
+        verify(Math.abs(stickyAfter.y - stickyBefore.y) <= 0.01);
+        verify(contentAfter.y < contentBefore.y);
+    }
+
+    function test_appearanceActionsReachableAtMinimumWindow() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this,
+            { width: 423, height: 480 }
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        page.setDraftValue(page.borderSizeId, 4);
+        waitForRendering(page);
+        wait(0);
+
+        const sticky = findChild(page, "appearanceStickyPreview");
+        const scroll = findChild(page, "appearanceOptionsScrollView");
+        const content = findChild(page, "appearanceOptionsContent");
+        const save = findChild(page, "saveAppearanceButton");
+        const preview = findChild(page, "appearancePreview");
+        const refresh = findChild(page, "refreshAppearanceButton");
+        const motionToggle = findChild(
+            page,
+            "toggleAppearanceMotionButton"
+        );
+        verify(sticky !== null);
+        verify(scroll !== null);
+        verify(content !== null);
+        verify(save !== null);
+        verify(preview !== null);
+        verify(refresh !== null);
+        verify(motionToggle !== null);
+        compare(page.compactPreview, true);
+        verify(scroll.contentItem.contentHeight > scroll.height);
+        verify(scroll.height >= 100);
+        verify(scroll.contentWidth <= scroll.availableWidth + 0.01);
+        verify(content.x >= 0);
+        verify(content.x + content.width <= scroll.contentWidth + 0.01);
+        verify(preview.width > 0);
+        compare(preview.scale, 1);
+        verify(Math.abs(
+            preview.width - sticky.availableWidth
+        ) <= 0.01);
+        verify(Math.abs(
+            preview.height - preview.implicitHeight
+        ) <= 0.01);
+        verify(motionToggle.height >= page.minimumTargetSize);
+
+        const stickyBefore = sticky.mapToItem(page, 0, 0);
+        const contentBefore = content.mapToItem(page, 0, 0);
+        verify(stickyBefore.x >= 0);
+        verify(stickyBefore.x + sticky.width <= page.width + 0.01);
+        verify(stickyBefore.y >= 0);
+        verify(stickyBefore.y + sticky.height <= page.height + 0.01);
+        const refreshPosition = refresh.mapToItem(page, 0, 0);
+        verify(refreshPosition.x >= 0);
+        verify(refreshPosition.x + refresh.width <= page.width);
+
+        const maximumContentY = Math.max(
+            0,
+            scroll.contentItem.contentHeight - scroll.contentItem.height
+        );
+        verify(maximumContentY > 0);
+        scroll.contentItem.contentY = maximumContentY;
+        tryCompare(scroll.contentItem, "contentY", maximumContentY);
+        const stickyAfter = sticky.mapToItem(page, 0, 0);
+        const contentAfter = content.mapToItem(page, 0, 0);
+        verify(Math.abs(stickyAfter.x - stickyBefore.x) <= 0.01);
+        verify(Math.abs(stickyAfter.y - stickyBefore.y) <= 0.01);
+        verify(contentAfter.y < contentBefore.y);
+        const savePosition = save.mapToItem(page, 0, 0);
+        verify(savePosition.x >= 0);
+        verify(savePosition.x + save.width <= page.width);
+        verify(savePosition.y >= 0);
+        verify(savePosition.y + save.height <= page.height);
+    }
+
+    function test_mainNavigationIncludesAppearance() {
+        const application = createTemporaryObject(mainComponent, this);
+        verify(application !== null);
+        const navigation = findChild(
+            application,
+            "appearanceNavigationItem"
+        );
+        const page = findChild(application, "appearancePage");
+        verify(navigation !== null);
+        verify(page !== null);
+        compare(navigation.Accessible.name, "Appearance settings");
+        navigation.clicked();
+        compare(application.currentPage, "appearance");
+        compare(navigation.checked, true);
+        compare(page.visible, true);
+
+        // Appearance offers only navigation into the existing confirmed
+        // takeover workflow. It never forwards an adoption mutation itself.
+        page.openDisplaysRequested();
+        compare(application.currentPage, "displays");
+        compare(findChild(application, "displaysPage").visible, true);
     }
 
     function test_unavailableFallbackRemainsVisible() {

@@ -260,6 +260,8 @@ public:
     std::function<void()> abortHook;
     quint64 lastReplaceExpected = 0;
     QByteArray lastReplaceCandidate;
+    QByteArray optionCatalogBytes;
+    mutable int optionCatalogCalls = 0;
     QStringList calls;
 
     AuthorityResult initialize() override
@@ -292,6 +294,12 @@ public:
     AuthoritySnapshot snapshot() const override
     {
         return current;
+    }
+
+    QByteArray optionCatalog() const override
+    {
+        ++optionCatalogCalls;
+        return optionCatalogBytes;
     }
 
     AuthorityResult replaceSnapshot(
@@ -626,6 +634,55 @@ class CompositorServiceTest final : public QObject
     Q_OBJECT
 
 private slots:
+    void optionCatalogReturnsExactAuthorityBytesWithoutMutation()
+    {
+        const QByteArray catalog = QByteArrayLiteral(
+            "{\"contractVersion\":1,\"options\":[]}"
+        );
+        auto initial = dirtySnapshot();
+        initial.catalogDigest = sha256(catalog);
+        ServiceHarness harness(initial);
+        harness.authority->optionCatalogBytes = catalog;
+
+        QString digest = QStringLiteral("must-be-replaced");
+        QCOMPARE(harness.service->GetOptionCatalog(digest), catalog);
+        QCOMPARE(digest, initial.catalogDigest);
+        QCOMPARE(harness.authority->optionCatalogCalls, 1);
+        QCOMPARE(harness.authority->replaceCalls, 0);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.authority->prepareRecoveryCalls, 0);
+        QCOMPARE(harness.authority->current, initial);
+    }
+
+    void optionCatalogFailsClosedForMismatchedOrOversizedAuthorityBytes()
+    {
+        {
+            auto initial = dirtySnapshot();
+            initial.catalogDigest = QString(64, QLatin1Char('c'));
+            ServiceHarness harness(initial);
+            harness.authority->optionCatalogBytes =
+                QByteArrayLiteral("{\"contractVersion\":1}");
+
+            QString digest = QStringLiteral("must-be-cleared");
+            QVERIFY(harness.service->GetOptionCatalog(digest).isEmpty());
+            QVERIFY(digest.isEmpty());
+            QCOMPARE(harness.authority->optionCatalogCalls, 1);
+        }
+
+        {
+            const QByteArray oversized(maximumCatalogBytes + 1, 'x');
+            auto initial = dirtySnapshot();
+            initial.catalogDigest = sha256(oversized);
+            ServiceHarness harness(initial);
+            harness.authority->optionCatalogBytes = oversized;
+
+            QString digest = QStringLiteral("must-be-cleared");
+            QVERIFY(harness.service->GetOptionCatalog(digest).isEmpty());
+            QVERIFY(digest.isEmpty());
+            QCOMPARE(harness.authority->optionCatalogCalls, 1);
+        }
+    }
+
     void inspectorDistinguishesAbsentFromRegular()
     {
         EntrypointTree tree;
