@@ -4,6 +4,9 @@ Item {
     id: root
 
     required property int barHeight
+    required property bool shellBorderEnabled
+    required property int shellBorderWidth
+    required property int shellBorderRadius
     required property date currentTime
     required property string screenName
     required property bool configurationAvailable
@@ -16,7 +19,15 @@ Item {
     property bool failureNoticeVisible: false
     property string failureNoticeText: ""
 
-    readonly property real cornerRadius: Math.min(16, height * 0.375)
+    readonly property int renderedBorderWidth: shellBorderEnabled
+        ? Math.max(0, Math.min(20, shellBorderWidth))
+        : 0
+    readonly property real renderedCornerRadius: Math.min(
+        Math.max(0, Math.min(20, shellBorderRadius)),
+        width / 2,
+        height / 2
+    )
+    readonly property real cornerRadius: renderedCornerRadius
     readonly property string accessibleHealthSummary: healthSummary.length > 0
         ? healthSummary
         : qsTr("A HyprShelld component needs attention.")
@@ -25,11 +36,12 @@ Item {
     height: barHeight
 
     Rectangle {
+        objectName: "barBackground"
         anchors.fill: parent
         color: "#ed171b22"
-        radius: root.cornerRadius
+        radius: root.renderedCornerRadius
         border.color: "#33ffffff"
-        border.width: 1
+        border.width: root.renderedBorderWidth
 
         Rectangle {
             id: statusIndicator

@@ -595,6 +595,34 @@ add_test(
 )
 
 qt_add_executable(
+    hyprshelld-compositor-shared-border-dbus-test
+    compositor_shared_border_dbus_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-shared-border-dbus-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-compositord-service
+)
+
+add_test(
+    NAME compositor-shared-border-dbus
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        --
+        "$<TARGET_FILE:hyprshelld-compositor-shared-border-dbus-test>"
+)
+
+set_tests_properties(
+    compositor-shared-border-dbus
+    PROPERTIES
+        TIMEOUT 30
+)
+
+qt_add_executable(
     hyprshelld-compositor-activation-backend-test
     compositor_activation_backend_test.cpp
 )

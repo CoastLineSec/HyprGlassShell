@@ -8,6 +8,7 @@
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QDBusServiceWatcher>
+#include <QMetaType>
 #include <QVariant>
 
 #include <utility>
@@ -33,6 +34,12 @@ ConfigClient::ConfigClient(QDBusConnection connection, QObject *parent)
     : QObject(parent)
     , connection_(std::move(connection))
     , barHeight_(ConfigValues::defaultBarHeight)
+    , shellBorderEnabled_(ConfigValues::defaultShellBorderEnabled)
+    , shellBorderWidth_(ConfigValues::defaultShellBorderWidth)
+    , shellBorderRadius_(ConfigValues::defaultShellBorderRadius)
+    , syncHyprlandWindowBorders_(
+          ConfigValues::defaultSyncHyprlandWindowBorders
+      )
 {
     interface_ = new OrgHyprshelldConfig1Interface(
         serviceName,
@@ -81,9 +88,34 @@ uint ConfigClient::barHeight() const
     return barHeight_;
 }
 
+bool ConfigClient::shellBorderEnabled() const
+{
+    return shellBorderEnabled_;
+}
+
+uint ConfigClient::shellBorderWidth() const
+{
+    return shellBorderWidth_;
+}
+
+uint ConfigClient::shellBorderRadius() const
+{
+    return shellBorderRadius_;
+}
+
+bool ConfigClient::syncHyprlandWindowBorders() const
+{
+    return syncHyprlandWindowBorders_;
+}
+
 qulonglong ConfigClient::revision() const
 {
     return revision_;
+}
+
+QString ConfigClient::revisionToken() const
+{
+    return QString::number(revision_);
 }
 
 QString ConfigClient::recoveryState() const
@@ -106,6 +138,46 @@ uint ConfigClient::defaultBarHeight() const
     return ConfigValues::defaultBarHeight;
 }
 
+bool ConfigClient::defaultShellBorderEnabled() const
+{
+    return ConfigValues::defaultShellBorderEnabled;
+}
+
+uint ConfigClient::minimumShellBorderWidth() const
+{
+    return ConfigValues::minimumShellBorderWidth;
+}
+
+uint ConfigClient::maximumShellBorderWidth() const
+{
+    return ConfigValues::maximumShellBorderWidth;
+}
+
+uint ConfigClient::defaultShellBorderWidth() const
+{
+    return ConfigValues::defaultShellBorderWidth;
+}
+
+uint ConfigClient::minimumShellBorderRadius() const
+{
+    return ConfigValues::minimumShellBorderRadius;
+}
+
+uint ConfigClient::maximumShellBorderRadius() const
+{
+    return ConfigValues::maximumShellBorderRadius;
+}
+
+uint ConfigClient::defaultShellBorderRadius() const
+{
+    return ConfigValues::defaultShellBorderRadius;
+}
+
+bool ConfigClient::defaultSyncHyprlandWindowBorders() const
+{
+    return ConfigValues::defaultSyncHyprlandWindowBorders;
+}
+
 QString ConfigClient::lastErrorName() const
 {
     return lastErrorName_;
@@ -124,6 +196,26 @@ void ConfigClient::setBarHeight(uint height)
 void ConfigClient::resetBarHeight()
 {
     beginMutation(interface_->ResetBarHeight());
+}
+
+void ConfigClient::setSharedBorder(
+    const bool enabled,
+    const uint width,
+    const uint radius,
+    const bool syncHyprlandWindowBorders
+)
+{
+    beginMutation(interface_->SetSharedBorder(
+        enabled,
+        width,
+        radius,
+        syncHyprlandWindowBorders
+    ));
+}
+
+void ConfigClient::resetSharedBorder()
+{
+    beginMutation(interface_->ResetSharedBorder());
 }
 
 void ConfigClient::clearError()
@@ -147,17 +239,27 @@ void ConfigClient::propertiesChanged(
         return;
     }
 
-    applyProperties(changed);
-    setAvailable(true);
-
     for (const auto &property : invalidated) {
         if (property == QStringLiteral("BarHeight")
+            || property == QStringLiteral("ShellBorderEnabled")
+            || property == QStringLiteral("ShellBorderWidth")
+            || property == QStringLiteral("ShellBorderRadius")
+            || property == QStringLiteral("SyncHyprlandWindowBorders")
             || property == QStringLiteral("Revision")
             || property == QStringLiteral("RecoveryState")) {
+            setAvailable(false);
             refresh();
-            break;
+            return;
         }
     }
+
+    if (!available_ || !applyProperties(changed, false)) {
+        setAvailable(false);
+        refresh();
+        return;
+    }
+
+    setAvailable(true);
 }
 
 void ConfigClient::serviceOwnerChanged(
@@ -209,49 +311,170 @@ void ConfigClient::refresh()
                 return;
             }
 
-            applyProperties(reply.value());
+            if (!applyProperties(reply.value(), true)) {
+                setAvailable(false);
+                return;
+            }
             setAvailable(true);
         }
     );
 }
 
-void ConfigClient::applyProperties(const QVariantMap &properties)
+bool ConfigClient::applyProperties(
+    const QVariantMap &properties,
+    const bool requireComplete
+)
 {
-    bool barHeightChanged = false;
-    bool revisionChanged = false;
-    bool recoveryStateChanged = false;
+    const QStringList required{
+        QStringLiteral("BarHeight"),
+        QStringLiteral("ShellBorderEnabled"),
+        QStringLiteral("ShellBorderWidth"),
+        QStringLiteral("ShellBorderRadius"),
+        QStringLiteral("SyncHyprlandWindowBorders"),
+        QStringLiteral("Revision"),
+        QStringLiteral("RecoveryState"),
+    };
+    if (requireComplete) {
+        for (const auto &name : required) {
+            if (!properties.contains(name)) {
+                return false;
+            }
+        }
+    }
+
+    const QStringList sharedBorderProperties{
+        QStringLiteral("ShellBorderEnabled"),
+        QStringLiteral("ShellBorderWidth"),
+        QStringLiteral("ShellBorderRadius"),
+        QStringLiteral("SyncHyprlandWindowBorders"),
+    };
+    auto sharedBorderSupplied = false;
+    for (const auto &name : sharedBorderProperties) {
+        sharedBorderSupplied = sharedBorderSupplied
+            || properties.contains(name);
+    }
+    if (sharedBorderSupplied) {
+        for (const auto &name : sharedBorderProperties) {
+            if (!properties.contains(name)) {
+                return false;
+            }
+        }
+    }
+    if ((properties.contains(QStringLiteral("BarHeight"))
+         || sharedBorderSupplied)
+        && !properties.contains(QStringLiteral("Revision"))) {
+        return false;
+    }
+
+    auto nextBarHeight = barHeight_;
+    auto nextShellBorderEnabled = shellBorderEnabled_;
+    auto nextShellBorderWidth = shellBorderWidth_;
+    auto nextShellBorderRadius = shellBorderRadius_;
+    auto nextSyncHyprlandWindowBorders = syncHyprlandWindowBorders_;
+    auto nextRevision = revision_;
+    auto nextRecoveryState = recoveryState_;
 
     const auto barHeight = properties.constFind(QStringLiteral("BarHeight"));
     if (barHeight != properties.cend()) {
-        const auto value = barHeight->toUInt();
-        if (value != barHeight_) {
-            barHeight_ = value;
-            barHeightChanged = true;
+        if (barHeight->metaType().id() != QMetaType::UInt) {
+            return false;
         }
+        nextBarHeight = barHeight->toUInt();
+        if (nextBarHeight < ConfigValues::minimumBarHeight
+            || nextBarHeight > ConfigValues::maximumBarHeight) {
+            return false;
+        }
+    }
+
+    const auto shellBorderEnabled = properties.constFind(
+        QStringLiteral("ShellBorderEnabled")
+    );
+    if (shellBorderEnabled != properties.cend()) {
+        if (shellBorderEnabled->metaType().id() != QMetaType::Bool) {
+            return false;
+        }
+        nextShellBorderEnabled = shellBorderEnabled->toBool();
+    }
+
+    const auto shellBorderWidth = properties.constFind(
+        QStringLiteral("ShellBorderWidth")
+    );
+    if (shellBorderWidth != properties.cend()) {
+        if (shellBorderWidth->metaType().id() != QMetaType::UInt) {
+            return false;
+        }
+        nextShellBorderWidth = shellBorderWidth->toUInt();
+        if (nextShellBorderWidth < ConfigValues::minimumShellBorderWidth
+            || nextShellBorderWidth > ConfigValues::maximumShellBorderWidth) {
+            return false;
+        }
+    }
+
+    const auto shellBorderRadius = properties.constFind(
+        QStringLiteral("ShellBorderRadius")
+    );
+    if (shellBorderRadius != properties.cend()) {
+        if (shellBorderRadius->metaType().id() != QMetaType::UInt) {
+            return false;
+        }
+        nextShellBorderRadius = shellBorderRadius->toUInt();
+        if (nextShellBorderRadius < ConfigValues::minimumShellBorderRadius
+            || nextShellBorderRadius
+                > ConfigValues::maximumShellBorderRadius) {
+            return false;
+        }
+    }
+
+    const auto syncHyprlandWindowBorders = properties.constFind(
+        QStringLiteral("SyncHyprlandWindowBorders")
+    );
+    if (syncHyprlandWindowBorders != properties.cend()) {
+        if (syncHyprlandWindowBorders->metaType().id() != QMetaType::Bool) {
+            return false;
+        }
+        nextSyncHyprlandWindowBorders = syncHyprlandWindowBorders->toBool();
     }
 
     const auto revision = properties.constFind(QStringLiteral("Revision"));
     if (revision != properties.cend()) {
-        const auto value = revision->toULongLong();
-        if (value != revision_) {
-            revision_ = value;
-            revisionChanged = true;
+        if (revision->metaType().id() != QMetaType::ULongLong) {
+            return false;
         }
+        nextRevision = revision->toULongLong();
     }
 
     const auto recoveryState = properties.constFind(
         QStringLiteral("RecoveryState")
     );
     if (recoveryState != properties.cend()) {
-        const auto value = recoveryState->toString();
-        if (value != recoveryState_) {
-            recoveryState_ = value;
-            recoveryStateChanged = true;
+        if (recoveryState->metaType().id() != QMetaType::QString) {
+            return false;
         }
+        nextRecoveryState = recoveryState->toString();
     }
+
+    const auto barHeightChanged = nextBarHeight != barHeight_;
+    const auto sharedBorderChanged =
+        nextShellBorderEnabled != shellBorderEnabled_
+        || nextShellBorderWidth != shellBorderWidth_
+        || nextShellBorderRadius != shellBorderRadius_
+        || nextSyncHyprlandWindowBorders != syncHyprlandWindowBorders_;
+    const auto revisionChanged = nextRevision != revision_;
+    const auto recoveryStateChanged = nextRecoveryState != recoveryState_;
+
+    barHeight_ = nextBarHeight;
+    shellBorderEnabled_ = nextShellBorderEnabled;
+    shellBorderWidth_ = nextShellBorderWidth;
+    shellBorderRadius_ = nextShellBorderRadius;
+    syncHyprlandWindowBorders_ = nextSyncHyprlandWindowBorders;
+    revision_ = nextRevision;
+    recoveryState_ = nextRecoveryState;
 
     if (barHeightChanged) {
         emit this->barHeightChanged();
+    }
+    if (sharedBorderChanged) {
+        emit this->sharedBorderChanged();
     }
     if (revisionChanged) {
         emit this->revisionChanged();
@@ -259,6 +482,8 @@ void ConfigClient::applyProperties(const QVariantMap &properties)
     if (recoveryStateChanged) {
         emit this->recoveryStateChanged();
     }
+
+    return true;
 }
 
 void ConfigClient::beginMutation(const QDBusPendingCall &call)
@@ -281,8 +506,9 @@ void ConfigClient::beginMutation(const QDBusPendingCall &call)
             watcher->deleteLater();
 
             if (reply.isError()) {
-                setError(reply.error().name(), reply.error().message());
-                if (reply.error().type() == QDBusError::ServiceUnknown) {
+                const auto error = reply.error();
+                setError(error.name(), error.message());
+                if (error.type() == QDBusError::ServiceUnknown) {
                     setAvailable(false);
                 }
             } else if (!available_) {

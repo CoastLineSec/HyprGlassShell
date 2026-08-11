@@ -72,6 +72,26 @@ ApplicationWindow {
         return "#f6ad55";
     }
 
+    function appearanceValuesWithSharedBorder(values) {
+        let resolved = null;
+        try {
+            resolved = JSON.parse(JSON.stringify(values));
+        } catch (error) {
+            return values;
+        }
+        if (!resolved || typeof resolved !== "object"
+                || Array.isArray(resolved)
+                || !ConfigClient.syncHyprlandWindowBorders) {
+            return values;
+        }
+        resolved["hyprland.general.border_size"] =
+            ConfigClient.shellBorderEnabled
+                ? ConfigClient.shellBorderWidth : 0;
+        resolved["hyprland.decoration.rounding"] =
+            ConfigClient.shellBorderRadius;
+        return resolved;
+    }
+
     function isWorkspaceSettings(settings) {
         if (!settings || typeof settings !== "object"
                 || Array.isArray(settings)) {
@@ -808,6 +828,11 @@ ApplicationWindow {
                     minimumBarHeight: ConfigClient.minimumBarHeight
                     maximumBarHeight: ConfigClient.maximumBarHeight
                     defaultBarHeight: ConfigClient.defaultBarHeight
+                    shellBorderEnabled: ConfigClient.shellBorderEnabled
+                    shellBorderWidth: ConfigClient.shellBorderWidth
+                    shellBorderRadius: ConfigClient.shellBorderRadius
+                    syncHyprlandWindowBorders:
+                        ConfigClient.syncHyprlandWindowBorders
                     workspaceShowIdentifiers:
                         root.workspaceInstanceState.showIdentifiers
                     workspaceShowNames:
@@ -856,6 +881,19 @@ ApplicationWindow {
                     onBarHeightRequested: height =>
                         ConfigClient.setBarHeight(height)
                     onResetBarHeightRequested: ConfigClient.resetBarHeight()
+                    onSharedBorderRequested: (
+                        enabled,
+                        width,
+                        radius,
+                        syncHyprlandWindowBorders
+                    ) => ConfigClient.setSharedBorder(
+                        enabled,
+                        width,
+                        radius,
+                        syncHyprlandWindowBorders
+                    )
+                    onResetSharedBorderRequested:
+                        ConfigClient.resetSharedBorder()
                     onWorkspaceSwitcherRequested: (
                         showIdentifiers,
                         showNames,
@@ -886,7 +924,23 @@ ApplicationWindow {
                     busy: CompositorClient.busy
                     busyOperation: CompositorClient.busyOperation
                     appearanceOptions: CompositorClient.appearanceOptions
-                    appearanceValues: CompositorClient.appearanceValues
+                    appearanceValues: root.appearanceValuesWithSharedBorder(
+                        CompositorClient.appearanceValues
+                    )
+                    sharedBorderAvailable: ConfigClient.available
+                    sharedBorderBusy: ConfigClient.busy
+                    windowBorderSynced:
+                        ConfigClient.syncHyprlandWindowBorders
+                    sharedBorderSyncState:
+                        CompositorClient.sharedBorderSyncState
+                    sharedBorderSyncError:
+                        CompositorClient.sharedBorderSyncError
+                    sharedBorderClientError:
+                        ConfigClient.lastErrorMessage
+                    sharedBorderConfigRevisionToken:
+                        ConfigClient.revisionToken
+                    sharedBorderVerifiedRevisionToken:
+                        CompositorClient.sharedBorderSourceRevisionToken
                     revisionToken: CompositorClient.revisionToken
                     appliedRevision: CompositorClient.appliedRevision
                     loadState: CompositorClient.loadState
@@ -915,6 +969,15 @@ ApplicationWindow {
                     onRetryApplyRequested: CompositorClient.retryApply()
                     onRecoveryRequested:
                         CompositorClient.recoverConfiguration()
+                    onWindowBorderSyncRequested: sync =>
+                        ConfigClient.setSharedBorder(
+                            ConfigClient.shellBorderEnabled,
+                            ConfigClient.shellBorderWidth,
+                            ConfigClient.shellBorderRadius,
+                            sync
+                        )
+                    onRetrySharedBorderSyncRequested:
+                        CompositorClient.retrySharedBorderSync()
                 }
 
                 DisplaysPage {

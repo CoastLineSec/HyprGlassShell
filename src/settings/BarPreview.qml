@@ -8,6 +8,9 @@ Control {
     id: root
 
     required property int barHeight
+    required property bool shellBorderEnabled
+    required property int shellBorderWidth
+    required property int shellBorderRadius
     required property bool workspaceShowIdentifiers
     required property bool workspaceShowNames
     required property bool workspaceShowApplications
@@ -234,6 +237,9 @@ Control {
                     objectName: "previewBarVisual"
                     width: parent.width
                     barHeight: root.barHeight
+                    shellBorderEnabled: root.shellBorderEnabled
+                    shellBorderWidth: root.shellBorderWidth
+                    shellBorderRadius: root.shellBorderRadius
                     currentTime: new Date(1991, 8, 17, 15, 42)
                     screenName: qsTr("Preview")
                     configurationAvailable: root.configurationAvailable

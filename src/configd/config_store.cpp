@@ -9,12 +9,14 @@
 #include <QStandardPaths>
 #include <QDebug>
 
+#include <algorithm>
 #include <utility>
 
 namespace HyprShelld {
 namespace {
 
-constexpr auto formatVersion = 1;
+constexpr auto formatVersion = 2;
+constexpr auto legacyFormatVersion = 1;
 constexpr qsizetype maximumSnapshotBytes = 64 * 1024;
 
 enum class FileStatus {
@@ -30,6 +32,7 @@ struct ReadResult final {
     ConfigState state;
     std::optional<LegacyWorkspaceSettings> legacyWorkspaceSettings;
     bool hadLegacyWorkspaceBlock = false;
+    bool requiresMigration = false;
     QString error;
 };
 
@@ -42,6 +45,22 @@ QByteArray serialize(
     object.insert(QStringLiteral("formatVersion"), formatVersion);
     object.insert(QStringLiteral("revision"), QString::number(state.revision));
     object.insert(QStringLiteral("barHeight"), static_cast<qint64>(state.barHeight));
+    object.insert(
+        QStringLiteral("shellBorderEnabled"),
+        state.shellBorderEnabled
+    );
+    object.insert(
+        QStringLiteral("shellBorderWidth"),
+        static_cast<qint64>(state.shellBorderWidth)
+    );
+    object.insert(
+        QStringLiteral("shellBorderRadius"),
+        static_cast<qint64>(state.shellBorderRadius)
+    );
+    object.insert(
+        QStringLiteral("syncHyprlandWindowBorders"),
+        state.syncHyprlandWindowBorders
+    );
     if (legacyWorkspaceSettings) {
         object.insert(
             QStringLiteral("workspaceSwitcher"),
@@ -206,7 +225,7 @@ ReadResult readSnapshot(const QString &path)
             .error = QStringLiteral("Unsupported format version in %1").arg(path),
         };
     }
-    if (version != formatVersion) {
+    if (version != legacyFormatVersion && version != formatVersion) {
         return {
             .status = FileStatus::Damaged,
             .error = QStringLiteral("Invalid format version in %1").arg(path),
@@ -241,6 +260,48 @@ ReadResult readSnapshot(const QString &path)
 
     ConfigState state;
     state.barHeight = static_cast<quint32>(height);
+    if (version == legacyFormatVersion) {
+        state.shellBorderEnabled = true;
+        state.shellBorderWidth = ConfigValues::defaultShellBorderWidth;
+        state.shellBorderRadius = std::min(
+            16U,
+            static_cast<quint32>(height) * 3U / 8U
+        );
+        state.syncHyprlandWindowBorders = false;
+    } else {
+        const auto enabledValue = object.value(
+            QStringLiteral("shellBorderEnabled")
+        );
+        const auto widthValue = object.value(
+            QStringLiteral("shellBorderWidth")
+        );
+        const auto radiusValue = object.value(
+            QStringLiteral("shellBorderRadius")
+        );
+        const auto syncValue = object.value(
+            QStringLiteral("syncHyprlandWindowBorders")
+        );
+        const auto width = widthValue.toInteger(-1);
+        const auto radius = radiusValue.toInteger(-1);
+        if (!enabledValue.isBool()
+            || !widthValue.isDouble()
+            || width < ConfigValues::minimumShellBorderWidth
+            || width > ConfigValues::maximumShellBorderWidth
+            || !radiusValue.isDouble()
+            || radius < ConfigValues::minimumShellBorderRadius
+            || radius > ConfigValues::maximumShellBorderRadius
+            || !syncValue.isBool()) {
+            return {
+                .status = FileStatus::Damaged,
+                .error = QStringLiteral("Invalid shared border in %1").arg(path),
+            };
+        }
+
+        state.shellBorderEnabled = enabledValue.toBool();
+        state.shellBorderWidth = static_cast<quint32>(width);
+        state.shellBorderRadius = static_cast<quint32>(radius);
+        state.syncHyprlandWindowBorders = syncValue.toBool();
+    }
     state.revision = revision;
 
     return {
@@ -255,6 +316,7 @@ ReadResult readSnapshot(const QString &path)
         .hadLegacyWorkspaceBlock = object.contains(
             QStringLiteral("workspaceSwitcher")
         ),
+        .requiresMigration = version == legacyFormatVersion,
     };
 }
 
@@ -293,16 +355,27 @@ bool writeSnapshot(
     return true;
 }
 
-bool initializeSnapshots(
+bool rewriteSnapshots(
     const ConfigPaths &paths,
     const ConfigState &state,
+    const std::optional<LegacyWorkspaceSettings> &legacyWorkspaceSettings,
     QString &error
 )
 {
-    if (!writeSnapshot(paths.recoveryFile, state, std::nullopt, error)) {
+    if (!writeSnapshot(
+            paths.recoveryFile,
+            state,
+            legacyWorkspaceSettings,
+            error
+        )) {
         return false;
     }
-    return writeSnapshot(paths.activeFile, state, std::nullopt, error);
+    return writeSnapshot(
+        paths.activeFile,
+        state,
+        legacyWorkspaceSettings,
+        error
+    );
 }
 
 } // namespace
@@ -350,7 +423,18 @@ ConfigLoadResult ConfigStore::load() const
     }
 
     if (active.status == FileStatus::Valid) {
-        if (recovery.status != FileStatus::Valid
+        if (active.requiresMigration) {
+            QString error;
+            if (!rewriteSnapshots(
+                    paths_,
+                    active.state,
+                    active.legacyWorkspaceSettings,
+                    error
+                )) {
+                return {.error = error};
+            }
+        } else if (recovery.status != FileStatus::Valid
+            || recovery.requiresMigration
             || recovery.state != active.state
             || recovery.legacyWorkspaceSettings
                 != active.legacyWorkspaceSettings) {
@@ -377,12 +461,20 @@ ConfigLoadResult ConfigStore::load() const
 
     if (recovery.status == FileStatus::Valid) {
         QString error;
-        if (!writeSnapshot(
-                paths_.activeFile,
-                recovery.state,
-                recovery.legacyWorkspaceSettings,
-                error
-            )) {
+        const auto repaired = recovery.requiresMigration
+            ? rewriteSnapshots(
+                  paths_,
+                  recovery.state,
+                  recovery.legacyWorkspaceSettings,
+                  error
+              )
+            : writeSnapshot(
+                  paths_.activeFile,
+                  recovery.state,
+                  recovery.legacyWorkspaceSettings,
+                  error
+              );
+        if (!repaired) {
             return {.error = error};
         }
 
@@ -398,7 +490,7 @@ ConfigLoadResult ConfigStore::load() const
 
     const ConfigState defaults;
     QString error;
-    if (!initializeSnapshots(paths_, defaults, error)) {
+    if (!rewriteSnapshots(paths_, defaults, std::nullopt, error)) {
         return {.error = error};
     }
 

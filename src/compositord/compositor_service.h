@@ -2,6 +2,8 @@
 
 #include "activation_backend.h"
 #include "configuration_authority.h"
+#include "shared_border_reconciler.h"
+#include "shared_border_source.h"
 
 #include <QByteArray>
 #include <QDeadlineTimer>
@@ -38,6 +40,9 @@ class CompositorService final : public QObject, protected QDBusContext {
     Q_PROPERTY(qulonglong DisplayConfirmationRevision READ displayConfirmationRevision)
     Q_PROPERTY(qulonglong DisplayConfirmationDeadlineMs READ displayConfirmationDeadlineMs)
     Q_PROPERTY(QString DisplayConfirmationGeneration READ displayConfirmationGeneration)
+    Q_PROPERTY(QString SharedBorderSyncState READ sharedBorderSyncState)
+    Q_PROPERTY(qulonglong SharedBorderSourceRevision READ sharedBorderSourceRevision)
+    Q_PROPERTY(QString SharedBorderSyncError READ sharedBorderSyncError)
 
 public:
     using DisplayDeadlineRemaining = std::function<qint64(
@@ -50,7 +55,8 @@ public:
         QDBusConnection connection,
         QObject *parent = nullptr,
         DisplayDeadlineRemaining displayDeadlineRemaining = {},
-        DisplayOwnerPresent displayOwnerPresent = {}
+        DisplayOwnerPresent displayOwnerPresent = {},
+        std::unique_ptr<SharedBorderSource> sharedBorderSource = {}
     );
 
     // Must be called only after the process owns org.hyprshelld.Compositor1.
@@ -76,6 +82,9 @@ public:
     [[nodiscard]] qulonglong displayConfirmationRevision() const;
     [[nodiscard]] qulonglong displayConfirmationDeadlineMs() const;
     [[nodiscard]] QString displayConfirmationGeneration() const;
+    [[nodiscard]] QString sharedBorderSyncState() const;
+    [[nodiscard]] qulonglong sharedBorderSourceRevision() const;
+    [[nodiscard]] QString sharedBorderSyncError() const;
 
 public slots:
     QByteArray GetSnapshot(
@@ -134,6 +143,7 @@ public slots:
     qulonglong RevertDisplayConfiguration(
         const QString &confirmationToken
     );
+    void RetrySharedBorderSync();
 
 signals:
     // Mirrors the exact changed map sent on
@@ -147,6 +157,7 @@ private slots:
     // exposing the confirmation timer or adding a production-only clock API.
     void handleDisplayConfirmationTimeout();
     void handleDisplayOwnerLoss(const QString &owner);
+    void reconcileSharedBorder();
 
 private:
     struct Completion final {
@@ -229,6 +240,25 @@ private:
     void clearDisplayOwnerWatch();
     void appendDisplayProperties(QVariantMap &changed) const;
     void publishDisplayProperties();
+    void scheduleSharedBorderReconcile();
+    void sharedBorderSourceChanged();
+    void setSharedBorderStatus(
+        const QString &state,
+        qulonglong sourceRevision,
+        const QString &error = {}
+    );
+    void clearFailedSharedBorderAttempt();
+    void failSharedBorder(const QString &error);
+    [[nodiscard]] QString sharedBorderAttemptKey() const;
+    [[nodiscard]] bool ensureSharedBorderCatalog(QString &error);
+    [[nodiscard]] bool sharedBorderReplacementAllowed(
+        const QByteArray &candidate,
+        QString &error
+    );
+    [[nodiscard]] bool sharedBorderActivationAllowed(
+        const QByteArray &candidate,
+        QString &error
+    );
     void acceptUnreconciled(
         const AuthoritySnapshot &snapshot,
         ManagementStatus management
@@ -250,6 +280,7 @@ private:
 
     std::unique_ptr<ConfigurationAuthority> authority_;
     std::unique_ptr<ActivationBackend> activationBackend_;
+    std::unique_ptr<SharedBorderSource> sharedBorderSource_;
     QDBusConnection connection_;
     AuthoritySnapshot snapshot_;
     ManagementStatus management_;
@@ -263,6 +294,20 @@ private:
     QString displayConfirmationState_ = QStringLiteral("idle");
     DisplayDeadlineRemaining displayDeadlineRemaining_;
     DisplayOwnerPresent displayOwnerPresent_;
+    SharedBorderReconciler sharedBorderReconciler_;
+    std::optional<SharedBorderProjection> lastSharedBorderProjection_;
+    std::optional<quint64> pendingSharedBorderApplyRevision_;
+    QString sharedBorderSyncState_ = QStringLiteral("unavailable");
+    quint64 sharedBorderSourceRevision_ = 0;
+    QString sharedBorderSyncError_ = QStringLiteral(
+        "Shared visual settings are unavailable"
+    );
+    QString failedSharedBorderAttempt_;
+    QString failedSharedBorderError_;
+    quint64 sharedBorderAuthorityGeneration_ = 0;
+    bool sharedBorderReconcileScheduled_ = false;
+    bool sharedBorderReconcileRunning_ = false;
+    bool forceSharedBorderRetry_ = false;
 };
 
 } // namespace HyprShelld::Compositor

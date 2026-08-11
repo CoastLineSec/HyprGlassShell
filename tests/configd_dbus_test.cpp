@@ -17,6 +17,8 @@
 #include <QXmlStreamReader>
 #include <QtTest>
 
+#include <utility>
+
 namespace {
 
 const QString busName = QStringLiteral("org.hyprshelld.Config1");
@@ -192,6 +194,10 @@ private slots:
         OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
         QVERIFY(proxy.isValid());
         QCOMPARE(proxy.barHeight(), 40U);
+        QCOMPARE(proxy.shellBorderEnabled(), true);
+        QCOMPARE(proxy.shellBorderWidth(), 1U);
+        QCOMPARE(proxy.shellBorderRadius(), 15U);
+        QCOMPARE(proxy.syncHyprlandWindowBorders(), true);
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(proxy.recoveryState(), QStringLiteral("normal"));
 
@@ -247,8 +253,16 @@ private slots:
         QVERIFY(!bytesSeenAtSignal_.isEmpty());
 
         const auto persisted = QJsonDocument::fromJson(bytesSeenAtSignal_).object();
-        QCOMPARE(persisted.size(), 3);
+        QCOMPARE(persisted.size(), 7);
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 2);
         QCOMPARE(persisted.value(QStringLiteral("barHeight")).toInteger(), 60);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderWidth")).toInteger(), 1);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderRadius")).toInteger(), 15);
+        QCOMPARE(
+            persisted.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            true
+        );
         QCOMPARE(persisted.value(QStringLiteral("revision")).toString(), QStringLiteral("1"));
         QVERIFY(!persisted.contains(QStringLiteral("workspaceSwitcher")));
         QCOMPARE(proxy.barHeight(), 60U);
@@ -298,6 +312,137 @@ private slots:
         QCOMPARE(readFile(recoveryFile_), resetRecoveryBytes);
     }
 
+    void mutatesSharedBorderAsOnePersistentTuple()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        QVERIFY2(startService(directory.path()), qPrintable(processError_));
+        QVERIFY(connectPropertiesSignal());
+
+        OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
+        const auto originalActive = readFile(activeFile_);
+        const auto originalRecovery = readFile(recoveryFile_);
+
+        for (const auto invalid : {
+                 std::pair{21U, 15U},
+                 std::pair{1U, 21U},
+             }) {
+            auto reply = proxy.SetSharedBorder(
+                true,
+                invalid.first,
+                invalid.second,
+                true
+            );
+            reply.waitForFinished();
+            QVERIFY(reply.isError());
+            QCOMPARE(
+                reply.error().name(),
+                QStringLiteral(
+                    "org.hyprshelld.Config1.Error.InvalidSharedBorder"
+                )
+            );
+        }
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 0);
+        QCOMPARE(proxy.revision(), 0ULL);
+        QCOMPARE(readFile(activeFile_), originalActive);
+        QCOMPARE(readFile(recoveryFile_), originalRecovery);
+
+        auto changed = proxy.SetSharedBorder(false, 7U, 12U, false);
+        changed.waitForFinished();
+        QVERIFY2(!changed.isError(), qPrintable(changed.error().message()));
+        QCOMPARE(changed.value(), 1ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 1, 1000);
+        QCOMPARE(lastChanged_.size(), 5);
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("ShellBorderEnabled")).toBool(),
+            false
+        );
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("ShellBorderWidth")).toUInt(),
+            7U
+        );
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("ShellBorderRadius")).toUInt(),
+            12U
+        );
+        QCOMPARE(
+            lastChanged_.value(
+                QStringLiteral("SyncHyprlandWindowBorders")
+            ).toBool(),
+            false
+        );
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("Revision")).toULongLong(),
+            1ULL
+        );
+        QVERIFY(!lastChanged_.contains(QStringLiteral("BarHeight")));
+        QVERIFY(lastInvalidated_.isEmpty());
+
+        const auto persisted = QJsonDocument::fromJson(
+            bytesSeenAtSignal_
+        ).object();
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 2);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderEnabled")).toBool(), false);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderWidth")).toInteger(), 7);
+        QCOMPARE(persisted.value(QStringLiteral("shellBorderRadius")).toInteger(), 12);
+        QCOMPARE(
+            persisted.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            false
+        );
+        QCOMPARE(persisted.value(QStringLiteral("revision")).toString(), QStringLiteral("1"));
+        QCOMPARE(proxy.shellBorderEnabled(), false);
+        QCOMPARE(proxy.shellBorderWidth(), 7U);
+        QCOMPARE(proxy.shellBorderRadius(), 12U);
+        QCOMPARE(proxy.syncHyprlandWindowBorders(), false);
+
+        const auto changedActive = readFile(activeFile_);
+        const auto changedRecovery = readFile(recoveryFile_);
+        const auto configDirectory = QFileInfo(activeFile_).absolutePath();
+        const auto stateDirectory = QFileInfo(recoveryFile_).absolutePath();
+        QVERIFY(blockDirectory(configDirectory));
+        QVERIFY(blockDirectory(stateDirectory));
+        auto idempotent = proxy.SetSharedBorder(false, 7U, 12U, false);
+        idempotent.waitForFinished();
+        QVERIFY(restoreDirectory(stateDirectory));
+        QVERIFY(restoreDirectory(configDirectory));
+        QVERIFY2(!idempotent.isError(), qPrintable(idempotent.error().message()));
+        QCOMPARE(idempotent.value(), 1ULL);
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 1);
+        QCOMPARE(readFile(activeFile_), changedActive);
+        QCOMPARE(readFile(recoveryFile_), changedRecovery);
+
+        auto reset = proxy.ResetSharedBorder();
+        reset.waitForFinished();
+        QVERIFY2(!reset.isError(), qPrintable(reset.error().message()));
+        QCOMPARE(reset.value(), 2ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 2, 1000);
+        QCOMPARE(proxy.shellBorderEnabled(), true);
+        QCOMPARE(proxy.shellBorderWidth(), 1U);
+        QCOMPARE(proxy.shellBorderRadius(), 15U);
+        QCOMPARE(proxy.syncHyprlandWindowBorders(), true);
+        QCOMPARE(proxy.revision(), 2ULL);
+
+        const auto resetActive = readFile(activeFile_);
+        const auto resetRecovery = readFile(recoveryFile_);
+        QVERIFY(blockDirectory(configDirectory));
+        QVERIFY(blockDirectory(stateDirectory));
+        auto repeatedReset = proxy.ResetSharedBorder();
+        repeatedReset.waitForFinished();
+        QVERIFY(restoreDirectory(stateDirectory));
+        QVERIFY(restoreDirectory(configDirectory));
+        QVERIFY2(
+            !repeatedReset.isError(),
+            qPrintable(repeatedReset.error().message())
+        );
+        QCOMPARE(repeatedReset.value(), 2ULL);
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 2);
+        QCOMPARE(readFile(activeFile_), resetActive);
+        QCOMPARE(readFile(recoveryFile_), resetRecovery);
+    }
+
     void reportsPersistenceFailureWithoutChangingState()
     {
         QTemporaryDir directory;
@@ -313,15 +458,27 @@ private slots:
         auto failed = proxy.SetBarHeight(64);
         failed.waitForFinished();
 
+        auto failedBorder = proxy.SetSharedBorder(false, 7U, 12U, false);
+        failedBorder.waitForFinished();
+
         QVERIFY(restoreDirectory(configDirectory));
         QVERIFY(failed.isError());
         QCOMPARE(
             failed.error().name(),
             QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
         );
+        QVERIFY(failedBorder.isError());
+        QCOMPARE(
+            failedBorder.error().name(),
+            QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
+        );
         QTest::qWait(50);
         QCOMPARE(signalCount_, 0);
         QCOMPARE(proxy.barHeight(), 40U);
+        QCOMPARE(proxy.shellBorderEnabled(), true);
+        QCOMPARE(proxy.shellBorderWidth(), 1U);
+        QCOMPARE(proxy.shellBorderRadius(), 15U);
+        QCOMPARE(proxy.syncHyprlandWindowBorders(), true);
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(readFile(activeFile_), originalBytes);
     }
@@ -344,6 +501,36 @@ private slots:
         QVERIFY2(!maximum.isError(), qPrintable(maximum.error().message()));
         QCOMPARE(maximum.value(), 2ULL);
         QCOMPARE(proxy.barHeight(), 96U);
+
+        auto borderMinimumMaximum = proxy.SetSharedBorder(
+            false,
+            0U,
+            20U,
+            false
+        );
+        borderMinimumMaximum.waitForFinished();
+        QVERIFY2(
+            !borderMinimumMaximum.isError(),
+            qPrintable(borderMinimumMaximum.error().message())
+        );
+        QCOMPARE(borderMinimumMaximum.value(), 3ULL);
+        QCOMPARE(proxy.shellBorderWidth(), 0U);
+        QCOMPARE(proxy.shellBorderRadius(), 20U);
+
+        auto borderMaximumMinimum = proxy.SetSharedBorder(
+            true,
+            20U,
+            0U,
+            true
+        );
+        borderMaximumMinimum.waitForFinished();
+        QVERIFY2(
+            !borderMaximumMinimum.isError(),
+            qPrintable(borderMaximumMinimum.error().message())
+        );
+        QCOMPARE(borderMaximumMinimum.value(), 4ULL);
+        QCOMPARE(proxy.shellBorderWidth(), 20U);
+        QCOMPARE(proxy.shellBorderRadius(), 0U);
     }
 
     void reportsRestartRecoveryStates()
@@ -392,6 +579,42 @@ private slots:
         QCOMPARE(defaulted.recoveryState(), QStringLiteral("defaulted"));
         QCOMPARE(defaulted.barHeight(), 40U);
         QCOMPARE(defaulted.revision(), 0ULL);
+    }
+
+    void publishesMigratedFormatOneBorderWithoutAdvancingRevision()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto active = directory.path()
+            + QStringLiteral("/config/hyprshelld/settings.json");
+        QVERIFY(writeFile(
+            active,
+            QByteArrayLiteral(
+                "{\"formatVersion\":1,\"revision\":\"9\",\"barHeight\":32}\n"
+            )
+        ));
+
+        QVERIFY2(startService(directory.path()), qPrintable(processError_));
+        OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
+        QCOMPARE(proxy.barHeight(), 32U);
+        QCOMPARE(proxy.shellBorderEnabled(), true);
+        QCOMPARE(proxy.shellBorderWidth(), 1U);
+        QCOMPARE(proxy.shellBorderRadius(), 12U);
+        QCOMPARE(proxy.syncHyprlandWindowBorders(), false);
+        QCOMPARE(proxy.revision(), 9ULL);
+        QCOMPARE(proxy.recoveryState(), QStringLiteral("normal"));
+
+        QCOMPARE(readFile(activeFile_), readFile(recoveryFile_));
+        const auto migrated = QJsonDocument::fromJson(
+            readFile(activeFile_)
+        ).object();
+        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 2);
+        QCOMPARE(migrated.value(QStringLiteral("revision")).toString(), QStringLiteral("9"));
+        QCOMPARE(migrated.value(QStringLiteral("shellBorderRadius")).toInteger(), 12);
+        QCOMPARE(
+            migrated.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            false
+        );
     }
 
     void propertiesChanged(

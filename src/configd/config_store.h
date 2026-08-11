@@ -12,6 +12,11 @@ namespace HyprShelld {
 
 struct ConfigState final {
     quint32 barHeight = ConfigValues::defaultBarHeight;
+    bool shellBorderEnabled = ConfigValues::defaultShellBorderEnabled;
+    quint32 shellBorderWidth = ConfigValues::defaultShellBorderWidth;
+    quint32 shellBorderRadius = ConfigValues::defaultShellBorderRadius;
+    bool syncHyprlandWindowBorders =
+        ConfigValues::defaultSyncHyprlandWindowBorders;
     quint64 revision = 0;
 
     friend bool operator==(const ConfigState &, const ConfigState &) = default;

@@ -90,7 +90,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     mask: Region {
         item: bar
-        radius: bar.cornerRadius
+        radius: bar.renderedCornerRadius
     }
 
     Bar {
@@ -98,6 +98,9 @@ PanelWindow { // qmllint disable uncreatable-type
 
         anchors.fill: parent
         barHeight: ConfigClient.barHeight
+        shellBorderEnabled: ConfigClient.shellBorderEnabled
+        shellBorderWidth: ConfigClient.shellBorderWidth
+        shellBorderRadius: ConfigClient.shellBorderRadius
         currentTime: root.currentTime
         screenName: root.modelData ? root.modelData.name : ""
         configurationAvailable: ConfigClient.available

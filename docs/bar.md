@@ -8,6 +8,11 @@ keeps windows from tiling under the bar.
 The bar height applies to every display. It can be set from 24 to 96 logical
 pixels and defaults to 40 logical pixels.
 
+The bar also uses HyprShelld's shared border shape. The border line is enabled
+by default with a width of 1 logical pixel and a corner radius of 15 logical
+pixels. Both values can be set from 0 through 20. On a short bar, the rendered
+corner radius is limited to half the bar height so the shape remains valid.
+
 ## What the bar shows
 
 The current bar shows configuration availability and, when enabled, the
@@ -77,10 +82,11 @@ Bar Widgets**. Disabling it removes the switcher without discarding its saved
 choices. Its natural **Workspaces** settings card remains visible but dimmed
 and read-only until the component is enabled again.
 
-Workspace choices are stored separately from the core bar size. If the
+Workspace choices are stored separately from the core Bar settings. If the
 component settings or component catalog is unavailable, Settings keeps the
 workspace preview visible but makes only the **Workspaces** card read-only. You
-can still change the bar height when core settings are available.
+can still change the bar height and shared border when core settings are
+available.
 
 ## Component failure notices
 
@@ -105,10 +111,36 @@ but the persistent warning remains available in Settings.
 Changes are saved automatically. Select **Reset** to return every bar to the
 default height of 40 logical pixels.
 
-If core settings are unavailable, Settings shows a bar-size warning and
-disables the height control until they reconnect. The displayed height may be
-out of date while that warning is visible. A separate workspace warning does
-not disable the height control.
+If core settings are unavailable, Settings shows a Bar warning and
+disables the height and border controls until they reconnect. The displayed
+height and border may be out of date while that warning is visible. A separate
+workspace warning does not disable the core Bar controls.
+
+## Customize the shared border
+
+Open **HyprShelld Settings**, select **Bar**, and use the **Border** card:
+
+- **Show border** draws or removes the border line on the bar and, while
+  synchronization is on, on Hyprland windows. Hiding the line does not discard
+  its saved width or corner radius.
+- **Border width** sets the line from 0 through 20 logical pixels.
+- **Corner radius** rounds the bar from 0 through 20 logical pixels.
+- **Sync Hyprland window borders** makes HyprShelld the visual authority for
+  the matching managed Hyprland border options. While synchronization is on,
+  those Hyprland controls remain visible but read-only. Turn synchronization
+  off when window borders should use their explicit Hyprland override without
+  changing the bar.
+
+Each interaction automatically saves the complete enabled, width, radius, and
+synchronization choice as one shared-border update. The pinned desktop preview
+renders the real Bar component as an illustration; viewing the preview does not
+itself change the live session. Saving updates every live Bar through Config1.
+With synchronization enabled, the same saved geometry reaches managed Hyprland
+windows automatically only from an exact current managed baseline. That
+verified activation may reload the managed Hyprland configuration. Otherwise,
+the matching geometry remains saved until explicit safe Apply or compositor
+takeover. Select **Reset** to enable the border, restore width 1 and radius 15,
+and synchronize Hyprland window borders again.
 
 See [Settings](settings.md) for recovery messages and configuration-file
 locations.

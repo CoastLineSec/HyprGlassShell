@@ -1,4 +1,6 @@
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QStringList>
 #include <QXmlStreamReader>
 #include <QtTest>
@@ -102,6 +104,61 @@ void compareContract(const QString &path, const QStringList &expected)
     QCOMPARE(actual, expected);
 }
 
+QString readTextFile(const QString &path, QString &error)
+{
+    error.clear();
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        error = file.errorString();
+        return {};
+    }
+
+    return QString::fromUtf8(file.readAll());
+}
+
+QString methodDocumentation(
+    const QString &path,
+    const QString &methodName,
+    QString &error
+)
+{
+    const auto document = readTextFile(path, error);
+    if (!error.isEmpty()) {
+        return {};
+    }
+
+    const auto marker = QStringLiteral("<method name=\"%1\"").arg(methodName);
+    const auto methodOffset = document.indexOf(marker);
+    if (methodOffset < 0) {
+        error = QStringLiteral("Method %1 was not found").arg(methodName);
+        return {};
+    }
+
+    const auto commentEnd = document.lastIndexOf(
+        QStringLiteral("-->"), methodOffset
+    );
+    const auto commentStart = document.lastIndexOf(
+        QStringLiteral("<!--"), commentEnd
+    );
+    if (commentStart < 0 || commentEnd < commentStart) {
+        error = QStringLiteral("Method %1 has no documentation").arg(methodName);
+        return {};
+    }
+
+    const auto between = document.mid(
+        commentEnd + 3, methodOffset - commentEnd - 3
+    );
+    if (!between.trimmed().isEmpty()) {
+        error = QStringLiteral("Method %1 documentation is not adjacent")
+                    .arg(methodName);
+        return {};
+    }
+
+    return document.mid(
+        commentStart + 4, commentEnd - commentStart - 4
+    ).simplified();
+}
+
 } // namespace
 
 class DbusContractTest final : public QObject {
@@ -136,6 +193,14 @@ private slots:
                 QStringLiteral("interface=org.hyprshelld.Config1"),
                 QStringLiteral("property=BarHeight:u:read"),
                 QStringLiteral("annotation=property:BarHeight:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ShellBorderEnabled:b:read"),
+                QStringLiteral("annotation=property:ShellBorderEnabled:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ShellBorderWidth:u:read"),
+                QStringLiteral("annotation=property:ShellBorderWidth:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=ShellBorderRadius:u:read"),
+                QStringLiteral("annotation=property:ShellBorderRadius:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SyncHyprlandWindowBorders:b:read"),
+                QStringLiteral("annotation=property:SyncHyprlandWindowBorders:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=Revision:t:read"),
                 QStringLiteral("annotation=property:Revision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=RecoveryState:s:read"),
@@ -145,6 +210,14 @@ private slots:
                 QStringLiteral("arg=method:SetBarHeight:revision:t:out"),
                 QStringLiteral("method=ResetBarHeight"),
                 QStringLiteral("arg=method:ResetBarHeight:revision:t:out"),
+                QStringLiteral("method=SetSharedBorder"),
+                QStringLiteral("arg=method:SetSharedBorder:enabled:b:in"),
+                QStringLiteral("arg=method:SetSharedBorder:width:u:in"),
+                QStringLiteral("arg=method:SetSharedBorder:radius:u:in"),
+                QStringLiteral("arg=method:SetSharedBorder:syncHyprlandWindowBorders:b:in"),
+                QStringLiteral("arg=method:SetSharedBorder:revision:t:out"),
+                QStringLiteral("method=ResetSharedBorder"),
+                QStringLiteral("arg=method:ResetSharedBorder:revision:t:out"),
             }
         );
     }
@@ -344,6 +417,12 @@ private slots:
                 QStringLiteral("annotation=property:DisplayConfirmationDeadlineMs:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=DisplayConfirmationGeneration:s:read"),
                 QStringLiteral("annotation=property:DisplayConfirmationGeneration:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SharedBorderSyncState:s:read"),
+                QStringLiteral("annotation=property:SharedBorderSyncState:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SharedBorderSourceRevision:t:read"),
+                QStringLiteral("annotation=property:SharedBorderSourceRevision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=SharedBorderSyncError:s:read"),
+                QStringLiteral("annotation=property:SharedBorderSyncError:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("method=GetSnapshot"),
                 QStringLiteral("arg=method:GetSnapshot:snapshot:ay:out"),
                 QStringLiteral("arg=method:GetSnapshot:revision:t:out"),
@@ -404,8 +483,84 @@ private slots:
                 QStringLiteral("method=RevertDisplayConfiguration"),
                 QStringLiteral("arg=method:RevertDisplayConfiguration:confirmationToken:s:in"),
                 QStringLiteral("arg=method:RevertDisplayConfiguration:revision:t:out"),
+                QStringLiteral("method=RetrySharedBorderSync"),
             }
         );
+    }
+
+    void compositorSharedBorderDocumentationContract()
+    {
+        const auto path = QStringLiteral(HYPRSHELLD_COMPOSITOR_XML);
+        QString error;
+
+        const auto xml = readTextFile(path, error).simplified();
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(xml.contains(QStringLiteral(
+            "zero while the Config1 source is unavailable"
+        )));
+
+        const auto apply = methodDocumentation(
+            path, QStringLiteral("Apply"), error
+        );
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(apply.contains(QStringLiteral("ControlledByHyprShelld")));
+        QVERIFY(apply.contains(
+            QStringLiteral("currently verified, available Config1 shared-border authority")
+        ));
+        QVERIFY(apply.contains(
+            QStringLiteral("even when the last verified policy was an override")
+        ));
+
+        const auto adopt = methodDocumentation(
+            path, QStringLiteral("AdoptManagedConfiguration"), error
+        );
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(adopt.contains(QStringLiteral("ControlledByHyprShelld")));
+        QVERIFY(adopt.contains(
+            QStringLiteral("currently verified, available Config1 authority")
+        ));
+        QVERIFY(adopt.contains(
+            QStringLiteral("even when the last verified policy was an override")
+        ));
+
+        const auto recover = methodDocumentation(
+            path, QStringLiteral("Recover"), error
+        );
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(recover.contains(
+            QStringLiteral("intentionally exempt from the shared-border ownership gate")
+        ));
+        QVERIFY(!recover.contains(QStringLiteral("ControlledByHyprShelld")));
+
+        const auto retry = methodDocumentation(
+            path, QStringLiteral("RetrySharedBorderSync"), error
+        );
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(retry.contains(QStringLiteral("Explicitly retries")));
+        QVERIFY(retry.contains(QStringLiteral(
+            "effective Config1 shared policy or derived compositor border values change"
+        )));
+        QVERIFY(retry.contains(QStringLiteral("Revision-only change")));
+        QVERIFY(retry.contains(QStringLiteral("does not retry")));
+
+        const auto readmePath = QFileInfo(path).dir().filePath(
+            QStringLiteral("README.md")
+        );
+        const auto readme = readTextFile(readmePath, error).simplified();
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QVERIFY(readme.contains(QStringLiteral(
+            "requires a currently verified, available Config1 shared-border authority"
+        )));
+        QVERIFY(readme.contains(QStringLiteral(
+            "even when the last verified policy was an override"
+        )));
+        QVERIFY(readme.contains(QStringLiteral(
+            "Recover is intentionally exempt from the shared-border ownership gate"
+        )));
+        QVERIFY(readme.contains(QStringLiteral(
+            "Config1 projection Revision-only change"
+        )));
+        QVERIFY(readme.contains(QStringLiteral("does not retry")));
     }
 };
 

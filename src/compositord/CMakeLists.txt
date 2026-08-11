@@ -35,6 +35,10 @@ qt_add_library(
         compositor_service.cpp
         compositor_service.h
         configuration_authority.h
+        shared_border_reconciler.cpp
+        shared_border_reconciler.h
+        shared_border_source.cpp
+        shared_border_source.h
 )
 
 target_include_directories(

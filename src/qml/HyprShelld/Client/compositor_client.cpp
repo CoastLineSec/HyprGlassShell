@@ -321,6 +321,22 @@ bool CompositorClient::displayConfirmationOwned() const
 {
     return displayConfirmationOwned_;
 }
+QString CompositorClient::sharedBorderSyncState() const
+{
+    return sharedBorderSyncState_;
+}
+qulonglong CompositorClient::sharedBorderSourceRevision() const
+{
+    return sharedBorderSourceRevision_;
+}
+QString CompositorClient::sharedBorderSourceRevisionToken() const
+{
+    return QString::number(sharedBorderSourceRevision_);
+}
+QString CompositorClient::sharedBorderSyncError() const
+{
+    return sharedBorderSyncError_;
+}
 QString CompositorClient::lastErrorName() const { return lastErrorName_; }
 QString CompositorClient::lastErrorMessage() const { return lastErrorMessage_; }
 
@@ -632,6 +648,24 @@ void CompositorClient::revertDisplayConfiguration()
     beginMutation(Mutation::Revert, message, ordinaryCallTimeoutMs);
 }
 
+void CompositorClient::retrySharedBorderSync()
+{
+    if (!available_ || busy_) {
+        setError(
+            QStringLiteral("org.hyprshelld.Client.Compositor.Error.Unavailable"),
+            QStringLiteral("Shared border synchronization cannot be retried right now")
+        );
+        return;
+    }
+    auto message = QDBusMessage::createMethodCall(
+        serviceName,
+        objectPath,
+        interfaceName,
+        QStringLiteral("RetrySharedBorderSync")
+    );
+    beginMutation(Mutation::SharedBorderSync, message, ordinaryCallTimeoutMs);
+}
+
 void CompositorClient::clearError()
 {
     if (lastErrorName_.isEmpty() && lastErrorMessage_.isEmpty()) return;
@@ -660,6 +694,9 @@ void CompositorClient::propertiesChanged(
         QStringLiteral("DisplayConfirmationRevision"),
         QStringLiteral("DisplayConfirmationDeadlineMs"),
         QStringLiteral("DisplayConfirmationGeneration"),
+        QStringLiteral("SharedBorderSyncState"),
+        QStringLiteral("SharedBorderSourceRevision"),
+        QStringLiteral("SharedBorderSyncError"),
     };
     const auto hydrationChanged = std::ranges::any_of(
         hydrationProperties,
@@ -705,6 +742,17 @@ void CompositorClient::serviceOwnerChanged(
     displayConfirmationDeadlineMs_ = 0;
     displayConfirmationGeneration_.clear();
     if (confirmationChanged) emit displayConfirmationChanged();
+    const auto sharedBorderChanged = sharedBorderSyncState_
+            != QStringLiteral("unavailable")
+        || sharedBorderSourceRevision_ != 0
+        || sharedBorderSyncError_
+            != QStringLiteral("Shared visual settings are unavailable");
+    sharedBorderSyncState_ = QStringLiteral("unavailable");
+    sharedBorderSourceRevision_ = 0;
+    sharedBorderSyncError_ = QStringLiteral(
+        "Shared visual settings are unavailable"
+    );
+    if (sharedBorderChanged) emit sharedBorderSyncChanged();
     if (managementState_ == QStringLiteral("preview")) {
         managementState_ = QStringLiteral("unmanaged");
         emit managementStateChanged();
@@ -989,6 +1037,9 @@ bool CompositorClient::applyProperties(
         QStringLiteral("DisplayConfirmationRevision"),
         QStringLiteral("DisplayConfirmationDeadlineMs"),
         QStringLiteral("DisplayConfirmationGeneration"),
+        QStringLiteral("SharedBorderSyncState"),
+        QStringLiteral("SharedBorderSourceRevision"),
+        QStringLiteral("SharedBorderSyncError"),
     };
     if (requireAll) {
         for (const auto &name : required) {
@@ -1032,6 +1083,9 @@ bool CompositorClient::applyProperties(
     auto nextConfirmationRevision = displayConfirmationRevision_;
     auto nextConfirmationDeadline = displayConfirmationDeadlineMs_;
     auto nextConfirmationGeneration = displayConfirmationGeneration_;
+    auto nextSharedBorderState = sharedBorderSyncState_;
+    auto nextSharedBorderRevision = sharedBorderSourceRevision_;
+    auto nextSharedBorderError = sharedBorderSyncError_;
     if (!boolean(QStringLiteral("Available"), advertisedAvailable_)
         || !boolean(QStringLiteral("Writable"), nextWritable)
         || !unsignedInteger(QStringLiteral("Revision"), advertisedRevision_)
@@ -1062,6 +1116,18 @@ bool CompositorClient::applyProperties(
         || !string(
             QStringLiteral("DisplayConfirmationGeneration"),
             nextConfirmationGeneration
+        )
+        || !string(
+            QStringLiteral("SharedBorderSyncState"),
+            nextSharedBorderState
+        )
+        || !unsignedInteger(
+            QStringLiteral("SharedBorderSourceRevision"),
+            nextSharedBorderRevision
+        )
+        || !string(
+            QStringLiteral("SharedBorderSyncError"),
+            nextSharedBorderError
         )) {
         return false;
     }
@@ -1089,6 +1155,14 @@ bool CompositorClient::applyProperties(
             QStringLiteral("reverting"), QStringLiteral("committing"),
             QStringLiteral("failed"),
         }.contains(nextConfirmationState)
+        || !QStringList{
+            QStringLiteral("unavailable"), QStringLiteral("override"),
+            QStringLiteral("pending"), QStringLiteral("saved"),
+            QStringLiteral("current"), QStringLiteral("failed"),
+        }.contains(nextSharedBorderState)
+        || ((nextSharedBorderState == QStringLiteral("unavailable")
+                || nextSharedBorderState == QStringLiteral("failed"))
+            != !nextSharedBorderError.isEmpty())
         || (!advertisedCatalogDigest_.isEmpty()
             && !isDigest(advertisedCatalogDigest_))
         || (!advertisedActionCatalogDigest_.isEmpty()
@@ -1164,6 +1238,14 @@ bool CompositorClient::applyProperties(
         emit displayConfirmationChanged();
         emit appearanceChanged();
     }
+    if (nextSharedBorderState != sharedBorderSyncState_
+        || nextSharedBorderRevision != sharedBorderSourceRevision_
+        || nextSharedBorderError != sharedBorderSyncError_) {
+        sharedBorderSyncState_ = nextSharedBorderState;
+        sharedBorderSourceRevision_ = nextSharedBorderRevision;
+        sharedBorderSyncError_ = nextSharedBorderError;
+        emit sharedBorderSyncChanged();
+    }
     return !advertisedAvailable_
         || (isDigest(advertisedCatalogDigest_)
             && isDigest(advertisedActionCatalogDigest_));
@@ -1183,7 +1265,8 @@ void CompositorClient::beginMutation(
         : mutation == Mutation::Preview ? QStringLiteral("display-preview")
         : mutation == Mutation::Confirm ? QStringLiteral("display-confirm")
         : mutation == Mutation::Revert ? QStringLiteral("display-revert")
-        : QStringLiteral("recover")
+        : mutation == Mutation::Recover ? QStringLiteral("recover")
+        : QStringLiteral("shared-border-sync")
     );
     const auto ownerGeneration = ownerGeneration_;
     // PropertiesChanged for the durable transition can be delivered before
@@ -1241,6 +1324,8 @@ void CompositorClient::beginMutation(
                     : mutation == Mutation::Recover
                         ? arguments.size() == 3 && unsignedAt(0)
                             && unsignedAt(1) && stringAt(2)
+                    : mutation == Mutation::SharedBorderSync
+                        ? arguments.isEmpty()
                         : arguments.size() == 1 && unsignedAt(0);
             const auto replyValid = structuralReplyValid
                 && (mutation != Mutation::Adopt

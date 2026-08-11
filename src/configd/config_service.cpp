@@ -17,6 +17,9 @@ const QString configPath = QStringLiteral("/org/hyprshelld/Config1");
 const QString invalidBarHeightError = QStringLiteral(
     "org.hyprshelld.Config1.Error.InvalidBarHeight"
 );
+const QString invalidSharedBorderError = QStringLiteral(
+    "org.hyprshelld.Config1.Error.InvalidSharedBorder"
+);
 const QString persistenceError = QStringLiteral(
     "org.hyprshelld.Config1.Error.PersistenceFailed"
 );
@@ -68,6 +71,26 @@ uint ConfigService::barHeight() const
     return state_.barHeight;
 }
 
+bool ConfigService::shellBorderEnabled() const
+{
+    return state_.shellBorderEnabled;
+}
+
+uint ConfigService::shellBorderWidth() const
+{
+    return state_.shellBorderWidth;
+}
+
+uint ConfigService::shellBorderRadius() const
+{
+    return state_.shellBorderRadius;
+}
+
+bool ConfigService::syncHyprlandWindowBorders() const
+{
+    return state_.syncHyprlandWindowBorders;
+}
+
 qulonglong ConfigService::revision() const
 {
     return state_.revision;
@@ -94,6 +117,31 @@ qulonglong ConfigService::ResetBarHeight()
     return setBarHeight(ConfigValues::defaultBarHeight);
 }
 
+qulonglong ConfigService::SetSharedBorder(
+    const bool enabled,
+    const uint width,
+    const uint radius,
+    const bool syncHyprlandWindowBorders
+)
+{
+    return setSharedBorder(
+        enabled,
+        width,
+        radius,
+        syncHyprlandWindowBorders
+    );
+}
+
+qulonglong ConfigService::ResetSharedBorder()
+{
+    return setSharedBorder(
+        ConfigValues::defaultShellBorderEnabled,
+        ConfigValues::defaultShellBorderWidth,
+        ConfigValues::defaultShellBorderRadius,
+        ConfigValues::defaultSyncHyprlandWindowBorders
+    );
+}
+
 qulonglong ConfigService::setBarHeight(uint height)
 {
     if (height < ConfigValues::minimumBarHeight
@@ -116,10 +164,9 @@ qulonglong ConfigService::setBarHeight(uint height)
         return state_.revision;
     }
 
-    const ConfigState next {
-        .barHeight = height,
-        .revision = state_.revision + 1,
-    };
+    auto next = state_;
+    next.barHeight = height;
+    next.revision = state_.revision + 1;
 
     QString error;
     if (!store_.persist(
@@ -132,8 +179,66 @@ qulonglong ConfigService::setBarHeight(uint height)
         return state_.revision;
     }
 
+    const auto previous = state_;
     state_ = next;
-    publishChange();
+    publishChange(previous);
+    return state_.revision;
+}
+
+qulonglong ConfigService::setSharedBorder(
+    const bool enabled,
+    const uint width,
+    const uint radius,
+    const bool syncHyprlandWindowBorders
+)
+{
+    if (width < ConfigValues::minimumShellBorderWidth
+        || width > ConfigValues::maximumShellBorderWidth
+        || radius < ConfigValues::minimumShellBorderRadius
+        || radius > ConfigValues::maximumShellBorderRadius) {
+        reportError(
+            invalidSharedBorderError,
+            QStringLiteral(
+                "Shared border width and radius must each be between %1 and %2 logical pixels"
+            )
+                .arg(ConfigValues::minimumShellBorderWidth)
+                .arg(ConfigValues::maximumShellBorderWidth)
+        );
+        return state_.revision;
+    }
+
+    if (enabled == state_.shellBorderEnabled
+        && width == state_.shellBorderWidth
+        && radius == state_.shellBorderRadius
+        && syncHyprlandWindowBorders
+            == state_.syncHyprlandWindowBorders) {
+        return state_.revision;
+    }
+
+    if (state_.revision == std::numeric_limits<quint64>::max()) {
+        reportError(
+            persistenceError,
+            QStringLiteral("Configuration revision is exhausted")
+        );
+        return state_.revision;
+    }
+
+    auto next = state_;
+    next.shellBorderEnabled = enabled;
+    next.shellBorderWidth = width;
+    next.shellBorderRadius = radius;
+    next.syncHyprlandWindowBorders = syncHyprlandWindowBorders;
+    next.revision = state_.revision + 1;
+
+    QString error;
+    if (!store_.persist(state_, next, legacyWorkspaceSettings_, error)) {
+        reportError(persistenceError, error);
+        return state_.revision;
+    }
+
+    const auto previous = state_;
+    state_ = next;
+    publishChange(previous);
     return state_.revision;
 }
 
@@ -167,10 +272,34 @@ void ConfigService::reportError(const QString &name, const QString &message) con
     }
 }
 
-void ConfigService::publishChange() const
+void ConfigService::publishChange(const ConfigState &previous) const
 {
     QVariantMap changed;
-    changed.insert(QStringLiteral("BarHeight"), state_.barHeight);
+    if (state_.barHeight != previous.barHeight) {
+        changed.insert(QStringLiteral("BarHeight"), state_.barHeight);
+    }
+    if (state_.shellBorderEnabled != previous.shellBorderEnabled
+        || state_.shellBorderWidth != previous.shellBorderWidth
+        || state_.shellBorderRadius != previous.shellBorderRadius
+        || state_.syncHyprlandWindowBorders
+            != previous.syncHyprlandWindowBorders) {
+        changed.insert(
+            QStringLiteral("ShellBorderEnabled"),
+            state_.shellBorderEnabled
+        );
+        changed.insert(
+            QStringLiteral("ShellBorderWidth"),
+            state_.shellBorderWidth
+        );
+        changed.insert(
+            QStringLiteral("ShellBorderRadius"),
+            state_.shellBorderRadius
+        );
+        changed.insert(
+            QStringLiteral("SyncHyprlandWindowBorders"),
+            state_.syncHyprlandWindowBorders
+        );
+    }
     changed.insert(
         QStringLiteral("Revision"),
         QVariant::fromValue<qulonglong>(state_.revision)

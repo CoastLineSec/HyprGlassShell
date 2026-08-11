@@ -15,6 +15,14 @@ Page {
     property string busyOperation: ""
     property var appearanceOptions: []
     property var appearanceValues: ({})
+    property bool sharedBorderAvailable: false
+    property bool sharedBorderBusy: false
+    property bool windowBorderSynced: true
+    property string sharedBorderSyncState: "unavailable"
+    property string sharedBorderSyncError: ""
+    property string sharedBorderClientError: ""
+    property string sharedBorderConfigRevisionToken: ""
+    property string sharedBorderVerifiedRevisionToken: ""
     property string revisionToken: "0"
     property double appliedRevision: 0
     property string loadState: "unavailable"
@@ -38,12 +46,21 @@ Page {
     property bool projectionInitialized: false
     property bool externalChangeWhileEditing: false
     property bool saveSubmitted: false
+    property bool synchronizedWindowBorderSynced: windowBorderSynced
+    property bool sharedBorderProjectionPending: false
+    property string sharedBorderSourceActionError: ""
+    property bool sharedBorderSourceRequestPending: false
+    property bool sharedBorderSourceRequestSawBusy: false
+    property bool sharedBorderSourceRequestErrorCleared: false
+    property bool sharedBorderSourceExpectedSync: windowBorderSynced
 
     signal refreshRequested()
     signal openDisplaysRequested()
     signal saveRequested(var values)
     signal retryApplyRequested()
     signal recoveryRequested()
+    signal windowBorderSyncRequested(bool sync)
+    signal retrySharedBorderSyncRequested()
 
     readonly property string borderSizeId: "hyprland.general.border_size"
     readonly property string roundingId: "hyprland.decoration.rounding"
@@ -54,6 +71,7 @@ Page {
     readonly property string resizeId: "hyprland.general.resize_on_border"
     readonly property string snapId: "hyprland.general.snap.enabled"
     readonly property real minimumTargetSize: 44
+    readonly property int maximumSharedBorderSourceErrorLength: 1024
     readonly property bool compactPreview:
         root.width < 560 || root.height < 640
     readonly property var expectedOptionIds: [
@@ -80,6 +98,40 @@ Page {
     readonly property bool displayTestActive:
         root.confirmationState !== "idle"
         || root.managementState === "preview"
+    readonly property bool sharedBorderTransitionBusy:
+        root.sharedBorderBusy
+        || root.sharedBorderSyncState === "pending"
+        || root.sharedBorderProjectionPending
+        || root.sharedBorderSourceRequestPending
+    readonly property bool sharedBorderRevisionVerified:
+        /^(0|[1-9][0-9]*)$/.test(root.sharedBorderConfigRevisionToken)
+        && /^(0|[1-9][0-9]*)$/.test(
+            root.sharedBorderVerifiedRevisionToken
+        )
+        && root.sharedBorderConfigRevisionToken
+            === root.sharedBorderVerifiedRevisionToken
+    readonly property bool sharedBorderProjectionVerified:
+        root.sharedBorderRevisionVerified
+        && ((!root.windowBorderSynced
+                && root.sharedBorderSyncState === "override")
+            || (root.windowBorderSynced
+                && (root.sharedBorderSyncState === "saved"
+                    || root.sharedBorderSyncState === "current"
+                    || root.sharedBorderSyncState === "failed"
+                    || (root.sharedBorderSyncState === "unavailable"
+                        && root.sharedBorderConfigRevisionToken !== "0"))))
+    readonly property bool sharedBorderApplyStateSettled:
+        (!root.windowBorderSynced
+            && root.sharedBorderSyncState === "override")
+        || (root.windowBorderSynced
+            && (root.sharedBorderSyncState === "saved"
+                || root.sharedBorderSyncState === "current"))
+    readonly property bool sharedBorderApplyVerified:
+        root.sharedBorderRevisionVerified
+        && root.sharedBorderApplyStateSettled
+    readonly property bool sharedBorderApplySafe:
+        !root.sharedBorderTransitionBusy
+        && root.sharedBorderApplyVerified
     readonly property bool controlsEnabled:
         root.serviceAvailable
         && root.writable
@@ -89,11 +141,40 @@ Page {
         && root.trustedDefinitionsValid
         && root.trustedValuesValid
         && !root.busy
+        && !root.sharedBorderTransitionBusy
         && !root.externalChangeWhileEditing
         && !root.displayTestActive
     readonly property bool saveEnabled:
         root.controlsEnabled && root.draftDirty && root.draftValid
+        && !root.saveSubmitted && root.sharedBorderApplySafe
+    readonly property bool sharedBorderSourceActionEnabled:
+        root.sharedBorderAvailable && !root.sharedBorderBusy
+        && root.sharedBorderSyncState !== "pending"
+        && !root.sharedBorderSourceRequestPending
+        && !root.busy && !root.displayTestActive
+        && !root.draftDirty && !root.externalChangeWhileEditing
         && !root.saveSubmitted
+    readonly property bool sharedBorderRetryAvailable:
+        root.windowBorderSynced
+        && root.sharedBorderAvailable
+        && root.serviceAvailable
+        && (root.sharedBorderSyncState === "failed"
+            || root.sharedBorderSyncState === "unavailable")
+    readonly property string windowBorderAuthorityMessage: {
+        if (!root.windowBorderSynced)
+            return qsTr("Window borders use an explicit Hyprland override. Sync them to make HyprShelld's shared border shape authoritative again.");
+        if (!root.sharedBorderAvailable)
+            return qsTr("Controlled by HyprShelld. The shared border service is unavailable, so these resolved values remain read-only.");
+        if (root.sharedBorderSyncState === "failed")
+            return qsTr("Controlled by HyprShelld, but the current shared border could not be applied to Hyprland. %1").arg(root.sharedBorderSyncError);
+        if (root.sharedBorderSyncState === "pending")
+            return qsTr("Controlled by HyprShelld. The shared border is waiting for the current compositor operation to finish.");
+        if (root.sharedBorderSyncState === "saved")
+            return qsTr("Controlled by HyprShelld. The matching window border is saved and will become active after explicit compositor takeover or apply recovery.");
+        if (root.sharedBorderSyncState === "unavailable")
+            return qsTr("Controlled by HyprShelld. Synchronization is temporarily unavailable, so the last applied window border is preserved.");
+        return qsTr("Controlled by HyprShelld. Window border thickness and corner radius follow the shared border configured on the Bar page.");
+    }
     readonly property bool statusVisible:
         !root.serviceAvailable
         || !root.writable
@@ -196,6 +277,23 @@ Page {
         }
         return Object.keys(left).length === root.expectedOptionIds.length
             && Object.keys(right).length === root.expectedOptionIds.length;
+    }
+
+    function isWindowBorderOption(id) {
+        return id === root.borderSizeId || id === root.roundingId;
+    }
+
+    function valuesEqualExceptWindowBorder(left, right) {
+        if (!left || !right || typeof left !== "object"
+                || typeof right !== "object"
+                || Array.isArray(left) || Array.isArray(right)) {
+            return false;
+        }
+        for (const id of root.expectedOptionIds) {
+            if (!root.isWindowBorderOption(id) && left[id] !== right[id])
+                return false;
+        }
+        return true;
     }
 
     function optionById(id) {
@@ -338,6 +436,111 @@ Page {
             ? root.draftValues[id] : root.optionDefault(id);
     }
 
+    function resetTargetValues() {
+        if (!root.trustedDefinitionsValid)
+            return null;
+        const defaults = {};
+        for (const id of root.expectedOptionIds) {
+            defaults[id] = root.windowBorderSynced
+                    && root.isWindowBorderOption(id)
+                ? root.draftValue(id) : root.optionDefault(id);
+        }
+        return root.validateValues(defaults) ? defaults : null;
+    }
+
+    function finishSharedBorderSourceRequest() {
+        root.sharedBorderSourceRequestPending = false;
+        root.sharedBorderSourceRequestSawBusy = false;
+        root.sharedBorderSourceRequestErrorCleared = false;
+    }
+
+    function reviewSharedBorderSourceRequest() {
+        if (!root.sharedBorderSourceRequestPending)
+            return;
+        if (root.windowBorderSynced === root.sharedBorderSourceExpectedSync) {
+            root.sharedBorderSourceActionError = "";
+            root.finishSharedBorderSourceRequest();
+            return;
+        }
+        if (root.sharedBorderBusy) {
+            root.sharedBorderSourceRequestSawBusy = true;
+            return;
+        }
+        if (!root.sharedBorderSourceRequestSawBusy)
+            return;
+        if (root.sharedBorderSourceRequestErrorCleared
+                && root.sharedBorderClientError.length > 0) {
+            root.sharedBorderSourceActionError = root.sharedBorderClientError
+                .slice(0, root.maximumSharedBorderSourceErrorLength);
+            root.finishSharedBorderSourceRequest();
+        }
+    }
+
+    function scheduleSharedBorderSourceRequestReview() {
+        Qt.callLater(root.reviewSharedBorderSourceRequest);
+    }
+
+    function requestWindowBorderSync(sync) {
+        if (!root.sharedBorderSourceActionEnabled
+                || typeof sync !== "boolean"
+                || sync === root.windowBorderSynced) {
+            return;
+        }
+        root.sharedBorderSourceActionError = "";
+        root.sharedBorderSourceRequestPending = true;
+        root.sharedBorderSourceRequestSawBusy = root.sharedBorderBusy;
+        root.sharedBorderSourceRequestErrorCleared =
+            root.sharedBorderClientError.length === 0;
+        root.sharedBorderSourceExpectedSync = sync;
+        root.windowBorderSyncRequested(sync);
+        root.scheduleSharedBorderSourceRequestReview();
+    }
+
+    function reconcileWindowBorderProjection() {
+        if (!root.serviceAvailable
+                || !root.projectionInitialized || !root.trustedValuesValid
+                || root.sharedBorderBusy
+                || root.sharedBorderSyncState === "pending") {
+            return false;
+        }
+        const modeChanged = root.windowBorderSynced
+            !== root.synchronizedWindowBorderSynced;
+        const pairChanged = root.appearanceValues[root.borderSizeId]
+                !== root.synchronizedValues[root.borderSizeId]
+            || root.appearanceValues[root.roundingId]
+                !== root.synchronizedValues[root.roundingId];
+        if (!modeChanged && (!root.windowBorderSynced || !pairChanged))
+            return false;
+
+        const nextDraft = root.clone(root.draftValues);
+        const nextSynchronized = root.clone(root.synchronizedValues);
+        if (!nextDraft || !nextSynchronized)
+            return false;
+        for (const id of [root.borderSizeId, root.roundingId]) {
+            nextDraft[id] = root.appearanceValues[id];
+            nextSynchronized[id] = root.appearanceValues[id];
+        }
+        if (!root.validateValues(nextDraft)
+                || !root.validateValues(nextSynchronized)) {
+            return false;
+        }
+        root.draftValues = nextDraft;
+        root.synchronizedValues = nextSynchronized;
+        root.synchronizedWindowBorderSynced = root.windowBorderSynced;
+        root.sharedBorderProjectionPending = true;
+        return true;
+    }
+
+    function settleSharedBorderProjection() {
+        if (!root.serviceAvailable
+                || !root.sharedBorderProjectionPending
+                || root.sharedBorderBusy
+                || !root.sharedBorderProjectionVerified) {
+            return;
+        }
+        root.sharedBorderProjectionPending = false;
+    }
+
     function layoutChoices() {
         return root.choiceValues(root.optionById(root.layoutId));
     }
@@ -365,6 +568,10 @@ Page {
     function setDraftValue(id, value) {
         if (!root.controlsEnabled || !root.trustedDefinitionsValid)
             return;
+        if (root.windowBorderSynced
+                && (id === root.borderSizeId || id === root.roundingId)) {
+            return;
+        }
         const next = root.clone(root.draftValues);
         if (!next)
             return;
@@ -375,29 +582,33 @@ Page {
     }
 
     function synchronizeDraft() {
-        if (!root.trustedValuesValid)
+        if (!root.serviceAvailable
+                || !root.trustedValuesValid || root.sharedBorderBusy
+                || root.sharedBorderSyncState === "pending"
+                || root.sharedBorderProjectionPending) {
             return;
+        }
         const next = root.clone(root.appearanceValues);
         if (!next)
             return;
         root.synchronizedValues = root.clone(next);
         root.draftValues = next;
         root.synchronizedRevisionToken = root.revisionToken;
+        root.synchronizedWindowBorderSynced = root.windowBorderSynced;
         root.projectionInitialized = true;
         root.externalChangeWhileEditing = false;
         root.saveSubmitted = false;
         root.submittedValues = ({});
         root.submittedRevisionToken = "";
+        root.sharedBorderProjectionPending = false;
     }
 
     function resetDraftToDefaults() {
         if (!root.controlsEnabled || !root.trustedDefinitionsValid)
             return;
-        const defaults = {};
-        for (const id of root.expectedOptionIds)
-            defaults[id] = root.optionDefault(id);
-        if (root.validateValues(defaults))
-            root.draftValues = defaults;
+        const target = root.resetTargetValues();
+        if (target)
+            root.draftValues = target;
     }
 
     function submitDraft() {
@@ -417,14 +628,26 @@ Page {
     }
 
     function reviewProjection() {
-        if (!root.trustedValuesValid)
+        if (!root.serviceAvailable || !root.trustedValuesValid)
             return;
+        if (root.sharedBorderBusy
+                || root.sharedBorderSyncState === "pending") {
+            return;
+        }
         if (!root.projectionInitialized) {
             root.synchronizeDraft();
             return;
         }
+        root.reconcileWindowBorderProjection();
+        if (root.sharedBorderProjectionPending
+                && root.valuesEqualExceptWindowBorder(
+                    root.appearanceValues, root.synchronizedValues
+                )) {
+            root.synchronizedRevisionToken = root.revisionToken;
+        }
+        root.settleSharedBorderProjection();
         if (root.saveSubmitted) {
-            if (root.busy)
+            if (root.busy || root.sharedBorderTransitionBusy)
                 return;
             if (root.valuesEqual(
                     root.appearanceValues, root.submittedValues)) {
@@ -463,6 +686,48 @@ Page {
     onAppearanceOptionsChanged: root.scheduleProjectionReview()
     onAppearanceValuesChanged: root.scheduleProjectionReview()
     onRevisionTokenChanged: root.scheduleProjectionReview()
+    onServiceAvailableChanged: root.scheduleProjectionReview()
+    onSharedBorderConfigRevisionTokenChanged:
+        root.scheduleProjectionReview()
+    onSharedBorderVerifiedRevisionTokenChanged:
+        root.scheduleProjectionReview()
+    onWindowBorderSyncedChanged: {
+        if (root.projectionInitialized)
+            root.sharedBorderProjectionPending = true;
+        root.scheduleProjectionReview();
+        root.scheduleSharedBorderSourceRequestReview();
+    }
+    onSharedBorderAvailableChanged: {
+        if (root.sharedBorderAvailable)
+            root.sharedBorderSourceActionError = "";
+        root.scheduleSharedBorderSourceRequestReview();
+    }
+    onSharedBorderBusyChanged: {
+        if (root.sharedBorderBusy) {
+            if (root.sharedBorderSourceRequestPending)
+                root.sharedBorderSourceRequestSawBusy = true;
+            else
+                root.sharedBorderSourceActionError = "";
+        }
+        root.scheduleProjectionReview();
+        root.scheduleSharedBorderSourceRequestReview();
+    }
+    onSharedBorderClientErrorChanged: {
+        if (root.sharedBorderClientError.length === 0) {
+            if (root.sharedBorderSourceRequestPending) {
+                root.sharedBorderSourceRequestErrorCleared = true;
+            } else {
+                root.sharedBorderSourceActionError = "";
+            }
+        }
+        root.scheduleSharedBorderSourceRequestReview();
+    }
+    onSharedBorderSyncStateChanged: {
+        if (root.projectionInitialized
+                && root.sharedBorderSyncState === "pending")
+            root.sharedBorderProjectionPending = true;
+        root.scheduleProjectionReview();
+    }
     onBusyChanged: {
         root.scheduleProjectionReview();
         if (appearanceRecoveryDialog.opened && root.busy)
@@ -684,7 +949,9 @@ Page {
                                 )
                                 visible: root.externalChangeWhileEditing
                                 text: qsTr("Load current settings")
-                                enabled: !root.busy && root.trustedValuesValid
+                                enabled: !root.busy
+                                    && !root.sharedBorderTransitionBusy
+                                    && root.trustedValuesValid
                                 Accessible.name: qsTr("Discard this draft and load the current compositor settings")
 
                                 onClicked: root.synchronizeDraft()
@@ -702,6 +969,7 @@ Page {
                                     ? qsTr("Retrying apply…")
                                     : qsTr("Retry apply")
                                 enabled: root.retryApplyAvailable && !root.busy
+                                    && root.sharedBorderApplySafe
                                 Accessible.name: qsTr("Retry applying the exact saved compositor revision")
 
                                 onClicked: root.retryApplyRequested()
@@ -748,6 +1016,108 @@ Page {
                             Accessible.name: text
                         }
 
+                        Frame {
+                            Layout.fillWidth: true
+                            padding: 14
+
+                            background: Rectangle {
+                                color: root.windowBorderSynced
+                                    ? Qt.rgba(
+                                        root.palette.highlight.r,
+                                        root.palette.highlight.g,
+                                        root.palette.highlight.b,
+                                        0.09
+                                    )
+                                    : root.palette.window
+                                radius: 12
+                                border.color: root.windowBorderSynced
+                                    ? Qt.rgba(
+                                        root.palette.highlight.r,
+                                        root.palette.highlight.g,
+                                        root.palette.highlight.b,
+                                        0.34
+                                    )
+                                    : root.palette.mid
+                            }
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                spacing: 10
+
+                                Label {
+                                    objectName: "windowBorderAuthorityMessage"
+                                    Layout.fillWidth: true
+                                    text: root.windowBorderAuthorityMessage
+                                    color: root.palette.text
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+
+                                Label {
+                                    objectName: "sharedBorderMutationErrorMessage"
+                                    Layout.fillWidth: true
+                                    visible:
+                                        root.sharedBorderSourceActionError.length
+                                            > 0
+                                    text: qsTr("The shared border source could not be changed. %1").arg(
+                                        root.sharedBorderSourceActionError
+                                    )
+                                    color: "#ffb8c3"
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                    Accessible.role: Accessible.AlertMessage
+                                    Accessible.name: text
+                                }
+
+                                Flow {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+
+                                    Button {
+                                        objectName: "windowBorderSourceButton"
+                                        implicitHeight: Math.max(
+                                            root.minimumTargetSize,
+                                            implicitBackgroundHeight,
+                                            implicitContentHeight
+                                                + topPadding + bottomPadding
+                                        )
+                                        text: root.windowBorderSynced
+                                            ? qsTr("Override window borders")
+                                            : qsTr("Sync with HyprShelld")
+                                        enabled:
+                                            root.sharedBorderSourceActionEnabled
+                                        Accessible.name: text
+
+                                        onClicked: root.requestWindowBorderSync(
+                                            !root.windowBorderSynced
+                                        )
+                                    }
+
+                                    Button {
+                                        objectName: "retrySharedBorderSyncButton"
+                                        implicitHeight: Math.max(
+                                            root.minimumTargetSize,
+                                            implicitBackgroundHeight,
+                                            implicitContentHeight
+                                                + topPadding + bottomPadding
+                                        )
+                                        visible:
+                                            root.sharedBorderRetryAvailable
+                                        enabled: visible
+                                            && !root.sharedBorderBusy
+                                            && !root.sharedBorderSourceRequestPending
+                                            && !root.busy
+                                            && !root.displayTestActive
+                                        text: qsTr("Retry synchronization")
+                                        Accessible.name: text
+
+                                        onClicked:
+                                            root.retrySharedBorderSyncRequested()
+                                    }
+                                }
+                            }
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 16
@@ -784,6 +1154,7 @@ Page {
                                 value: Number(root.draftValue(root.borderSizeId)) || 0
                                 editable: false
                                 enabled: root.controlsEnabled
+                                    && !root.windowBorderSynced
                                 Accessible.name: qsTr("Window border thickness")
 
                                 onValueModified: root.setDraftValue(
@@ -828,6 +1199,7 @@ Page {
                                 value: Number(root.draftValue(root.roundingId)) || 0
                                 editable: false
                                 enabled: root.controlsEnabled
+                                    && !root.windowBorderSynced
                                 Accessible.name: qsTr("Window corner radius")
 
                                 onValueModified: root.setDraftValue(
@@ -1178,7 +1550,9 @@ Page {
                                 text: qsTr("Discard draft")
                                 visible: root.draftDirty
                                     && !root.externalChangeWhileEditing
-                                enabled: !root.busy && root.trustedValuesValid
+                                enabled: !root.busy
+                                    && !root.sharedBorderTransitionBusy
+                                    && root.trustedValuesValid
                                 Accessible.name: qsTr("Discard Appearance draft")
 
                                 onClicked: root.synchronizeDraft()
@@ -1192,17 +1566,14 @@ Page {
                                     implicitContentHeight + topPadding + bottomPadding
                                 )
                                 text: qsTr("Reset to defaults")
-                                enabled: root.controlsEnabled
-                                    && root.trustedDefinitionsValid
-                                    && !root.valuesEqual(
-                                        root.draftValues,
-                                        root.expectedOptionIds.reduce(
-                                            function(result, id) {
-                                                result[id] = root.optionDefault(id);
-                                                return result;
-                                            }, {}
-                                        )
-                                    )
+                                enabled: {
+                                    const target = root.resetTargetValues();
+                                    return root.controlsEnabled
+                                        && target !== null
+                                        && !root.valuesEqual(
+                                            root.draftValues, target
+                                        );
+                                }
                                 Accessible.name: qsTr("Reset Appearance draft to trusted catalog defaults")
 
                                 onClicked: root.resetDraftToDefaults()

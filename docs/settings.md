@@ -189,14 +189,14 @@ that the desktop is healthy.
 
 ## When settings cannot be saved
 
-Bar size and component settings use separate persistence and recovery areas.
+Core Bar settings and component settings use separate persistence and recovery areas.
 The Bar page reports them separately: a component-settings or catalog failure
-does not make the core bar-size setting read-only. Both interfaces are served
+does not make the core Bar settings read-only. Both interfaces are served
 by the configuration service, so a complete core service outage can make both
 areas temporarily unavailable:
 
-- A **bar size settings** warning disables only the height control. Its
-  displayed value may be stale until core settings reconnect.
+- A **Bar settings** warning disables the height and shared-border controls.
+  Their displayed values may be stale until core settings reconnect.
 - A **workspace settings** warning disables only the **Workspaces** card. It
   appears when component settings or the catalog are unavailable or read-only,
   or when the expected built-in workspace-switcher record or placement cannot
@@ -255,6 +255,14 @@ revision. **Restore last working configuration** is broader: after a separate
 cancel-first confirmation it can replace all pending compositor settings, not
 only Appearance. See [Appearance and behavior](appearance.md) before using that
 recovery action.
+
+Core settings also own HyprShelld's shared border geometry. The Bar consumes
+that style directly, while compositord mirrors its enabled width and corner
+radius into managed Hyprland window borders when synchronization is enabled.
+The compositor values remain visible but read-only in that mode and can be
+separated with **Override window borders**. Core recovery never requires the
+two services to overwrite one another's persistence files; compositord
+reconciles from Config1's verified projection.
 
 If a recovery message keeps returning, close Settings and preserve the active
 and last-known-good file named above for the affected area before seeking help.

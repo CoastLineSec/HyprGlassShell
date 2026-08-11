@@ -10,6 +10,30 @@
         value="true"/>
     </property>
 
+    <property name="ShellBorderEnabled" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ShellBorderWidth" type="u" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ShellBorderRadius" type="u" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="SyncHyprlandWindowBorders" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
     <property name="Revision" type="t" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -35,6 +59,25 @@
     </method>
 
     <method name="ResetBarHeight">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Width and radius each accept 0 through 20 logical pixels. The complete
+      shared-border tuple is persisted and published atomically.
+      Errors:
+        org.hyprshelld.Config1.Error.InvalidSharedBorder
+        org.hyprshelld.Config1.Error.PersistenceFailed
+    -->
+    <method name="SetSharedBorder">
+      <arg name="enabled" type="b" direction="in"/>
+      <arg name="width" type="u" direction="in"/>
+      <arg name="radius" type="u" direction="in"/>
+      <arg name="syncHyprlandWindowBorders" type="b" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <method name="ResetSharedBorder">
       <arg name="revision" type="t" direction="out"/>
     </method>
   </interface>

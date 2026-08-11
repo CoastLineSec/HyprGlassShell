@@ -37,6 +37,7 @@ const QString confirmationToken(32, QLatin1Char('f'));
 constexpr qulonglong baselineRevision = 7;
 constexpr qulonglong previewRevision = 8;
 constexpr qulonglong previewDeadlineMs = 4'102'444'800'000ULL;
+constexpr qulonglong initialSharedBorderSourceRevision = 17;
 
 QByteArray readBytes(const QString &path)
 {
@@ -127,6 +128,9 @@ class FakeCompositor final : public QObject, protected QDBusContext {
     Q_PROPERTY(qulonglong DisplayConfirmationRevision READ confirmationRevision)
     Q_PROPERTY(qulonglong DisplayConfirmationDeadlineMs READ confirmationDeadlineMs)
     Q_PROPERTY(QString DisplayConfirmationGeneration READ confirmationGeneration)
+    Q_PROPERTY(QString SharedBorderSyncState READ sharedBorderSyncState)
+    Q_PROPERTY(qulonglong SharedBorderSourceRevision READ sharedBorderSourceRevision)
+    Q_PROPERTY(QString SharedBorderSyncError READ sharedBorderSyncError)
 
 public:
     enum class PendingBehavior {
@@ -196,6 +200,18 @@ public:
     {
         return confirmationGeneration_;
     }
+    [[nodiscard]] QString sharedBorderSyncState() const
+    {
+        return sharedBorderSyncState_;
+    }
+    [[nodiscard]] qulonglong sharedBorderSourceRevision() const
+    {
+        return sharedBorderSourceRevision_;
+    }
+    [[nodiscard]] QString sharedBorderSyncError() const
+    {
+        return sharedBorderSyncError_;
+    }
     [[nodiscard]] qsizetype pendingCallCount() const
     {
         return pendingCallCount_;
@@ -232,6 +248,12 @@ public:
         confirmationRevision_ = 0;
         confirmationDeadlineMs_ = 0;
         confirmationGeneration_.clear();
+        sharedBorderSyncState_ = QStringLiteral("current");
+        sharedBorderSourceRevision_ = initialSharedBorderSourceRevision;
+        sharedBorderSyncError_.clear();
+        retrySharedBorderSyncCallCount_ = 0;
+        retrySharedBorderSyncErrorName_.clear();
+        retrySharedBorderSyncErrorMessage_.clear();
         pendingBehavior_ = PendingBehavior::NoDisplayConfirmation;
         pendingCallCount_ = 0;
         holdSnapshots_ = false;
@@ -342,9 +364,50 @@ public:
         ambiguousRecover_ = enabled;
     }
 
+    bool setSharedBorderSync(
+        QString state,
+        const qulonglong sourceRevision,
+        QString error,
+        const bool publish = false
+    )
+    {
+        sharedBorderSyncState_ = std::move(state);
+        sharedBorderSourceRevision_ = sourceRevision;
+        sharedBorderSyncError_ = std::move(error);
+        return !publish || publishSharedBorderProperties({
+            {QStringLiteral("SharedBorderSyncState"), sharedBorderSyncState_},
+            {
+                QStringLiteral("SharedBorderSourceRevision"),
+                QVariant::fromValue<qulonglong>(sharedBorderSourceRevision_)
+            },
+            {QStringLiteral("SharedBorderSyncError"), sharedBorderSyncError_},
+        });
+    }
+
+    bool publishSharedBorderProperties(const QVariantMap &changed)
+    {
+        auto signal = QDBusMessage::createSignal(
+            objectPath,
+            propertiesInterface,
+            QStringLiteral("PropertiesChanged")
+        );
+        signal.setArguments({interfaceName, changed, QStringList{}});
+        return connection_.send(signal);
+    }
+
+    void setRetrySharedBorderSyncError(QString name, QString message)
+    {
+        retrySharedBorderSyncErrorName_ = std::move(name);
+        retrySharedBorderSyncErrorMessage_ = std::move(message);
+    }
+
     [[nodiscard]] int replaceCallCount() const { return replaceCallCount_; }
     [[nodiscard]] int applyCallCount() const { return applyCallCount_; }
     [[nodiscard]] int recoverCallCount() const { return recoverCallCount_; }
+    [[nodiscard]] int retrySharedBorderSyncCallCount() const
+    {
+        return retrySharedBorderSyncCallCount_;
+    }
     [[nodiscard]] qsizetype heldReplaceCount() const
     {
         return heldReplaces_.size();
@@ -692,6 +755,21 @@ public slots:
         return 0;
     }
 
+    void RetrySharedBorderSync()
+    {
+        ++retrySharedBorderSyncCallCount_;
+        if (retrySharedBorderSyncErrorName_.isEmpty()) return;
+        const auto errorName = std::exchange(
+            retrySharedBorderSyncErrorName_,
+            {}
+        );
+        const auto errorMessage = std::exchange(
+            retrySharedBorderSyncErrorMessage_,
+            {}
+        );
+        sendErrorReply(errorName, errorMessage);
+    }
+
 private:
     struct HeldPreview final {
         QDBusMessage call;
@@ -782,6 +860,12 @@ private:
     qulonglong confirmationRevision_ = 0;
     qulonglong confirmationDeadlineMs_ = 0;
     QString confirmationGeneration_;
+    QString sharedBorderSyncState_;
+    qulonglong sharedBorderSourceRevision_ = 0;
+    QString sharedBorderSyncError_;
+    int retrySharedBorderSyncCallCount_ = 0;
+    QString retrySharedBorderSyncErrorName_;
+    QString retrySharedBorderSyncErrorMessage_;
     PendingBehavior pendingBehavior_ = PendingBehavior::NoDisplayConfirmation;
     qsizetype pendingCallCount_ = 0;
     bool holdSnapshots_ = false;
@@ -876,8 +960,234 @@ private slots:
             ).toString(),
             QStringLiteral("dwindle")
         );
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("current")
+        );
+        QCOMPARE(
+            client.sharedBorderSourceRevision(),
+            initialSharedBorderSourceRevision
+        );
+        QCOMPARE(
+            client.sharedBorderSourceRevisionToken(),
+            QStringLiteral("17")
+        );
+        QVERIFY(client.sharedBorderSyncError().isEmpty());
         QVERIFY(client.appearanceErrorName().isEmpty());
         QVERIFY(client.lastErrorName().isEmpty());
+    }
+
+    void projectsSharedBorderPropertiesWithoutRegressingAppearance()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        const auto appearanceValues = client.appearanceValues();
+        QSignalSpy sharedBorderChanges(
+            &client,
+            &HyprShelld::CompositorClient::sharedBorderSyncChanged
+        );
+        QVERIFY(sharedBorderChanges.isValid());
+
+        QVERIFY(service_.setSharedBorderSync(
+            QStringLiteral("pending"),
+            initialSharedBorderSourceRevision + 1,
+            {},
+            true
+        ));
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.sharedBorderSyncState(),
+            QStringLiteral("pending"),
+            3000
+        );
+        QCOMPARE(
+            client.sharedBorderSourceRevision(),
+            initialSharedBorderSourceRevision + 1
+        );
+        QCOMPARE(
+            client.sharedBorderSourceRevisionToken(),
+            QStringLiteral("18")
+        );
+        QVERIFY(client.sharedBorderSyncError().isEmpty());
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appearanceValues(), appearanceValues);
+
+        QVERIFY(service_.setSharedBorderSync(
+            QStringLiteral("failed"),
+            initialSharedBorderSourceRevision + 1,
+            QStringLiteral("Injected synchronization failure"),
+            true
+        ));
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.sharedBorderSyncState(),
+            QStringLiteral("failed"),
+            3000
+        );
+        QCOMPARE(
+            client.sharedBorderSyncError(),
+            QStringLiteral("Injected synchronization failure")
+        );
+        QTRY_COMPARE_WITH_TIMEOUT(sharedBorderChanges.size(), 2, 3000);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appearanceValues(), appearanceValues);
+    }
+
+    void rejectsMalformedSharedBorderProperties_data()
+    {
+        QTest::addColumn<QVariantMap>("changed");
+
+        const auto validRevision = QVariant::fromValue<qulonglong>(
+            initialSharedBorderSourceRevision
+        );
+        QTest::newRow("state-wrong-type") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), 1U},
+            {QStringLiteral("SharedBorderSourceRevision"), validRevision},
+            {QStringLiteral("SharedBorderSyncError"), QString{}},
+        };
+        QTest::newRow("revision-wrong-type") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), QStringLiteral("current")},
+            {
+                QStringLiteral("SharedBorderSourceRevision"),
+                QStringLiteral("17")
+            },
+            {QStringLiteral("SharedBorderSyncError"), QString{}},
+        };
+        QTest::newRow("error-wrong-type") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), QStringLiteral("current")},
+            {QStringLiteral("SharedBorderSourceRevision"), validRevision},
+            {QStringLiteral("SharedBorderSyncError"), false},
+        };
+        QTest::newRow("unknown-state") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), QStringLiteral("retrying")},
+            {QStringLiteral("SharedBorderSourceRevision"), validRevision},
+            {QStringLiteral("SharedBorderSyncError"), QString{}},
+        };
+        QTest::newRow("current-with-error") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), QStringLiteral("current")},
+            {QStringLiteral("SharedBorderSourceRevision"), validRevision},
+            {
+                QStringLiteral("SharedBorderSyncError"),
+                QStringLiteral("Unexpected error")
+            },
+        };
+        QTest::newRow("failed-without-error") << QVariantMap{
+            {QStringLiteral("SharedBorderSyncState"), QStringLiteral("failed")},
+            {QStringLiteral("SharedBorderSourceRevision"), validRevision},
+            {QStringLiteral("SharedBorderSyncError"), QString{}},
+        };
+    }
+
+    void rejectsMalformedSharedBorderProperties()
+    {
+        QFETCH(QVariantMap, changed);
+
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("current")
+        );
+
+        QVERIFY(service_.publishSharedBorderProperties(changed));
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("current")
+        );
+        QCOMPARE(
+            client.sharedBorderSourceRevision(),
+            initialSharedBorderSourceRevision
+        );
+        QVERIFY(client.sharedBorderSyncError().isEmpty());
+    }
+
+    void ownerLossResetsSharedBorderProjection()
+    {
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("current")
+        );
+        QSignalSpy sharedBorderChanges(
+            &client,
+            &HyprShelld::CompositorClient::sharedBorderSyncChanged
+        );
+        QVERIFY(sharedBorderChanges.isValid());
+
+        service_.stop();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("unavailable")
+        );
+        QCOMPARE(client.sharedBorderSourceRevision(), 0ULL);
+        QCOMPARE(
+            client.sharedBorderSourceRevisionToken(),
+            QStringLiteral("0")
+        );
+        QCOMPARE(
+            client.sharedBorderSyncError(),
+            QStringLiteral("Shared visual settings are unavailable")
+        );
+        QCOMPARE(sharedBorderChanges.size(), 1);
+    }
+
+    void retriesSharedBorderSynchronizationWithAnEmptyReplyAndCopiesErrors()
+    {
+        QVERIFY(service_.setSharedBorderSync(
+            QStringLiteral("failed"),
+            initialSharedBorderSourceRevision,
+            QStringLiteral("Injected synchronization failure")
+        ));
+        QVERIFY(service_.start());
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        const auto appearanceValues = client.appearanceValues();
+        QSignalSpy failures(
+            &client,
+            &HyprShelld::CompositorClient::operationFailed
+        );
+        QVERIFY(failures.isValid());
+
+        client.retrySharedBorderSync();
+        QVERIFY(client.busy());
+        QCOMPARE(
+            client.busyOperation(),
+            QStringLiteral("shared-border-sync")
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(service_.retrySharedBorderSyncCallCount(), 1);
+        QCOMPARE(failures.size(), 0);
+        QVERIFY(client.lastErrorName().isEmpty());
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appearanceValues(), appearanceValues);
+
+        service_.setRetrySharedBorderSyncError(
+            QStringLiteral("org.hyprshelld.Compositor1.Error.Unavailable"),
+            QStringLiteral("Injected retry failure")
+        );
+        client.retrySharedBorderSync();
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(service_.retrySharedBorderSyncCallCount(), 2);
+        QTRY_COMPARE_WITH_TIMEOUT(failures.size(), 1, 3000);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral("org.hyprshelld.Compositor1.Error.Unavailable")
+        );
+        QCOMPARE(
+            client.lastErrorMessage(),
+            QStringLiteral("Injected retry failure")
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(client.appearanceAvailable(), 3000);
+        QCOMPARE(client.appearanceValues(), appearanceValues);
+        QCOMPARE(
+            client.sharedBorderSyncState(),
+            QStringLiteral("failed")
+        );
     }
 
     void catalogFailureDisablesOnlyAppearance()
@@ -951,6 +1261,23 @@ private slots:
         QCOMPARE(client.revision(), exactRevision);
         QCOMPARE(
             client.revisionToken(),
+            QStringLiteral("9007199254740993")
+        );
+    }
+
+    void exposesAnExactSharedBorderSourceRevisionTokenBeyondQmlIntegerPrecision()
+    {
+        constexpr qulonglong exactRevision = 9'007'199'254'740'993ULL;
+        QVERIFY(service_.setSharedBorderSync(
+            QStringLiteral("current"), exactRevision, {}
+        ));
+        QVERIFY(service_.start());
+
+        HyprShelld::CompositorClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.sharedBorderSourceRevision(), exactRevision);
+        QCOMPARE(
+            client.sharedBorderSourceRevisionToken(),
             QStringLiteral("9007199254740993")
         );
     }

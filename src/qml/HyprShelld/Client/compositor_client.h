@@ -58,6 +58,10 @@ class CompositorClient final : public QObject {
     Q_PROPERTY(qulonglong displayConfirmationDeadlineMs READ displayConfirmationDeadlineMs NOTIFY displayConfirmationChanged)
     Q_PROPERTY(QString displayConfirmationGeneration READ displayConfirmationGeneration NOTIFY displayConfirmationChanged)
     Q_PROPERTY(bool displayConfirmationOwned READ displayConfirmationOwned NOTIFY displayConfirmationChanged)
+    Q_PROPERTY(QString sharedBorderSyncState READ sharedBorderSyncState NOTIFY sharedBorderSyncChanged)
+    Q_PROPERTY(qulonglong sharedBorderSourceRevision READ sharedBorderSourceRevision NOTIFY sharedBorderSyncChanged)
+    Q_PROPERTY(QString sharedBorderSourceRevisionToken READ sharedBorderSourceRevisionToken NOTIFY sharedBorderSyncChanged)
+    Q_PROPERTY(QString sharedBorderSyncError READ sharedBorderSyncError NOTIFY sharedBorderSyncChanged)
     Q_PROPERTY(QString lastErrorName READ lastErrorName NOTIFY lastErrorChanged)
     Q_PROPERTY(QString lastErrorMessage READ lastErrorMessage NOTIFY lastErrorChanged)
 
@@ -99,6 +103,10 @@ public:
     [[nodiscard]] qulonglong displayConfirmationDeadlineMs() const;
     [[nodiscard]] QString displayConfirmationGeneration() const;
     [[nodiscard]] bool displayConfirmationOwned() const;
+    [[nodiscard]] QString sharedBorderSyncState() const;
+    [[nodiscard]] qulonglong sharedBorderSourceRevision() const;
+    [[nodiscard]] QString sharedBorderSourceRevisionToken() const;
+    [[nodiscard]] QString sharedBorderSyncError() const;
     [[nodiscard]] QString lastErrorName() const;
     [[nodiscard]] QString lastErrorMessage() const;
 
@@ -114,6 +122,7 @@ public:
     );
     Q_INVOKABLE void confirmDisplayConfiguration();
     Q_INVOKABLE void revertDisplayConfiguration();
+    Q_INVOKABLE void retrySharedBorderSync();
     Q_INVOKABLE void clearError();
 
 signals:
@@ -130,6 +139,7 @@ signals:
     void applyStateChanged();
     void connectedDisplaysChanged();
     void displayConfirmationChanged();
+    void sharedBorderSyncChanged();
     void lastErrorChanged();
     void operationFailed(const QString &name, const QString &message);
 
@@ -153,6 +163,7 @@ private:
         Confirm,
         Revert,
         Recover,
+        SharedBorderSync,
     };
 
     struct AppearanceSaveRequest final {
@@ -210,6 +221,7 @@ private:
     qulonglong displaysObservedAtMs_ = 0;
     qulonglong displayConfirmationRevision_ = 0;
     qulonglong displayConfirmationDeadlineMs_ = 0;
+    qulonglong sharedBorderSourceRevision_ = 0;
     QString loadState_ = QStringLiteral("unavailable");
     QString managementState_ = QStringLiteral("unmanaged");
     QString entrypointDigest_;
@@ -224,6 +236,10 @@ private:
     QString displayConfirmationState_ = QStringLiteral("idle");
     QString displayConfirmationToken_;
     QString displayConfirmationGeneration_;
+    QString sharedBorderSyncState_ = QStringLiteral("unavailable");
+    QString sharedBorderSyncError_ = QStringLiteral(
+        "Shared visual settings are unavailable"
+    );
     QString lastErrorName_;
     QString lastErrorMessage_;
     QString busyOperation_;

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtTest
+import HyprShelld.Client
 import "../../src/settings" as Settings
 
 TestCase {
@@ -17,6 +18,10 @@ TestCase {
             minimumBarHeight: 24
             maximumBarHeight: 96
             defaultBarHeight: 40
+            shellBorderEnabled: true
+            shellBorderWidth: 1
+            shellBorderRadius: 15
+            syncHyprlandWindowBorders: true
             workspaceShowIdentifiers: true
             workspaceShowNames: false
             workspaceShowApplications: false
@@ -245,12 +250,21 @@ TestCase {
         };
     }
 
-    function configureAppearancePage(page, values) {
+    function configureAppearancePage(page, values, windowBorderSynced) {
         page.serviceAvailable = true;
         page.writable = true;
         page.catalogAvailable = true;
         page.appearanceOptions = appearanceDefinitions();
         page.appearanceValues = values || appearanceDefaults();
+        page.sharedBorderAvailable = true;
+        page.sharedBorderBusy = false;
+        page.windowBorderSynced = windowBorderSynced === true;
+        page.sharedBorderSyncState = windowBorderSynced === true
+            ? "current" : "override";
+        page.sharedBorderSyncError = "";
+        page.sharedBorderClientError = "";
+        page.sharedBorderConfigRevisionToken = "11";
+        page.sharedBorderVerifiedRevisionToken = "11";
         page.revisionToken = "7";
         page.appliedRevision = 7;
         page.loadState = "normal";
@@ -1585,6 +1599,144 @@ TestCase {
         compare(resetRequestCount, 1);
     }
 
+    function test_sharedBorderControlsUseOneAtomicRequestAndRealPreview() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+        enableCoreSettings(page);
+
+        const enabledControl = findChild(page, "shellBorderEnabled");
+        const widthControl = findChild(page, "shellBorderWidth");
+        const radiusControl = findChild(page, "shellBorderRadius");
+        const syncControl = findChild(
+            page,
+            "syncHyprlandWindowBorders"
+        );
+        const authorityMessage = findChild(
+            page,
+            "sharedBorderAuthorityMessage"
+        );
+        const enabledDescription = findChild(
+            page,
+            "shellBorderEnabledDescription"
+        );
+        const reset = findChild(page, "resetSharedBorder");
+        const previewBar = findChild(page, "previewBarVisual");
+        verify(enabledControl !== null);
+        verify(widthControl !== null);
+        verify(radiusControl !== null);
+        verify(syncControl !== null);
+        verify(authorityMessage !== null);
+        verify(enabledDescription !== null);
+        verify(reset !== null);
+        verify(previewBar !== null);
+
+        compare(enabledControl.checked, true);
+        compare(widthControl.from, 0);
+        compare(widthControl.to, 20);
+        compare(widthControl.value, 1);
+        compare(radiusControl.from, 0);
+        compare(radiusControl.to, 20);
+        compare(radiusControl.value, 15);
+        compare(syncControl.checked, true);
+        compare(reset.enabled, false);
+        compare(
+            enabledControl.Accessible.name,
+            "Show shared border on the bar and synchronized windows"
+        );
+        verify(enabledDescription.text.includes(
+            "while synced"
+        ));
+        verify(enabledDescription.text.includes(
+            "kept when hidden"
+        ));
+        verify(authorityMessage.text.includes("HyprShelld controls"));
+        verify(authorityMessage.text.includes("read-only"));
+        compare(previewBar.shellBorderEnabled, true);
+        compare(previewBar.shellBorderWidth, 1);
+        compare(previewBar.shellBorderRadius, 15);
+
+        let requestCount = 0;
+        let request = [];
+        let resetCount = 0;
+        page.sharedBorderRequested.connect(function(
+            enabled,
+            width,
+            radius,
+            sync
+        ) {
+            ++requestCount;
+            request = [enabled, width, radius, sync];
+        });
+        page.resetSharedBorderRequested.connect(function() {
+            ++resetCount;
+        });
+
+        page.requestSharedBorder(true, 7, 15, true);
+        compare(requestCount, 1);
+        compare(request, [true, 7, 15, true]);
+        compare(previewBar.shellBorderWidth, 7);
+
+        page.requestSharedBorder(true, 7, 11, true);
+        compare(requestCount, 2);
+        compare(request, [true, 7, 11, true]);
+        compare(previewBar.shellBorderRadius, 11);
+
+        page.requestSharedBorder(false, 7, 11, true);
+        compare(requestCount, 3);
+        compare(request, [false, 7, 11, true]);
+        compare(previewBar.shellBorderEnabled, false);
+        compare(previewBar.renderedBorderWidth, 0);
+
+        page.requestSharedBorder(false, 7, 11, false);
+        compare(requestCount, 4);
+        compare(request, [false, 7, 11, false]);
+        verify(authorityMessage.text.includes("own window border override"));
+        compare(reset.enabled, true);
+
+        reset.clicked();
+        compare(resetCount, 1);
+        compare(requestCount, 4);
+        compare(previewBar.shellBorderEnabled, true);
+        compare(previewBar.shellBorderWidth, 1);
+        compare(previewBar.shellBorderRadius, 15);
+        compare(syncControl.checked, true);
+        compare(reset.enabled, false);
+    }
+
+    function test_sharedBorderControlsFollowCoreAvailability() {
+        const page = createTemporaryObject(pageComponent, this);
+        verify(page !== null);
+
+        const enabledControl = findChild(page, "shellBorderEnabled");
+        const widthControl = findChild(page, "shellBorderWidth");
+        const radiusControl = findChild(page, "shellBorderRadius");
+        const syncControl = findChild(
+            page,
+            "syncHyprlandWindowBorders"
+        );
+        verify(enabledControl !== null);
+        verify(widthControl !== null);
+        verify(radiusControl !== null);
+        verify(syncControl !== null);
+
+        compare(enabledControl.enabled, false);
+        compare(widthControl.enabled, false);
+        compare(radiusControl.enabled, false);
+        compare(syncControl.enabled, false);
+
+        enableCoreSettings(page);
+        compare(enabledControl.enabled, true);
+        compare(widthControl.enabled, true);
+        compare(radiusControl.enabled, true);
+        compare(syncControl.enabled, true);
+
+        page.coreBusy = true;
+        compare(enabledControl.enabled, false);
+        compare(widthControl.enabled, false);
+        compare(radiusControl.enabled, false);
+        compare(syncControl.enabled, false);
+    }
+
     function test_busyAndErrorsAreWired() {
         const page = createTemporaryObject(pageComponent, this);
         verify(page !== null);
@@ -2381,11 +2533,23 @@ TestCase {
         const scrollView = findChild(page, "barOptionsScrollView");
         const content = findChild(page, "barOptionsContent");
         const preview = findChild(page, "barPreview");
+        const borderCard = findChild(page, "sharedBorderSettingsCard");
+        const borderEnabled = findChild(page, "shellBorderEnabled");
+        const borderWidth = findChild(page, "shellBorderWidth");
+        const borderRadius = findChild(page, "shellBorderRadius");
+        const borderSync = findChild(page, "syncHyprlandWindowBorders");
+        const borderReset = findChild(page, "resetSharedBorder");
         const reset = findChild(page, "resetWorkspaceSwitcher");
         verify(sticky !== null);
         verify(scrollView !== null);
         verify(content !== null);
         verify(preview !== null);
+        verify(borderCard !== null);
+        verify(borderEnabled !== null);
+        verify(borderWidth !== null);
+        verify(borderRadius !== null);
+        verify(borderSync !== null);
+        verify(borderReset !== null);
         verify(reset !== null);
         waitForRendering(page);
         wait(0);
@@ -2401,6 +2565,22 @@ TestCase {
         verify(content.x >= 0);
         verify(content.x + content.width
             <= scrollView.contentWidth + 0.01);
+        for (const control of [
+            borderEnabled,
+            borderWidth,
+            borderRadius,
+            borderSync,
+            borderReset
+        ]) {
+            verify(control.height >= 44);
+            const position = control.mapToItem(page, 0, 0);
+            verify(position.x >= 0);
+            verify(position.x + control.width <= page.width + 0.01);
+        }
+        const borderCardPosition = borderCard.mapToItem(content, 0, 0);
+        verify(borderCardPosition.x >= 0);
+        verify(borderCardPosition.x + borderCard.width
+            <= content.width + 0.01);
 
         const stickyBefore = sticky.mapToItem(page, 0, 0);
         const previewBefore = preview.mapToItem(page, 0, 0);
@@ -3506,6 +3686,7 @@ TestCase {
             "loadCurrentAppearanceButton",
             "retryApplyAppearanceButton",
             "recoverAppearanceButton",
+            "windowBorderSourceButton",
             "appearanceBorderSize",
             "appearanceRounding",
             "appearanceBlurEnabled",
@@ -3548,6 +3729,920 @@ TestCase {
         compare(
             findChild(page, "appearancePreviewSnapGuide").visible,
             true
+        );
+    }
+
+    function test_syncedWindowBorderPairIsReadOnlyAndChangesSourceAtomically() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 7;
+        resolvedValues[page.roundingId] = 13;
+        configureAppearancePage(page, resolvedValues, true);
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+
+        const border = findChild(page, "appearanceBorderSize");
+        const rounding = findChild(page, "appearanceRounding");
+        const blur = findChild(page, "appearanceBlurEnabled");
+        const source = findChild(page, "windowBorderSourceButton");
+        const message = findChild(page, "windowBorderAuthorityMessage");
+        verify(border !== null);
+        verify(rounding !== null);
+        verify(blur !== null);
+        verify(source !== null);
+        verify(message !== null);
+
+        compare(border.value, 7);
+        compare(rounding.value, 13);
+        compare(border.enabled, false);
+        compare(rounding.enabled, false);
+        compare(blur.enabled, true);
+        compare(source.text, "Override window borders");
+        compare(source.enabled, true);
+        verify(source.implicitHeight >= 44);
+        verify(String(message.text).includes("Controlled by HyprShelld"));
+        verify(String(message.text).includes("Bar page"));
+
+        let requestCount = 0;
+        let requests = [];
+        page.windowBorderSyncRequested.connect(function(sync) {
+            ++requestCount;
+            requests.push(sync);
+        });
+
+        source.clicked();
+        compare(requestCount, 1);
+        compare(requests, [false]);
+
+        // Model the single authoritative Config1 update that follows the
+        // request. Only the synchronized pair changes editability.
+        page.sharedBorderBusy = true;
+        page.sharedBorderConfigRevisionToken = "12";
+        page.windowBorderSynced = false;
+        page.sharedBorderSyncState = "override";
+        page.sharedBorderVerifiedRevisionToken = "12";
+        page.sharedBorderBusy = false;
+        wait(0);
+        compare(border.enabled, true);
+        compare(rounding.enabled, true);
+        compare(blur.enabled, true);
+        compare(source.text, "Sync with HyprShelld");
+
+        source.clicked();
+        compare(requestCount, 2);
+        compare(requests, [false, true]);
+    }
+
+    function test_unavailableProjectionKeepsSourceActionReversible() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const overrideValues = appearanceDefaults();
+        overrideValues[page.borderSizeId] = 4;
+        overrideValues[page.roundingId] = 5;
+        configureAppearancePage(page, overrideValues);
+        waitForRendering(page);
+        wait(0);
+
+        const source = findChild(page, "windowBorderSourceButton");
+        const save = findChild(page, "saveAppearanceButton");
+        const retryApply = findChild(
+            page,
+            "retryApplyAppearanceButton"
+        );
+        verify(source !== null);
+        verify(save !== null);
+        verify(retryApply !== null);
+
+        const requests = [];
+        page.windowBorderSyncRequested.connect(function(sync) {
+            requests.push(sync);
+        });
+        source.clicked();
+        compare(requests, [true]);
+
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 8;
+        resolvedValues[page.roundingId] = 12;
+        page.sharedBorderBusy = true;
+        page.sharedBorderConfigRevisionToken = "12";
+        page.windowBorderSynced = true;
+        page.appearanceValues = resolvedValues;
+        page.sharedBorderSyncState = "unavailable";
+        page.sharedBorderBusy = false;
+        wait(0);
+        page.reviewProjection();
+
+        compare(page.sharedBorderSourceRequestPending, false);
+        compare(page.sharedBorderProjectionPending, true);
+        compare(page.sharedBorderRevisionVerified, false);
+        compare(page.draftValue(page.borderSizeId), 8);
+        compare(page.draftValue(page.roundingId), 12);
+        compare(page.draftDirty, false);
+        compare(source.enabled, true);
+        compare(save.enabled, false);
+        page.retryApplyAvailable = true;
+        compare(retryApply.enabled, false);
+
+        source.clicked();
+        compare(requests, [true, false]);
+        page.sharedBorderBusy = true;
+        page.sharedBorderConfigRevisionToken = "13";
+        page.windowBorderSynced = false;
+        page.appearanceValues = overrideValues;
+        page.sharedBorderBusy = false;
+        wait(0);
+        page.reviewProjection();
+
+        compare(page.sharedBorderSourceRequestPending, false);
+        compare(page.sharedBorderProjectionPending, true);
+        compare(page.sharedBorderRevisionVerified, false);
+        compare(page.draftValue(page.borderSizeId), 4);
+        compare(page.draftValue(page.roundingId), 5);
+        compare(page.draftDirty, false);
+        compare(source.enabled, true);
+        compare(save.enabled, false);
+        compare(retryApply.enabled, false);
+        compare(requests, [true, false]);
+    }
+
+    function test_dirtyAppearanceDraftBlocksWindowBorderSourceChanges() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const source = findChild(page, "windowBorderSourceButton");
+        verify(source !== null);
+        compare(source.enabled, true);
+
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftDirty, true);
+        compare(source.enabled, false);
+
+        page.synchronizeDraft();
+        compare(page.draftDirty, false);
+        compare(source.enabled, true);
+
+        page.saveSubmitted = true;
+        compare(source.enabled, false);
+        page.saveSubmitted = false;
+        compare(source.enabled, true);
+    }
+
+    function test_sharedBorderBusyPreservesAndLocksAppearanceDraft() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.blurId, false);
+        const save = findChild(page, "saveAppearanceButton");
+        const source = findChild(page, "windowBorderSourceButton");
+        verify(save !== null);
+        verify(source !== null);
+        compare(page.draftDirty, true);
+        compare(save.enabled, true);
+
+        let saveCount = 0;
+        page.saveRequested.connect(function() { ++saveCount; });
+        page.sharedBorderBusy = true;
+        wait(0);
+        compare(page.controlsEnabled, false);
+        compare(save.enabled, false);
+        compare(source.enabled, false);
+
+        page.setDraftValue(page.shadowId, false);
+        page.resetDraftToDefaults();
+        page.synchronizeDraft();
+        page.submitDraft();
+        compare(page.draftValue(page.blurId), false);
+        compare(page.draftValue(page.shadowId), true);
+        compare(page.draftDirty, true);
+        compare(saveCount, 0);
+
+        page.sharedBorderBusy = false;
+        wait(0);
+        compare(page.controlsEnabled, true);
+        compare(page.draftValue(page.blurId), false);
+        compare(save.enabled, true);
+        page.setDraftValue(page.shadowId, false);
+        compare(page.draftValue(page.shadowId), false);
+    }
+
+    function test_appearanceApplyActionsRequireSettledSharedBorderAuthority() {
+        const rows = [
+            {
+                label: "synchronized current",
+                synced: true,
+                state: "current",
+                sourceBusy: false,
+                safe: true,
+                controlsEnabled: true
+            },
+            {
+                label: "synchronized saved",
+                synced: true,
+                state: "saved",
+                sourceBusy: false,
+                safe: true,
+                controlsEnabled: true
+            },
+            {
+                label: "synchronized pending",
+                synced: true,
+                state: "pending",
+                sourceBusy: false,
+                safe: false,
+                controlsEnabled: false
+            },
+            {
+                label: "synchronized unavailable",
+                synced: true,
+                state: "unavailable",
+                sourceBusy: false,
+                safe: false,
+                controlsEnabled: true
+            },
+            {
+                label: "synchronized failed",
+                synced: true,
+                state: "failed",
+                sourceBusy: false,
+                safe: false,
+                controlsEnabled: true
+            },
+            {
+                label: "explicit override",
+                synced: false,
+                state: "override",
+                sourceBusy: false,
+                safe: true,
+                controlsEnabled: true
+            },
+            {
+                label: "override source busy",
+                synced: false,
+                state: "override",
+                sourceBusy: true,
+                safe: false,
+                controlsEnabled: false
+            },
+            {
+                label: "incoherent override state",
+                synced: false,
+                state: "current",
+                sourceBusy: false,
+                safe: false,
+                controlsEnabled: true
+            }
+        ];
+
+        for (const row of rows) {
+            const testWindow = createTemporaryObject(
+                appearancePageComponent,
+                this
+            );
+            verify(testWindow !== null, row.label);
+            const page = testWindow.page;
+            configureAppearancePage(page, undefined, row.synced);
+            waitForRendering(page);
+            wait(0);
+
+            page.setDraftValue(page.blurId, false);
+            compare(page.draftDirty, true, row.label);
+            page.retryApplyAvailable = true;
+            page.sharedBorderSyncState = row.state;
+            page.sharedBorderBusy = row.sourceBusy;
+            wait(0);
+
+            const save = findChild(page, "saveAppearanceButton");
+            const retry = findChild(page, "retryApplyAppearanceButton");
+            verify(save !== null, row.label);
+            verify(retry !== null, row.label);
+            compare(page.sharedBorderApplySafe, row.safe, row.label);
+            compare(page.controlsEnabled, row.controlsEnabled, row.label);
+            compare(save.enabled, row.safe, row.label);
+            compare(retry.enabled, row.safe, row.label);
+            compare(page.draftValue(page.blurId), false, row.label);
+            testWindow.destroy();
+        }
+    }
+
+    function test_retryApplyLocksForCompleteSourceTransition() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        page.retryApplyAvailable = true;
+        waitForRendering(page);
+        wait(0);
+
+        const retry = findChild(page, "retryApplyAppearanceButton");
+        const source = findChild(page, "windowBorderSourceButton");
+        verify(retry !== null);
+        verify(source !== null);
+        compare(page.sharedBorderApplySafe, true);
+        compare(retry.enabled, true);
+
+        let sourceRequests = 0;
+        page.windowBorderSyncRequested.connect(function(sync) {
+            ++sourceRequests;
+            compare(sync, true);
+        });
+        source.clicked();
+        compare(sourceRequests, 1);
+        compare(page.sharedBorderSourceRequestPending, true);
+        compare(retry.enabled, false);
+
+        page.sharedBorderBusy = true;
+        page.sharedBorderConfigRevisionToken = "12";
+        page.sharedBorderSyncState = "pending";
+        page.windowBorderSynced = true;
+        page.sharedBorderBusy = false;
+        wait(0);
+        compare(page.sharedBorderSourceRequestPending, false);
+        compare(page.sharedBorderProjectionPending, true);
+        compare(retry.enabled, false);
+
+        page.sharedBorderVerifiedRevisionToken = "12";
+        page.sharedBorderSyncState = "saved";
+        wait(0);
+        page.reviewProjection();
+        compare(page.sharedBorderProjectionPending, false);
+        compare(page.sharedBorderApplySafe, true);
+        compare(retry.enabled, true);
+        compare(sourceRequests, 1);
+    }
+
+    function test_sharedBorderRevisionCorrelationIsLosslessAndPolicyAware() {
+        const terminalStates = ["current", "saved"];
+        const configRevision = "9007199254740993";
+        const olderRevision = "9007199254740992";
+
+        for (const terminalState of terminalStates) {
+            const testWindow = createTemporaryObject(
+                appearancePageComponent,
+                this
+            );
+            verify(testWindow !== null, terminalState);
+            const page = testWindow.page;
+            configureAppearancePage(page);
+            page.retryApplyAvailable = true;
+            waitForRendering(page);
+            wait(0);
+
+            const source = findChild(page, "windowBorderSourceButton");
+            const retry = findChild(page, "retryApplyAppearanceButton");
+            verify(source !== null, terminalState);
+            verify(retry !== null, terminalState);
+
+            const resolvedValues = appearanceDefaults();
+            resolvedValues[page.borderSizeId] = 6;
+            resolvedValues[page.roundingId] = 10;
+            page.sharedBorderBusy = true;
+            page.sharedBorderConfigRevisionToken = configRevision;
+            page.sharedBorderVerifiedRevisionToken = olderRevision;
+            page.windowBorderSynced = true;
+            page.appearanceValues = resolvedValues;
+            page.sharedBorderSyncState = terminalState;
+            page.sharedBorderBusy = false;
+            wait(0);
+            page.reviewProjection();
+
+            // No transient pending state was observed. The already-terminal
+            // projection remains gated until the exact source revision lands.
+            compare(
+                page.sharedBorderConfigRevisionToken,
+                configRevision,
+                terminalState
+            );
+            compare(
+                page.sharedBorderVerifiedRevisionToken,
+                olderRevision,
+                terminalState
+            );
+            compare(page.sharedBorderRevisionVerified, false, terminalState);
+            compare(
+                page.sharedBorderProjectionPending,
+                true,
+                terminalState
+            );
+            compare(page.sharedBorderApplySafe, false, terminalState);
+            compare(retry.enabled, false, terminalState);
+            compare(source.enabled, true, terminalState);
+
+            page.sharedBorderVerifiedRevisionToken =
+                "0" + configRevision;
+            wait(0);
+            compare(page.sharedBorderRevisionVerified, false, terminalState);
+            compare(
+                page.sharedBorderProjectionPending,
+                true,
+                terminalState
+            );
+
+            page.sharedBorderVerifiedRevisionToken = configRevision;
+            wait(0);
+            page.reviewProjection();
+            compare(page.sharedBorderRevisionVerified, true, terminalState);
+            compare(
+                page.sharedBorderProjectionPending,
+                false,
+                terminalState
+            );
+            compare(page.sharedBorderApplySafe, true, terminalState);
+            compare(retry.enabled, true, terminalState);
+            compare(page.draftValue(page.borderSizeId), 6, terminalState);
+            compare(page.draftValue(page.roundingId), 10, terminalState);
+            testWindow.destroy();
+        }
+
+        const terminalFailureWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(terminalFailureWindow !== null);
+        const failurePage = terminalFailureWindow.page;
+        configureAppearancePage(failurePage);
+        failurePage.sharedBorderBusy = true;
+        failurePage.sharedBorderConfigRevisionToken = "12";
+        failurePage.sharedBorderVerifiedRevisionToken = "12";
+        failurePage.windowBorderSynced = true;
+        failurePage.sharedBorderSyncState = "failed";
+        failurePage.sharedBorderBusy = false;
+        wait(0);
+        failurePage.reviewProjection();
+        compare(failurePage.sharedBorderProjectionPending, false);
+        compare(failurePage.controlsEnabled, true);
+        compare(failurePage.sharedBorderApplySafe, false);
+
+        const unavailableWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(unavailableWindow !== null);
+        const unavailablePage = unavailableWindow.page;
+        configureAppearancePage(unavailablePage);
+        unavailablePage.sharedBorderBusy = true;
+        unavailablePage.sharedBorderConfigRevisionToken = "0";
+        unavailablePage.sharedBorderVerifiedRevisionToken = "0";
+        unavailablePage.windowBorderSynced = true;
+        unavailablePage.sharedBorderSyncState = "unavailable";
+        unavailablePage.sharedBorderBusy = false;
+        wait(0);
+        unavailablePage.reviewProjection();
+        compare(unavailablePage.sharedBorderRevisionVerified, true);
+        compare(unavailablePage.sharedBorderProjectionVerified, false);
+        compare(unavailablePage.sharedBorderProjectionPending, true);
+        compare(unavailablePage.sharedBorderApplySafe, false);
+
+        unavailablePage.sharedBorderConfigRevisionToken = "12";
+        unavailablePage.sharedBorderVerifiedRevisionToken = "12";
+        wait(0);
+        unavailablePage.reviewProjection();
+        compare(unavailablePage.sharedBorderProjectionVerified, true);
+        compare(unavailablePage.sharedBorderProjectionPending, false);
+        compare(unavailablePage.controlsEnabled, true);
+        compare(unavailablePage.sharedBorderApplySafe, false);
+    }
+
+    function test_settledSourceTransitionProjectsOneCoherentBorderPair() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const overrideValues = appearanceDefaults();
+        overrideValues[page.borderSizeId] = 4;
+        overrideValues[page.roundingId] = 5;
+        configureAppearancePage(page, overrideValues);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftDirty, true);
+
+        page.sharedBorderBusy = true;
+        page.sharedBorderConfigRevisionToken = "12";
+        page.sharedBorderSyncState = "pending";
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 9;
+        resolvedValues[page.roundingId] = 14;
+        page.appearanceValues = resolvedValues;
+        page.revisionToken = "8";
+        page.windowBorderSynced = true;
+        wait(0);
+
+        compare(page.controlsEnabled, false);
+        compare(page.draftValue(page.borderSizeId), 4);
+        compare(page.draftValue(page.roundingId), 5);
+        compare(findChild(page, "saveAppearanceButton").enabled, false);
+
+        page.sharedBorderBusy = false;
+        wait(0);
+        compare(page.controlsEnabled, false);
+        page.sharedBorderVerifiedRevisionToken = "12";
+        page.sharedBorderSyncState = "current";
+        wait(0);
+        page.reviewProjection();
+
+        const border = findChild(page, "appearanceBorderSize");
+        const rounding = findChild(page, "appearanceRounding");
+        const source = findChild(page, "windowBorderSourceButton");
+        const save = findChild(page, "saveAppearanceButton");
+        verify(border !== null);
+        verify(rounding !== null);
+        verify(source !== null);
+        verify(save !== null);
+        compare(page.draftValue(page.borderSizeId), 9);
+        compare(page.draftValue(page.roundingId), 14);
+        compare(page.synchronizedValues[page.borderSizeId], 9);
+        compare(page.synchronizedValues[page.roundingId], 14);
+        compare(page.draftValue(page.blurId), false);
+        compare(page.synchronizedValues[page.blurId], true);
+        compare(page.synchronizedRevisionToken, "8");
+        compare(page.externalChangeWhileEditing, false);
+        compare(page.sharedBorderProjectionPending, false);
+        compare(page.draftDirty, true);
+        compare(border.value, 9);
+        compare(rounding.value, 14);
+        compare(border.enabled, false);
+        compare(rounding.enabled, false);
+        compare(source.enabled, false);
+        compare(save.enabled, true);
+    }
+
+    function test_sharedBorderHydrationWaitsForAuthoritativeRevision() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const overrideValues = appearanceDefaults();
+        overrideValues[page.borderSizeId] = 4;
+        overrideValues[page.roundingId] = 5;
+        configureAppearancePage(page, overrideValues);
+        waitForRendering(page);
+        wait(0);
+
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftDirty, true);
+        compare(page.synchronizedRevisionToken, "7");
+
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 9;
+        resolvedValues[page.roundingId] = 14;
+
+        // A reconnect can deliver the terminal shared-border tuple while the
+        // compositor client still exposes its old, unavailable snapshot.
+        page.serviceAvailable = false;
+        page.sharedBorderConfigRevisionToken = "12";
+        page.sharedBorderVerifiedRevisionToken = "12";
+        page.windowBorderSynced = true;
+        page.appearanceValues = resolvedValues;
+        page.sharedBorderSyncState = "current";
+        wait(0);
+        page.reviewProjection();
+
+        compare(page.sharedBorderProjectionPending, true);
+        compare(page.draftValue(page.borderSizeId), 4);
+        compare(page.draftValue(page.roundingId), 5);
+        compare(page.draftValue(page.blurId), false);
+        compare(page.synchronizedValues[page.blurId], true);
+        compare(page.synchronizedRevisionToken, "7");
+        compare(page.externalChangeWhileEditing, false);
+
+        // The refreshed revision can arrive while availability is still
+        // false. Raising availability must schedule the authoritative review.
+        page.revisionToken = "8";
+        wait(0);
+        compare(page.synchronizedRevisionToken, "7");
+        compare(page.externalChangeWhileEditing, false);
+
+        page.serviceAvailable = true;
+        wait(0);
+
+        compare(page.sharedBorderProjectionPending, false);
+        compare(page.draftValue(page.borderSizeId), 9);
+        compare(page.draftValue(page.roundingId), 14);
+        compare(page.draftValue(page.blurId), false);
+        compare(page.synchronizedValues[page.borderSizeId], 9);
+        compare(page.synchronizedValues[page.roundingId], 14);
+        compare(page.synchronizedValues[page.blurId], true);
+        compare(page.synchronizedRevisionToken, "8");
+        compare(page.externalChangeWhileEditing, false);
+        compare(page.draftDirty, true);
+        compare(findChild(page, "saveAppearanceButton").enabled, true);
+    }
+
+    function test_syncedAppearanceResetPreservesResolvedBorderPair() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 6;
+        resolvedValues[page.roundingId] = 12;
+        configureAppearancePage(page, resolvedValues, true);
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+
+        // The synchronized pair rejects Appearance draft writes, while an
+        // unrelated setting remains independently editable.
+        page.setDraftValue(page.borderSizeId, 3);
+        page.setDraftValue(page.roundingId, 4);
+        compare(page.draftValue(page.borderSizeId), 6);
+        compare(page.draftValue(page.roundingId), 12);
+        const reset = findChild(page, "resetAppearanceDefaultsButton");
+        verify(reset !== null);
+        compare(reset.enabled, false);
+
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftValue(page.blurId), false);
+        compare(page.draftDirty, true);
+        compare(reset.enabled, true);
+        reset.clicked();
+        compare(page.draftValue(page.borderSizeId), 6);
+        compare(page.draftValue(page.roundingId), 12);
+        compare(page.draftValue(page.blurId), true);
+        compare(page.draftValue(page.layoutId), "dwindle");
+        compare(page.draftDirty, false);
+        compare(reset.enabled, false);
+    }
+
+    function test_unavailableSharedBorderSourceFailsClosedLocally() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        const resolvedValues = appearanceDefaults();
+        resolvedValues[page.borderSizeId] = 5;
+        resolvedValues[page.roundingId] = 9;
+        configureAppearancePage(page, resolvedValues, true);
+        page.sharedBorderAvailable = false;
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+
+        const border = findChild(page, "appearanceBorderSize");
+        const rounding = findChild(page, "appearanceRounding");
+        const blur = findChild(page, "appearanceBlurEnabled");
+        const source = findChild(page, "windowBorderSourceButton");
+        const message = findChild(page, "windowBorderAuthorityMessage");
+        verify(border !== null);
+        verify(rounding !== null);
+        verify(blur !== null);
+        verify(source !== null);
+        verify(message !== null);
+
+        compare(border.enabled, false);
+        compare(rounding.enabled, false);
+        compare(source.enabled, false);
+        verify(String(message.text).includes("service is unavailable"));
+        verify(String(message.text).includes("read-only"));
+        compare(blur.enabled, true);
+        page.setDraftValue(page.blurId, false);
+        compare(page.draftValue(page.blurId), false);
+        compare(page.draftDirty, true);
+    }
+
+    function test_failedSharedBorderSyncOffersOneExplicitRetry() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page, undefined, true);
+        page.sharedBorderSyncState = "failed";
+        page.sharedBorderSyncError = "Injected synchronization failure.";
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+
+        const message = findChild(page, "windowBorderAuthorityMessage");
+        const retry = findChild(page, "retrySharedBorderSyncButton");
+        verify(message !== null);
+        verify(retry !== null);
+        verify(String(message.text).includes("Controlled by HyprShelld"));
+        verify(String(message.text).includes(
+            "Injected synchronization failure."
+        ));
+        compare(retry.visible, true);
+        compare(retry.enabled, true);
+        verify(retry.implicitHeight >= 44);
+
+        let retryCount = 0;
+        page.retrySharedBorderSyncRequested.connect(function() {
+            ++retryCount;
+        });
+        retry.clicked();
+        compare(retryCount, 1);
+
+        page.busy = true;
+        compare(retry.enabled, false);
+    }
+
+    function test_unavailableSharedBorderSyncOffersBoundedRetry() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page, undefined, true);
+        page.sharedBorderSyncState = "unavailable";
+        page.sharedBorderSyncError = "Config1 GetAll failed transiently.";
+        page.reviewProjection();
+        waitForRendering(page);
+        wait(0);
+
+        const retry = findChild(page, "retrySharedBorderSyncButton");
+        verify(retry !== null);
+        compare(page.sharedBorderAvailable, true);
+        compare(page.serviceAvailable, true);
+        compare(retry.visible, true);
+        compare(retry.enabled, true);
+        verify(retry.implicitHeight >= 44);
+
+        let retryCount = 0;
+        page.retrySharedBorderSyncRequested.connect(function() {
+            ++retryCount;
+        });
+        retry.clicked();
+        compare(retryCount, 1);
+
+        page.sharedBorderBusy = true;
+        compare(retry.enabled, false);
+        page.sharedBorderBusy = false;
+        page.busy = true;
+        compare(retry.enabled, false);
+        page.busy = false;
+        page.serviceAvailable = false;
+        compare(retry.visible, false);
+    }
+
+    function test_sharedBorderMutationFailureIsDistinctAndRetryClearsIt() {
+        const testWindow = createTemporaryObject(
+            appearancePageComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const page = testWindow.page;
+        configureAppearancePage(page);
+        waitForRendering(page);
+        wait(0);
+
+        const source = findChild(page, "windowBorderSourceButton");
+        const error = findChild(
+            page,
+            "sharedBorderMutationErrorMessage"
+        );
+        verify(source !== null);
+        verify(error !== null);
+        compare(error.visible, false);
+
+        // A retained error from another Config1 operation is not evidence
+        // that this page's source action failed.
+        page.sharedBorderClientError =
+            "Retained Bar height mutation failure.";
+        wait(0);
+        compare(error.visible, false);
+
+        let requestCount = 0;
+        let requestedSync = false;
+        page.windowBorderSyncRequested.connect(function(sync) {
+            ++requestCount;
+            requestedSync = sync;
+        });
+        source.clicked();
+        compare(requestCount, 1);
+        compare(requestedSync, true);
+
+        // ConfigClient clears its retained error before beginning a mutation.
+        page.sharedBorderClientError = "";
+        page.sharedBorderBusy = true;
+        const failurePrefix =
+            "Injected Config1 source mutation failure.";
+        const oversizedFailure = failurePrefix
+            + new Array(2049).join("x");
+        page.sharedBorderClientError = oversizedFailure;
+        page.sharedBorderBusy = false;
+        wait(0);
+        compare(error.visible, true);
+        verify(String(error.text).includes(
+            "shared border source could not be changed"
+        ));
+        verify(String(error.text).includes(
+            failurePrefix
+        ));
+        compare(
+            page.sharedBorderSourceActionError,
+            oversizedFailure.slice(
+                0,
+                page.maximumSharedBorderSourceErrorLength
+            )
+        );
+        compare(
+            page.sharedBorderSourceActionError.length,
+            page.maximumSharedBorderSourceErrorLength
+        );
+        compare(error.textFormat, Text.PlainText);
+        compare(error.Accessible.role, Accessible.AlertMessage);
+        compare(error.Accessible.name, error.text);
+        compare(source.enabled, true);
+
+        source.clicked();
+        compare(requestCount, 2);
+        compare(requestedSync, true);
+        compare(error.visible, false);
+        page.sharedBorderClientError = "";
+        page.sharedBorderBusy = true;
+        compare(source.enabled, false);
+        page.sharedBorderConfigRevisionToken = "12";
+        page.sharedBorderSyncState = "pending";
+        page.windowBorderSynced = true;
+        page.sharedBorderVerifiedRevisionToken = "12";
+        page.sharedBorderBusy = false;
+        page.sharedBorderSyncState = "current";
+        wait(0);
+        compare(error.visible, false);
+        compare(page.sharedBorderSourceRequestPending, false);
+        compare(source.enabled, true);
+    }
+
+    function test_mainProjectsSharedBorderIntoAppearance() {
+        const application = createTemporaryObject(mainComponent, this);
+        verify(application !== null);
+        const appearance = findChild(application, "appearancePage");
+        verify(appearance !== null);
+
+        const input = appearanceDefaults();
+        input[appearance.borderSizeId] = 19;
+        input[appearance.roundingId] = 2;
+        const resolved = application.appearanceValuesWithSharedBorder(input);
+        verify(resolved !== null);
+
+        if (ConfigClient.syncHyprlandWindowBorders) {
+            compare(
+                resolved[appearance.borderSizeId],
+                ConfigClient.shellBorderEnabled
+                    ? ConfigClient.shellBorderWidth : 0
+            );
+            compare(
+                resolved[appearance.roundingId],
+                ConfigClient.shellBorderRadius
+            );
+            compare(input[appearance.borderSizeId], 19);
+            compare(input[appearance.roundingId], 2);
+        } else {
+            compare(resolved, input);
+        }
+        compare(
+            appearance.windowBorderSynced,
+            ConfigClient.syncHyprlandWindowBorders
+        );
+        compare(
+            appearance.sharedBorderClientError,
+            ConfigClient.lastErrorMessage
+        );
+        compare(
+            appearance.sharedBorderConfigRevisionToken,
+            ConfigClient.revisionToken
+        );
+        compare(
+            appearance.sharedBorderVerifiedRevisionToken,
+            CompositorClient.sharedBorderSourceRevisionToken
         );
     }
 
@@ -4559,8 +5654,8 @@ TestCase {
         );
         verify(testWindow !== null);
         const page = testWindow.page;
-        configureAppearancePage(page);
-        page.setDraftValue(page.borderSizeId, 4);
+        configureAppearancePage(page, undefined, true);
+        page.setDraftValue(page.blurId, false);
         waitForRendering(page);
         wait(0);
 
@@ -4570,6 +5665,11 @@ TestCase {
         const save = findChild(page, "saveAppearanceButton");
         const preview = findChild(page, "appearancePreview");
         const refresh = findChild(page, "refreshAppearanceButton");
+        const source = findChild(page, "windowBorderSourceButton");
+        const resetDefaults = findChild(
+            page,
+            "resetAppearanceDefaultsButton"
+        );
         const motionToggle = findChild(
             page,
             "toggleAppearanceMotionButton"
@@ -4580,6 +5680,8 @@ TestCase {
         verify(save !== null);
         verify(preview !== null);
         verify(refresh !== null);
+        verify(source !== null);
+        verify(resetDefaults !== null);
         verify(motionToggle !== null);
         compare(page.compactPreview, true);
         verify(scroll.contentItem.contentHeight > scroll.height);
@@ -4596,6 +5698,8 @@ TestCase {
             preview.height - preview.implicitHeight
         ) <= 0.01);
         verify(motionToggle.height >= page.minimumTargetSize);
+        verify(source.height >= page.minimumTargetSize);
+        verify(resetDefaults.height >= page.minimumTargetSize);
 
         const stickyBefore = sticky.mapToItem(page, 0, 0);
         const contentBefore = content.mapToItem(page, 0, 0);
@@ -4612,6 +5716,21 @@ TestCase {
             scroll.contentItem.contentHeight - scroll.contentItem.height
         );
         verify(maximumContentY > 0);
+        const sourceInContent = source.mapToItem(content, 0, 0);
+        const sourceContentY = Math.min(
+            maximumContentY,
+            Math.max(0, sourceInContent.y - 8)
+        );
+        scroll.contentItem.contentY = sourceContentY;
+        tryCompare(scroll.contentItem, "contentY", sourceContentY);
+        const scrollPosition = scroll.mapToItem(page, 0, 0);
+        const sourcePosition = source.mapToItem(page, 0, 0);
+        verify(sourcePosition.x >= 0);
+        verify(sourcePosition.x + source.width <= page.width);
+        verify(sourcePosition.y >= scrollPosition.y);
+        verify(sourcePosition.y + source.height
+            <= scrollPosition.y + scroll.height + 0.01);
+
         scroll.contentItem.contentY = maximumContentY;
         tryCompare(scroll.contentItem, "contentY", maximumContentY);
         const stickyAfter = sticky.mapToItem(page, 0, 0);

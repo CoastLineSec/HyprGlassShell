@@ -8,6 +8,8 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
+
 using HyprShelld::ConfigPaths;
 using HyprShelld::ConfigRecoveryState;
 using HyprShelld::ConfigState;
@@ -51,6 +53,21 @@ QByteArray snapshotWithWorkspace(const QByteArray &workspace, quint32 height = 4
         + workspace + QByteArrayLiteral("}\n");
 }
 
+ConfigState migratedFormatOneState(
+    const quint32 height,
+    const quint64 revision = 7
+)
+{
+    ConfigState state;
+    state.barHeight = height;
+    state.shellBorderEnabled = true;
+    state.shellBorderWidth = 1;
+    state.shellBorderRadius = std::min(16U, height * 3U / 8U);
+    state.syncHyprlandWindowBorders = false;
+    state.revision = revision;
+    return state;
+}
+
 } // namespace
 
 class ConfigStoreTest final : public QObject {
@@ -75,10 +92,17 @@ private slots:
         const auto object = QJsonDocument::fromJson(
             readFile(paths.activeFile)
         ).object();
-        QCOMPARE(object.size(), 3);
-        QCOMPARE(object.value(QStringLiteral("formatVersion")).toInteger(), 1);
+        QCOMPARE(object.size(), 7);
+        QCOMPARE(object.value(QStringLiteral("formatVersion")).toInteger(), 2);
         QCOMPARE(object.value(QStringLiteral("revision")).toString(), QStringLiteral("0"));
         QCOMPARE(object.value(QStringLiteral("barHeight")).toInteger(), 40);
+        QCOMPARE(object.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
+        QCOMPARE(object.value(QStringLiteral("shellBorderWidth")).toInteger(), 1);
+        QCOMPARE(object.value(QStringLiteral("shellBorderRadius")).toInteger(), 15);
+        QCOMPARE(
+            object.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            true
+        );
         QVERIFY(!object.contains(QStringLiteral("workspaceSwitcher")));
     }
 
@@ -91,7 +115,13 @@ private slots:
         const auto loaded = store.load();
         QVERIFY2(loaded.success, qPrintable(loaded.error));
 
-        const ConfigState next {.barHeight = 64, .revision = 1};
+        auto next = loaded.state;
+        next.barHeight = 64;
+        next.shellBorderEnabled = false;
+        next.shellBorderWidth = 7;
+        next.shellBorderRadius = 3;
+        next.syncHyprlandWindowBorders = false;
+        next.revision = 1;
         QString error;
         QVERIFY2(
             store.persist(
@@ -121,6 +151,9 @@ private slots:
 
         QTest::newRow("previous-minimum") << quint32(32);
         QTest::newRow("previous-default") << quint32(48);
+        QTest::newRow("current-minimum") << quint32(24);
+        QTest::newRow("current-default") << quint32(40);
+        QTest::newRow("maximum") << quint32(96);
     }
 
     void loadsExistingFormatOneHeights()
@@ -137,12 +170,27 @@ private slots:
 
         const auto loaded = ConfigStore(paths).load();
         QVERIFY2(loaded.success, qPrintable(loaded.error));
-        QCOMPARE(loaded.state.barHeight, height);
-        QCOMPARE(loaded.state.revision, quint64(7));
+        QCOMPARE(loaded.state, migratedFormatOneState(height));
         QCOMPARE(loaded.recoveryState, ConfigRecoveryState::Normal);
         QVERIFY(!loaded.legacyWorkspaceSettings.has_value());
         QVERIFY(!loaded.legacyWorkspaceRetirementPending);
-        QCOMPARE(readFile(paths.activeFile), snapshot);
+        QCOMPARE(readFile(paths.activeFile), readFile(paths.recoveryFile));
+        const auto migrated = QJsonDocument::fromJson(
+            readFile(paths.activeFile)
+        ).object();
+        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 2);
+        QCOMPARE(migrated.value(QStringLiteral("revision")).toString(), QStringLiteral("7"));
+        QCOMPARE(migrated.value(QStringLiteral("barHeight")).toInteger(), height);
+        QCOMPARE(migrated.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
+        QCOMPARE(migrated.value(QStringLiteral("shellBorderWidth")).toInteger(), 1);
+        QCOMPARE(
+            migrated.value(QStringLiteral("shellBorderRadius")).toInteger(),
+            std::min(16U, height * 3U / 8U)
+        );
+        QCOMPARE(
+            migrated.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            false
+        );
     }
 
     void extractsExactLegacyWorkspaceSettingsAndIgnoresRetiredPadding()
@@ -159,7 +207,7 @@ private slots:
 
         const auto loaded = ConfigStore(paths).load();
         QVERIFY2(loaded.success, qPrintable(loaded.error));
-        QCOMPARE(loaded.state, (ConfigState{.barHeight = 40, .revision = 7}));
+        QCOMPARE(loaded.state, migratedFormatOneState(40));
         QCOMPARE(loaded.recoveryState, ConfigRecoveryState::Normal);
         QVERIFY(loaded.legacyWorkspaceSettings.has_value());
         QVERIFY(loaded.legacyWorkspaceRetirementPending);
@@ -173,7 +221,14 @@ private slots:
                 .scrollMode = QStringLiteral("reversed"),
             })
         );
-        QCOMPARE(readFile(paths.activeFile), snapshot);
+        QCOMPARE(readFile(paths.activeFile), readFile(paths.recoveryFile));
+        QCOMPARE(
+            QJsonDocument::fromJson(readFile(paths.activeFile))
+                .object()
+                .value(QStringLiteral("formatVersion"))
+                .toInteger(),
+            2
+        );
 
         const auto repairedRecovery = QJsonDocument::fromJson(
             readFile(paths.recoveryFile)
@@ -266,7 +321,9 @@ private slots:
         const ConfigStore store(paths);
         const auto loaded = store.load();
         QVERIFY(loaded.legacyWorkspaceSettings.has_value());
-        const ConfigState next {.barHeight = 72, .revision = 8};
+        auto next = loaded.state;
+        next.barHeight = 72;
+        next.revision = 8;
         QString error;
         QVERIFY2(
             store.persist(
@@ -312,7 +369,7 @@ private slots:
 
         const auto recovered = ConfigStore(paths).load();
         QVERIFY2(recovered.success, qPrintable(recovered.error));
-        QCOMPARE(recovered.state, (ConfigState{.barHeight = 72, .revision = 7}));
+        QCOMPARE(recovered.state, migratedFormatOneState(72));
         QCOMPARE(recovered.recoveryState, ConfigRecoveryState::Recovered);
         QVERIFY(recovered.legacyWorkspaceSettings.has_value());
         QVERIFY(recovered.legacyWorkspaceRetirementPending);
@@ -430,7 +487,7 @@ private slots:
         QVERIFY(ConfigStore(paths).load().success);
 
         const QByteArray future(
-            "{\"formatVersion\":2,\"revision\":\"9\",\"barHeight\":80}\n"
+            "{\"formatVersion\":3,\"revision\":\"9\",\"barHeight\":80}\n"
         );
         QVERIFY(writeFile(paths.activeFile, future));
 
@@ -449,7 +506,7 @@ private slots:
 
         const auto active = readFile(paths.activeFile);
         const QByteArray future(
-            "{\"formatVersion\":2,\"revision\":\"9\",\"barHeight\":80}\n"
+            "{\"formatVersion\":3,\"revision\":\"9\",\"barHeight\":80}\n"
         );
         QVERIFY(writeFile(paths.recoveryFile, future));
 
@@ -485,6 +542,34 @@ private slots:
         QTest::newRow("height-out-of-range")
             << QByteArrayLiteral(
                    "{\"formatVersion\":1,\"revision\":\"0\",\"barHeight\":23}\n"
+               );
+        QTest::newRow("version-two-missing-border")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":2,\"revision\":\"0\",\"barHeight\":40}\n"
+               );
+        QTest::newRow("border-enabled-not-boolean")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":2,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":1,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true}\n"
+               );
+        QTest::newRow("border-width-out-of-range")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":2,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":21,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true}\n"
+               );
+        QTest::newRow("border-radius-fractional")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":2,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":2.5,\"syncHyprlandWindowBorders\":true}\n"
+               );
+        QTest::newRow("border-sync-not-boolean")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":2,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":\"yes\"}\n"
                );
     }
 
@@ -534,7 +619,9 @@ private slots:
         blocker.close();
 
         QString error;
-        const ConfigState next {.barHeight = 56, .revision = 1};
+        auto next = loaded.state;
+        next.barHeight = 56;
+        next.revision = 1;
         const auto persisted = store.persist(
             loaded.state,
             next,

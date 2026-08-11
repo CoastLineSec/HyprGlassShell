@@ -49,6 +49,23 @@ atomically before publishing it and return the resulting revision. An
 idempotent request returns the existing revision without writing or emitting a
 change.
 
+The shared shell-border tuple contains `ShellBorderEnabled`,
+`ShellBorderWidth`, `ShellBorderRadius`, and
+`SyncHyprlandWindowBorders`. Width and radius are measured in logical pixels
+and each accepts values from 0 through 20. New state defaults to an enabled
+1-pixel border, radius 15, with Hyprland window-border synchronization enabled.
+`SetSharedBorder` changes the complete tuple atomically, while
+`ResetSharedBorder` restores those defaults. A real tuple change is persisted
+before one combined property notification and revision increment; an
+idempotent request performs neither.
+
+The current snapshot format is version 2. A valid version-1 snapshot is
+migrated during loading without incrementing its revision. The migration keeps
+`BarHeight`, enables the shell border at width 1, derives its radius as the
+smaller of 16 and three eighths of the bar height rounded down, and leaves
+Hyprland window-border synchronization disabled. Both active and recovery
+snapshots are rewritten before the service exposes the migrated state.
+
 The active snapshot follows the XDG base directories at
 `$XDG_CONFIG_HOME/hyprshelld/settings.json`, normally
 `~/.config/hyprshelld/settings.json`. Its last-known-good recovery snapshot is
@@ -68,7 +85,9 @@ warning.
 Configuration errors have these meanings:
 
 - `org.hyprshelld.Config1.Error.InvalidBarHeight`: the requested height is
-  outside the accepted range; and
+  outside the accepted range;
+- `org.hyprshelld.Config1.Error.InvalidSharedBorder`: the requested border
+  width or radius is outside the accepted range; and
 - `org.hyprshelld.Config1.Error.PersistenceFailed`: the new state could not be
   persisted atomically, so the active value and revision remain unchanged.
 
@@ -119,7 +138,14 @@ an existing entrypoint.
 `AdoptManagedConfiguration` is the only ownership transition. The caller must
 bind the exact bytes of an existing regular file, or assert actual absence with
 an empty digest. Unsafe, unreadable, non-regular, or concurrently changed paths
-fail closed. Before changing the stable path, compositord durably preserves a
+fail closed. Before staging, adoption requires a currently verified, available
+Config1 shared-border authority. It returns `ControlledByHyprShelld` when that
+authority is unavailable or unverified, even when the last verified policy was
+an override. With a current verified projection, an explicit synchronization
+override permits divergent desired border values; otherwise divergence also
+returns `ControlledByHyprShelld`. It returns before any generation is prepared
+or entrypoint is adopted. Before changing the
+stable path, compositord durably preserves a
 recoverable original, writes a live-activation journal that binds the prior and
 target entrypoints, and stages and verifies the entire managed generation. It
 then publishes a regular managed entrypoint with an atomic no-replace or
@@ -141,18 +167,25 @@ that actor is inside the local-user trust boundary, and a detected post-phase
 mismatch remains an explicit conflict with its recovery journal retained.
 
 `Apply` compares the revision and both catalog digests before rendering. It
+then requires a currently verified, available Config1 shared-border authority.
+It returns `ControlledByHyprShelld` when that authority is unavailable or
+unverified, even when the last verified policy was an override. With a current
+verified projection, an explicit synchronization override permits divergent
+saved border values; otherwise divergence also returns
+`ControlledByHyprShelld`. It returns before any generation is prepared or
+activated. Apply
 verifies every generated file and manifest, then asks the activation executor
 to satisfy the strongest required mode across the snapshot: `reload`,
 `restart`, or `session`. The installed live executor confirms only `reload`;
-`restart` and `session` return `ActivationRequired` before the stable
-entrypoint is changed. They remain visible through `RequiredActivation` and
-are never weakened to a reload. Only a confirmed activation is committed as
-`AppliedRevision` and `GenerationDigest`; abort retains the prior managed
-entrypoint, generation, last-good snapshot, and applied tuple. Desired state
-remains saved, and `RequiredActivation` reports `none`, `reload`, `restart`, or
-`session` for the pending difference. Enabled broker-dependent bindings and UWSM
-environment changes remain fail-closed in this slice rather than being rendered
-as invented shell commands.
+`restart` and `session` return
+`ActivationRequired` before the stable entrypoint is changed. They remain
+visible through `RequiredActivation` and are never weakened to a reload. Only a
+confirmed activation is committed as `AppliedRevision` and `GenerationDigest`;
+abort retains the prior managed entrypoint, generation, last-good snapshot, and
+applied tuple. Desired state remains saved, and `RequiredActivation` reports
+`none`, `reload`, `restart`, or `session` for the pending difference. Enabled
+broker-dependent bindings and UWSM environment changes remain fail-closed in
+this slice rather than being rendered as invented shell commands.
 
 Reload activation is bound to one exact running Hyprland instance. Compositord
 resolves the current instance signature before each prepare from the bounded
@@ -207,9 +240,12 @@ commit, the service exposes unavailable/failed authority with management
 current revision it copies the last successfully applied content into exactly
 the next desired revision, prepares a new immutable generation, and activates
 that exact content. It never decrements or reuses a revision, never adopts an
-unmanaged entrypoint, and never silently discards current bytes. Startup
-recovery only reconciles an interrupted transaction; it does not invoke this
-public rollback operation.
+unmanaged entrypoint, and never silently discards current bytes. Recover is
+intentionally exempt from the shared-border ownership gate so it can restore
+the whole-compositor last-known-good state. Enabled synchronization may then
+reassert the current shared-border values through a normal reconciliation.
+Startup recovery only reconciles an interrupted transaction; it does not invoke
+this public rollback operation.
 
 The installed backend performs the bounded live Reload protocol above for
 `Apply`, `Recover`, and `AdoptManagedConfiguration`. It never claims a stronger
@@ -247,6 +283,36 @@ publishes non-actionable `committing`; a finalization failure then remains
 unavailable/conflict for startup roll-forward and is never contradicted by a
 late timer or Revert.
 
+Shared window-border synchronization consumes Config1 directly. A verified
+`SyncHyprlandWindowBorders=true` projection derives only
+`general:border_size` (zero when the shell border is disabled, otherwise the
+shell width) and `decoration:rounding` from the shared shell border radius.
+Compositord clones the canonical desired snapshot, preserves every unrelated
+surface, and removes either override when the derived value equals the protected
+catalog default. It uses the existing whole-snapshot CAS and applies only an
+exact revision that this reconciliation created while the entrypoint is already
+managed; it never adopts. A display confirmation defers reconciliation.
+
+`SharedBorderSyncState` is one of `unavailable`, `override`, `pending`, `saved`,
+`current`, or `failed`. `SharedBorderSourceRevision` is the exact verified
+Config1 revision and is zero while that source is unavailable. Source loss does
+not rewrite or roll back the last live compositor configuration. A failed
+effective tuple does not poll. It retries only after the effective Config1
+synchronization policy or derived compositor border values change, compositor
+authority changes, or an explicit `RetrySharedBorderSync` call. A verified
+Config1 projection Revision-only change that leaves the policy and values
+identical advances `SharedBorderSourceRevision` but does not retry. While
+synchronization owns the two values, unrelated whole-snapshot replacements
+remain valid only when they preserve both resolved values; disabling
+synchronization is the explicit override. `Apply` and
+`AdoptManagedConfiguration` require a current verified Config1 projection
+before preparation or activation even when the last verified policy was an
+override. Once verified, they enforce synchronized-value preservation unless
+that current projection explicitly disables synchronization. `Recover` remains
+exempt as whole-compositor recovery, after which enabled synchronization
+reasserts the current shared border projection as a new normal CAS/apply
+operation.
+
 `LoadState` is one of `normal`, `recovered`, `defaulted`, `unsupported`, or
 `unavailable`. `ApplyState` is one of `unavailable`, `inactive`, `current`,
 `retained`, or `failed`; in-progress staging is never published. An
@@ -265,6 +331,11 @@ Compositor errors have these meanings:
 - `StaleRevision` or `StaleCatalogDigest`: a CAS authority changed;
 - `InvalidSnapshot`, `RevisionExhausted`, or `PersistenceFailed`: desired state
   could not be validated or durably replaced;
+- `ControlledByHyprShelld`: `ReplaceSnapshot` could not prove that its
+  candidate preserves the protected border values, or `Apply` or
+  `AdoptManagedConfiguration` lacked a current verified Config1 shared-border
+  projection or found divergent saved values under synchronized policy;
+  `Recover` is exempt;
 - `AdoptionRequired`: the caller tried to apply or recover before explicit
   ownership;
 - `EntrypointChanged`: the stable entrypoint no longer matches the committed or

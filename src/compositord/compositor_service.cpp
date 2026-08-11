@@ -105,12 +105,17 @@ CompositorService::CompositorService(
     std::unique_ptr<ActivationBackend> activationBackend,
     QDBusConnection connection, QObject *parent,
     DisplayDeadlineRemaining displayDeadlineRemaining,
-    DisplayOwnerPresent displayOwnerPresent)
+    DisplayOwnerPresent displayOwnerPresent,
+    std::unique_ptr<SharedBorderSource> sharedBorderSource)
     : QObject(parent), activationBackend_(std::move(activationBackend)),
+      sharedBorderSource_(std::move(sharedBorderSource)),
       connection_(std::move(connection)),
       displayDeadlineRemaining_(std::move(displayDeadlineRemaining)),
       displayOwnerPresent_(std::move(displayOwnerPresent)) {
   Q_ASSERT(activationBackend_);
+  if (!sharedBorderSource_) {
+    sharedBorderSource_ = std::make_unique<DbusSharedBorderSource>(connection_);
+  }
   if (!displayDeadlineRemaining_) {
     displayDeadlineRemaining_ = [](const QDeadlineTimer &deadline) {
       return deadline.remainingTime();
@@ -129,6 +134,10 @@ CompositorService::CompositorService(
   connect(
       &displayConfirmationTimer_, &QTimer::timeout, this,
       &CompositorService::handleDisplayConfirmationTimeout
+  );
+  connect(
+      sharedBorderSource_.get(), &SharedBorderSource::changed, this,
+      &CompositorService::sharedBorderSourceChanged
   );
 }
 
@@ -201,6 +210,8 @@ bool CompositorService::initializeAuthority(
     acceptState(initialized.snapshot, startup.status);
   }
   configureManagementMonitoring();
+  sharedBorderSource_->start();
+  scheduleSharedBorderReconcile();
   return true;
 }
 
@@ -266,6 +277,18 @@ QString CompositorService::displayConfirmationGeneration() const {
   return displayConfirmation_
           && displayConfirmationState_ == QStringLiteral("awaiting-confirmation")
       ? displayConfirmation_->generation : QString();
+}
+
+QString CompositorService::sharedBorderSyncState() const {
+  return sharedBorderSyncState_;
+}
+
+qulonglong CompositorService::sharedBorderSourceRevision() const {
+  return sharedBorderSourceRevision_;
+}
+
+QString CompositorService::sharedBorderSyncError() const {
+  return sharedBorderSyncError_;
 }
 
 QByteArray
@@ -338,6 +361,18 @@ CompositorService::ReplaceSnapshot(const qulonglong expectedRevision,
         QStringLiteral("Compositor configuration changed; read it again"));
     return revision();
   }
+  QString controlledError;
+  if (!sharedBorderReplacementAllowed(candidateSnapshot, controlledError)) {
+    reportError(
+        QStringLiteral("ControlledByHyprShelld"),
+        controlledError.isEmpty()
+            ? QStringLiteral(
+                  "Window border geometry is controlled by shared visual settings"
+              )
+            : controlledError
+    );
+    return revision();
+  }
 
   auto result =
       authority_->replaceSnapshot(expectedRevision, candidateSnapshot);
@@ -367,6 +402,19 @@ qulonglong CompositorService::Apply(const qulonglong expectedRevision,
   if (!checkNoDisplayConfirmation()) return appliedRevision();
   if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
                               expectedActionCatalogDigest)) {
+    return appliedRevision();
+  }
+  QString controlledError;
+  if (!sharedBorderActivationAllowed(snapshot_.desiredState,
+                                     controlledError)) {
+    reportError(
+        QStringLiteral("ControlledByHyprShelld"),
+        controlledError.isEmpty()
+            ? QStringLiteral(
+                  "Window border geometry is controlled by shared visual settings"
+              )
+            : controlledError
+    );
     return appliedRevision();
   }
 
@@ -479,6 +527,19 @@ qulonglong CompositorService::AdoptManagedConfiguration(
   if (!checkNoDisplayConfirmation()) return appliedRevision();
   if (!checkMutationAuthority(expectedRevision, expectedCatalogDigest,
                               expectedActionCatalogDigest)) {
+    return appliedRevision();
+  }
+  QString controlledError;
+  if (!sharedBorderActivationAllowed(snapshot_.desiredState,
+                                     controlledError)) {
+    reportError(
+        QStringLiteral("ControlledByHyprShelld"),
+        controlledError.isEmpty()
+            ? QStringLiteral(
+                  "Window border geometry is controlled by shared visual settings"
+              )
+            : controlledError
+    );
     return appliedRevision();
   }
 
@@ -1167,6 +1228,13 @@ qulonglong CompositorService::RevertDisplayConfiguration(
   return revision();
 }
 
+void CompositorService::RetrySharedBorderSync() {
+  clearFailedSharedBorderAttempt();
+  forceSharedBorderRetry_ = true;
+  if (sharedBorderSource_) sharedBorderSource_->requestRefresh();
+  scheduleSharedBorderReconcile();
+}
+
 bool CompositorService::checkMutationAuthority(
     const qulonglong expectedRevision, const QString &expectedCatalogDigest,
     const QString &expectedActionCatalogDigest) const {
@@ -1441,6 +1509,364 @@ void CompositorService::publishDisplayProperties() {
   QVariantMap changed;
   appendDisplayProperties(changed);
   publishProperties(changed);
+  scheduleSharedBorderReconcile();
+}
+
+void CompositorService::scheduleSharedBorderReconcile() {
+  if (sharedBorderReconcileScheduled_) return;
+  sharedBorderReconcileScheduled_ = true;
+  QTimer::singleShot(0, this, &CompositorService::reconcileSharedBorder);
+}
+
+void CompositorService::sharedBorderSourceChanged() {
+  if (sharedBorderSource_->available()) {
+    const auto next = sharedBorderSource_->projection();
+    const auto effectivePolicyChanged =
+        !lastSharedBorderProjection_
+        || lastSharedBorderProjection_->syncWindowBorders
+            != next.syncWindowBorders
+        || sharedBorderReconciler_.valuesFor(*lastSharedBorderProjection_)
+            != sharedBorderReconciler_.valuesFor(next);
+    if (effectivePolicyChanged) {
+      clearFailedSharedBorderAttempt();
+      pendingSharedBorderApplyRevision_.reset();
+    }
+    if (!next.syncWindowBorders) {
+      pendingSharedBorderApplyRevision_.reset();
+    }
+    lastSharedBorderProjection_ = next;
+  }
+  scheduleSharedBorderReconcile();
+}
+
+void CompositorService::setSharedBorderStatus(
+    const QString &state,
+    const qulonglong sourceRevision,
+    const QString &error
+) {
+  auto boundedError = error;
+  if (boundedError.size() > 1024) boundedError.truncate(1024);
+  QVariantMap changed;
+  if (state != sharedBorderSyncState_) {
+    sharedBorderSyncState_ = state;
+    changed.insert(QStringLiteral("SharedBorderSyncState"), state);
+  }
+  if (sourceRevision != sharedBorderSourceRevision_) {
+    sharedBorderSourceRevision_ = sourceRevision;
+    changed.insert(
+        QStringLiteral("SharedBorderSourceRevision"),
+        QVariant::fromValue<qulonglong>(sourceRevision)
+    );
+  }
+  if (boundedError != sharedBorderSyncError_) {
+    sharedBorderSyncError_ = boundedError;
+    changed.insert(QStringLiteral("SharedBorderSyncError"), boundedError);
+  }
+  publishProperties(changed);
+}
+
+QString CompositorService::sharedBorderAttemptKey() const {
+  QStringList fields{
+      sharedBorderSource_ && sharedBorderSource_->available()
+          ? QStringLiteral("source") : QStringLiteral("no-source"),
+      QString::number(snapshot_.available),
+      QString::number(snapshot_.writable),
+      QString::number(snapshot_.revision),
+      QString::number(snapshot_.appliedRevision),
+      snapshot_.catalogDigest,
+      snapshot_.applyState,
+      requiredActivationName(snapshot_.requiredActivation),
+      snapshot_.generationDigest,
+      managementStateName(management_.state),
+      management_.managedGeneration,
+      displayConfirmationState_,
+      QString::number(sharedBorderAuthorityGeneration_),
+  };
+  if (sharedBorderSource_ && sharedBorderSource_->available()) {
+    const auto &projection = sharedBorderSource_->projection();
+    fields.append(QString::number(projection.borderEnabled));
+    fields.append(QString::number(projection.borderWidth));
+    fields.append(QString::number(projection.borderRadius));
+    fields.append(QString::number(projection.syncWindowBorders));
+  }
+  return fields.join(QLatin1Char('|'));
+}
+
+bool CompositorService::ensureSharedBorderCatalog(QString &error) {
+  if (sharedBorderReconciler_.configuredFor(snapshot_.catalogDigest)) {
+    error.clear();
+    return true;
+  }
+  if (!authority_ || snapshot_.catalogDigest.isEmpty()) {
+    error = QStringLiteral("The compositor option catalog is unavailable");
+    return false;
+  }
+  return sharedBorderReconciler_.configure(
+      authority_->optionCatalog(), snapshot_.catalogDigest, error
+  );
+}
+
+bool CompositorService::sharedBorderReplacementAllowed(
+    const QByteArray &candidate,
+    QString &error
+) {
+  error.clear();
+  std::optional<SharedBorderProjection> policy;
+  if (sharedBorderSource_ && sharedBorderSource_->available()) {
+    policy = sharedBorderSource_->projection();
+  } else if (lastSharedBorderProjection_) {
+    policy = *lastSharedBorderProjection_;
+  }
+  if (policy && !policy->syncWindowBorders) {
+    return true;
+  }
+
+  QString catalogError;
+  if (!ensureSharedBorderCatalog(catalogError)) {
+    error = catalogError;
+    return false;
+  }
+
+  std::optional<SharedBorderValues> controlledValues;
+  if (policy) {
+    controlledValues = sharedBorderReconciler_.valuesFor(*policy);
+  } else {
+    controlledValues = sharedBorderReconciler_.resolvedValues(
+        snapshot_.desiredState, error
+    );
+    if (!controlledValues) {
+      error = QStringLiteral(
+          "Window border geometry cannot be safely replaced while shared visual policy is unavailable"
+      );
+      return false;
+    }
+  }
+
+  if (!sharedBorderReconciler_.replacementPreserves(
+          candidate, *controlledValues, error
+      )) {
+    error = QStringLiteral(
+        "Window border geometry is controlled by shared visual settings"
+    );
+    return false;
+  }
+  return true;
+}
+
+bool CompositorService::sharedBorderActivationAllowed(
+    const QByteArray &candidate,
+    QString &error
+) {
+  if (!sharedBorderSource_ || !sharedBorderSource_->available()) {
+    error = QStringLiteral(
+        "Shared visual settings are unavailable or have not been verified"
+    );
+    return false;
+  }
+  return sharedBorderReplacementAllowed(candidate, error);
+}
+
+void CompositorService::clearFailedSharedBorderAttempt() {
+  failedSharedBorderAttempt_.clear();
+  failedSharedBorderError_.clear();
+}
+
+void CompositorService::failSharedBorder(const QString &error) {
+  failedSharedBorderAttempt_ = sharedBorderAttemptKey();
+  failedSharedBorderError_ = error.isEmpty()
+      ? QStringLiteral("Shared window border synchronization failed")
+      : error;
+  if (failedSharedBorderError_.size() > 1024) {
+    failedSharedBorderError_.truncate(1024);
+  }
+  setSharedBorderStatus(
+      QStringLiteral("failed"),
+      sharedBorderSource_ && sharedBorderSource_->available()
+          ? sharedBorderSource_->projection().revision : 0,
+      failedSharedBorderError_
+  );
+}
+
+void CompositorService::reconcileSharedBorder() {
+  sharedBorderReconcileScheduled_ = false;
+  if (sharedBorderReconcileRunning_) {
+    scheduleSharedBorderReconcile();
+    return;
+  }
+  sharedBorderReconcileRunning_ = true;
+  struct ResetRunning final {
+    bool &value;
+    ~ResetRunning() { value = false; }
+  } resetRunning{sharedBorderReconcileRunning_};
+
+  const auto force = std::exchange(forceSharedBorderRetry_, false);
+  if (!sharedBorderSource_ || !sharedBorderSource_->available()) {
+    setSharedBorderStatus(
+        QStringLiteral("unavailable"), 0,
+        sharedBorderSource_
+            ? sharedBorderSource_->error()
+            : QStringLiteral("Shared visual settings are unavailable")
+    );
+    return;
+  }
+  const auto projection = sharedBorderSource_->projection();
+  lastSharedBorderProjection_ = projection;
+  if (!projection.syncWindowBorders) {
+    pendingSharedBorderApplyRevision_.reset();
+    clearFailedSharedBorderAttempt();
+    setSharedBorderStatus(
+        QStringLiteral("override"), projection.revision
+    );
+    return;
+  }
+  if (!authority_ || !snapshot_.available) {
+    setSharedBorderStatus(
+        QStringLiteral("unavailable"), projection.revision,
+        QStringLiteral("Compositor configuration is unavailable")
+    );
+    return;
+  }
+  if (displayConfirmationState_ != QStringLiteral("idle")) {
+    setSharedBorderStatus(
+        QStringLiteral("pending"), projection.revision
+    );
+    return;
+  }
+
+  const auto liveBaseManagement = authorityBoundManagement(
+      snapshot_, activationBackend_->status()
+  );
+  if (liveBaseManagement != management_) {
+    acceptState(snapshot_, liveBaseManagement);
+  }
+  const auto baseWasExactCurrent =
+      management_.state == ManagementState::Managed
+      && snapshot_.applyState == QStringLiteral("current")
+      && snapshot_.appliedRevision == snapshot_.revision
+      && !snapshot_.requiredActivation.has_value()
+      && !snapshot_.generationDigest.isEmpty()
+      && management_.managedGeneration == snapshot_.generationDigest;
+
+  const auto attemptKey = sharedBorderAttemptKey();
+  if (!force && !failedSharedBorderAttempt_.isEmpty()
+      && failedSharedBorderAttempt_ == attemptKey) {
+    setSharedBorderStatus(
+        QStringLiteral("failed"),
+        projection.revision,
+        failedSharedBorderError_
+    );
+    return;
+  }
+  clearFailedSharedBorderAttempt();
+  if (!snapshot_.writable) {
+    failSharedBorder(QStringLiteral("Compositor configuration is read-only"));
+    return;
+  }
+  setSharedBorderStatus(QStringLiteral("pending"), projection.revision);
+
+  QString error;
+  if (!ensureSharedBorderCatalog(error)) {
+    failSharedBorder(error);
+    return;
+  }
+  const auto edit = sharedBorderReconciler_.edit(
+      snapshot_.desiredState,
+      snapshot_.revision,
+      snapshot_.catalogDigest,
+      projection,
+      error
+  );
+  if (!edit) {
+    failSharedBorder(error);
+    return;
+  }
+  if (edit->changed) {
+    const auto replaced = authority_->replaceSnapshot(
+        snapshot_.revision, edit->candidate
+    );
+    if (!replaced.success) {
+      if (replaced.snapshot.available
+          || replaced.snapshot.applyState == QStringLiteral("failed")) {
+        acceptState(replaced.snapshot, activationBackend_->status());
+      }
+      failSharedBorder(replaced.errorMessage);
+      return;
+    }
+    acceptState(replaced.snapshot, activationBackend_->status());
+    if (baseWasExactCurrent) {
+      pendingSharedBorderApplyRevision_ = replaced.snapshot.revision;
+    } else {
+      pendingSharedBorderApplyRevision_.reset();
+    }
+  }
+
+  const auto resolved = sharedBorderReconciler_.resolvedValues(
+      snapshot_.desiredState, error
+  );
+  if (!resolved
+      || *resolved != sharedBorderReconciler_.valuesFor(projection)) {
+    failSharedBorder(error);
+    return;
+  }
+
+  const auto liveManagement = authorityBoundManagement(
+      snapshot_, activationBackend_->status()
+  );
+  if (liveManagement != management_) {
+    acceptState(snapshot_, liveManagement);
+  }
+  const auto exactCurrent = management_.state == ManagementState::Managed
+      && snapshot_.applyState == QStringLiteral("current")
+      && snapshot_.appliedRevision == snapshot_.revision
+      && !snapshot_.requiredActivation.has_value()
+      && !snapshot_.generationDigest.isEmpty()
+      && management_.managedGeneration == snapshot_.generationDigest;
+  if (exactCurrent) {
+    pendingSharedBorderApplyRevision_.reset();
+    setSharedBorderStatus(
+        QStringLiteral("current"), projection.revision
+    );
+    return;
+  }
+
+  const auto ownsPendingRevision = pendingSharedBorderApplyRevision_
+      && *pendingSharedBorderApplyRevision_ == snapshot_.revision;
+  if (!ownsPendingRevision
+      || management_.state != ManagementState::Managed
+      || !snapshot_.requiredActivation.has_value()
+      || *snapshot_.requiredActivation != ActivationRequirement::Reload
+      || !activationBackend_->canSatisfy(
+          *snapshot_.requiredActivation
+      )) {
+    setSharedBorderStatus(
+        QStringLiteral("saved"), projection.revision
+    );
+    return;
+  }
+
+  auto completion = completePrepared(
+      authority_->prepareApply(
+          snapshot_.revision,
+          activationNonce(),
+          QDateTime::currentDateTimeUtc()
+      ),
+      false,
+      {},
+      snapshot_.requiredActivation
+  );
+  if (!completion.success) {
+    if (completion.snapshot.available
+        || completion.snapshot.applyState == QStringLiteral("failed")) {
+      acceptState(completion.snapshot, completion.management);
+    }
+    failSharedBorder(completion.errorMessage);
+    return;
+  }
+  acceptState(completion.snapshot, completion.management);
+  pendingSharedBorderApplyRevision_.reset();
+  setSharedBorderStatus(
+      QStringLiteral("current"), projection.revision
+  );
 }
 
 CompositorService::Completion CompositorService::completePrepared(
@@ -1765,9 +2191,17 @@ void CompositorService::acceptState(const AuthoritySnapshot &next,
   }
   if (includeDisplayProperties) appendDisplayProperties(changed);
 
+  if (next != snapshot_ || boundManagement != management_) {
+    ++sharedBorderAuthorityGeneration_;
+  }
+  if (pendingSharedBorderApplyRevision_
+      && next.revision != *pendingSharedBorderApplyRevision_) {
+    pendingSharedBorderApplyRevision_.reset();
+  }
   snapshot_ = next;
   management_ = boundManagement;
   publishProperties(changed);
+  scheduleSharedBorderReconcile();
 }
 
 void CompositorService::configureManagementMonitoring() {
@@ -1887,6 +2321,7 @@ QString CompositorService::boundedErrorCode(const QString &code,
       QStringLiteral("InvalidCaller"),
       QStringLiteral("NoDisplayConfirmation"),
       QStringLiteral("ConfirmationExpired"),
+      QStringLiteral("ControlledByHyprShelld"),
   };
   return allowed.contains(code) ? code : fallback;
 }

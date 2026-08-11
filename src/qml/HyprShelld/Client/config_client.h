@@ -20,11 +20,51 @@ class ConfigClient final : public QObject {
     Q_PROPERTY(bool available READ available NOTIFY availableChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(uint barHeight READ barHeight NOTIFY barHeightChanged)
+    Q_PROPERTY(
+        bool shellBorderEnabled READ shellBorderEnabled
+        NOTIFY sharedBorderChanged
+    )
+    Q_PROPERTY(
+        uint shellBorderWidth READ shellBorderWidth NOTIFY sharedBorderChanged
+    )
+    Q_PROPERTY(
+        uint shellBorderRadius READ shellBorderRadius NOTIFY sharedBorderChanged
+    )
+    Q_PROPERTY(
+        bool syncHyprlandWindowBorders READ syncHyprlandWindowBorders
+        NOTIFY sharedBorderChanged
+    )
     Q_PROPERTY(qulonglong revision READ revision NOTIFY revisionChanged)
+    Q_PROPERTY(QString revisionToken READ revisionToken NOTIFY revisionChanged)
     Q_PROPERTY(QString recoveryState READ recoveryState NOTIFY recoveryStateChanged)
     Q_PROPERTY(uint minimumBarHeight READ minimumBarHeight CONSTANT)
     Q_PROPERTY(uint maximumBarHeight READ maximumBarHeight CONSTANT)
     Q_PROPERTY(uint defaultBarHeight READ defaultBarHeight CONSTANT)
+    Q_PROPERTY(
+        bool defaultShellBorderEnabled READ defaultShellBorderEnabled CONSTANT
+    )
+    Q_PROPERTY(
+        uint minimumShellBorderWidth READ minimumShellBorderWidth CONSTANT
+    )
+    Q_PROPERTY(
+        uint maximumShellBorderWidth READ maximumShellBorderWidth CONSTANT
+    )
+    Q_PROPERTY(
+        uint defaultShellBorderWidth READ defaultShellBorderWidth CONSTANT
+    )
+    Q_PROPERTY(
+        uint minimumShellBorderRadius READ minimumShellBorderRadius CONSTANT
+    )
+    Q_PROPERTY(
+        uint maximumShellBorderRadius READ maximumShellBorderRadius CONSTANT
+    )
+    Q_PROPERTY(
+        uint defaultShellBorderRadius READ defaultShellBorderRadius CONSTANT
+    )
+    Q_PROPERTY(
+        bool defaultSyncHyprlandWindowBorders
+        READ defaultSyncHyprlandWindowBorders CONSTANT
+    )
     Q_PROPERTY(QString lastErrorName READ lastErrorName NOTIFY lastErrorChanged)
     Q_PROPERTY(QString lastErrorMessage READ lastErrorMessage NOTIFY lastErrorChanged)
 
@@ -35,22 +75,43 @@ public:
     [[nodiscard]] bool available() const;
     [[nodiscard]] bool busy() const;
     [[nodiscard]] uint barHeight() const;
+    [[nodiscard]] bool shellBorderEnabled() const;
+    [[nodiscard]] uint shellBorderWidth() const;
+    [[nodiscard]] uint shellBorderRadius() const;
+    [[nodiscard]] bool syncHyprlandWindowBorders() const;
     [[nodiscard]] qulonglong revision() const;
+    [[nodiscard]] QString revisionToken() const;
     [[nodiscard]] QString recoveryState() const;
     [[nodiscard]] uint minimumBarHeight() const;
     [[nodiscard]] uint maximumBarHeight() const;
     [[nodiscard]] uint defaultBarHeight() const;
+    [[nodiscard]] bool defaultShellBorderEnabled() const;
+    [[nodiscard]] uint minimumShellBorderWidth() const;
+    [[nodiscard]] uint maximumShellBorderWidth() const;
+    [[nodiscard]] uint defaultShellBorderWidth() const;
+    [[nodiscard]] uint minimumShellBorderRadius() const;
+    [[nodiscard]] uint maximumShellBorderRadius() const;
+    [[nodiscard]] uint defaultShellBorderRadius() const;
+    [[nodiscard]] bool defaultSyncHyprlandWindowBorders() const;
     [[nodiscard]] QString lastErrorName() const;
     [[nodiscard]] QString lastErrorMessage() const;
 
     Q_INVOKABLE void setBarHeight(uint height);
     Q_INVOKABLE void resetBarHeight();
+    Q_INVOKABLE void setSharedBorder(
+        bool enabled,
+        uint width,
+        uint radius,
+        bool syncHyprlandWindowBorders
+    );
+    Q_INVOKABLE void resetSharedBorder();
     Q_INVOKABLE void clearError();
 
 signals:
     void availableChanged();
     void busyChanged();
     void barHeightChanged();
+    void sharedBorderChanged();
     void revisionChanged();
     void recoveryStateChanged();
     void lastErrorChanged();
@@ -70,7 +131,10 @@ private slots:
 
 private:
     void refresh();
-    void applyProperties(const QVariantMap &properties);
+    [[nodiscard]] bool applyProperties(
+        const QVariantMap &properties,
+        bool requireComplete
+    );
     void beginMutation(const QDBusPendingCall &call);
     void setAvailable(bool available);
     void setError(const QString &name, const QString &message);
@@ -82,6 +146,10 @@ private:
     int pendingOperations_ = 0;
     bool available_ = false;
     uint barHeight_ = 0;
+    bool shellBorderEnabled_ = true;
+    uint shellBorderWidth_ = 0;
+    uint shellBorderRadius_ = 0;
+    bool syncHyprlandWindowBorders_ = true;
     qulonglong revision_ = 0;
     QString recoveryState_;
     QString lastErrorName_;

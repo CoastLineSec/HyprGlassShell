@@ -25,6 +25,9 @@ TestCase {
         Bar {
             width: 800
             barHeight: 40
+            shellBorderEnabled: true
+            shellBorderWidth: 1
+            shellBorderRadius: 15
             currentTime: new Date(2026, 7, 7, 15, 42)
             screenName: "DP-2"
             configurationAvailable: true
@@ -80,6 +83,9 @@ TestCase {
                     top: parent.top
                 }
                 barHeight: 40
+                shellBorderEnabled: true
+                shellBorderWidth: 1
+                shellBorderRadius: 15
                 currentTime: new Date(2026, 7, 7, 15, 42)
                 screenName: "DP-2"
                 configurationAvailable: true
@@ -122,11 +128,43 @@ TestCase {
 
         bar.barHeight = 24;
         compare(bar.height, 24);
-        compare(bar.cornerRadius, 9);
+        compare(bar.cornerRadius, 12);
 
         bar.barHeight = 96;
         compare(bar.height, 96);
-        compare(bar.cornerRadius, 16);
+        compare(bar.cornerRadius, 15);
+    }
+
+    function test_barRendersSharedBorderInsideExistingGeometry() {
+        const bar = createTemporaryObject(barComponent, this);
+        verify(bar !== null);
+        const background = findChild(bar, "barBackground");
+        verify(background !== null);
+
+        compare(bar.height, 40);
+        compare(bar.renderedBorderWidth, 1);
+        compare(bar.renderedCornerRadius, 15);
+        compare(background.border.width, 1);
+        compare(background.radius, 15);
+
+        bar.shellBorderWidth = 20;
+        bar.shellBorderRadius = 20;
+        compare(bar.renderedBorderWidth, 20);
+        compare(bar.renderedCornerRadius, 20);
+        compare(background.border.width, 20);
+        compare(background.radius, 20);
+        compare(bar.height, 40);
+
+        bar.barHeight = 24;
+        compare(bar.renderedCornerRadius, 12);
+        compare(background.radius, 12);
+        compare(bar.height, 24);
+
+        bar.shellBorderEnabled = false;
+        compare(bar.renderedBorderWidth, 0);
+        compare(background.border.width, 0);
+        compare(bar.renderedCornerRadius, 12);
+        compare(background.radius, 12);
     }
 
     function test_barOnlyShowsHealthIndicatorWhenDegraded() {

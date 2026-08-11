@@ -10,6 +10,10 @@ Page {
     required property int minimumBarHeight
     required property int maximumBarHeight
     required property int defaultBarHeight
+    required property bool shellBorderEnabled
+    required property int shellBorderWidth
+    required property int shellBorderRadius
+    required property bool syncHyprlandWindowBorders
     required property bool workspaceShowIdentifiers
     required property bool workspaceShowNames
     required property bool workspaceShowApplications
@@ -33,14 +37,27 @@ Page {
     property string componentRecoveryState: ""
     property bool previewAnimationsEnabled: true
     property real contentTopMargin: 28
+    property bool borderDraftEnabled: shellBorderEnabled
+    property int borderDraftWidth: shellBorderWidth
+    property int borderDraftRadius: shellBorderRadius
+    property bool borderDraftSync: syncHyprlandWindowBorders
     readonly property bool compactPreview:
         root.width < 560 || root.height < 640
+    readonly property bool defaultShellBorderEnabled: true
+    readonly property int defaultShellBorderWidth: 1
+    readonly property int defaultShellBorderRadius: 15
+    readonly property bool defaultSyncHyprlandWindowBorders: true
+    readonly property bool borderDraftDirty:
+        borderDraftEnabled !== defaultShellBorderEnabled
+        || borderDraftWidth !== defaultShellBorderWidth
+        || borderDraftRadius !== defaultShellBorderRadius
+        || borderDraftSync !== defaultSyncHyprlandWindowBorders
 
     readonly property string coreRecoveryMessage: {
         if (coreRecoveryState === "recovered")
-            return qsTr("Your bar size was restored from its last known good copy because the main settings file could not be read.");
+            return qsTr("Your bar settings were restored from their last known good copy because the main settings file could not be read.");
         if (coreRecoveryState === "defaulted")
-            return qsTr("Your bar size could not be recovered, so its safe default is in use. Review it before continuing.");
+            return qsTr("Your bar settings could not be recovered, so their safe defaults are in use. Review them before continuing.");
         return "";
     }
     readonly property string componentRecoveryMessage: {
@@ -54,18 +71,18 @@ Page {
         if (componentRecoveryState === "unsupported") {
             return componentServiceAvailable
                 ? qsTr("Workspace settings have a protected newer-format recovery copy. The current choices remain visible but read-only so HyprShelld does not overwrite it.")
-                : qsTr("Workspace settings use a newer format that this HyprShelld version cannot read. The file is preserved, and bar size changes remain available.");
+                : qsTr("Workspace settings use a newer format that this HyprShelld version cannot read. The file is preserved, and core Bar changes remain available.");
         }
         if (!componentServiceAvailable)
             return qsTr("Workspace settings are unavailable. Their displayed values may be stale, and workspace changes are disabled until the component settings reconnect.");
         if (!componentCatalogAvailable)
-            return qsTr("The component catalog is unavailable. Bar size changes still work, but workspace changes are disabled until the catalog reconnects.");
+            return qsTr("The component catalog is unavailable. Core Bar changes still work, but workspace changes are disabled until the catalog reconnects.");
         if (!componentWritable)
-            return qsTr("Workspace settings are currently read-only. Bar size changes remain available.");
+            return qsTr("Workspace settings are currently read-only. Core Bar changes remain available.");
         if (!workspaceInstanceAvailable)
-            return qsTr("The built-in workspace switcher configuration is unavailable. Bar size changes remain available.");
+            return qsTr("The built-in workspace switcher configuration is unavailable. Core Bar changes remain available.");
         if (!workspaceFeatureAvailable)
-            return qsTr("The built-in workspace switcher placement is unavailable. Its settings remain read-only, and bar size changes remain available.");
+            return qsTr("The built-in workspace switcher placement is unavailable. Its settings remain read-only, and core Bar changes remain available.");
         return "";
     }
     readonly property bool coreServiceWarningVisible:
@@ -93,6 +110,13 @@ Page {
 
     signal barHeightRequested(int height)
     signal resetBarHeightRequested()
+    signal sharedBorderRequested(
+        bool enabled,
+        int width,
+        int radius,
+        bool syncHyprlandWindowBorders
+    )
+    signal resetSharedBorderRequested()
     signal workspaceSwitcherRequested(
         bool showIdentifiers,
         bool showNames,
@@ -102,6 +126,65 @@ Page {
         string scrollMode
     )
     signal resetWorkspaceSwitcherRequested()
+
+    function synchronizeBorderDraft() {
+        root.borderDraftEnabled = root.shellBorderEnabled;
+        root.borderDraftWidth = root.shellBorderWidth;
+        root.borderDraftRadius = root.shellBorderRadius;
+        root.borderDraftSync = root.syncHyprlandWindowBorders;
+    }
+
+    function requestSharedBorder(enabled, width, radius, sync) {
+        if (!root.coreControlsEnabled) {
+            root.synchronizeBorderDraft();
+            return;
+        }
+
+        root.borderDraftEnabled = enabled;
+        root.borderDraftWidth = Math.max(0, Math.min(20, width));
+        root.borderDraftRadius = Math.max(0, Math.min(20, radius));
+        root.borderDraftSync = sync;
+        root.sharedBorderRequested(
+            root.borderDraftEnabled,
+            root.borderDraftWidth,
+            root.borderDraftRadius,
+            root.borderDraftSync
+        );
+    }
+
+    function resetSharedBorder() {
+        if (!root.coreControlsEnabled)
+            return;
+
+        root.borderDraftEnabled = root.defaultShellBorderEnabled;
+        root.borderDraftWidth = root.defaultShellBorderWidth;
+        root.borderDraftRadius = root.defaultShellBorderRadius;
+        root.borderDraftSync = root.defaultSyncHyprlandWindowBorders;
+        root.resetSharedBorderRequested();
+    }
+
+    onShellBorderEnabledChanged: {
+        if (!root.coreBusy)
+            root.synchronizeBorderDraft();
+    }
+    onShellBorderWidthChanged: {
+        if (!root.coreBusy)
+            root.synchronizeBorderDraft();
+    }
+    onShellBorderRadiusChanged: {
+        if (!root.coreBusy)
+            root.synchronizeBorderDraft();
+    }
+    onSyncHyprlandWindowBordersChanged: {
+        if (!root.coreBusy)
+            root.synchronizeBorderDraft();
+    }
+    onCoreBusyChanged: {
+        if (!root.coreBusy)
+            root.synchronizeBorderDraft();
+    }
+
+    Component.onCompleted: root.synchronizeBorderDraft()
 
     background: Rectangle {
         color: root.palette.window
@@ -155,6 +238,9 @@ Page {
                     Layout.preferredHeight: 286
                     Layout.minimumHeight: 286
                     barHeight: heightControl.previewValue
+                    shellBorderEnabled: root.borderDraftEnabled
+                    shellBorderWidth: root.borderDraftWidth
+                    shellBorderRadius: root.borderDraftRadius
                     adjusting: heightControl.adjusting
                     configurationAvailable: root.coreServiceAvailable
                     animationsEnabled: root.previewAnimationsEnabled
@@ -269,7 +355,7 @@ Page {
 
                     Label {
                         anchors.fill: parent
-                        text: qsTr("Bar size settings are unavailable. The displayed size may be stale, and size changes are disabled until core settings reconnect.")
+                        text: qsTr("Bar settings are unavailable. The displayed size and border may be stale, and core Bar changes are disabled until settings reconnect.")
                         color: "#ffd5a1"
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
@@ -380,7 +466,7 @@ Page {
                     Label {
                         objectName: "coreConfigurationErrorLabel"
                         anchors.fill: parent
-                        text: qsTr("The bar size could not be saved. %1").arg(
+                        text: qsTr("The Bar settings could not be saved. %1").arg(
                             root.coreErrorText
                         )
                         color: "#ffb8c3"
@@ -475,6 +561,290 @@ Page {
                             color: root.palette.placeholderText
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "sharedBorderSettingsCard"
+                    Layout.fillWidth: true
+                    padding: 22
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+
+                            Label {
+                                text: qsTr("Border")
+                                color: root.palette.text
+                                font.pixelSize: 18
+                                font.weight: Font.DemiBold
+                                Accessible.role: Accessible.Heading
+                                Accessible.name: text
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Use one HyprShelld border shape for the bar and synchronized Hyprland windows.")
+                                color: root.palette.placeholderText
+                                font.pixelSize: 13
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 16
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 2
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Show border")
+                                    color: root.palette.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Medium
+                                }
+
+                                Label {
+                                    objectName: "shellBorderEnabledDescription"
+                                    Layout.fillWidth: true
+                                    text: qsTr("Show the shared border line on the bar and, while synced, on Hyprland windows. Width and radius are kept when hidden.")
+                                    color: root.palette.placeholderText
+                                    font.pixelSize: 12
+                                    wrapMode: Text.Wrap
+                                }
+                            }
+
+                            Switch {
+                                id: shellBorderEnabledControl
+
+                                objectName: "shellBorderEnabled"
+                                implicitHeight: Math.max(
+                                    44,
+                                    implicitBackgroundHeight,
+                                    implicitContentHeight + topPadding + bottomPadding
+                                )
+                                checked: root.borderDraftEnabled
+                                enabled: root.coreControlsEnabled
+                                text: checked ? qsTr("On") : qsTr("Off")
+                                Accessible.name: qsTr("Show shared border on the bar and synchronized windows")
+
+                                onClicked: root.requestSharedBorder(
+                                    checked,
+                                    root.borderDraftWidth,
+                                    root.borderDraftRadius,
+                                    root.borderDraftSync
+                                )
+                            }
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: root.width < 720 ? 1 : 2
+                            columnSpacing: 22
+                            rowSpacing: 14
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 12
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Border width")
+                                        color: root.palette.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.Medium
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Thickness in logical pixels.")
+                                        color: root.palette.placeholderText
+                                        font.pixelSize: 12
+                                        wrapMode: Text.Wrap
+                                    }
+                                }
+
+                                SpinBox {
+                                    id: shellBorderWidthControl
+
+                                    objectName: "shellBorderWidth"
+                                    Layout.preferredWidth: 104
+                                    implicitHeight: Math.max(
+                                        44,
+                                        implicitBackgroundHeight,
+                                        implicitContentHeight + topPadding + bottomPadding
+                                    )
+                                    from: 0
+                                    to: 20
+                                    value: root.borderDraftWidth
+                                    editable: false
+                                    enabled: root.coreControlsEnabled
+                                    Accessible.name: qsTr("Shared border width")
+
+                                    onValueModified: root.requestSharedBorder(
+                                        root.borderDraftEnabled,
+                                        value,
+                                        root.borderDraftRadius,
+                                        root.borderDraftSync
+                                    )
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 12
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Corner radius")
+                                        color: root.palette.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.Medium
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Round the bar and synchronized window corners.")
+                                        color: root.palette.placeholderText
+                                        font.pixelSize: 12
+                                        wrapMode: Text.Wrap
+                                    }
+                                }
+
+                                SpinBox {
+                                    id: shellBorderRadiusControl
+
+                                    objectName: "shellBorderRadius"
+                                    Layout.preferredWidth: 104
+                                    implicitHeight: Math.max(
+                                        44,
+                                        implicitBackgroundHeight,
+                                        implicitContentHeight + topPadding + bottomPadding
+                                    )
+                                    from: 0
+                                    to: 20
+                                    value: root.borderDraftRadius
+                                    editable: false
+                                    enabled: root.coreControlsEnabled
+                                    Accessible.name: qsTr("Shared corner radius")
+
+                                    onValueModified: root.requestSharedBorder(
+                                        root.borderDraftEnabled,
+                                        root.borderDraftWidth,
+                                        value,
+                                        root.borderDraftSync
+                                    )
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 16
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 2
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Sync Hyprland window borders")
+                                    color: root.palette.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Medium
+                                }
+
+                                Label {
+                                    objectName: "sharedBorderAuthorityMessage"
+                                    Layout.fillWidth: true
+                                    text: root.borderDraftSync
+                                        ? qsTr("HyprShelld controls Hyprland's window border width and corner radius. The matching Hyprland options remain read-only while synchronization is on.")
+                                        : qsTr("Hyprland can use its own window border override without changing the HyprShelld bar.")
+                                    color: root.palette.placeholderText
+                                    font.pixelSize: 12
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+                            }
+
+                            CheckBox {
+                                id: syncHyprlandWindowBordersControl
+
+                                objectName: "syncHyprlandWindowBorders"
+                                implicitHeight: Math.max(
+                                    44,
+                                    implicitBackgroundHeight,
+                                    implicitContentHeight + topPadding + bottomPadding
+                                )
+                                checked: root.borderDraftSync
+                                enabled: root.coreControlsEnabled
+                                text: qsTr("Sync")
+                                Accessible.name: qsTr("Sync Hyprland window borders with HyprShelld")
+
+                                onClicked: root.requestSharedBorder(
+                                    root.borderDraftEnabled,
+                                    root.borderDraftWidth,
+                                    root.borderDraftRadius,
+                                    checked
+                                )
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Each change is saved as one shared border update.")
+                                color: root.palette.placeholderText
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                            }
+
+                            Button {
+                                objectName: "resetSharedBorder"
+                                implicitHeight: Math.max(
+                                    44,
+                                    implicitBackgroundHeight,
+                                    implicitContentHeight + topPadding + bottomPadding
+                                )
+                                text: qsTr("Reset")
+                                enabled: root.coreControlsEnabled
+                                    && root.borderDraftDirty
+                                Accessible.name: qsTr("Reset shared border settings")
+
+                                onClicked: root.resetSharedBorder()
+                            }
                         }
                     }
                 }

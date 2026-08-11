@@ -13,12 +13,13 @@ whether to allow it. Appearance never starts takeover implicitly.
 
 ## Available choices
 
-The first Appearance page intentionally exposes eight common, safe options:
+The first Appearance page intentionally exposes eight common, safe options.
+Two of them participate in HyprShelld's shared visual style:
 
 - **Border thickness** sets the managed window border from 0 to 20 layout
-  pixels. Its catalog default is 1.
+  pixels. By default it follows the shared border configured on **Bar**.
 - **Corner radius** sets rounded corners from 0 to 20 layout pixels. Its
-  catalog default is 0.
+  synchronized value also follows the shared border configured on **Bar**.
 - **Blur backgrounds** enables or disables Hyprland's configured background
   blur. It is enabled by default.
 - **Window shadows** enables or disables managed drop shadows. They are enabled
@@ -31,6 +32,24 @@ The first Appearance page intentionally exposes eight common, safe options:
   resize windows. It is disabled by default.
 - **Snap floating windows** enables Hyprland's managed floating-window
   snapping. It is disabled by default.
+
+While synchronization is on, window border thickness and corner radius remain
+visible but read-only and are labeled **Controlled by HyprShelld**. Change the
+shared values from **Bar**, or select **Override window borders** when Hyprland
+should use a separate pair. That override affects only these two values; blur,
+shadows, animation, layout, resize, and snapping remain independent. **Sync
+with HyprShelld** restores shared authority and reconciles the current shared
+values. HyprShelld activates that reconciliation automatically only from an
+exact current managed base; otherwise the matching values remain saved pending
+an explicit safe apply or compositor takeover. Turning the shared border line
+off sets a synchronized Hyprland border width of zero without discarding the
+saved width or corner radius.
+
+The Bar can keep using and editing the shared style when compositor management
+is unavailable. HyprShelld preserves the last applied window appearance and
+reports synchronization as unavailable rather than taking over or reloading
+Hyprland. Only the explicit takeover flow in **Displays** can adopt an
+unmanaged compositor entrypoint.
 
 Settings obtains the types, ranges, choices, and defaults from the exact
 catalog advertised by the compositor-settings authority. If that catalog is
@@ -57,7 +76,8 @@ the preview changes the live session.
 Changing a control creates a local draft. Use:
 
 - **Discard draft** to return to the authoritative values without writing;
-- **Reset to defaults** to prepare a draft containing the catalog defaults; or
+- **Reset to defaults** to prepare catalog defaults for direct compositor
+  controls while retaining any synchronized border pair; or
 - **Save & apply** to persist and activate the complete validated draft.
 
 Resetting to defaults removes redundant managed overrides rather than pinning
@@ -80,6 +100,12 @@ and Settings says that it is not active. **Retry apply** retries the exact saved
 revision when the authority says that is safe. It does not create another
 desired-state revision.
 
+Shared-border synchronization follows the same durable compositor activation
+rules. A successful managed update advances the normal last-known-good state.
+If synchronization fails, the Bar still reflects HyprShelld's saved style, Hyprland
+keeps its last verified live state, and Settings offers an explicit retry. It
+does not repeatedly reload the same failed tuple in the background.
+
 ## Restore the last working configuration
 
 When recovery is available, **Restore last working configuration** opens a
@@ -90,7 +116,9 @@ future settings, with the last verified working snapshot.
 After confirmation, HyprShelld records that snapshot as a new monotonic
 desired-state revision, reloads Hyprland, and verifies it. Canceling does not
 change desired files or the running compositor. An ambiguous recovery response
-is not retried automatically.
+is not retried automatically. If window-border synchronization remains on,
+HyprShelld then reasserts the current shared border pair instead of leaving
+those two values under the recovered compositor snapshot.
 
 Appearance uses the same compositor desired-state and last-known-good files as
 Displays. On a standard installation these are
