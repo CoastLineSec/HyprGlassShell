@@ -128,7 +128,7 @@ bool SharedBorderReconciler::configuredFor(const QString &digest) const
 }
 
 SharedBorderValues SharedBorderReconciler::valuesFor(
-    const SharedBorderProjection &projection
+    const SharedVisualProjection &projection
 ) const
 {
     return {
@@ -158,7 +158,7 @@ std::optional<SharedBorderEdit> SharedBorderReconciler::edit(
     const QByteArray &snapshot,
     const quint64 expectedRevision,
     const QString &expectedCatalogDigest,
-    const SharedBorderProjection &projection,
+    const SharedVisualProjection &projection,
     QString &error
 ) const
 {

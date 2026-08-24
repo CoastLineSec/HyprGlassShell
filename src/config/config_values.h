@@ -15,4 +15,10 @@ inline constexpr unsigned int maximumShellBorderRadius = 20U;
 inline constexpr unsigned int defaultShellBorderRadius = 15U;
 inline constexpr bool defaultSyncHyprlandWindowBorders = true;
 
+inline constexpr unsigned int minimumShellSpacing = 0U;
+inline constexpr unsigned int maximumShellSpacing = 32U;
+inline constexpr unsigned int defaultShellInnerSpacing = 8U;
+inline constexpr unsigned int defaultShellOuterSpacing = 12U;
+inline constexpr bool defaultSyncHyprlandWindowSpacing = true;
+
 } // namespace HyprShelld::ConfigValues

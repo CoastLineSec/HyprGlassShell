@@ -17,6 +17,9 @@ using namespace HyprShelld::Hyprland;
 
 namespace {
 
+const QString testAuthorityId =
+    QStringLiteral("0123456789abcdef0123456789abcdef");
+
 [[nodiscard]] QByteArray readBytes(const QString &path)
 {
     QFile file(path);
@@ -32,6 +35,46 @@ namespace {
         return {};
     }
     return document.object();
+}
+
+[[nodiscard]] QString dormantV2ActionCatalogPath()
+{
+    auto path = QStringLiteral(HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE);
+    path.replace(
+        QStringLiteral("action-catalog-v1.json"),
+        QStringLiteral("action-catalog-v2.json")
+    );
+    return path;
+}
+
+[[nodiscard]] QString dormantV2CatalogPath()
+{
+    auto path = QStringLiteral(HYPRSHELLD_HYPRLAND_CATALOG_FILE);
+    path.replace(
+        QStringLiteral("config-catalog-v1.json"),
+        QStringLiteral("config-catalog-v2.json")
+    );
+    return path;
+}
+
+[[nodiscard]] QString dormantV2ConfigSchemaPath()
+{
+    auto path = QStringLiteral(HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE);
+    path.replace(
+        QStringLiteral("/v1/config.schema.json"),
+        QStringLiteral("/v2/config.schema.json")
+    );
+    return path;
+}
+
+[[nodiscard]] QString dormantV2TemplatePath()
+{
+    auto path = QStringLiteral(HYPRSHELLD_HYPRLAND_DEFAULTS_FILE);
+    path.replace(
+        QStringLiteral("hyprland.json"),
+        QStringLiteral("hyprland-template.json")
+    );
+    return path;
 }
 
 [[nodiscard]] QJsonObject readObjectFromBytes(const QByteArrayView bytes)
@@ -278,6 +321,59 @@ private slots:
         parsed = parseDisplayProfile(canonical(root));
         QVERIFY(!parsed);
         QVERIFY(hasCode(parsed.errors, QStringLiteral("display.output-object-required")));
+    }
+
+    void dormantV2EnvelopeRetainsSemanticsButCannotUseActiveCandidate()
+    {
+        const auto v2Catalog = parseDormantCatalogV2(
+            readBytes(dormantV2CatalogPath())
+        );
+        QVERIFY2(v2Catalog, qPrintable(describeErrors(v2Catalog.errors)));
+
+        const auto v2Actions = parseDormantActionCatalogV2(
+            readBytes(dormantV2ActionCatalogPath()),
+            readBytes(dormantV2ConfigSchemaPath())
+        );
+        QVERIFY2(v2Actions, qPrintable(describeErrors(v2Actions.errors)));
+
+        auto runtime = readObject(dormantV2TemplatePath());
+        QVERIFY(!runtime.isEmpty());
+        runtime.insert(QStringLiteral("authorityId"), testAuthorityId);
+        const auto v2 = parseDormantDesiredStateV2(
+            canonical(runtime), *v2Catalog.value, *v2Actions.value
+        );
+        QVERIFY2(v2, qPrintable(describeErrors(v2.errors)));
+        QCOMPARE(v2.value->semanticState.workspaceRules,
+                 defaults.workspaceRules);
+
+        const auto topology = twoOutputTopology();
+        const auto displayProfile = profile(
+            topology,
+            {
+                desiredMonitor(
+                    QStringLiteral("DP-1"), QStringLiteral("display-one")
+                ),
+                desiredMonitor(
+                    QStringLiteral("DP-2"), QStringLiteral("display-two")
+                ),
+            }
+        );
+        const auto candidate = buildDisplayCandidate(
+            v2.value->semanticState,
+            displayProfile,
+            topology,
+            *v2Catalog.value,
+            *v2Actions.value
+        );
+        QVERIFY(!candidate);
+        QVERIFY(hasCode(
+            candidate.errors,
+            QStringLiteral("state.active-v1-catalog-authority-required")
+        ));
+        QVERIFY(hasCode(
+            candidate.errors,
+            QStringLiteral("state.active-v1-action-authority-required")
+        ));
     }
 
     void parsesPinnedWireAndNormalizesModesAndMirrors()

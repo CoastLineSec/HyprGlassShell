@@ -19,12 +19,30 @@ PanelWindow { // qmllint disable uncreatable-type
     required property string failureNoticeScreenName
     required property string failureNoticeText
     required property var workspaceSource
-    readonly property int outerMargin: 12
-    readonly property int sideMargin: 12
-    readonly property int inwardSpacing: 8
+    property int shellInnerSpacing: 8
+    property int shellOuterSpacing: 12
+    readonly property int configuredInnerSpacing: Math.max(
+        0, Math.min(32, shellInnerSpacing)
+    )
+    readonly property int configuredOuterSpacing: Math.max(
+        0, Math.min(32, shellOuterSpacing)
+    )
     readonly property string outputName: root.modelData
         ? root.modelData.name
         : ""
+    readonly property int visibleWorkspaceCoveringMode: {
+        if (!root.workspaceSource || !root.workspaceSource.available)
+            return 0;
+        root.workspaceSource.snapshot;
+        return root.workspaceSource.coveringModeForOutput(root.outputName);
+    }
+    readonly property bool attachedToTopEdge:
+        root.visibleWorkspaceCoveringMode === 1
+    readonly property int outerMargin: root.attachedToTopEdge
+        ? 0 : root.configuredOuterSpacing
+    readonly property int sideMargin: root.outerMargin
+    readonly property int inwardSpacing: root.attachedToTopEdge
+        ? 0 : root.configuredInnerSpacing
     readonly property var startComponentInstances: {
         ComponentRuntimeClient.planRevision;
         ComponentRuntimeClient.planDigest;
@@ -90,7 +108,12 @@ PanelWindow { // qmllint disable uncreatable-type
 
     mask: Region {
         item: bar
-        radius: bar.renderedCornerRadius
+        topLeftRadius: root.attachedToTopEdge
+            ? 0 : bar.renderedCornerRadius
+        topRightRadius: root.attachedToTopEdge
+            ? 0 : bar.renderedCornerRadius
+        bottomLeftRadius: bar.renderedCornerRadius
+        bottomRightRadius: bar.renderedCornerRadius
     }
 
     Bar {
@@ -146,5 +169,11 @@ PanelWindow { // qmllint disable uncreatable-type
             && root.modelData
             && root.modelData.name === root.failureNoticeScreenName
         failureNoticeText: root.failureNoticeText
+    }
+
+    Binding {
+        target: bar
+        property: "attachedToTopEdge"
+        value: root.attachedToTopEdge
     }
 }

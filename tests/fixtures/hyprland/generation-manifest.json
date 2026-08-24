@@ -1,10 +1,10 @@
 {
   "formatVersion": 1,
   "contractVersion": 1,
-  "generation": "743a8c36be6176d5f1df165ffb48dec7f90da7a33bfd24cc97f6cf8197d3aa01",
-  "snapshotDigest": "1a2bd8ddb000ca54bda76802b642580742ad24741006b1d4e6f59f52fa9847b6",
-  "catalogDigest": "0232f9b036849e2b9423d5960dd32f22001c79b5b6b6696330f481d1d0c657e0",
-  "actionCatalogDigest": "72e063a5476308cefdd2771367ffeed9a8e553b3a2d7141f4e08c3e105a5deb2",
+  "generation": "49463670579daac11a301bfd6cf78e17027d5ba1821db9a62abab9430461ad54",
+  "snapshotDigest": "1b1a29e72e33f1d4aca6651c398987123cac3263bbc7a8169529ff45610bc712",
+  "catalogDigest": "402c8a8c570dd3760d4d7bea8c358c7f12021a7c51457e62a4771d69a581254b",
+  "actionCatalogDigest": "1438f04a169b4ecfc945078403d6286154bc89a0e32cb3a1a5073d209e0c358b",
   "revision": "0",
   "targetHyprland": "0.56.1",
   "compatibleHyprland": {

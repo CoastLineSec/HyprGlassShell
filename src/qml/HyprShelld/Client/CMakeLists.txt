@@ -27,6 +27,10 @@ qt_add_qml_module(
         component_runtime_client.h
         compositor_client.cpp
         compositor_client.h
+        input_device_projection.cpp
+        input_device_projection.h
+        keyboard_shortcut_reference_model.cpp
+        keyboard_shortcut_reference_model.h
         compositor_option_catalog.cpp
         compositor_option_catalog.h
         compositor_snapshot_editor.cpp

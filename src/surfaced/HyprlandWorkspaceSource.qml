@@ -121,6 +121,15 @@ Scope {
         return true;
     }
 
+    function coveringModeForOutput(outputName) {
+        if (!root.available)
+            return 0;
+        return WorkspaceProtocol.visibleWorkspaceCoveringMode(
+            root.snapshot,
+            outputName
+        );
+    }
+
     function _connectEventSocket() {
         if (!root._started
                 || root._eventStream
@@ -197,6 +206,7 @@ Scope {
 
     function _handleEventLine(line) {
         if (String(line || "").length > 256 * 1024) {
+            root._eventGeneration += 1;
             root._queueRefresh(0);
             return;
         }
@@ -205,6 +215,7 @@ Scope {
         if (!event.relevant)
             return;
 
+        root._eventGeneration += 1;
         root._urgentAddresses = WorkspaceProtocol.applyUrgentEvent(
             root._urgentAddresses,
             event,

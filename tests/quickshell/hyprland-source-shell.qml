@@ -53,6 +53,7 @@ ShellRoot {
                 monitor: "DP-4",
                 monitorID: 0,
                 windows: 1,
+                hasfullscreen: true,
                 ispersistent: false,
                 lastwindow: "0xa"
             },
@@ -62,6 +63,7 @@ ShellRoot {
                 monitor: "DP-4",
                 monitorID: 0,
                 windows: 1,
+                hasfullscreen: false,
                 ispersistent: true,
                 lastwindow: "0xb"
             }
@@ -76,6 +78,10 @@ ShellRoot {
             activeWorkspace: {
                 id: 1,
                 name: "1"
+            },
+            specialWorkspace: {
+                id: 0,
+                name: ""
             }
         }]);
     }
@@ -88,6 +94,10 @@ ShellRoot {
                 monitor: 0,
                 mapped: true,
                 hidden: false,
+                visible: true,
+                floating: false,
+                fullscreen: 1,
+                fullscreenHandler: "default",
                 class: "org.example.Editor",
                 initialClass: "org.example.Editor",
                 title: "Editor",
@@ -99,6 +109,10 @@ ShellRoot {
                 monitor: 0,
                 mapped: true,
                 hidden: false,
+                visible: true,
+                floating: false,
+                fullscreen: 0,
+                fullscreenHandler: "default",
                 class: "org.example.Browser",
                 initialClass: "org.example.Browser",
                 title: "Browser",
@@ -179,6 +193,14 @@ ShellRoot {
                 "real named/persistent workspace fields were not normalized")) {
             return false;
         }
+        if (!root.check(source.coveringModeForOutput("DP-4") === 1,
+                "maximized covering mode was not projected per output")) {
+            return false;
+        }
+        if (!root.check(source.coveringModeForOutput("DP-9") === 0,
+                "unknown output did not fail safe to floating mode")) {
+            return false;
+        }
         if (!root.check(source.activateWorkspace("DP-4", -44),
                 "valid Lua workspace action was rejected")) {
             return false;
@@ -236,7 +258,7 @@ ShellRoot {
 
         if (root.phase === 0
                 && source.actionsAvailable
-                && source.snapshot.revision >= 2) {
+                && source.snapshot.revision >= 1) {
             if (!root.check(root.hungRequest,
                     "request timeout fixture was not exercised")) {
                 return;
@@ -246,10 +268,11 @@ ShellRoot {
                     "timed-out request was not recreated")) {
                 return;
             }
-            if (!root.check(root.commandsCompleted.length === 8
-                    && root.sequenceMatches(0)
-                    && root.sequenceMatches(4),
-                    "atomic query cycles were out of order or starved")) {
+            if (!root.check(root.commandsCompleted.length === 6
+                    && root.commandsCompleted[0] === "j/status"
+                    && root.commandsCompleted[1] === "j/workspaces"
+                    && root.sequenceMatches(2),
+                    "event-invalidated query cycle was not discarded and restarted atomically")) {
                 return;
             }
             if (!root.validateLuaActions())
@@ -265,9 +288,9 @@ ShellRoot {
 
         if (root.phase === 1
                 && source.actionsAvailable
-                && source.snapshot.revision >= 3
+                && source.snapshot.revision >= 2
                 && source.configProvider === "legacy") {
-            if (!root.check(root.sequenceMatches(8),
+            if (!root.check(root.sequenceMatches(6),
                     "legacy refresh query cycle was out of order")) {
                 return;
             }
@@ -293,7 +316,7 @@ ShellRoot {
             }
             if (root.staleActionChecked
                     && source.actionsAvailable
-                    && source.snapshot.revision >= 4) {
+                    && source.snapshot.revision >= 3) {
                 root.retainedSnapshot = source.snapshot;
                 root.retainedRevision = source.snapshot.revision;
                 eventServer.active = false;
@@ -326,7 +349,7 @@ ShellRoot {
                     "source did not recover after event server returned")) {
                 return;
             }
-            if (!root.check(root.sequenceMatches(16),
+            if (!root.check(root.sequenceMatches(14),
                     "reconnect query cycle was out of order")) {
                 return;
             }

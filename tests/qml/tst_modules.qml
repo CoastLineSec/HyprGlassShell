@@ -167,6 +167,48 @@ TestCase {
         compare(background.radius, 12);
     }
 
+    function test_barAttachedGeometrySquaresOnlyTheTopCorners() {
+        const bar = createTemporaryObject(barComponent, this);
+        verify(bar !== null);
+        const background = findChild(bar, "barBackground");
+        verify(background !== null);
+
+        compare(bar.attachedToTopEdge, false);
+        compare(bar.renderedTopLeftCornerRadius, 15);
+        compare(bar.renderedTopRightCornerRadius, 15);
+        compare(bar.renderedBottomLeftCornerRadius, 15);
+        compare(bar.renderedBottomRightCornerRadius, 15);
+        compare(background.topLeftRadius, 15);
+        compare(background.topRightRadius, 15);
+        compare(background.bottomLeftRadius, 15);
+        compare(background.bottomRightRadius, 15);
+
+        bar.barHeight = 25;
+        compare(bar.renderedCornerRadius, 12);
+        compare(bar.renderedTopLeftCornerRadius, 12);
+        compare(bar.renderedTopRightCornerRadius, 12);
+        compare(bar.renderedBottomLeftCornerRadius, 12);
+        compare(bar.renderedBottomRightCornerRadius, 12);
+        compare(background.topLeftRadius, 12);
+        compare(background.topRightRadius, 12);
+        compare(background.bottomLeftRadius, 12);
+        compare(background.bottomRightRadius, 12);
+
+        bar.attachedToTopEdge = true;
+        compare(bar.renderedTopLeftCornerRadius, 0);
+        compare(bar.renderedTopRightCornerRadius, 0);
+        compare(bar.renderedBottomLeftCornerRadius, 12);
+        compare(bar.renderedBottomRightCornerRadius, 12);
+        compare(background.topLeftRadius, 0);
+        compare(background.topRightRadius, 0);
+        compare(background.bottomLeftRadius, 12);
+        compare(background.bottomRightRadius, 12);
+
+        bar.attachedToTopEdge = false;
+        compare(background.topLeftRadius, 12);
+        compare(background.topRightRadius, 12);
+    }
+
     function test_barOnlyShowsHealthIndicatorWhenDegraded() {
         const testWindow = createTemporaryObject(barWindowComponent, this);
         verify(testWindow !== null);

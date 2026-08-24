@@ -5,7 +5,7 @@
     "reviewedTag": "v0.56.1",
     "reviewedCommit": "5c9377c15f85c50648f35ca5a213754f95b93ca0"
   },
-  "configSchemaDigest": "85bc06011e93563217742c0bddb67d84da232404cb32e73e3a3e663a0ffaadd5",
+  "configSchemaDigest": "75e299cc9f5d3a3289450df089cad4aa22efd26ba2f11fbbf27d46f78b898202",
   "source": {
     "repository": "https://github.com/hyprwm/Hyprland",
     "tag": "v0.56.1",

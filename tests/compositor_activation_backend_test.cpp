@@ -33,6 +33,16 @@ constexpr auto newNonce = "fedcba9876543210fedcba9876543210";
     };
 }
 
+[[nodiscard]] HyprlandVersionPolicy inputDiscoveryVersionPolicy()
+{
+    return {
+        .major = 0,
+        .minor = 56,
+        .minimumPatch = 0,
+        .maximumPatch = std::nullopt,
+    };
+}
+
 [[nodiscard]] ManagementStatus unmanagedStatus(
     const QString &digest = {}
 )
@@ -220,12 +230,25 @@ public:
             .document = QByteArrayLiteral("{\"formatVersion\":1}\n"),
         },
     };
+    ConnectedInputDevicesResult inputDevicesResult{
+        .success = true,
+        .runtimeIdentity = QStringLiteral("input-runtime-identity"),
+        .inventory = HyprShelld::Hyprland::ConnectedInputDeviceInventory{
+            .inventoryDigest = QString(64, QLatin1Char('a')),
+            .document = QByteArrayLiteral(
+                "{\"formatVersion\":1,\"inventoryDigest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"records\":[],\"unaddressable\":{\"switches\":0,\"tabletPads\":0,\"tabletTools\":0}}\n"
+            ),
+        },
+    };
     int setPolicyCalls = 0;
     int prepareCalls = 0;
     int proofCalls = 0;
     int cancelCalls = 0;
     int unboundedConnectedCalls = 0;
     QVector<int> connectedMaximumWaits;
+    int unboundedInputDeviceCalls = 0;
+    QVector<int> inputDeviceMaximumWaits;
+    QVector<QByteArray> inputDeviceEpochs;
     HyprlandVersionPolicy lastPolicy;
     ActivationRequirement lastRequirement = ActivationRequirement::None;
     RuntimeActivationMode lastMode = RuntimeActivationMode::ManagedReload;
@@ -304,6 +327,27 @@ public:
         connectedMaximumWaits.append(maximumWaitMilliseconds);
         trace.append(QStringLiteral("runtime-connected-bounded"));
         return connectedResult;
+    }
+
+    ConnectedInputDevicesResult connectedInputDevices(
+        const QByteArrayView serviceEpoch
+    ) override
+    {
+        ++unboundedInputDeviceCalls;
+        inputDeviceEpochs.append(serviceEpoch.toByteArray());
+        trace.append(QStringLiteral("runtime-input-devices-unbounded"));
+        return inputDevicesResult;
+    }
+
+    ConnectedInputDevicesResult connectedInputDevices(
+        const QByteArrayView serviceEpoch,
+        const int maximumWaitMilliseconds
+    ) override
+    {
+        inputDeviceEpochs.append(serviceEpoch.toByteArray());
+        inputDeviceMaximumWaits.append(maximumWaitMilliseconds);
+        trace.append(QStringLiteral("runtime-input-devices-bounded"));
+        return inputDevicesResult;
     }
 };
 
@@ -700,6 +744,100 @@ private slots:
         QVERIFY(connected.success);
         QCOMPARE(harness.runtime->connectedMaximumWaits,
                  (QVector<int>{41, 0}));
+    }
+
+    void connectedInputDevicesRequiresOnlyConfiguredVersionPolicy()
+    {
+        auto publisher = std::make_unique<FakePublisher>();
+        auto runtime = std::make_unique<FakeRuntime>();
+        auto *runtimeObserver = runtime.get();
+        LiveActivationBackend backend(
+            std::move(publisher), std::move(runtime)
+        );
+
+        auto connected = backend.connectedInputDevices(
+            QByteArrayView("epoch-a"), 41
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(runtimeObserver->inputDeviceMaximumWaits.isEmpty());
+        QCOMPARE(runtimeObserver->unboundedInputDeviceCalls, 0);
+
+        backend.setVersionPolicy(inputDiscoveryVersionPolicy());
+        QCOMPARE(runtimeObserver->setPolicyCalls, 1);
+        QCOMPARE(runtimeObserver->lastPolicy.major, quint32(0));
+        QCOMPARE(runtimeObserver->lastPolicy.minor, quint32(56));
+        QCOMPARE(runtimeObserver->lastPolicy.minimumPatch, quint32(0));
+        QVERIFY(!runtimeObserver->lastPolicy.maximumPatch.has_value());
+
+        // No filesystem bind, desired snapshot, or startup reconciliation has
+        // occurred. The authenticated read-only runtime is still available.
+        connected = backend.connectedInputDevices(
+            QByteArrayView("epoch-a"), 41
+        );
+        QVERIFY2(connected.success, qPrintable(connected.errorMessage));
+        QCOMPARE(connected.runtimeIdentity,
+                 QStringLiteral("input-runtime-identity"));
+        QVERIFY(connected.inventory.has_value());
+        QCOMPARE(runtimeObserver->inputDeviceMaximumWaits, QVector<int>{41});
+        QCOMPARE(runtimeObserver->inputDeviceEpochs,
+                 QVector<QByteArray>{QByteArrayLiteral("epoch-a")});
+        QCOMPARE(runtimeObserver->unboundedInputDeviceCalls, 0);
+
+        connected = backend.connectedInputDevices(QByteArrayView("epoch-b"));
+        QVERIFY(connected.success);
+        QCOMPARE(runtimeObserver->unboundedInputDeviceCalls, 1);
+        QCOMPARE(runtimeObserver->inputDeviceEpochs,
+                 (QVector<QByteArray>{QByteArrayLiteral("epoch-a"),
+                                      QByteArrayLiteral("epoch-b")}));
+
+        connected = backend.connectedInputDevices(
+            QByteArrayView("epoch-c"), 0
+        );
+        QVERIFY(connected.success);
+        QCOMPARE(runtimeObserver->inputDeviceMaximumWaits,
+                 (QVector<int>{41, 0}));
+        QCOMPARE(runtimeObserver->inputDeviceEpochs.back(),
+                 QByteArrayLiteral("epoch-c"));
+    }
+
+    void connectedInputDevicesSurvivesActivationFinalizationFailure()
+    {
+        LiveHarness harness(managedStatus(QString::fromLatin1(oldGeneration)));
+        harness.backend->setVersionPolicy(inputDiscoveryVersionPolicy());
+        QVERIFY(harness.start(QString::fromLatin1(oldGeneration)).success);
+        configureTargetActivation(harness);
+        const auto target = harness.publisher->verifyTargetResult.status;
+        harness.publisher->statusValue = target;
+        harness.publisher->pendingResult = {
+            .success = true,
+            .value = pendingBridge(),
+        };
+        harness.publisher->finalizeTargetResult = {
+            .success = false,
+            .errorCode = QStringLiteral("PersistenceFailed"),
+            .errorMessage = QStringLiteral("bridge sync failed"),
+            .status = target,
+        };
+
+        const auto finalized = harness.backend->finalizeCommitted(
+            {.rollbackToken = QByteArrayLiteral("bridge-token")},
+            QString::fromLatin1(newGeneration)
+        );
+        QVERIFY(!finalized.success);
+        QVERIFY(!harness.backend->canSatisfy(ActivationRequirement::Reload));
+
+        const auto connected = harness.backend->connectedInputDevices(
+            QByteArrayView("epoch-after-failure"), 73
+        );
+        QVERIFY2(connected.success, qPrintable(connected.errorMessage));
+        QVERIFY(connected.inventory.has_value());
+        QCOMPARE(harness.runtime->inputDeviceMaximumWaits,
+                 QVector<int>{73});
+        QCOMPARE(harness.runtime->inputDeviceEpochs,
+                 QVector<QByteArray>{
+                     QByteArrayLiteral("epoch-after-failure")
+                 });
     }
 
     void pendingDisplayTargetIsBoundToExactBridgeReceiptAndGeneration()

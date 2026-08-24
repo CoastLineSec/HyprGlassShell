@@ -161,6 +161,9 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/AppearancePreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarPreview.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/BarSettingsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/BindingEditor.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/BindingsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/CompositorRecoveryDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentPill.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentReviewDialog.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ComponentsPage.qml"
@@ -168,9 +171,38 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/DisplaysPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/DisplaySettingsCard.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/DisplayTopologyPreview.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/EnvironmentVariablesPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/GenericComponentSettings.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/GestureEditor.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/GestureSummaryList.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputDevicesPane.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputDeviceEditor.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputDeviceOverrideRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputDevicePreview.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/InputDevicesPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/HyprlandCatalogPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/HyprlandCategoryGraphic.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/HyprlandOptionRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/HyprlandOverviewPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/KeyboardShortcutsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/PermissionsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/RuleDecimalField.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/RuleOptionalField.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/RuleSafeIntegerField.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/RuleSummaryList.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/RulesPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/SchemaSettingRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SettingsDecimalRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SettingsSelectRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SettingsSliderRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SettingsSpinBoxRow.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/SettingsToggleRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/WindowsLayoutPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceRuleEditor.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceRuleSummaryList.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/WorkspacesPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceSwitcherSettings.qml"
 )
 
@@ -244,6 +276,18 @@ qt_add_dbus_interface(
     compositor1_interface
 )
 
+set_source_files_properties(
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor2.xml"
+    PROPERTIES
+        INCLUDE "compositord/compositor2_dbus_types.h"
+)
+
+qt_add_dbus_interface(
+    HYPRSHELLD_COMPOSITOR_PROXY_SOURCES
+    "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor2.xml"
+    compositor2_interface
+)
+
 qt_add_executable(
     hyprshelld-dbus-contract-test
     dbus_contract_test.cpp
@@ -253,6 +297,12 @@ qt_add_executable(
     ${HYPRSHELLD_COMPONENT_CONFIG_PROXY_SOURCES}
     ${HYPRSHELLD_COMPONENT_RUNTIME_PROXY_SOURCES}
     ${HYPRSHELLD_COMPOSITOR_PROXY_SOURCES}
+)
+
+target_include_directories(
+    hyprshelld-dbus-contract-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
 )
 
 target_compile_definitions(
@@ -489,6 +539,11 @@ target_compile_definitions(
     PRIVATE
         HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_SOURCE_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/source-manifest-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_TEMPLATE_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland-template.json"
         HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
         HYPRSHELLD_HYPRLAND_CATALOG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/catalog.schema.json"
         HYPRSHELLD_HYPRLAND_ACTION_CATALOG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/action-catalog.schema.json"
@@ -541,6 +596,646 @@ add_test(
     COMMAND hyprshelld-hyprland-monitor-profile-test
 )
 
+qt_add_executable(
+    hyprshelld-hyprland-input-device-inventory-test
+    hyprland_input_device_inventory_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-hyprland-input-device-inventory-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-hyprland-core
+)
+
+add_test(
+    NAME hyprland-input-device-inventory
+    COMMAND hyprshelld-hyprland-input-device-inventory-test
+)
+
+qt_add_executable(
+    hyprshelld-keyboard-shortcut-reference-test
+    keyboard_shortcut_reference_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-keyboard-shortcut-reference-test
+    PRIVATE
+        HYPRSHELLD_LEGACY_SHORTCUT_REFERENCE_FILE="${PROJECT_SOURCE_DIR}/src/hyprland/resources/keyboard-shortcuts-reference-v1.json"
+)
+
+target_link_libraries(
+    hyprshelld-keyboard-shortcut-reference-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-hyprland-core
+)
+
+add_test(
+    NAME keyboard-shortcut-reference
+    COMMAND hyprshelld-keyboard-shortcut-reference-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-identity-test
+    compositor_identity_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-identity-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-identity
+    COMMAND hyprshelld-compositor-identity-test
+)
+
+find_program(HYPRSHELLD_NODE_EXECUTABLE NAMES node REQUIRED)
+
+qt_add_executable(
+    hyprshelld-compositor-canonical-json-test
+    compositor_canonical_json_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-canonical-json-test
+    PRIVATE
+        HYPRSHELLD_NODE_EXECUTABLE="${HYPRSHELLD_NODE_EXECUTABLE}"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-canonical-json-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-canonical-json
+    COMMAND hyprshelld-compositor-canonical-json-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-authority-records-test
+    compositor_authority_records_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-authority-records-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-authority-records
+    COMMAND hyprshelld-compositor-authority-records-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-authority-cas-reducer-test
+    compositor_authority_cas_reducer_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-authority-cas-reducer-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-authority-cas-reducer
+    COMMAND hyprshelld-compositor-authority-cas-reducer-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-startup-reducer-test
+    compositor_startup_reducer_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-startup-reducer-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-startup-reducer
+    COMMAND hyprshelld-compositor-startup-reducer-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-observed-authority-facts-test
+    compositor_observed_authority_facts_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-observed-authority-facts-test
+    PRIVATE
+        QT_NO_DEBUG
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-observed-authority-facts-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-observed-authority-facts
+    COMMAND hyprshelld-compositor-observed-authority-facts-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-settled-v2-startup-facts-test
+    compositor_settled_v2_startup_facts_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-settled-v2-startup-facts-test
+    PRIVATE
+        QT_NO_DEBUG
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-settled-v2-startup-facts-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-settled-v2-startup-facts
+    COMMAND hyprshelld-compositor-settled-v2-startup-facts-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-settled-v2-pending-observation-test
+    compositor_settled_v2_pending_observation_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-settled-v2-pending-observation-test
+    PRIVATE
+        QT_NO_DEBUG
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-settled-v2-pending-observation-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-settled-v2-pending-observation
+    COMMAND hyprshelld-compositor-settled-v2-pending-observation-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-settled-v2-generation-byte-graph-test
+    compositor_settled_v2_generation_byte_graph_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-settled-v2-generation-byte-graph-test
+    PRIVATE
+        QT_NO_DEBUG
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_TEMPLATE_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland-template.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-settled-v2-generation-byte-graph-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-settled-v2-generation-byte-graph
+)
+
+add_test(
+    NAME compositor-settled-v2-generation-byte-graph
+    COMMAND hyprshelld-compositor-settled-v2-generation-byte-graph-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-ordinary-pending-record-test
+    compositor_ordinary_pending_record_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-ordinary-pending-record-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-ordinary-pending-record-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-ordinary-pending-record
+    COMMAND hyprshelld-compositor-ordinary-pending-record-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-desired-v1-observation-test
+    compositor_desired_v1_observation_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-desired-v1-observation-test
+    PRIVATE
+        QT_NO_DEBUG
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-desired-v1-observation-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-desired-v1-observation
+    COMMAND hyprshelld-compositor-desired-v1-observation-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-desired-migration-reducer-test
+    compositor_desired_migration_reducer_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-desired-migration-reducer-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_MIGRATION_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/../restart-proof-repair-migration-manifest.md"
+        HYPRSHELLD_SOURCE_MANIFEST_V2_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/source-manifest-v2.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-desired-migration-reducer-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-v2-core
+)
+
+add_test(
+    NAME compositor-desired-migration-reducer
+    COMMAND hyprshelld-compositor-desired-migration-reducer-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-legacy-transaction-records-test
+    compositor_legacy_transaction_records_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-legacy-transaction-records-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-legacy-transaction-records-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-legacy-transaction-records
+)
+
+add_test(
+    NAME compositor-legacy-transaction-records
+    COMMAND hyprshelld-compositor-legacy-transaction-records-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-legacy-entrypoint-records-test
+    compositor_legacy_entrypoint_records_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-legacy-entrypoint-records-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-legacy-entrypoint-records
+)
+
+add_test(
+    NAME compositor-legacy-entrypoint-records
+    COMMAND hyprshelld-compositor-legacy-entrypoint-records-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-dormant-generation-verifier-test
+    compositor_dormant_generation_verifier_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-dormant-generation-verifier-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_TEMPLATE_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland-template.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-dormant-generation-verifier-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-generation-verifier
+)
+
+add_test(
+    NAME compositor-dormant-generation-verifier
+    COMMAND hyprshelld-compositor-dormant-generation-verifier-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-dormant-generation-v1-verifier-test
+    compositor_dormant_generation_v1_verifier_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-dormant-generation-v1-verifier-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_GENERATION_MANIFEST_FIXTURE_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/generation-manifest.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-dormant-generation-v1-verifier-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-dormant-generation-v1-verifier
+)
+
+add_test(
+    NAME compositor-dormant-generation-v1-verifier
+    COMMAND hyprshelld-compositor-dormant-generation-v1-verifier-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-reachable-v1-preflight-test
+    compositor_reachable_v1_preflight_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-reachable-v1-preflight-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_MIGRATION_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/../restart-proof-repair-migration-manifest.md"
+        HYPRSHELLD_SOURCE_MANIFEST_V2_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/source-manifest-v2.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-reachable-v1-preflight-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-reachable-v1-preflight
+)
+
+add_test(
+    NAME compositor-reachable-v1-preflight
+    COMMAND hyprshelld-compositor-reachable-v1-preflight-test
+)
+
+# Compile the dormant capture implementation directly so its deterministic
+# checkpoint seam exists only in this focused test binary. The normal dormant
+# archive, production compositor, install graph, and exported ABI stay clean.
+qt_add_executable(
+    hyprshelld-compositor-dormant-v1-filesystem-capture-test
+    compositor_dormant_v1_filesystem_capture_test.cpp
+    "${PROJECT_SOURCE_DIR}/src/compositord/dormant_v1_filesystem_capture.cpp"
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-dormant-v1-filesystem-capture-test
+    PRIVATE
+        HYPRSHELLD_DORMANT_V1_CAPTURE_TEST_HOOKS=1
+)
+
+target_include_directories(
+    hyprshelld-compositor-dormant-v1-filesystem-capture-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-dormant-v1-filesystem-capture-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-reachable-v1-preflight
+)
+
+add_test(
+    NAME compositor-dormant-v1-filesystem-capture
+    COMMAND hyprshelld-compositor-dormant-v1-filesystem-capture-test
+)
+
+# Compile the implementation directly so its deterministic syscall/checkpoint
+# seam exists only in this focused binary. The normal dormant archive has no
+# hook ABI and no production target links or installs it.
+qt_add_executable(
+    hyprshelld-compositor-dormant-fixed-record-capture-test
+    compositor_dormant_fixed_record_capture_test.cpp
+    "${PROJECT_SOURCE_DIR}/src/compositord/dormant_fixed_record_capture.cpp"
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-dormant-fixed-record-capture-test
+    PRIVATE
+        HYPRSHELLD_DORMANT_FIXED_RECORD_CAPTURE_TEST_HOOKS=1
+)
+
+target_include_directories(
+    hyprshelld-compositor-dormant-fixed-record-capture-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-dormant-fixed-record-capture-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+)
+
+add_test(
+    NAME compositor-dormant-fixed-record-capture
+    COMMAND hyprshelld-compositor-dormant-fixed-record-capture-test
+)
+
+# Compile the pathless generation-tree capture directly so deterministic
+# checkpoint/syscall/allocation seams exist only in this focused binary. The
+# ordinary dormant archive and every production/install target stay hook-free.
+qt_add_executable(
+    hyprshelld-compositor-dormant-v2-generation-tree-capture-test
+    compositor_dormant_v2_generation_tree_capture_test.cpp
+    "${PROJECT_SOURCE_DIR}/src/compositord/dormant_v2_generation_tree_capture.cpp"
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-dormant-v2-generation-tree-capture-test
+    PRIVATE
+        HYPRSHELLD_DORMANT_V2_GENERATION_TREE_CAPTURE_TEST_HOOKS=1
+)
+
+target_include_directories(
+    hyprshelld-compositor-dormant-v2-generation-tree-capture-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-dormant-v2-generation-tree-capture-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+)
+
+add_test(
+    NAME compositor-dormant-v2-generation-tree-capture
+    COMMAND hyprshelld-compositor-dormant-v2-generation-tree-capture-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-captured-observed-authority-facts-test
+    compositor_captured_observed_authority_facts_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-captured-observed-authority-facts-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V1_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_V1_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-captured-observed-authority-facts-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-captured-observed-authority-facts
+)
+
+add_test(
+    NAME compositor-captured-observed-authority-facts
+    COMMAND hyprshelld-compositor-captured-observed-authority-facts-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-captured-settled-v2-generation-byte-graph-test
+    compositor_captured_settled_v2_generation_byte_graph_test.cpp
+)
+
+target_compile_definitions(
+    hyprshelld-compositor-captured-settled-v2-generation-byte-graph-test
+    PRIVATE
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+)
+
+target_link_libraries(
+    hyprshelld-compositor-captured-settled-v2-generation-byte-graph-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-captured-settled-v2-generation-byte-graph
+)
+
+add_test(
+    NAME compositor-captured-settled-v2-generation-byte-graph
+    COMMAND hyprshelld-compositor-captured-settled-v2-generation-byte-graph-test
+)
+
+qt_add_executable(
+    hyprshelld-compositor-activation-requirement-test
+    compositor_activation_requirement_test.cpp
+)
+
+target_link_libraries(
+    hyprshelld-compositor-activation-requirement-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-compositord-activation-classifier
+)
+
+add_test(
+    NAME compositor-activation-requirement
+    COMMAND hyprshelld-compositor-activation-requirement-test
+)
+
 find_program(HYPRSHELLD_LUAC_EXECUTABLE NAMES luac REQUIRED)
 find_program(HYPRSHELLD_LUA_EXECUTABLE NAMES lua REQUIRED)
 find_program(HYPRSHELLD_HYPRLAND_EXECUTABLE NAMES Hyprland REQUIRED)
@@ -557,6 +1252,12 @@ target_compile_definitions(
         HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
         HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+        HYPRSHELLD_HYPRLAND_V2_TEMPLATE_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland-template.json"
+        HYPRSHELLD_HYPRLAND_V2_SOURCE_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/source-manifest-v2.json"
+        HYPRSHELLD_HYPRLAND_V2_GENERATION_MANIFEST_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/generation-manifest-v2.json"
         HYPRSHELLD_LUAC_EXECUTABLE="${HYPRSHELLD_LUAC_EXECUTABLE}"
         HYPRSHELLD_LUA_EXECUTABLE="${HYPRSHELLD_LUA_EXECUTABLE}"
         HYPRSHELLD_HYPRLAND_EXECUTABLE="${HYPRSHELLD_HYPRLAND_EXECUTABLE}"
@@ -594,13 +1295,19 @@ add_test(
     COMMAND hyprshelld-compositor-service-test
 )
 
+find_program(
+    HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE
+    NAMES dbus-run-session
+    REQUIRED
+)
+
 qt_add_executable(
-    hyprshelld-compositor-shared-border-dbus-test
-    compositor_shared_border_dbus_test.cpp
+    hyprshelld-compositor-shared-visual-dbus-test
+    compositor_shared_visual_dbus_test.cpp
 )
 
 target_link_libraries(
-    hyprshelld-compositor-shared-border-dbus-test
+    hyprshelld-compositor-shared-visual-dbus-test
     PRIVATE
         Qt6::Core
         Qt6::DBus
@@ -609,15 +1316,15 @@ target_link_libraries(
 )
 
 add_test(
-    NAME compositor-shared-border-dbus
+    NAME compositor-shared-visual-dbus
     COMMAND
         "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
         --
-        "$<TARGET_FILE:hyprshelld-compositor-shared-border-dbus-test>"
+        "$<TARGET_FILE:hyprshelld-compositor-shared-visual-dbus-test>"
 )
 
 set_tests_properties(
-    compositor-shared-border-dbus
+    compositor-shared-visual-dbus
     PROPERTIES
         TIMEOUT 30
 )
@@ -652,6 +1359,7 @@ target_link_libraries(
         Qt6::Core
         Qt6::Test
         hyprshelld-compositord-core
+        hyprshelld-compositord-legacy-entrypoint-records
         hyprshelld-compositord-service
 )
 
@@ -733,6 +1441,8 @@ target_compile_definitions(
         HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_PRE_SHARED_SPACING_DEFAULT_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/pre-shared-spacing-default-desired.json"
+        HYPRSHELLD_HYPRLAND_PRE_BINDINGS_QUARANTINE_DEFAULT_FILE="${PROJECT_SOURCE_DIR}/tests/fixtures/hyprland/pre-bindings-quarantine-default-desired.json"
         HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
 )
 
@@ -742,6 +1452,7 @@ target_link_libraries(
         Qt6::Core
         Qt6::Test
         hyprshelld-compositord-core
+        hyprshelld-compositord-legacy-transaction-records
 )
 
 add_test(
@@ -773,6 +1484,53 @@ add_test(
         "${PROJECT_SOURCE_DIR}/tools/hyprland/validate_contract.py"
         --root
         "${PROJECT_SOURCE_DIR}"
+)
+
+add_test(
+    NAME hyprland-extract-contract
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland_extract_contract_test.py"
+        --extractor
+        "${PROJECT_SOURCE_DIR}/tools/hyprland/extract_contract.py"
+)
+
+add_test(
+    NAME hyprland-extract-contract-v2
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland_extract_contract_v2_test.py"
+        --extractor
+        "${PROJECT_SOURCE_DIR}/tools/hyprland/extract_contract.py"
+)
+
+add_test(
+    NAME hyprland-validate-contract-v2
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland_validate_contract_v2_test.py"
+        --validator
+        "${PROJECT_SOURCE_DIR}/tools/hyprland/validate_contract.py"
+)
+
+add_test(
+    NAME hyprland-settings-coverage
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland_settings_coverage_test.py"
+)
+
+add_test(
+    NAME legacy-shortcuts-source
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/legacy_shortcuts_source_test.py"
+        --validator
+        "${PROJECT_SOURCE_DIR}/tools/hyprland/validate_legacy_shortcuts.py"
+        --source
+        "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/hyprland/legacy-keybindings.lua"
+        --artifact
+        "${PROJECT_SOURCE_DIR}/src/hyprland/resources/keyboard-shortcuts-reference-v1.json"
 )
 
 qt_add_executable(
@@ -864,12 +1622,6 @@ target_link_libraries(
 add_test(
     NAME config-store
     COMMAND hyprshelld-config-store-test
-)
-
-find_program(
-    HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE
-    NAMES dbus-run-session
-    REQUIRED
 )
 
 add_test(
@@ -1229,23 +1981,27 @@ target_compile_definitions(
     hyprshelld-compositor-client-test
     PRIVATE
         HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
 )
 
 add_executable(
-    hyprshelld-compositor-appearance-helpers-test
-    compositor_appearance_helpers_test.cpp
+    hyprshelld-compositor-settings-helpers-test
+    compositor_settings_helpers_test.cpp
 )
 
 target_compile_definitions(
-    hyprshelld-compositor-appearance-helpers-test
+    hyprshelld-compositor-settings-helpers-test
     PRIVATE
         HYPRSHELLD_HYPRLAND_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/config-catalog-v1.json"
+        HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE="${PROJECT_SOURCE_DIR}/data/hyprland/action-catalog-v1.json"
         HYPRSHELLD_HYPRLAND_DEFAULTS_FILE="${PROJECT_SOURCE_DIR}/data/defaults/hyprland.json"
+        HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE="${PROJECT_SOURCE_DIR}/interfaces/hyprland/v1/config.schema.json"
 )
 
 target_link_libraries(
-    hyprshelld-compositor-appearance-helpers-test
+    hyprshelld-compositor-settings-helpers-test
     PRIVATE
         Qt6::Core
         Qt6::Test
@@ -1254,8 +2010,8 @@ target_link_libraries(
 )
 
 add_test(
-    NAME compositor-appearance-helpers
-    COMMAND hyprshelld-compositor-appearance-helpers-test
+    NAME compositor-settings-helpers
+    COMMAND hyprshelld-compositor-settings-helpers-test
 )
 
 target_link_libraries(

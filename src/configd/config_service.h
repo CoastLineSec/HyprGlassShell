@@ -17,6 +17,9 @@ class ConfigService final : public QObject, protected QDBusContext {
     Q_PROPERTY(uint ShellBorderWidth READ shellBorderWidth)
     Q_PROPERTY(uint ShellBorderRadius READ shellBorderRadius)
     Q_PROPERTY(bool SyncHyprlandWindowBorders READ syncHyprlandWindowBorders)
+    Q_PROPERTY(uint ShellInnerSpacing READ shellInnerSpacing)
+    Q_PROPERTY(uint ShellOuterSpacing READ shellOuterSpacing)
+    Q_PROPERTY(bool SyncHyprlandWindowSpacing READ syncHyprlandWindowSpacing)
     Q_PROPERTY(qulonglong Revision READ revision)
     Q_PROPERTY(QString RecoveryState READ recoveryState)
 
@@ -33,6 +36,9 @@ public:
     [[nodiscard]] uint shellBorderWidth() const;
     [[nodiscard]] uint shellBorderRadius() const;
     [[nodiscard]] bool syncHyprlandWindowBorders() const;
+    [[nodiscard]] uint shellInnerSpacing() const;
+    [[nodiscard]] uint shellOuterSpacing() const;
+    [[nodiscard]] bool syncHyprlandWindowSpacing() const;
     [[nodiscard]] qulonglong revision() const;
     [[nodiscard]] QString recoveryState() const;
 
@@ -48,6 +54,12 @@ public slots:
         bool syncHyprlandWindowBorders
     );
     qulonglong ResetSharedBorder();
+    qulonglong SetSharedSpacing(
+        uint inner,
+        uint outer,
+        bool syncHyprlandWindowSpacing
+    );
+    qulonglong ResetSharedSpacing();
 
 private:
     qulonglong setBarHeight(uint height);
@@ -56,6 +68,11 @@ private:
         uint width,
         uint radius,
         bool syncHyprlandWindowBorders
+    );
+    qulonglong setSharedSpacing(
+        uint inner,
+        uint outer,
+        bool syncHyprlandWindowSpacing
     );
     void attemptLegacyWorkspaceRetirement();
     void reportError(const QString &name, const QString &message) const;

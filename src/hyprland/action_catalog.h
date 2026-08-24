@@ -21,7 +21,12 @@ namespace HyprShelld::Hyprland {
 
 inline constexpr quint32 currentActionCatalogContractVersion = 1;
 inline constexpr char reviewedActionCatalogDigest[] =
-    "72e063a5476308cefdd2771367ffeed9a8e553b3a2d7141f4e08c3e105a5deb2";
+    "1438f04a169b4ecfc945078403d6286154bc89a0e32cb3a1a5073d209e0c358b";
+// Dormant until the full Hyprland 0.56.2 provenance/catalog rotation and
+// lease-held desired-state migration are implemented atomically.
+inline constexpr quint32 dormantActionCatalogV2ContractVersion = 2;
+inline constexpr char dormantReviewedActionCatalogV2Digest[] =
+    "3625e37617810539823ae829de80eb5488b06b0e71d4c0be1f0356e00d019db8";
 inline constexpr qsizetype maximumActionCatalogBytes = 1024 * 1024;
 inline constexpr qsizetype maximumActionSchemaBytes = 2 * 1024 * 1024;
 inline constexpr qsizetype maximumActions = 256;
@@ -154,6 +159,9 @@ struct ActionCatalog final {
     SemanticVersion reviewedVersion;
     QString reviewedTag;
     QString reviewedCommit;
+    quint32 minimumPatch = 0;
+    std::optional<quint32> maximumPatch;
+    QString sourceManifestDigest;
     ActionCatalogSource source;
     QVector<ActionDefinition> dispatcherActions;
     QVector<ActionDefinition> semanticActions;
@@ -163,9 +171,17 @@ struct ActionCatalog final {
     QString configSchemaDigest;
     QJsonObject canonicalDocument;
     QJsonObject canonicalConfigSchema;
+    QByteArray configSchemaDocument;
 };
 
 [[nodiscard]] ValidationResult<ActionCatalog> parseActionCatalog(
+    QByteArrayView actionCatalogBytes,
+    QByteArrayView configSchemaBytes
+);
+
+// Parses the packaged, runtime-unselected v2 authority without changing the
+// active v1 action-catalog contract selected by parseActionCatalog().
+[[nodiscard]] ValidationResult<ActionCatalog> parseDormantActionCatalogV2(
     QByteArrayView actionCatalogBytes,
     QByteArrayView configSchemaBytes
 );

@@ -9,6 +9,12 @@ HyprShelld owns its managed entrypoint, and the saved and active compositor
 revisions match. This prevents a display test from silently applying unrelated
 pending compositor settings.
 
+Takeover, pending-baseline Apply, display editing, and **Test changes** also
+wait while shared border or spacing authority is changing or its exact source
+revision has not been verified. This keeps a display generation from racing a
+shared visual reconciliation. Refresh remains available because it does not
+publish a configuration.
+
 ## Before the first change: take control
 
 HyprShelld never claims an existing Hyprland entrypoint at startup. When the
@@ -64,8 +70,15 @@ For each connected output you can change:
 - scale and orientation;
 - automatic arrangement or an explicit logical-pixel position; and
 - under **Show advanced settings**, mirroring, bit depth, variable refresh
-  rate, color-management mode, wide-color and HDR support, and an ICC profile
-  path.
+  rate, color-management mode, wide-color and HDR support, an ICC profile
+  path, the SDR transfer/brightness/saturation range, HDR luminance metadata,
+  and signed reserved workspace edges.
+
+The mode menu includes Hyprland's preferred, highest-refresh,
+highest-resolution, and widest-mode selectors. Automatic placement exposes all
+nine managed direction and centered-direction forms, and **Exact display
+scale** accepts any schema-valid value of at least 0.25 in addition to the
+common percentage presets.
 
 You can also drag an output in the layout preview when explicit positioning is
 active. A mirror uses its enabled, non-mirrored target's position. A valid draft
@@ -74,10 +87,17 @@ least one enabled output that is not a mirror. Self-mirroring, mirror chains,
 missing or disabled mirror targets, and duplicate outputs are rejected.
 
 **Reset this display** rebuilds only that output's draft from safe values
-derived from the observed display. Advanced saved values that the page does not
-show are otherwise preserved exactly. **Discard draft** returns every connected
+derived from the observed display. Every pinned Hyprland 0.56.2 monitor field
+for that connected output is represented in the card; the stable record
+identity is preserved automatically. **Discard draft** returns every connected
 output to the saved baseline. Neither action changes the running compositor
 until a valid draft is tested and kept.
+
+An unrelated managed settings update preserves a dirty display draft when the
+authoritative monitor records and live topology are unchanged. Testing remains
+locked until that new whole-compositor baseline and both shared visual groups
+are verified. An actual monitor-record or live-topology change still refreshes
+the display draft through the safety path described below.
 
 ## Test, keep, or revert changes
 
@@ -152,6 +172,10 @@ prove safe:
   active managed revisions differ. **Apply pending changes** applies that whole
   exact compositor baseline, not only display values; display testing remains
   locked until it is current.
+- **Shared visual settings are changing** or **waiting for an exact verified
+  compositor baseline** means border or spacing synchronization has not
+  settled. Takeover, Apply, editing, and layout testing unlock after both
+  independent shared groups reach a verified safe state.
 - **Another display test is active** means this window does not own the private
   confirmation capability. Its initiating window or the daemon timeout remains
   responsible for the outcome.

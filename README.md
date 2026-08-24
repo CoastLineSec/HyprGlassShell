@@ -18,10 +18,12 @@ User documentation begins in [docs/index.md](docs/index.md).
 
 The current Arch Linux build checks require CMake 3.24 or newer, Ninja, a C++23
 compiler, Qt 6.8 or newer, Quickshell 0.3.0, `dbus-run-session`, and systemd 257
-or newer with `busctl` and `systemd-analyze`, plus the libzip, libxkbcommon,
-and RE2 development packages. Compositor generation checks require the pinned
-Hyprland 0.56.1 executable and the Lua interpreter/compiler (`lua` and `luac`).
-The build checks also use
+or newer with `busctl` and `systemd-analyze`, plus the double-conversion,
+libzip, libxkbcommon, and RE2 development packages. Compositor generation
+checks require the pinned Hyprland 0.56.1 executable and the Lua
+interpreter/compiler (`lua` and `luac`). Canonical-JSON qualification also
+requires Node.js as an independent ECMAScript number-serialization oracle.
+The build checks additionally use
 `desktop-file-validate` from `desktop-file-utils` and the Python `jsonschema`
 package for Draft 2020-12 contract validation.
 

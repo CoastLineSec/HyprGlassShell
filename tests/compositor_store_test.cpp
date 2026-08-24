@@ -16,10 +16,22 @@
 #include <sys/file.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <type_traits>
 #include <unistd.h>
 
 using namespace HyprShelld::Compositor;
 using namespace HyprShelld::Hyprland;
+
+static_assert(!std::is_constructible_v<
+              RenderedGeneration,
+              const DormantRenderedGenerationV2 &>);
+static_assert(!std::is_convertible_v<
+              DormantRenderedGenerationV2,
+              RenderedGeneration>);
+static_assert(!std::is_invocable_v<
+              decltype(&GenerationStore::publish),
+              GenerationStore &,
+              const DormantRenderedGenerationV2 &>);
 
 namespace {
 
@@ -679,6 +691,30 @@ private slots:
         QVERIFY(generations.initialize().success);
         const auto rendered = renderDefault(fixture.paths);
         QVERIFY2(rendered, qPrintable(describeErrors(rendered.errors)));
+        QCOMPARE(
+            rendered.value->manifest.value(
+                QStringLiteral("formatVersion")
+            ).toInt(),
+            1
+        );
+        QCOMPARE(
+            rendered.value->manifest.value(
+                QStringLiteral("contractVersion")
+            ).toInt(),
+            1
+        );
+        QCOMPARE(
+            rendered.value->manifest.value(
+                QStringLiteral("rendererVersion")
+            ).toInt(),
+            1
+        );
+        QVERIFY(!rendered.value->manifest.contains(
+            QStringLiteral("authorityId")
+        ));
+        QVERIFY(!rendered.value->manifest.contains(
+            QStringLiteral("sourceManifestDigest")
+        ));
 
         const auto published = generations.publish(*rendered.value);
         QVERIFY2(published.success, qPrintable(published.errorMessage));

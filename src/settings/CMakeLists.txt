@@ -8,10 +8,17 @@ qt_add_qml_module(
     URI HyprShelld.Settings
     QML_FILES
         Main.qml
+        AdvancedPage.qml
+        AnimationCollectionsSummary.qml
+        AnimationCurveEditor.qml
+        AnimationRuleEditor.qml
         AppearancePage.qml
         AppearancePreview.qml
         BarPreview.qml
         BarSettingsPage.qml
+        BindingEditor.qml
+        BindingsPage.qml
+        CompositorRecoveryDialog.qml
         ComponentPill.qml
         ComponentReviewDialog.qml
         ComponentsPage.qml
@@ -19,10 +26,39 @@ qt_add_qml_module(
         DisplaysPage.qml
         DisplaySettingsCard.qml
         DisplayTopologyPreview.qml
+        EnvironmentVariablesPage.qml
         GenericComponentSettings.qml
+        GestureEditor.qml
+        GestureSummaryList.qml
+        InputDevicesPane.qml
+        InputDeviceEditor.qml
+        InputDeviceOverrideRow.qml
+        InputDevicePreview.qml
+        InputDevicesPage.qml
+        InputPage.qml
+        HyprlandCatalogPage.qml
+        HyprlandCategoryGraphic.qml
+        HyprlandOptionRow.qml
+        HyprlandOverviewPage.qml
+        KeyboardShortcutsPage.qml
+        PermissionsPage.qml
+        RuleDecimalField.qml
+        RuleOptionalField.qml
+        RuleSafeIntegerField.qml
+        RuleSummaryList.qml
+        RulesPage.qml
         SchemaSettingRow.qml
+        SettingsDecimalRow.qml
+        SettingsSelectRow.qml
+        SettingsSliderRow.qml
+        SettingsSpinBoxRow.qml
+        SettingsToggleRow.qml
         ShellHealthWarning.qml
         WorkspaceSwitcherSettings.qml
+        WorkspaceRuleEditor.qml
+        WorkspaceRuleSummaryList.qml
+        WindowsLayoutPage.qml
+        WorkspacesPage.qml
 )
 
 target_link_libraries(

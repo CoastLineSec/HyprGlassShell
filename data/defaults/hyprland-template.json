@@ -1,0 +1,33 @@
+{
+  "formatVersion": 2,
+  "revision": "0",
+  "targetHyprland": "0.56.2",
+  "catalogDigest": "3158d318945aeb03728426412933d737b5cf9cbd1dc384e296c11a9628ff6b88",
+  "actionCatalogDigest": "3625e37617810539823ae829de80eb5488b06b0e71d4c0be1f0356e00d019db8",
+  "overrides": {},
+  "monitors": [],
+  "devices": [],
+  "curves": [],
+  "animations": [],
+  "gestures": [],
+  "workspaceRules": [
+    {
+      "id": "hyprshelld.internal.shared-spacing.maximized",
+      "selector": "f[1]",
+      "enabled": true,
+      "monitor": "",
+      "persistent": false,
+      "isDefault": false,
+      "layout": "",
+      "overrides": {
+        "gaps_out": [0, 0, 0, 0]
+      }
+    }
+  ],
+  "windowRules": [],
+  "layerRules": [],
+  "submaps": [],
+  "bindings": [],
+  "permissions": [],
+  "environment": []
+}

@@ -693,6 +693,7 @@ void validateRe2Matchers(
 
 void validateWorkspaceRuleSelector(
     const QString &selector,
+    const QString &recordId,
     const QString &path,
     ValidationErrors &errors
 );
@@ -885,6 +886,7 @@ void validateWindowMatch(
     if (object.value(QStringLiteral("workspace")).isString()) {
         validateWorkspaceRuleSelector(
             object.value(QStringLiteral("workspace")).toString(),
+            {},
             path + QStringLiteral(".workspace"), errors
         );
     }
@@ -1369,10 +1371,25 @@ void validateWindowSelector(
 
 void validateWorkspaceRuleSelector(
     const QString &selector,
+    const QString &recordId,
     const QString &path,
     ValidationErrors &errors
 )
 {
+    if (selector == QLatin1String(sharedSpacingWorkspaceRuleSelector)) {
+        if (recordId == QLatin1String(sharedSpacingWorkspaceRuleId)) {
+            return;
+        }
+        addError(
+            errors,
+            path,
+            QStringLiteral("state.reserved-workspace-selector"),
+            QStringLiteral(
+                "The maximized-workspace selector is reserved for HyprShelld."
+            )
+        );
+        return;
+    }
     static const QRegularExpression decimal(
         QStringLiteral("^[1-9][0-9]{0,9}$")
     );
@@ -1553,7 +1570,163 @@ void insertFields(QJsonObject &target, const QJsonObject &source)
     }
 }
 
+void validateActiveV1Authorities(
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalog,
+    ValidationErrors &errors
+)
+{
+    const auto exactCatalog = catalog.contractVersion
+            == currentCatalogContractVersion
+        && catalog.digest == QLatin1String(reviewedCatalogDigest)
+        && catalog.sourceManifestDigest.isEmpty()
+        && catalog.hyprland.reviewedVersion == SemanticVersion{0, 56, 1}
+        && catalog.hyprland.reviewedTag == QStringLiteral("v0.56.1")
+        && catalog.hyprland.reviewedCommit
+            == QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")
+        && catalog.hyprland.minimumPatch == 0
+        && !catalog.hyprland.maximumPatch.has_value();
+    if (!exactCatalog) {
+        addError(
+            errors,
+            QStringLiteral("$.catalogDigest"),
+            QStringLiteral("state.active-v1-catalog-authority-required"),
+            QStringLiteral(
+                "Production desired-state parsing requires the exact active v1 scalar authority."
+            )
+        );
+    }
+
+    const auto exactActions = actionCatalog.contractVersion
+            == currentActionCatalogContractVersion
+        && actionCatalog.digest == QLatin1String(reviewedActionCatalogDigest)
+        && actionCatalog.sourceManifestDigest.isEmpty()
+        && actionCatalog.reviewedVersion == SemanticVersion{0, 56, 1}
+        && actionCatalog.reviewedTag == QStringLiteral("v0.56.1")
+        && actionCatalog.reviewedCommit
+            == QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")
+        && actionCatalog.minimumPatch == 0
+        && !actionCatalog.maximumPatch.has_value();
+    if (!exactActions) {
+        addError(
+            errors,
+            QStringLiteral("$.actionCatalogDigest"),
+            QStringLiteral("state.active-v1-action-authority-required"),
+            QStringLiteral(
+                "Production desired-state parsing requires the exact active v1 action authority."
+            )
+        );
+    }
+}
+
+void validateDormantV2Authorities(
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalog,
+    ValidationErrors &errors
+)
+{
+    const auto exactCatalog = catalog.contractVersion
+            == dormantCatalogV2ContractVersion
+        && catalog.digest == QLatin1String(dormantReviewedCatalogV2Digest)
+        && catalog.sourceManifestDigest
+            == QLatin1String(dormantReviewedSourceManifestDigest)
+        && catalog.hyprland.reviewedVersion == SemanticVersion{0, 56, 2}
+        && catalog.hyprland.reviewedTag == QStringLiteral("v0.56.2")
+        && catalog.hyprland.reviewedCommit
+            == QStringLiteral("efb50993780079460b0cbed1363e2166a2de1d9f")
+        && catalog.hyprland.minimumPatch == 2
+        && catalog.hyprland.maximumPatch == std::optional<quint32>{2};
+    if (!exactCatalog) {
+        addError(
+            errors,
+            QStringLiteral("$.catalogDigest"),
+            QStringLiteral("state.dormant-v2-catalog-authority-required"),
+            QStringLiteral(
+                "The dormant v2 envelope requires the exact reviewed v2 scalar authority."
+            )
+        );
+    }
+
+    const auto exactActions = actionCatalog.contractVersion
+            == dormantActionCatalogV2ContractVersion
+        && actionCatalog.digest
+            == QLatin1String(dormantReviewedActionCatalogV2Digest)
+        && actionCatalog.sourceManifestDigest
+            == QLatin1String(dormantReviewedSourceManifestDigest)
+        && actionCatalog.reviewedVersion == SemanticVersion{0, 56, 2}
+        && actionCatalog.reviewedTag == QStringLiteral("v0.56.2")
+        && actionCatalog.reviewedCommit
+            == QStringLiteral("efb50993780079460b0cbed1363e2166a2de1d9f")
+        && actionCatalog.minimumPatch == 2
+        && actionCatalog.maximumPatch == std::optional<quint32>{2};
+    if (!exactActions) {
+        addError(
+            errors,
+            QStringLiteral("$.actionCatalogDigest"),
+            QStringLiteral("state.dormant-v2-action-authority-required"),
+            QStringLiteral(
+                "The dormant v2 envelope requires its exact reviewed v2 action authority."
+            )
+        );
+    }
+
+    if (catalog.sourceManifestDigest != actionCatalog.sourceManifestDigest) {
+        addError(
+            errors,
+            QStringLiteral("$.sourceManifestDigest"),
+            QStringLiteral("state.dormant-v2-source-authority-mismatch"),
+            QStringLiteral(
+                "The dormant scalar and action authorities must bind the same exact source manifest."
+            )
+        );
+    }
+}
+
+void validateDormantV2ProtectedWorkspaceRuleOrder(
+    const QVector<WorkspaceRule> &workspaceRules,
+    ValidationErrors &errors
+)
+{
+    for (qsizetype index = 0; index + 1 < workspaceRules.size(); ++index) {
+        if (workspaceRules.at(index).id
+            == QLatin1String(sharedSpacingWorkspaceRuleId)) {
+            addError(
+                errors,
+                QStringLiteral("$.workspaceRules"),
+                QStringLiteral(
+                    "state.dormant-v2-protected-workspace-rule-not-final"
+                ),
+                QStringLiteral(
+                    "The protected HyprShelld workspace rule must be the final dormant v2 workspaceRules entry."
+                )
+            );
+            return;
+        }
+    }
+}
+
 } // namespace
+
+bool isCanonicalAuthorityId(const QString &authorityId)
+{
+    if (authorityId.size() != authorityIdHexLength) {
+        return false;
+    }
+
+    bool hasNonzeroNibble = false;
+    for (const auto character : authorityId) {
+        const auto isDigit = character >= QLatin1Char('0')
+            && character <= QLatin1Char('9');
+        const auto isLowerHex = character >= QLatin1Char('a')
+            && character <= QLatin1Char('f');
+        if (!isDigit && !isLowerHex) {
+            return false;
+        }
+        hasNonzeroNibble = hasNonzeroNibble
+            || character != QLatin1Char('0');
+    }
+    return hasNonzeroNibble;
+}
 
 ValidationResult<QString> normalizeBindingChord(
     const QStringList &modifiers,
@@ -1641,7 +1814,109 @@ ValidationResult<QString> normalizeBindingChord(
     return result;
 }
 
-ValidationResult<DesiredState> parseDesiredState(
+ValidationResult<QVector<DeviceConfiguration>> parseDesiredInputDevices(
+    const QJsonObject &snapshot
+)
+{
+    ValidationResult<QVector<DeviceConfiguration>> result;
+    auto devices = parseRecordArray<DeviceConfiguration>(
+        snapshot,
+        QStringLiteral("devices"),
+        maximumDevices,
+        result.errors,
+        [](const QJsonObject &object,
+           const QString &path,
+           ValidationErrors &errors) {
+            rejectUnknownFields(
+                object,
+                {
+                    QStringLiteral("id"),
+                    QStringLiteral("selector"),
+                    QStringLiteral("kind"),
+                    QStringLiteral("enabled"),
+                    QStringLiteral("overrides"),
+                },
+                path,
+                errors
+            );
+            DeviceConfiguration record;
+            record.id = readString(
+                object, QStringLiteral("id"), path, errors, 128
+            );
+            validateStableId(
+                record.id, path + QStringLiteral(".id"), errors
+            );
+            record.selector = readString(
+                object, QStringLiteral("selector"), path, errors, 256
+            );
+            record.kind = readString(
+                object, QStringLiteral("kind"), path, errors, 64
+            );
+            static const QSet<QString> deviceKinds{
+                QStringLiteral("keyboard"),
+                QStringLiteral("pointer"),
+                QStringLiteral("touchpad"),
+                QStringLiteral("touch"),
+                QStringLiteral("tablet"),
+                QStringLiteral("tabletTool"),
+                QStringLiteral("switch"),
+                QStringLiteral("other"),
+            };
+            if (!record.kind.isEmpty()
+                && !deviceKinds.contains(record.kind)) {
+                addError(
+                    errors,
+                    path + QStringLiteral(".kind"),
+                    QStringLiteral("state.invalid-device-kind"),
+                    QStringLiteral(
+                        "The device kind is not supported by the pinned contract."
+                    )
+                );
+            }
+            record.enabled = readBoolean(
+                object, QStringLiteral("enabled"), path, errors, true
+            );
+            record.overrides = readClosedMap(
+                object,
+                QStringLiteral("overrides"),
+                path,
+                deviceFields(),
+                errors
+            );
+            validateDeviceOverrides(
+                record.overrides,
+                path + QStringLiteral(".overrides"),
+                errors
+            );
+            return record;
+        }
+    );
+
+    QSet<QString> selectors;
+    for (qsizetype index = 0; index < devices.size(); ++index) {
+        auto selector = devices.at(index).selector;
+        selector.replace(QLatin1Char(' '), QLatin1Char('-'));
+        if (selector.isEmpty()) continue;
+        if (selectors.contains(selector)) {
+            addError(
+                result.errors,
+                QStringLiteral("$.devices[") + QString::number(index)
+                    + QStringLiteral("].selector"),
+                QStringLiteral("state.duplicate-natural-identity"),
+                QStringLiteral(
+                    "The managed collection contains a duplicate natural identity."
+                )
+            );
+        }
+        selectors.insert(selector);
+    }
+
+    if (result.errors.isEmpty()) result.value = std::move(devices);
+    return result;
+}
+
+[[nodiscard]] static ValidationResult<DesiredState>
+parseDesiredStateForAuthorities(
     const QByteArrayView bytes,
     const Catalog &catalog,
     const ActionCatalog &actionCatalog
@@ -1974,7 +2249,7 @@ ValidationResult<DesiredState> parseDesiredState(
             MonitorConfiguration record;
             record.id = readString(object, QStringLiteral("id"), path, errors, 128);
             validateStableId(record.id, path + QStringLiteral(".id"), errors);
-            record.selector = readString(object, QStringLiteral("selector"), path, errors, 256);
+            record.selector = readString(object, QStringLiteral("selector"), path, errors, 261);
             validateStaticMonitorSelector(
                 record.selector, path + QStringLiteral(".selector"), errors
             );
@@ -2030,7 +2305,7 @@ ValidationResult<DesiredState> parseDesiredState(
             if (const auto value = readInteger(object, QStringLiteral("transform"), path, errors, 0, 7)) {
                 record.transform = static_cast<qint32>(*value);
             }
-            record.mirror = readString(object, QStringLiteral("mirror"), path, errors, 256, true);
+            record.mirror = readString(object, QStringLiteral("mirror"), path, errors, 261, true);
             if (!record.mirror.isEmpty()) {
                 validateStaticMonitorSelector(
                     record.mirror, path + QStringLiteral(".mirror"), errors
@@ -2063,48 +2338,9 @@ ValidationResult<DesiredState> parseDesiredState(
         }
     );
 
-    state.devices = parseRecordArray<DeviceConfiguration>(
-        root,
-        QStringLiteral("devices"),
-        maximumDevices,
-        result.errors,
-        [](const QJsonObject &object, const QString &path, ValidationErrors &errors) {
-            rejectUnknownFields(
-                object,
-                {QStringLiteral("id"), QStringLiteral("selector"),
-                 QStringLiteral("kind"), QStringLiteral("enabled"),
-                 QStringLiteral("overrides")},
-                path,
-                errors
-            );
-            DeviceConfiguration record;
-            record.id = readString(object, QStringLiteral("id"), path, errors, 128);
-            validateStableId(record.id, path + QStringLiteral(".id"), errors);
-            record.selector = readString(object, QStringLiteral("selector"), path, errors, 256);
-            record.kind = readString(object, QStringLiteral("kind"), path, errors, 64);
-            static const QSet<QString> deviceKinds{
-                QStringLiteral("keyboard"), QStringLiteral("pointer"),
-                QStringLiteral("touchpad"), QStringLiteral("touch"),
-                QStringLiteral("tablet"), QStringLiteral("tabletTool"),
-                QStringLiteral("switch"), QStringLiteral("other"),
-            };
-            if (!record.kind.isEmpty() && !deviceKinds.contains(record.kind)) {
-                addError(errors, path + QStringLiteral(".kind"), QStringLiteral("state.invalid-device-kind"), QStringLiteral("The device kind is not supported by the pinned contract."));
-            }
-            record.enabled = readBoolean(object, QStringLiteral("enabled"), path, errors, true);
-            record.overrides = readClosedMap(
-                object,
-                QStringLiteral("overrides"),
-                path,
-                deviceFields(),
-                errors
-            );
-            validateDeviceOverrides(
-                record.overrides, path + QStringLiteral(".overrides"), errors
-            );
-            return record;
-        }
-    );
+    const auto devices = parseDesiredInputDevices(root);
+    result.errors.append(devices.errors);
+    if (devices) state.devices = *devices.value;
 
     state.curves = parseRecordArray<AnimationCurve>(
         root,
@@ -2341,10 +2577,13 @@ ValidationResult<DesiredState> parseDesiredState(
             validateStableId(record.id, path + QStringLiteral(".id"), errors);
             record.selector = readString(object, QStringLiteral("selector"), path, errors, 256);
             validateWorkspaceRuleSelector(
-                record.selector, path + QStringLiteral(".selector"), errors
+                record.selector,
+                record.id,
+                path + QStringLiteral(".selector"),
+                errors
             );
             record.enabled = readBoolean(object, QStringLiteral("enabled"), path, errors, true);
-            record.monitor = readString(object, QStringLiteral("monitor"), path, errors, 256, true);
+            record.monitor = readString(object, QStringLiteral("monitor"), path, errors, 261, true);
             if (!record.monitor.isEmpty()) {
                 validateStaticMonitorSelector(
                     record.monitor, path + QStringLiteral(".monitor"), errors
@@ -2364,9 +2603,49 @@ ValidationResult<DesiredState> parseDesiredState(
             validateWorkspaceOverrides(
                 record.overrides, path + QStringLiteral(".overrides"), errors
             );
+            if (record.id == QLatin1String(sharedSpacingWorkspaceRuleId)) {
+                const QJsonObject expectedOverrides{
+                    {
+                        QStringLiteral("gaps_out"),
+                        QJsonArray{0, 0, 0, 0},
+                    },
+                };
+                if (record.selector
+                        != QLatin1String(sharedSpacingWorkspaceRuleSelector)
+                    || !record.enabled || !record.monitor.isEmpty()
+                    || record.persistent || record.isDefault
+                    || !record.layout.isEmpty()
+                    || record.overrides != expectedOverrides) {
+                    addError(
+                        errors,
+                        path,
+                        QStringLiteral("state.invalid-protected-workspace-rule"),
+                        QStringLiteral(
+                            "The protected maximized-workspace rule must match the exact HyprShelld contract."
+                        )
+                    );
+                }
+            }
             return record;
         }
     );
+    const auto userWorkspaceRuleCount = std::ranges::count_if(
+        state.workspaceRules,
+        [](const WorkspaceRule &record) {
+            return record.id
+                != QLatin1String(sharedSpacingWorkspaceRuleId);
+        }
+    );
+    if (userWorkspaceRuleCount > maximumUserWorkspaceRules) {
+        addError(
+            result.errors,
+            QStringLiteral("$.workspaceRules"),
+            QStringLiteral("state.too-many-workspace-rules"),
+            QStringLiteral(
+                "At most 1024 user workspace rules are accepted."
+            )
+        );
+    }
 
     state.windowRules = parseRecordArray<WindowRule>(
         root,
@@ -2669,14 +2948,6 @@ ValidationResult<DesiredState> parseDesiredState(
         }
     }
     rejectDuplicateIdentities(
-        state.devices, QStringLiteral("devices"), QStringLiteral("selector"),
-        [](const DeviceConfiguration &record) {
-            auto identity = record.selector;
-            identity.replace(QLatin1Char(' '), QLatin1Char('-'));
-            return identity;
-        }
-    );
-    rejectDuplicateIdentities(
         state.animations, QStringLiteral("animations"), QStringLiteral("name"),
         [](const AnimationConfiguration &record) { return record.name; }
     );
@@ -2899,6 +3170,154 @@ ValidationResult<DesiredState> parseDesiredState(
     return result;
 }
 
+ValidationResult<DesiredState> parseDesiredState(
+    const QByteArrayView bytes,
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalog
+)
+{
+    ValidationResult<DesiredState> result;
+    validateActiveV1Authorities(catalog, actionCatalog, result.errors);
+    auto semantic = parseDesiredStateForAuthorities(
+        bytes, catalog, actionCatalog
+    );
+    if (result.errors.isEmpty()) {
+        return semantic;
+    }
+    result.errors.append(semantic.errors);
+    return result;
+}
+
+ValidationResult<DesiredStateV2> parseDormantDesiredStateV2(
+    const QByteArrayView bytes,
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalogV2
+)
+{
+    ValidationResult<DesiredStateV2> result;
+    validateDormantV2Authorities(catalog, actionCatalogV2, result.errors);
+    if (!result.errors.isEmpty()) {
+        return result;
+    }
+
+    const auto parsed = JsonSupport::parseStrictObject(
+        bytes, maximumDesiredStateBytes, maximumDesiredStateDepth
+    );
+    if (!parsed) {
+        result.errors.append(parsed.errors);
+        return result;
+    }
+
+    auto semanticRoot = *parsed.value;
+    const auto formatVersion = readInteger(
+        semanticRoot,
+        QStringLiteral("formatVersion"),
+        QStringLiteral("$"),
+        result.errors,
+        0,
+        std::numeric_limits<quint32>::max()
+    );
+    if (formatVersion
+        && *formatVersion != dormantDesiredStateV2FormatVersion) {
+        addError(
+            result.errors,
+            QStringLiteral("$.formatVersion"),
+            QStringLiteral("state.unsupported-format-version"),
+            QStringLiteral("Only the dormant desired-state v2 envelope is accepted.")
+        );
+    }
+
+    const auto authorityId = readString(
+        semanticRoot,
+        QStringLiteral("authorityId"),
+        QStringLiteral("$"),
+        result.errors,
+        authorityIdHexLength
+    );
+    if (!isCanonicalAuthorityId(authorityId)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.authorityId"),
+            QStringLiteral("state.invalid-authority-id"),
+            QStringLiteral(
+                "Authority ID must be 32 lowercase hexadecimal characters and cannot be all zero."
+            )
+        );
+    }
+
+    semanticRoot.remove(QStringLiteral("authorityId"));
+    semanticRoot.insert(
+        QStringLiteral("formatVersion"),
+        static_cast<qint64>(currentDesiredStateFormatVersion)
+    );
+    auto semanticBytes = JsonSupport::canonicalJson(semanticRoot);
+    semanticBytes.append('\n');
+    const auto semantic = parseDesiredStateForAuthorities(
+        QByteArrayView(semanticBytes), catalog, actionCatalogV2
+    );
+    result.errors.append(semantic.errors);
+    if (semantic) {
+        validateDormantV2ProtectedWorkspaceRuleOrder(
+            semantic.value->workspaceRules,
+            result.errors
+        );
+        if (semantic.value->targetHyprland != QStringLiteral("0.56.2")) {
+            addError(
+                result.errors,
+                QStringLiteral("$.targetHyprland"),
+                QStringLiteral("state.dormant-v2-target-required"),
+                QStringLiteral(
+                    "Dormant v2 state must target exact Hyprland 0.56.2."
+                )
+            );
+        }
+    }
+
+    if (result.errors.isEmpty() && semantic) {
+        result.value = DesiredStateV2{
+            .authorityId = authorityId,
+            .semanticState = *semantic.value,
+        };
+    }
+    return result;
+}
+
+ValidationErrors validateManagedActivationSafety(
+    const DesiredState &state,
+    const Catalog &catalog
+)
+{
+    const auto effectiveValue = [&state, &catalog](const QString &id) {
+        const auto override = state.overrides.constFind(id);
+        if (override != state.overrides.constEnd()) {
+            return override.value();
+        }
+        const auto *option = findOption(catalog, id);
+        return option ? option->defaultValue : QJsonValue{};
+    };
+
+    const auto enabled = effectiveValue(
+        QStringLiteral("hyprland.decoration.glow.enabled")
+    ).toBool();
+    const auto range = effectiveValue(
+        QStringLiteral("hyprland.decoration.glow.range")
+    ).toInteger();
+    if (!enabled || range >= 10) {
+        return {};
+    }
+
+    return {{
+        .path = QStringLiteral(
+            "$.overrides.hyprland.decoration.glow.range"
+        ),
+        .code = QStringLiteral("state.unsafe-glow-range"),
+        .message = QStringLiteral(
+            "Inner glow can be enabled only when its range is at least 10; "
+            "disable glow or raise the range."
+        ),
+    }};
+}
+
 DesiredState defaultDesiredState(
     const Catalog &catalog,
     const ActionCatalog &actionCatalog
@@ -2911,7 +3330,142 @@ DesiredState defaultDesiredState(
     state.catalogDigest = catalogDigest(catalog);
     state.actionCatalogDigest = actionCatalogDigest(actionCatalog);
     state.compatibility = CompatibilityDecision::Exact;
+    state.workspaceRules.append(WorkspaceRule{
+        .id = QLatin1String(sharedSpacingWorkspaceRuleId),
+        .selector = QLatin1String(sharedSpacingWorkspaceRuleSelector),
+        .enabled = true,
+        .monitor = QString(),
+        .persistent = false,
+        .isDefault = false,
+        .layout = QString(),
+        .overrides = QJsonObject{
+            {
+                QStringLiteral("gaps_out"),
+                QJsonArray{0, 0, 0, 0},
+            },
+        },
+    });
     return state;
+}
+
+ValidationResult<DesiredStateV2> defaultDormantDesiredStateV2(
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalogV2,
+    QString authorityId
+)
+{
+    ValidationResult<DesiredStateV2> result;
+    if (!isCanonicalAuthorityId(authorityId)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.authorityId"),
+            QStringLiteral("state.invalid-authority-id"),
+            QStringLiteral(
+                "Authority ID must be 32 lowercase hexadecimal characters and cannot be all zero."
+            )
+        );
+    }
+    validateDormantV2Authorities(catalog, actionCatalogV2, result.errors);
+    if (!result.errors.isEmpty()) {
+        return result;
+    }
+
+    result.value = DesiredStateV2{
+        .authorityId = std::move(authorityId),
+        .semanticState = defaultDesiredState(catalog, actionCatalogV2),
+    };
+    return result;
+}
+
+ValidationResult<QByteArray> serializeDormantDesiredStateV2(
+    const DesiredStateV2 &state
+)
+{
+    ValidationResult<QByteArray> result;
+    if (!isCanonicalAuthorityId(state.authorityId)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.authorityId"),
+            QStringLiteral("state.invalid-authority-id"),
+            QStringLiteral(
+                "Authority ID must be 32 lowercase hexadecimal characters and cannot be all zero."
+            )
+        );
+    }
+    if (state.semanticState.formatVersion
+        != currentDesiredStateFormatVersion) {
+        addError(
+            result.errors,
+            QStringLiteral("$.formatVersion"),
+            QStringLiteral("state.invalid-v2-semantic-envelope"),
+            QStringLiteral(
+                "The dormant v2 envelope must contain exact v1 semantic state."
+            )
+        );
+    }
+    if (state.semanticState.readOnly
+        || state.semanticState.opaqueFutureDocument.has_value()) {
+        addError(
+            result.errors,
+            QStringLiteral("$"),
+            QStringLiteral("state.invalid-v2-semantic-envelope"),
+            QStringLiteral(
+                "Dormant v2 state must be editable and cannot contain an opaque future document."
+            )
+        );
+    }
+    if (state.semanticState.catalogDigest
+            != QLatin1String(dormantReviewedCatalogV2Digest)
+        || state.semanticState.actionCatalogDigest
+            != QLatin1String(dormantReviewedActionCatalogV2Digest)
+        || state.semanticState.targetHyprland != QStringLiteral("0.56.2")) {
+        addError(
+            result.errors,
+            QStringLiteral("$.actionCatalogDigest"),
+            QStringLiteral("state.invalid-v2-semantic-envelope"),
+            QStringLiteral(
+                "Editable dormant v2 state must target 0.56.2 and bind the exact v2 scalar and action authorities."
+            )
+        );
+    }
+    validateDormantV2ProtectedWorkspaceRuleOrder(
+        state.semanticState.workspaceRules,
+        result.errors
+    );
+    if (!result.errors.isEmpty()) {
+        return result;
+    }
+
+    const auto semanticBytes = serializeDesiredState(state.semanticState);
+    const auto semanticRoot = JsonSupport::parseStrictObject(
+        QByteArrayView(semanticBytes),
+        maximumDesiredStateBytes,
+        maximumDesiredStateDepth
+    );
+    if (!semanticRoot) {
+        result.errors.append(semanticRoot.errors);
+        return result;
+    }
+
+    auto root = *semanticRoot.value;
+    root.insert(
+        QStringLiteral("formatVersion"),
+        static_cast<qint64>(dormantDesiredStateV2FormatVersion)
+    );
+    root.insert(QStringLiteral("authorityId"), state.authorityId);
+    auto encoded = JsonSupport::canonicalJson(root);
+    encoded.append('\n');
+    if (encoded.size() > maximumDesiredStateBytes) {
+        addError(
+            result.errors,
+            QStringLiteral("$"),
+            QStringLiteral("json.size-limit"),
+            QStringLiteral("The JSON document exceeds its byte limit.")
+        );
+        return result;
+    }
+    result.value = std::move(encoded);
+    return result;
 }
 
 QByteArray serializeDesiredState(const DesiredState &state)

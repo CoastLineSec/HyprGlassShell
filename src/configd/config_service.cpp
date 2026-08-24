@@ -20,6 +20,9 @@ const QString invalidBarHeightError = QStringLiteral(
 const QString invalidSharedBorderError = QStringLiteral(
     "org.hyprshelld.Config1.Error.InvalidSharedBorder"
 );
+const QString invalidSharedSpacingError = QStringLiteral(
+    "org.hyprshelld.Config1.Error.InvalidSharedSpacing"
+);
 const QString persistenceError = QStringLiteral(
     "org.hyprshelld.Config1.Error.PersistenceFailed"
 );
@@ -91,6 +94,21 @@ bool ConfigService::syncHyprlandWindowBorders() const
     return state_.syncHyprlandWindowBorders;
 }
 
+uint ConfigService::shellInnerSpacing() const
+{
+    return state_.shellInnerSpacing;
+}
+
+uint ConfigService::shellOuterSpacing() const
+{
+    return state_.shellOuterSpacing;
+}
+
+bool ConfigService::syncHyprlandWindowSpacing() const
+{
+    return state_.syncHyprlandWindowSpacing;
+}
+
 qulonglong ConfigService::revision() const
 {
     return state_.revision;
@@ -139,6 +157,24 @@ qulonglong ConfigService::ResetSharedBorder()
         ConfigValues::defaultShellBorderWidth,
         ConfigValues::defaultShellBorderRadius,
         ConfigValues::defaultSyncHyprlandWindowBorders
+    );
+}
+
+qulonglong ConfigService::SetSharedSpacing(
+    const uint inner,
+    const uint outer,
+    const bool syncHyprlandWindowSpacing
+)
+{
+    return setSharedSpacing(inner, outer, syncHyprlandWindowSpacing);
+}
+
+qulonglong ConfigService::ResetSharedSpacing()
+{
+    return setSharedSpacing(
+        ConfigValues::defaultShellInnerSpacing,
+        ConfigValues::defaultShellOuterSpacing,
+        ConfigValues::defaultSyncHyprlandWindowSpacing
     );
 }
 
@@ -242,6 +278,60 @@ qulonglong ConfigService::setSharedBorder(
     return state_.revision;
 }
 
+qulonglong ConfigService::setSharedSpacing(
+    const uint inner,
+    const uint outer,
+    const bool syncHyprlandWindowSpacing
+)
+{
+    if (inner < ConfigValues::minimumShellSpacing
+        || inner > ConfigValues::maximumShellSpacing
+        || outer < ConfigValues::minimumShellSpacing
+        || outer > ConfigValues::maximumShellSpacing) {
+        reportError(
+            invalidSharedSpacingError,
+            QStringLiteral(
+                "Shared inner and outer spacing must each be between %1 and %2 logical pixels"
+            )
+                .arg(ConfigValues::minimumShellSpacing)
+                .arg(ConfigValues::maximumShellSpacing)
+        );
+        return state_.revision;
+    }
+
+    if (inner == state_.shellInnerSpacing
+        && outer == state_.shellOuterSpacing
+        && syncHyprlandWindowSpacing
+            == state_.syncHyprlandWindowSpacing) {
+        return state_.revision;
+    }
+
+    if (state_.revision == std::numeric_limits<quint64>::max()) {
+        reportError(
+            persistenceError,
+            QStringLiteral("Configuration revision is exhausted")
+        );
+        return state_.revision;
+    }
+
+    auto next = state_;
+    next.shellInnerSpacing = inner;
+    next.shellOuterSpacing = outer;
+    next.syncHyprlandWindowSpacing = syncHyprlandWindowSpacing;
+    next.revision = state_.revision + 1;
+
+    QString error;
+    if (!store_.persist(state_, next, legacyWorkspaceSettings_, error)) {
+        reportError(persistenceError, error);
+        return state_.revision;
+    }
+
+    const auto previous = state_;
+    state_ = next;
+    publishChange(previous);
+    return state_.revision;
+}
+
 void ConfigService::attemptLegacyWorkspaceRetirement()
 {
     if (!legacyWorkspaceRetirementAuthorized_
@@ -298,6 +388,23 @@ void ConfigService::publishChange(const ConfigState &previous) const
         changed.insert(
             QStringLiteral("SyncHyprlandWindowBorders"),
             state_.syncHyprlandWindowBorders
+        );
+    }
+    if (state_.shellInnerSpacing != previous.shellInnerSpacing
+        || state_.shellOuterSpacing != previous.shellOuterSpacing
+        || state_.syncHyprlandWindowSpacing
+            != previous.syncHyprlandWindowSpacing) {
+        changed.insert(
+            QStringLiteral("ShellInnerSpacing"),
+            state_.shellInnerSpacing
+        );
+        changed.insert(
+            QStringLiteral("ShellOuterSpacing"),
+            state_.shellOuterSpacing
+        );
+        changed.insert(
+            QStringLiteral("SyncHyprlandWindowSpacing"),
+            state_.syncHyprlandWindowSpacing
         );
     }
     changed.insert(

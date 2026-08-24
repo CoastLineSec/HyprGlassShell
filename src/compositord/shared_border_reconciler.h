@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shared_border_source.h"
+#include "shared_visual_source.h"
 
 #include <QByteArray>
 #include <QString>
@@ -34,7 +34,7 @@ public:
     );
     [[nodiscard]] bool configuredFor(const QString &digest) const;
     [[nodiscard]] SharedBorderValues valuesFor(
-        const SharedBorderProjection &projection
+        const SharedVisualProjection &projection
     ) const;
     [[nodiscard]] std::optional<SharedBorderValues> resolvedValues(
         const QByteArray &snapshot,
@@ -44,7 +44,7 @@ public:
         const QByteArray &snapshot,
         quint64 expectedRevision,
         const QString &expectedCatalogDigest,
-        const SharedBorderProjection &projection,
+        const SharedVisualProjection &projection,
         QString &error
     ) const;
     [[nodiscard]] bool replacementPreserves(

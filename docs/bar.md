@@ -1,9 +1,25 @@
 # Bar
 
-HyprShelld places one floating bar at the top of every active display. Each bar
-sits 12 logical pixels from the top and side edges and keeps 8 logical pixels
-of inward space between the bar and the tiled workspace. This reserved space
-keeps windows from tiling under the bar.
+HyprShelld places one bar at the top of every active display. In its normal
+floating state, the bar uses the configured outer spacing at the top and side
+edges and the configured inner spacing between the bar and windows. The
+defaults are 12 and 8 logical pixels. This complete margin and Bar-height
+reservation keeps windows from tiling under the bar.
+
+When the covering window on one display's visible workspace is maximized—not
+fullscreen—that display's bar attaches to the top edge. Its margins become
+zero, its top corners become square, and its bottom corners keep the shared
+radius. Once the protected maximize rule has been safely applied, it also lets
+that window fill the usable area immediately below the bar. Restoring or moving
+the verified covering window restores floating
+margins as soon as that output no longer has a covering maximized window. True
+fullscreen remains Hyprland's physical-monitor presentation and does not use
+the attached-bar state.
+
+Bar attachment follows Hyprland's visible workspace state directly. The Bar
+can therefore attach while managed spacing is saved or temporarily unavailable;
+gapless window geometry begins after compositor takeover or a safe Apply
+activates the protected maximize rule.
 
 The bar height applies to every display. It can be set from 24 to 96 logical
 pixels and defaults to 40 logical pixels.
@@ -74,8 +90,8 @@ circle design.
 Changes are saved automatically as one workspace-switcher update and apply to
 every bar. The Settings preview uses illustrative workspaces and applications;
 it is not a live view of your session. The preview remains at the top of the
-Bar page while the Size and Workspaces settings scroll beneath it, so each
-change stays visible while you configure the bar.
+Bar page while the Size, Spacing, Border, and Workspaces settings scroll
+beneath it, so each change stays visible while you configure the bar.
 
 The workspace switcher itself can be disabled from **Settings → Components →
 Bar Widgets**. Disabling it removes the switcher without discarding its saved
@@ -85,8 +101,8 @@ and read-only until the component is enabled again.
 Workspace choices are stored separately from the core Bar settings. If the
 component settings or component catalog is unavailable, Settings keeps the
 workspace preview visible but makes only the **Workspaces** card read-only. You
-can still change the bar height and shared border when core settings are
-available.
+can still change the bar height, shared spacing, and shared border when core
+settings are available.
 
 ## Component failure notices
 
@@ -112,9 +128,45 @@ Changes are saved automatically. Select **Reset** to return every bar to the
 default height of 40 logical pixels.
 
 If core settings are unavailable, Settings shows a Bar warning and
-disables the height and border controls until they reconnect. The displayed
-height and border may be out of date while that warning is visible. A separate
+disables the height, spacing, and border controls until they reconnect. The
+displayed values may be out of date while that warning is visible. A separate
 workspace warning does not disable the core Bar controls.
+
+## Customize shared spacing
+
+Open **HyprShelld Settings**, select **Bar**, and use the **Spacing** card:
+
+- **Inner spacing** sets the normal gap between the floating bar and windows
+  from 0 through 32 logical pixels.
+- **Outer spacing** sets the normal gap between the floating bar, windows, and
+  monitor edges from 0 through 32 logical pixels.
+- **Sync Hyprland window spacing** makes HyprShelld the authority for normal
+  managed Hyprland inner and outer window gaps. The corresponding Appearance
+  controls remain visible but read-only while synchronization is on.
+
+Each interaction saves inner spacing, outer spacing, and synchronization as
+one update. New and reset settings use inner spacing 8, outer spacing 12, and
+synchronization on. The pinned preview shows the floating margins and inward
+gap. Select **Maximized** in the preview to see the automatic attached shape
+and gapless usable area; that preview control does not change saved settings or
+the live session.
+
+An older core-settings file that predates shared spacing is upgraded with the
+same 8 and 12 Bar values but synchronization off. This preserves existing
+managed Hyprland gaps until you explicitly choose to synchronize them.
+
+Saving updates every live Bar through Config1. With synchronization enabled,
+the matching normal gaps reach managed Hyprland automatically only from an
+exact current managed baseline. Otherwise, they remain saved until explicit
+safe Apply or compositor takeover.
+
+Synchronized normal gaps use the inner value on all four sides between
+windows. Outer gaps use zero at the top and the outer value on the right,
+bottom, and left, because the Bar reservation already supplies the top
+spacing. Turn synchronization off when Hyprland should use an explicit
+normal-gap override without changing the Bar. The Bar attaches in either mode;
+once the protected maximize rule has been safely applied, it keeps the covering
+maximized window gapless.
 
 ## Customize the shared border
 

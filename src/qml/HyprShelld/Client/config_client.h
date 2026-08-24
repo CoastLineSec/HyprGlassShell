@@ -34,6 +34,18 @@ class ConfigClient final : public QObject {
         bool syncHyprlandWindowBorders READ syncHyprlandWindowBorders
         NOTIFY sharedBorderChanged
     )
+    Q_PROPERTY(
+        uint shellInnerSpacing READ shellInnerSpacing
+        NOTIFY sharedSpacingChanged
+    )
+    Q_PROPERTY(
+        uint shellOuterSpacing READ shellOuterSpacing
+        NOTIFY sharedSpacingChanged
+    )
+    Q_PROPERTY(
+        bool syncHyprlandWindowSpacing READ syncHyprlandWindowSpacing
+        NOTIFY sharedSpacingChanged
+    )
     Q_PROPERTY(qulonglong revision READ revision NOTIFY revisionChanged)
     Q_PROPERTY(QString revisionToken READ revisionToken NOTIFY revisionChanged)
     Q_PROPERTY(QString recoveryState READ recoveryState NOTIFY recoveryStateChanged)
@@ -65,6 +77,18 @@ class ConfigClient final : public QObject {
         bool defaultSyncHyprlandWindowBorders
         READ defaultSyncHyprlandWindowBorders CONSTANT
     )
+    Q_PROPERTY(uint minimumShellSpacing READ minimumShellSpacing CONSTANT)
+    Q_PROPERTY(uint maximumShellSpacing READ maximumShellSpacing CONSTANT)
+    Q_PROPERTY(
+        uint defaultShellInnerSpacing READ defaultShellInnerSpacing CONSTANT
+    )
+    Q_PROPERTY(
+        uint defaultShellOuterSpacing READ defaultShellOuterSpacing CONSTANT
+    )
+    Q_PROPERTY(
+        bool defaultSyncHyprlandWindowSpacing
+        READ defaultSyncHyprlandWindowSpacing CONSTANT
+    )
     Q_PROPERTY(QString lastErrorName READ lastErrorName NOTIFY lastErrorChanged)
     Q_PROPERTY(QString lastErrorMessage READ lastErrorMessage NOTIFY lastErrorChanged)
 
@@ -79,6 +103,9 @@ public:
     [[nodiscard]] uint shellBorderWidth() const;
     [[nodiscard]] uint shellBorderRadius() const;
     [[nodiscard]] bool syncHyprlandWindowBorders() const;
+    [[nodiscard]] uint shellInnerSpacing() const;
+    [[nodiscard]] uint shellOuterSpacing() const;
+    [[nodiscard]] bool syncHyprlandWindowSpacing() const;
     [[nodiscard]] qulonglong revision() const;
     [[nodiscard]] QString revisionToken() const;
     [[nodiscard]] QString recoveryState() const;
@@ -93,6 +120,11 @@ public:
     [[nodiscard]] uint maximumShellBorderRadius() const;
     [[nodiscard]] uint defaultShellBorderRadius() const;
     [[nodiscard]] bool defaultSyncHyprlandWindowBorders() const;
+    [[nodiscard]] uint minimumShellSpacing() const;
+    [[nodiscard]] uint maximumShellSpacing() const;
+    [[nodiscard]] uint defaultShellInnerSpacing() const;
+    [[nodiscard]] uint defaultShellOuterSpacing() const;
+    [[nodiscard]] bool defaultSyncHyprlandWindowSpacing() const;
     [[nodiscard]] QString lastErrorName() const;
     [[nodiscard]] QString lastErrorMessage() const;
 
@@ -105,6 +137,12 @@ public:
         bool syncHyprlandWindowBorders
     );
     Q_INVOKABLE void resetSharedBorder();
+    Q_INVOKABLE void setSharedSpacing(
+        uint inner,
+        uint outer,
+        bool syncHyprlandWindowSpacing
+    );
+    Q_INVOKABLE void resetSharedSpacing();
     Q_INVOKABLE void clearError();
 
 signals:
@@ -112,6 +150,7 @@ signals:
     void busyChanged();
     void barHeightChanged();
     void sharedBorderChanged();
+    void sharedSpacingChanged();
     void revisionChanged();
     void recoveryStateChanged();
     void lastErrorChanged();
@@ -145,11 +184,15 @@ private:
     quint64 ownerGeneration_ = 0;
     int pendingOperations_ = 0;
     bool available_ = false;
+    bool projectionEstablished_ = false;
     uint barHeight_ = 0;
     bool shellBorderEnabled_ = true;
     uint shellBorderWidth_ = 0;
     uint shellBorderRadius_ = 0;
     bool syncHyprlandWindowBorders_ = true;
+    uint shellInnerSpacing_ = 0;
+    uint shellOuterSpacing_ = 0;
+    bool syncHyprlandWindowSpacing_ = true;
     qulonglong revision_ = 0;
     QString recoveryState_;
     QString lastErrorName_;

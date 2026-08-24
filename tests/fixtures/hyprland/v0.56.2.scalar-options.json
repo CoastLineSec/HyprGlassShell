@@ -1,0 +1,6066 @@
+{
+  "formatVersion": 1,
+  "hyprlandVersion": "0.56.2",
+  "tag": "v0.56.2",
+  "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "source": {
+    "path": "src/config/values/ConfigValues.cpp",
+    "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+  },
+  "optionCount": 353,
+  "options": [
+    {
+      "path": "general:border_size",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "border_size"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "size of the border around windows"
+    },
+    {
+      "path": "general:gaps_in",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "gaps_in"
+      ],
+      "sourceType": "CssGap",
+      "type": "cssGap",
+      "default": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "defaultExpression": "5",
+      "constraints": {},
+      "description": "gaps between windows"
+    },
+    {
+      "path": "general:gaps_out",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "gaps_out"
+      ],
+      "sourceType": "CssGap",
+      "type": "cssGap",
+      "default": [
+        20,
+        20,
+        20,
+        20
+      ],
+      "defaultExpression": "20",
+      "constraints": {},
+      "description": "gaps between windows and monitor edges"
+    },
+    {
+      "path": "general:float_gaps",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "float_gaps"
+      ],
+      "sourceType": "CssGap",
+      "type": "cssGap",
+      "default": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "defaultExpression": "0",
+      "constraints": {},
+      "description": "gaps between windows and monitor edges for floating windows"
+    },
+    {
+      "path": "general:gaps_workspaces",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "gaps_workspaces"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "gaps between workspaces. Stacks with gaps_out."
+    },
+    {
+      "path": "general:col.inactive_border",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "col",
+        "inactive_border"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xFF444444"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xff444444}",
+      "constraints": {},
+      "description": "border color for inactive windows"
+    },
+    {
+      "path": "general:col.active_border",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "col",
+        "active_border"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xFFFFFFFF"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xffffffff}",
+      "constraints": {},
+      "description": "border color for the active window"
+    },
+    {
+      "path": "general:col.nogroup_border",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "col",
+        "nogroup_border"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xFFFFAAFF"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xffffaaff}",
+      "constraints": {},
+      "description": "inactive border color for window that cannot be added to a group"
+    },
+    {
+      "path": "general:col.nogroup_border_active",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "col",
+        "nogroup_border_active"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xFFFF00FF"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xffff00ff}",
+      "constraints": {},
+      "description": "active border color for window that cannot be added to a group"
+    },
+    {
+      "path": "general:layout",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "layout"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "dwindle",
+      "defaultExpression": "\"dwindle\"",
+      "constraints": {},
+      "description": "which layout to use. [dwindle/master/scrolling/monocle/lua:<name>]"
+    },
+    {
+      "path": "general:no_focus_fallback",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "no_focus_fallback"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, will not fall back to the next available window when moving focus in a direction where no window was found"
+    },
+    {
+      "path": "general:resize_on_border",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "resize_on_border"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables resizing windows by clicking and dragging on borders and gaps"
+    },
+    {
+      "path": "general:extend_border_grab_area",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "extend_border_grab_area"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 15,
+      "defaultExpression": "15",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "extends the area around the border where you can click and drag on, only used when general:resize_on_border is on."
+    },
+    {
+      "path": "general:hover_icon_on_border",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "hover_icon_on_border"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "show a cursor icon when hovering over borders, only used when general:resize_on_border is on."
+    },
+    {
+      "path": "general:allow_tearing",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "allow_tearing"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "master switch for allowing tearing to occur."
+    },
+    {
+      "path": "general:resize_corner",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "resize_corner"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 4,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "top_left",
+            "value": 1
+          },
+          {
+            "label": "top_right",
+            "value": 2
+          },
+          {
+            "label": "bottom_right",
+            "value": 3
+          },
+          {
+            "label": "bottom_left",
+            "value": 4
+          }
+        ]
+      },
+      "description": "force floating windows to use a specific corner when being resized (1-4 going clockwise from top left, 0 to disable)"
+    },
+    {
+      "path": "general:snap:enabled",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "snap",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable snapping for floating windows"
+    },
+    {
+      "path": "general:snap:window_gap",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "snap",
+        "window_gap"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 10,
+      "defaultExpression": "10",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "minimum gap in pixels between windows before snapping"
+    },
+    {
+      "path": "general:snap:monitor_gap",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "snap",
+        "monitor_gap"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 10,
+      "defaultExpression": "10",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "minimum gap in pixels between window and monitor edges before snapping"
+    },
+    {
+      "path": "general:snap:border_overlap",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "snap",
+        "border_overlap"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, windows snap such that only one border's worth of space is between them"
+    },
+    {
+      "path": "general:snap:respect_gaps",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "snap",
+        "respect_gaps"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, snapping will respect gaps between windows"
+    },
+    {
+      "path": "general:modal_parent_blocking",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "modal_parent_blocking"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if true, parent windows of modals will not be interactive."
+    },
+    {
+      "path": "general:locale",
+      "module": "general",
+      "luaPath": [
+        "general",
+        "locale"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "\"\"",
+      "constraints": {},
+      "description": "overrides the system locale"
+    },
+    {
+      "path": "decoration:rounding",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "rounding"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "rounded corners' radius (in layout px)"
+    },
+    {
+      "path": "decoration:rounding_power",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "rounding_power"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 2,
+        "max": 10
+      },
+      "description": "rounding power of corners (2 is a circle)"
+    },
+    {
+      "path": "decoration:active_opacity",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "active_opacity"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "opacity of active windows."
+    },
+    {
+      "path": "decoration:inactive_opacity",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "inactive_opacity"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "opacity of inactive windows."
+    },
+    {
+      "path": "decoration:fullscreen_opacity",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "fullscreen_opacity"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "opacity of fullscreen windows."
+    },
+    {
+      "path": "decoration:shadow:enabled",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enable drop shadows on windows"
+    },
+    {
+      "path": "decoration:shadow:range",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "range"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 4,
+      "defaultExpression": "4",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "Shadow range (size) in layout px"
+    },
+    {
+      "path": "decoration:shadow:render_power",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "render_power"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 3,
+      "defaultExpression": "3",
+      "constraints": {
+        "min": 1,
+        "max": 4
+      },
+      "description": "in what power to render the falloff (more power, the faster the falloff)"
+    },
+    {
+      "path": "decoration:shadow:sharp",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "sharp"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether the shadow should be sharp or not."
+    },
+    {
+      "path": "decoration:shadow:color",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "color"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xEE1A1A1A"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xee1a1a1a}",
+      "constraints": {},
+      "description": "shadow's color. Alpha dictates shadow's opacity."
+    },
+    {
+      "path": "decoration:shadow:color_inactive",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "color_inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "kind": "inherit",
+        "from": "decoration:shadow:color"
+      },
+      "defaultExpression": "-1",
+      "constraints": {},
+      "description": "inactive shadow color. (if not set, will fall back to col.shadow)"
+    },
+    {
+      "path": "decoration:shadow:offset",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "offset"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{}",
+      "constraints": {
+        "min": [
+          -250,
+          -250
+        ],
+        "max": [
+          250,
+          250
+        ]
+      },
+      "description": "shadow's rendering offset."
+    },
+    {
+      "path": "decoration:shadow:scale",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "shadow",
+        "scale"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "shadow's scale."
+    },
+    {
+      "path": "decoration:glow:enabled",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "glow",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable inner glow on windows"
+    },
+    {
+      "path": "decoration:glow:range",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "glow",
+        "range"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 10,
+      "defaultExpression": "10",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "glow range (size) in layout px"
+    },
+    {
+      "path": "decoration:glow:render_power",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "glow",
+        "render_power"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 3,
+      "defaultExpression": "3",
+      "constraints": {
+        "min": 1,
+        "max": 4
+      },
+      "description": "in what power to render the falloff (more power, the faster the falloff)"
+    },
+    {
+      "path": "decoration:glow:color",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "glow",
+        "color"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0xEE33CCFF"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0xee33ccff}",
+      "constraints": {},
+      "description": "glow's color. Alpha dictates glow's opacity."
+    },
+    {
+      "path": "decoration:glow:color_inactive",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "glow",
+        "color_inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "kind": "inherit",
+        "from": "decoration:glow:color"
+      },
+      "defaultExpression": "-1",
+      "constraints": {},
+      "description": "inactive glow color. (if not set, will fall back to decoration:glow:color)"
+    },
+    {
+      "path": "decoration:dim_modal",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "dim_modal"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enables dimming of parents of modal windows"
+    },
+    {
+      "path": "decoration:dim_inactive",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "dim_inactive"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables dimming of inactive windows"
+    },
+    {
+      "path": "decoration:dim_strength",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "dim_strength"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.5,
+      "defaultExpression": "0.5",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "how much inactive windows should be dimmed"
+    },
+    {
+      "path": "decoration:dim_special",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "dim_special"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.2,
+      "defaultExpression": "0.2",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "how much to dim the rest of the screen by when a special workspace is open."
+    },
+    {
+      "path": "decoration:dim_around",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "dim_around"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.4,
+      "defaultExpression": "0.4",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "how much the dimaround window rule should dim by."
+    },
+    {
+      "path": "decoration:screen_shader",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "screen_shader"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "a path to a custom shader to be applied at the end of rendering."
+    },
+    {
+      "path": "decoration:border_part_of_window",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "border_part_of_window"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether the border should be treated as a part of the window."
+    },
+    {
+      "path": "decoration:blur:enabled",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enable kawase window background blur"
+    },
+    {
+      "path": "decoration:blur:size",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "size"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 8,
+      "defaultExpression": "8",
+      "constraints": {
+        "min": 0,
+        "max": 100
+      },
+      "description": "blur size (distance)"
+    },
+    {
+      "path": "decoration:blur:passes",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "passes"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 10
+      },
+      "description": "the amount of passes to perform"
+    },
+    {
+      "path": "decoration:blur:ignore_opacity",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "ignore_opacity"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "make the blur layer ignore the opacity of the window"
+    },
+    {
+      "path": "decoration:blur:new_optimizations",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "new_optimizations"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to enable further optimizations to the blur."
+    },
+    {
+      "path": "decoration:blur:xray",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "xray"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, floating windows will ignore tiled windows in their blur."
+    },
+    {
+      "path": "decoration:blur:noise",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "noise"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.0117,
+      "defaultExpression": "0.0117",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "how much noise to apply."
+    },
+    {
+      "path": "decoration:blur:contrast",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "contrast"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.8916,
+      "defaultExpression": "0.8916",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "contrast modulation for blur."
+    },
+    {
+      "path": "decoration:blur:brightness",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "brightness"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "brightness modulation for blur."
+    },
+    {
+      "path": "decoration:blur:vibrancy",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "vibrancy"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.1696,
+      "defaultExpression": "0.1696",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "Increase saturation of blurred colors."
+    },
+    {
+      "path": "decoration:blur:vibrancy_darkness",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "vibrancy_darkness"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "How strong the effect of vibrancy is on dark areas."
+    },
+    {
+      "path": "decoration:blur:special",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "special"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to blur behind the special workspace (note: expensive)"
+    },
+    {
+      "path": "decoration:blur:popups",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "popups"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to blur popups (e.g. right-click menus)"
+    },
+    {
+      "path": "decoration:blur:popups_ignorealpha",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "popups_ignorealpha"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.2,
+      "defaultExpression": "0.2",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "works like ignorealpha in layer rules. If pixel opacity is below set value, will not blur."
+    },
+    {
+      "path": "decoration:blur:input_methods",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "input_methods"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to blur input methods (e.g. fcitx5)"
+    },
+    {
+      "path": "decoration:blur:input_methods_ignorealpha",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "input_methods_ignorealpha"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.2,
+      "defaultExpression": "0.2",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "works like ignorealpha in layer rules. If pixel opacity is below set value, will not blur."
+    },
+    {
+      "path": "decoration:motion_blur:enabled",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "motion_blur",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable motion blur for moving and resizing windows"
+    },
+    {
+      "path": "decoration:motion_blur:samples",
+      "module": "decoration",
+      "luaPath": [
+        "decoration",
+        "motion_blur",
+        "samples"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 7,
+      "defaultExpression": "7",
+      "constraints": {
+        "min": 1,
+        "max": 64
+      },
+      "description": "amount of samples used for motion blur"
+    },
+    {
+      "path": "animations:enabled",
+      "module": "animations",
+      "luaPath": [
+        "animations",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enable animations"
+    },
+    {
+      "path": "animations:workspace_wraparound",
+      "module": "animations",
+      "luaPath": [
+        "animations",
+        "workspace_wraparound"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "changes the direction of slide animations between the first and last workspaces"
+    },
+    {
+      "path": "input:kb_model",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_model"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Appropriate XKB keymap parameter."
+    },
+    {
+      "path": "input:kb_layout",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_layout"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "us",
+      "defaultExpression": "\"us\"",
+      "constraints": {},
+      "description": "Appropriate XKB keymap parameter"
+    },
+    {
+      "path": "input:kb_variant",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_variant"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Appropriate XKB keymap parameter"
+    },
+    {
+      "path": "input:kb_options",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_options"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Appropriate XKB keymap parameter"
+    },
+    {
+      "path": "input:kb_rules",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_rules"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Appropriate XKB keymap parameter"
+    },
+    {
+      "path": "input:kb_file",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "kb_file"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Appropriate XKB keymap file"
+    },
+    {
+      "path": "input:numlock_by_default",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "numlock_by_default"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Engage numlock by default."
+    },
+    {
+      "path": "input:resolve_binds_by_sym",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "resolve_binds_by_sym"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Determines how keybinds act when multiple layouts are used."
+    },
+    {
+      "path": "input:repeat_rate",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "repeat_rate"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 25,
+      "defaultExpression": "25",
+      "constraints": {
+        "min": 0,
+        "max": 200
+      },
+      "description": "The repeat rate for held-down keys, in repeats per second."
+    },
+    {
+      "path": "input:repeat_delay",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "repeat_delay"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 600,
+      "defaultExpression": "600",
+      "constraints": {
+        "min": 0,
+        "max": 2000
+      },
+      "description": "Delay before a held-down key is repeated, in milliseconds."
+    },
+    {
+      "path": "input:sensitivity",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "sensitivity"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": -1,
+        "max": 1
+      },
+      "description": "Sets the mouse input sensitivity. Value is clamped to the range -1.0 to 1.0."
+    },
+    {
+      "path": "input:accel_profile",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "accel_profile"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {
+        "choices": [
+          {
+            "label": "adaptive",
+            "value": "adaptive"
+          },
+          {
+            "label": "flat",
+            "value": "flat"
+          },
+          {
+            "label": "custom",
+            "value": "custom"
+          }
+        ]
+      },
+      "description": "Sets the cursor acceleration profile. [adaptive/flat/custom]"
+    },
+    {
+      "path": "input:force_no_accel",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "force_no_accel"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Force no cursor acceleration."
+    },
+    {
+      "path": "input:rotation",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "rotation"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 359
+      },
+      "description": "Sets the rotation of a device in degrees clockwise. Value is clamped to the range 0 to 359."
+    },
+    {
+      "path": "input:left_handed",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "left_handed"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Switches RMB and LMB"
+    },
+    {
+      "path": "input:scroll_points",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "scroll_points"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "Sets the scroll acceleration profile, when accel_profile is set to custom."
+    },
+    {
+      "path": "input:scroll_method",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "scroll_method"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {
+        "choices": [
+          {
+            "label": "2fg",
+            "value": "2fg"
+          },
+          {
+            "label": "edge",
+            "value": "edge"
+          },
+          {
+            "label": "on_button_down",
+            "value": "on_button_down"
+          },
+          {
+            "label": "no_scroll",
+            "value": "no_scroll"
+          }
+        ]
+      },
+      "description": "Sets the scroll method. [2fg/edge/on_button_down/no_scroll]"
+    },
+    {
+      "path": "input:scroll_button",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "scroll_button"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 300
+      },
+      "description": "Sets the scroll button. 0 means default."
+    },
+    {
+      "path": "input:scroll_button_lock",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "scroll_button_lock"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If the scroll button lock is enabled, the button does not need to be held down."
+    },
+    {
+      "path": "input:scroll_factor",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "scroll_factor"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "Multiplier added to scroll movement for external mice."
+    },
+    {
+      "path": "input:natural_scroll",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "natural_scroll"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Inverts scrolling direction."
+    },
+    {
+      "path": "input:follow_mouse",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "follow_mouse"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 3,
+        "choices": [
+          {
+            "label": "disabled",
+            "value": 0
+          },
+          {
+            "label": "follow",
+            "value": 1
+          },
+          {
+            "label": "detached",
+            "value": 2
+          },
+          {
+            "label": "separate",
+            "value": 3
+          }
+        ]
+      },
+      "description": "Specify if and how cursor movement should affect window focus."
+    },
+    {
+      "path": "input:follow_mouse_threshold",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "follow_mouse_threshold"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {},
+      "description": "The smallest distance in logical pixels the mouse needs to travel for the window under it to get focused."
+    },
+    {
+      "path": "input:focus_on_close",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "focus_on_close"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "next",
+            "value": 0
+          },
+          {
+            "label": "cursor",
+            "value": 1
+          },
+          {
+            "label": "mru",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Controls the window focus behavior when a window is closed."
+    },
+    {
+      "path": "input:mouse_refocus",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "mouse_refocus"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if disabled, mouse focus won't switch to the hovered window unless the mouse crosses a window boundary when follow_mouse=1."
+    },
+    {
+      "path": "input:float_switch_override_focus",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "float_switch_override_focus"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "If enabled (1 or 2), focus will change to the window under the cursor when changing from tiled-to-floating and vice versa. If 2, focus will also follow mouse on float-to-float switches."
+    },
+    {
+      "path": "input:special_fallthrough",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "special_fallthrough"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, having only floating windows in the special workspace will not block focusing windows in the regular workspace."
+    },
+    {
+      "path": "input:off_window_axis_events",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "off_window_axis_events"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 3,
+        "choices": [
+          {
+            "label": "ignore",
+            "value": 0
+          },
+          {
+            "label": "send",
+            "value": 1
+          },
+          {
+            "label": "clamp",
+            "value": 2
+          },
+          {
+            "label": "warp",
+            "value": 3
+          }
+        ]
+      },
+      "description": "How to handle axis events around a focused window."
+    },
+    {
+      "path": "input:emulate_discrete_scroll",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "emulate_discrete_scroll"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "non_standard",
+            "value": 1
+          },
+          {
+            "label": "force_all",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Emulates discrete scrolling from high resolution scrolling events."
+    },
+    {
+      "path": "input:follow_mouse_shrink",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "follow_mouse_shrink"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 300
+      },
+      "description": "Shrinks the inactive window hitboxes used for focus detection by the specified number of pixels. This creates a dead zone in gaps between windows where moving the cursor will not change focus. Works only with follow_mouse = 1."
+    },
+    {
+      "path": "input:touchpad:disable_while_typing",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "disable_while_typing"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Disable the touchpad while typing."
+    },
+    {
+      "path": "input:touchpad:natural_scroll",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "natural_scroll"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Inverts scrolling direction."
+    },
+    {
+      "path": "input:touchpad:scroll_factor",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "scroll_factor"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "Multiplier applied to the amount of scroll movement."
+    },
+    {
+      "path": "input:touchpad:middle_button_emulation",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "middle_button_emulation"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Sending LMB and RMB simultaneously will be interpreted as a middle click."
+    },
+    {
+      "path": "input:touchpad:tap_button_map",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "tap_button_map"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {
+        "choices": [
+          {
+            "label": "lrm",
+            "value": "lrm"
+          },
+          {
+            "label": "lmr",
+            "value": "lmr"
+          }
+        ]
+      },
+      "description": "Sets the tap button mapping for touchpad button emulation. [lrm/lmr]"
+    },
+    {
+      "path": "input:touchpad:clickfinger_behavior",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "clickfinger_behavior"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Button presses with 1, 2, or 3 fingers will be mapped to LMB, RMB, and MMB respectively."
+    },
+    {
+      "path": "input:touchpad:tap-to-click",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "tap_to_click"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Tapping on the touchpad with 1, 2, or 3 fingers will send LMB, RMB, and MMB respectively."
+    },
+    {
+      "path": "input:touchpad:drag_lock",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "drag_lock"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "When enabled, lifting the finger off while dragging will not drop the dragged item."
+    },
+    {
+      "path": "input:touchpad:tap-and-drag",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "tap_and_drag"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Sets the tap and drag mode for the touchpad"
+    },
+    {
+      "path": "input:touchpad:flip_x",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "flip_x"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Inverts the horizontal movement of the touchpad"
+    },
+    {
+      "path": "input:touchpad:flip_y",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "flip_y"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Inverts the vertical movement of the touchpad"
+    },
+    {
+      "path": "input:touchpad:drag_3fg",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchpad",
+        "drag_3fg"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "3_finger",
+            "value": 1
+          },
+          {
+            "label": "4_finger",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Whether to use 3 or 4 finger drag."
+    },
+    {
+      "path": "input:touchdevice:transform",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchdevice",
+        "transform"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 6
+      },
+      "description": "Transform the input from touchdevices."
+    },
+    {
+      "path": "input:touchdevice:output",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchdevice",
+        "output"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "[[Auto]]",
+      "defaultExpression": "\"[[Auto]]\"",
+      "constraints": {},
+      "description": "The monitor to bind touch devices."
+    },
+    {
+      "path": "input:touchdevice:enabled",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "touchdevice",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Whether input is enabled for touch devices."
+    },
+    {
+      "path": "input:virtualkeyboard:share_states",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "virtualkeyboard",
+        "share_states"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "only_non_ime",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Unify key down states and modifier states with other keyboards."
+    },
+    {
+      "path": "input:virtualkeyboard:release_pressed_on_close",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "virtualkeyboard",
+        "release_pressed_on_close"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Release all pressed keys by virtual keyboard on close."
+    },
+    {
+      "path": "input:tablet:transform",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "transform"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 6
+      },
+      "description": "transform the input from tablets."
+    },
+    {
+      "path": "input:tablet:output",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "output"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "the monitor to bind tablets."
+    },
+    {
+      "path": "input:tablet:region_position",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "region_position"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{}",
+      "constraints": {
+        "min": [
+          -20000,
+          -20000
+        ],
+        "max": [
+          20000,
+          20000
+        ]
+      },
+      "description": "position of the mapped region in monitor layout."
+    },
+    {
+      "path": "input:tablet:absolute_region_position",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "absolute_region_position"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to treat the region_position as an absolute position in monitor layout."
+    },
+    {
+      "path": "input:tablet:region_size",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "region_size"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{}",
+      "constraints": {
+        "min": [
+          -100,
+          -100
+        ],
+        "max": [
+          4000,
+          4000
+        ]
+      },
+      "description": "size of the mapped region."
+    },
+    {
+      "path": "input:tablet:relative_input",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "relative_input"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether the input should be relative"
+    },
+    {
+      "path": "input:tablet:left_handed",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "left_handed"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, the tablet will be rotated 180 degrees"
+    },
+    {
+      "path": "input:tablet:active_area_size",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "active_area_size"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{}",
+      "constraints": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          500,
+          500
+        ]
+      },
+      "description": "size of tablet's active area in mm"
+    },
+    {
+      "path": "input:tablet:active_area_position",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablet",
+        "active_area_position"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{}",
+      "constraints": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          500,
+          500
+        ]
+      },
+      "description": "position of the active area in mm"
+    },
+    {
+      "path": "input:tablettool:eraser_button_mode",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablettool",
+        "eraser_button_mode"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 6
+      },
+      "description": "Change the eraser button behavior on the tool. When set to 0, use the default hardware behavior of the tool. When set to 1, the eraser button on the tool sends a button event instead."
+    },
+    {
+      "path": "input:tablettool:eraser_button_override",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablettool",
+        "eraser_button_override"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0
+      },
+      "description": "Set a button to be button event when eraser_button_mode is set to 1. Has to be an int, cannot be a string. Must be a valid button (e.g. BTN_STYLUS) excluding fake buttons (e.g. BTN_TOOL_*) and keys (KEY_*). Check wev if you have any doubts regarding the ID. 0 means default."
+    },
+    {
+      "path": "input:tablettool:pressure_range_min",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablettool",
+        "pressure_range_min"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": -1.0,
+      "defaultExpression": "-1.0",
+      "constraints": {
+        "min": -1.0,
+        "max": 1.0
+      },
+      "description": "Set the minimum pressure range for the tool, a negative number will set the default minimum pressure value. This is usually 0.0"
+    },
+    {
+      "path": "input:tablettool:pressure_range_max",
+      "module": "input",
+      "luaPath": [
+        "input",
+        "tablettool",
+        "pressure_range_max"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": -1.0,
+      "defaultExpression": "-1.0",
+      "constraints": {
+        "min": -1.0,
+        "max": 1.0
+      },
+      "description": "Set the maximum pressure range for the tool, a negative number will set the default maximum pressure value. This is usually 1.0"
+    },
+    {
+      "path": "gestures:workspace_swipe_distance",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_distance"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 300,
+      "defaultExpression": "300",
+      "constraints": {
+        "min": 0,
+        "max": 2000
+      },
+      "description": "in px, the distance of the touchpad gesture"
+    },
+    {
+      "path": "gestures:workspace_swipe_touch",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_touch"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable workspace swiping from the edge of a touchscreen"
+    },
+    {
+      "path": "gestures:workspace_swipe_invert",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_invert"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "invert the direction (touchpad only)"
+    },
+    {
+      "path": "gestures:workspace_swipe_touch_invert",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_touch_invert"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "invert the direction (touchscreen only)"
+    },
+    {
+      "path": "gestures:workspace_swipe_min_speed_to_force",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_min_speed_to_force"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 30,
+      "defaultExpression": "30",
+      "constraints": {
+        "min": 0,
+        "max": 200
+      },
+      "description": "minimum speed in px per timepoint to force the change ignoring cancel_ratio."
+    },
+    {
+      "path": "gestures:workspace_swipe_cancel_ratio",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_cancel_ratio"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.5,
+      "defaultExpression": "0.5",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "how much the swipe has to proceed in order to commence it."
+    },
+    {
+      "path": "gestures:workspace_swipe_create_new",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_create_new"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether a swipe right on the last workspace should create a new one."
+    },
+    {
+      "path": "gestures:workspace_swipe_direction_lock",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_direction_lock"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if enabled, switching direction will be locked when you swipe past the direction_lock_threshold."
+    },
+    {
+      "path": "gestures:workspace_swipe_direction_lock_threshold",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_direction_lock_threshold"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 10,
+      "defaultExpression": "10",
+      "constraints": {
+        "min": 0,
+        "max": 200
+      },
+      "description": "in px, the distance to swipe before direction lock activates."
+    },
+    {
+      "path": "gestures:workspace_swipe_forever",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_forever"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, swiping will not clamp at the neighboring workspaces but continue to the further ones."
+    },
+    {
+      "path": "gestures:workspace_swipe_use_r",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "workspace_swipe_use_r"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, swiping will use the r prefix instead of the m prefix for finding workspaces."
+    },
+    {
+      "path": "gestures:close_max_timeout",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "close_max_timeout"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 1000,
+      "defaultExpression": "1000",
+      "constraints": {
+        "min": 10,
+        "max": 2000
+      },
+      "description": "Timeout for closing windows with the close gesture, in ms."
+    },
+    {
+      "path": "gestures:scrolling:move_snap_to_grid",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "scrolling",
+        "move_snap_to_grid"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "When releasing the scroll move gesture, whether it shoud try to snap to the grid."
+    },
+    {
+      "path": "gestures:scrolling:move_snap_cursor",
+      "module": "gestures",
+      "luaPath": [
+        "gestures",
+        "scrolling",
+        "move_snap_cursor"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "When releasing the scroll move gesture, whether it shoud snap the cursor to the newly focused window."
+    },
+    {
+      "path": "group:insert_after_current",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "insert_after_current"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether new windows in a group spawn after current or at group tail"
+    },
+    {
+      "path": "group:focus_removed_window",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "focus_removed_window"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether Hyprland should focus on the window that has just been moved out of the group"
+    },
+    {
+      "path": "group:merge_groups_on_drag",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "merge_groups_on_drag"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether window groups can be dragged into other groups"
+    },
+    {
+      "path": "group:merge_groups_on_groupbar",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "merge_groups_on_groupbar"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether one group will be merged with another when dragged into its groupbar"
+    },
+    {
+      "path": "group:col.border_active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "col",
+        "border_active"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66FFFF00"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0x66ffff00}",
+      "constraints": {},
+      "description": "active group border color"
+    },
+    {
+      "path": "group:col.border_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "col",
+        "border_inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66777700"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0x66777700}",
+      "constraints": {},
+      "description": "inactive group border color"
+    },
+    {
+      "path": "group:col.border_locked_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "col",
+        "border_locked_inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66FF5500"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0x66ff5500}",
+      "constraints": {},
+      "description": "inactive locked group border color"
+    },
+    {
+      "path": "group:col.border_locked_active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "col",
+        "border_locked_active"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66775500"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "CHyprColor{0x66775500}",
+      "constraints": {},
+      "description": "active locked group border color"
+    },
+    {
+      "path": "group:auto_group",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "auto_group"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "automatically group new windows"
+    },
+    {
+      "path": "group:drag_into_group",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "drag_into_group"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disabled",
+            "value": 0
+          },
+          {
+            "label": "enabled",
+            "value": 1
+          },
+          {
+            "label": "only when dragging into the groupbar",
+            "value": 2
+          }
+        ]
+      },
+      "description": "whether dragging a window into a unlocked group will merge them."
+    },
+    {
+      "path": "group:merge_floated_into_tiled_on_groupbar",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "merge_floated_into_tiled_on_groupbar"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether dragging a floating window into a tiled window groupbar will merge them"
+    },
+    {
+      "path": "group:group_on_movetoworkspace",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "group_on_movetoworkspace"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether using movetoworkspace[silent] will merge the window into the workspace's solitary unlocked group"
+    },
+    {
+      "path": "group:groupbar:enabled",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enables groupbars"
+    },
+    {
+      "path": "group:groupbar:disable_when_only",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "disable_when_only"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disable if contains single window. Considered only if enabled == true"
+    },
+    {
+      "path": "group:groupbar:font_family",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "font_family"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "\"[[EMPTY]]\"",
+      "constraints": {},
+      "description": "font used to display groupbar titles"
+    },
+    {
+      "path": "group:groupbar:font_weight_active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "font_weight_active"
+      ],
+      "sourceType": "FontWeight",
+      "type": "fontWeight",
+      "default": 400,
+      "defaultExpression": "400",
+      "constraints": {},
+      "description": "weight of the font used to display active groupbar titles"
+    },
+    {
+      "path": "group:groupbar:font_weight_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "font_weight_inactive"
+      ],
+      "sourceType": "FontWeight",
+      "type": "fontWeight",
+      "default": 400,
+      "defaultExpression": "400",
+      "constraints": {},
+      "description": "weight of the font used to display inactive groupbar titles"
+    },
+    {
+      "path": "group:groupbar:font_size",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "font_size"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 8,
+      "defaultExpression": "8",
+      "constraints": {
+        "min": 2,
+        "max": 64
+      },
+      "description": "font size of groupbar title"
+    },
+    {
+      "path": "group:groupbar:gradients",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gradients"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables gradients"
+    },
+    {
+      "path": "group:groupbar:height",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "height"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 14,
+      "defaultExpression": "14",
+      "constraints": {
+        "min": 1,
+        "max": 64
+      },
+      "description": "height of the groupbar"
+    },
+    {
+      "path": "group:groupbar:indicator_gap",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "indicator_gap"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 64
+      },
+      "description": "height of the gap between the groupbar indicator and title"
+    },
+    {
+      "path": "group:groupbar:indicator_height",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "indicator_height"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 3,
+      "defaultExpression": "3",
+      "constraints": {
+        "min": 1,
+        "max": 64
+      },
+      "description": "height of the groupbar indicator"
+    },
+    {
+      "path": "group:groupbar:stacked",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "stacked"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "render the groupbar as a vertical stack"
+    },
+    {
+      "path": "group:groupbar:priority",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "priority"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 3,
+      "defaultExpression": "3",
+      "constraints": {
+        "min": 0,
+        "max": 6
+      },
+      "description": "sets the decoration priority for groupbars"
+    },
+    {
+      "path": "group:groupbar:render_titles",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "render_titles"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to render titles in the group bar decoration"
+    },
+    {
+      "path": "group:groupbar:scrolling",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "scrolling"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether scrolling in the groupbar changes group active window"
+    },
+    {
+      "path": "group:groupbar:middle_click_close",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "middle_click_close"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether middle clicking the groupbar closes the clicked window"
+    },
+    {
+      "path": "group:groupbar:rounding",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "rounding"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "how much to round the groupbar"
+    },
+    {
+      "path": "group:groupbar:rounding_power",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "rounding_power"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 2,
+        "max": 10
+      },
+      "description": "rounding power of groupbar corners (2 is a circle)"
+    },
+    {
+      "path": "group:groupbar:gradient_rounding",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gradient_rounding"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "how much to round the groupbar gradient"
+    },
+    {
+      "path": "group:groupbar:gradient_rounding_power",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gradient_rounding_power"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 2,
+        "max": 10
+      },
+      "description": "rounding power of groupbar gradient corners (2 is a circle)"
+    },
+    {
+      "path": "group:groupbar:round_only_edges",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "round_only_edges"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if yes, will only round at the groupbar edges"
+    },
+    {
+      "path": "group:groupbar:gradient_round_only_edges",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gradient_round_only_edges"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if yes, will only round at the groupbar gradient edges"
+    },
+    {
+      "path": "group:groupbar:text_color",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_color"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": "0xFFFFFFFF",
+      "defaultExpression": "0xffffffff",
+      "constraints": {},
+      "description": "color for window titles in the groupbar"
+    },
+    {
+      "path": "group:groupbar:text_color_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_color_inactive"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": {
+        "kind": "inherit",
+        "from": "group:groupbar:text_color"
+      },
+      "defaultExpression": "-1",
+      "constraints": {},
+      "description": "color for inactive windows' titles in the groupbar"
+    },
+    {
+      "path": "group:groupbar:text_color_locked_active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_color_locked_active"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": {
+        "kind": "inherit",
+        "from": "group:groupbar:text_color"
+      },
+      "defaultExpression": "-1",
+      "constraints": {},
+      "description": "color for the active window's title in a locked group"
+    },
+    {
+      "path": "group:groupbar:text_color_locked_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_color_locked_inactive"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": {
+        "kind": "inherit",
+        "from": "group:groupbar:text_color_inactive"
+      },
+      "defaultExpression": "-1",
+      "constraints": {},
+      "description": "color for inactive windows' titles in locked groups"
+    },
+    {
+      "path": "group:groupbar:col.active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "col",
+        "active"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66FFFF00"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "0x66ffff00",
+      "constraints": {},
+      "description": "active group border color"
+    },
+    {
+      "path": "group:groupbar:col.inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "col",
+        "inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66777700"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "0x66777700",
+      "constraints": {},
+      "description": "inactive (out of focus) group border color"
+    },
+    {
+      "path": "group:groupbar:col.locked_active",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "col",
+        "locked_active"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66FF5500"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "0x66ff5500",
+      "constraints": {},
+      "description": "active locked group border color"
+    },
+    {
+      "path": "group:groupbar:col.locked_inactive",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "col",
+        "locked_inactive"
+      ],
+      "sourceType": "Gradient",
+      "type": "gradient",
+      "default": {
+        "colors": [
+          "0x66775500"
+        ],
+        "angle": 0
+      },
+      "defaultExpression": "0x66775500",
+      "constraints": {},
+      "description": "inactive locked group border color"
+    },
+    {
+      "path": "group:groupbar:gaps_out",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gaps_out"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "gap between gradients and window"
+    },
+    {
+      "path": "group:groupbar:gaps_in",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "gaps_in"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "gap between gradients"
+    },
+    {
+      "path": "group:groupbar:keep_upper_gap",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "keep_upper_gap"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "keep an upper gap above gradient"
+    },
+    {
+      "path": "group:groupbar:text_offset",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_offset"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": -20,
+        "max": 20
+      },
+      "description": "set an offset for a text"
+    },
+    {
+      "path": "group:groupbar:text_padding",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "text_padding"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 22
+      },
+      "description": "set horizontal padding for a text"
+    },
+    {
+      "path": "group:groupbar:blur",
+      "module": "group",
+      "luaPath": [
+        "group",
+        "groupbar",
+        "blur"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable background blur for groupbars"
+    },
+    {
+      "path": "misc:disable_hyprland_logo",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_hyprland_logo"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disables the random Hyprland logo / anime girl background. :("
+    },
+    {
+      "path": "misc:disable_splash_rendering",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_splash_rendering"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disables the Hyprland splash rendering."
+    },
+    {
+      "path": "misc:col.splash",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "col",
+        "splash"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": "0x55FFFFFF",
+      "defaultExpression": "0x55ffffff",
+      "constraints": {},
+      "description": "Changes the color of the splash text."
+    },
+    {
+      "path": "misc:font_family",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "font_family"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "Sans",
+      "defaultExpression": "\"Sans\"",
+      "constraints": {},
+      "description": "Set the global default font to render the text."
+    },
+    {
+      "path": "misc:splash_font_family",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "splash_font_family"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "\"[[EMPTY]]\"",
+      "constraints": {},
+      "description": "Changes the font used to render the splash text."
+    },
+    {
+      "path": "misc:force_default_wallpaper",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "force_default_wallpaper"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": -1,
+      "defaultExpression": "-1",
+      "constraints": {
+        "min": -1,
+        "max": 2
+      },
+      "description": "Force any of the 3 default wallpapers. [-1/0/1/2]"
+    },
+    {
+      "path": "misc:vrr",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "vrr"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 3,
+        "choices": [
+          {
+            "label": "off",
+            "value": 0
+          },
+          {
+            "label": "on",
+            "value": 1
+          },
+          {
+            "label": "fullscreen",
+            "value": 2
+          },
+          {
+            "label": "fullscreen_game",
+            "value": 3
+          }
+        ]
+      },
+      "description": "controls the VRR (Adaptive Sync) of your monitors"
+    },
+    {
+      "path": "misc:mouse_move_enables_dpms",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "mouse_move_enables_dpms"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If DPMS is set to off, wake up the monitors if the mouse moves"
+    },
+    {
+      "path": "misc:key_press_enables_dpms",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "key_press_enables_dpms"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If DPMS is set to off, wake up the monitors if a key is pressed."
+    },
+    {
+      "path": "misc:name_vk_after_proc",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "name_vk_after_proc"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Name virtual keyboards after the processes that create them."
+    },
+    {
+      "path": "misc:always_follow_on_dnd",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "always_follow_on_dnd"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Will make mouse focus follow the mouse when drag and dropping."
+    },
+    {
+      "path": "misc:layers_hog_keyboard_focus",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "layers_hog_keyboard_focus"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "If true, will make keyboard-interactive layers keep their focus on mouse move."
+    },
+    {
+      "path": "misc:animate_manual_resizes",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "animate_manual_resizes"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If true, will animate manual window resizes/moves"
+    },
+    {
+      "path": "misc:animate_mouse_windowdragging",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "animate_mouse_windowdragging"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If true, will animate windows being dragged by mouse."
+    },
+    {
+      "path": "misc:disable_autoreload",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_autoreload"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If true, the config will not reload automatically on save."
+    },
+    {
+      "path": "misc:enable_swallow",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "enable_swallow"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Enable window swallowing"
+    },
+    {
+      "path": "misc:swallow_regex",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "swallow_regex"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "The class regex to be used for windows that should be swallowed."
+    },
+    {
+      "path": "misc:swallow_exception_regex",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "swallow_exception_regex"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "The title regex to be used for windows that should not be swallowed."
+    },
+    {
+      "path": "misc:focus_on_activate",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "focus_on_activate"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Whether Hyprland should focus an app that requests to be focused."
+    },
+    {
+      "path": "misc:mouse_move_focuses_monitor",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "mouse_move_focuses_monitor"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Whether mouse moving into a different monitor should focus it"
+    },
+    {
+      "path": "misc:allow_session_lock_restore",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "allow_session_lock_restore"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, will allow you to restart a lockscreen app in case it crashes."
+    },
+    {
+      "path": "misc:session_lock_xray",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "session_lock_xray"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "keep rendering workspaces below your lockscreen"
+    },
+    {
+      "path": "misc:session_lock_blur",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "session_lock_blur"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Enable blur for lockscreen. You probably want to enable `session_lock_xray`."
+    },
+    {
+      "path": "misc:background_color",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "background_color"
+      ],
+      "sourceType": "Color",
+      "type": "color",
+      "default": "0xFF111111",
+      "defaultExpression": "0xff111111",
+      "constraints": {},
+      "description": "change the background color."
+    },
+    {
+      "path": "misc:close_special_on_empty",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "close_special_on_empty"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "close the special workspace if the last window is removed"
+    },
+    {
+      "path": "misc:on_focus_under_fullscreen",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "on_focus_under_fullscreen"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "ignore",
+            "value": 0
+          },
+          {
+            "label": "take_over",
+            "value": 1
+          },
+          {
+            "label": "exit_fullscreen",
+            "value": 2
+          }
+        ]
+      },
+      "description": "if there is a fullscreen or maximized window, decide whether a tiled window requested to focus should replace it."
+    },
+    {
+      "path": "misc:exit_window_retains_fullscreen",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "exit_window_retains_fullscreen"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, closing a fullscreen window makes the next focused window fullscreen"
+    },
+    {
+      "path": "misc:initial_workspace_tracking",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "initial_workspace_tracking"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2
+      },
+      "description": "if enabled, windows will open on the workspace they were invoked on."
+    },
+    {
+      "path": "misc:initial_workspace_token_timeout",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "initial_workspace_token_timeout"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 10,
+      "defaultExpression": "10",
+      "constraints": {
+        "min": 1,
+        "max": 3600
+      },
+      "description": "the time in seconds a window has to open on its invoked workspace before the tracking token expires."
+    },
+    {
+      "path": "misc:middle_click_paste",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "middle_click_paste"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to enable middle-click-paste (aka primary selection)"
+    },
+    {
+      "path": "misc:render_unfocused_fps",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "render_unfocused_fps"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 15,
+      "defaultExpression": "15",
+      "constraints": {
+        "min": 1,
+        "max": 120
+      },
+      "description": "the maximum limit for renderunfocused windows' fps in the background"
+    },
+    {
+      "path": "misc:disable_xdg_env_checks",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_xdg_env_checks"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disable the warning if XDG environment is externally managed"
+    },
+    {
+      "path": "misc:disable_hyprland_guiutils_check",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_hyprland_guiutils_check"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disable the warning if hyprland-guiutils is missing"
+    },
+    {
+      "path": "misc:disable_watchdog_warning",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_watchdog_warning"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to disable the warning about not using start-hyprland."
+    },
+    {
+      "path": "misc:lockdead_screen_delay",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "lockdead_screen_delay"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 1000,
+      "defaultExpression": "1000",
+      "constraints": {
+        "min": 0,
+        "max": 5000
+      },
+      "description": "the delay in ms after the lockdead screen appears."
+    },
+    {
+      "path": "misc:enable_anr_dialog",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "enable_anr_dialog"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to enable the ANR (app not responding) dialog when your apps hang"
+    },
+    {
+      "path": "misc:anr_missed_pings",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "anr_missed_pings"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 5,
+      "defaultExpression": "5",
+      "constraints": {
+        "min": 1,
+        "max": 20
+      },
+      "description": "number of missed pings before showing the ANR dialog"
+    },
+    {
+      "path": "misc:screencopy_force_8b",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "screencopy_force_8b"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "forces 8 bit screencopy"
+    },
+    {
+      "path": "misc:disable_scale_notification",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "disable_scale_notification"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disables notification popup when a monitor fails to set a suitable scale"
+    },
+    {
+      "path": "misc:size_limits_tiled",
+      "module": "misc",
+      "luaPath": [
+        "misc",
+        "size_limits_tiled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to apply minsize and maxsize rules to tiled windows"
+    },
+    {
+      "path": "binds:pass_mouse_when_bound",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "pass_mouse_when_bound"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if disabled, will not pass the mouse events to apps / dragging windows around if a keybind has been triggered."
+    },
+    {
+      "path": "binds:scroll_event_delay",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "scroll_event_delay"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 300,
+      "defaultExpression": "300",
+      "constraints": {
+        "min": 0,
+        "max": 2000
+      },
+      "description": "in ms, how many ms to wait after a scroll event to allow passing another one for the binds."
+    },
+    {
+      "path": "binds:workspace_back_and_forth",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "workspace_back_and_forth"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, an attempt to switch to the currently focused workspace will instead switch to the previous workspace."
+    },
+    {
+      "path": "binds:hide_special_on_workspace_change",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "hide_special_on_workspace_change"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, changing the active workspace will hide the special workspace on the monitor."
+    },
+    {
+      "path": "binds:allow_workspace_cycles",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "allow_workspace_cycles"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, workspaces don't forget their previous workspace."
+    },
+    {
+      "path": "binds:workspace_center_on",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "workspace_center_on"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "Whether switching workspaces should center the cursor on the workspace (0) or on the last active window (1)"
+    },
+    {
+      "path": "binds:focus_preferred_method",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "focus_preferred_method"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "sets the preferred focus finding method when using focuswindow/movewindow/etc with a direction."
+    },
+    {
+      "path": "binds:ignore_group_lock",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "ignore_group_lock"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, dispatchers like moveintogroup, moveoutofgroup and movewindoworgroup will ignore lock per group."
+    },
+    {
+      "path": "binds:movefocus_cycles_fullscreen",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "movefocus_cycles_fullscreen"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, when on a fullscreen window, movefocus will cycle fullscreen."
+    },
+    {
+      "path": "binds:movefocus_cycles_groupfirst",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "movefocus_cycles_groupfirst"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, when in a grouped window, movefocus will cycle windows in the groups first."
+    },
+    {
+      "path": "binds:disable_keybind_grabbing",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "disable_keybind_grabbing"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, apps that request keybinds to be disabled will not be able to do so."
+    },
+    {
+      "path": "binds:window_direction_monitor_fallback",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "window_direction_monitor_fallback"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "If enabled, moving a window or focus over the edge of a monitor with a direction will move it to the next monitor."
+    },
+    {
+      "path": "binds:allow_pin_fullscreen",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "allow_pin_fullscreen"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Allows fullscreen to pinned windows, and restore their pinned status afterwards"
+    },
+    {
+      "path": "binds:drag_threshold",
+      "module": "binds",
+      "luaPath": [
+        "binds",
+        "drag_threshold"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2147483647
+      },
+      "description": "Movement threshold in pixels for window dragging and c/g bind flags. 0 to disable."
+    },
+    {
+      "path": "xwayland:enabled",
+      "module": "xwayland",
+      "luaPath": [
+        "xwayland",
+        "enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "allow running applications using X11"
+    },
+    {
+      "path": "xwayland:use_nearest_neighbor",
+      "module": "xwayland",
+      "luaPath": [
+        "xwayland",
+        "use_nearest_neighbor"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "uses the nearest neighbor filtering for xwayland apps, making them pixelated rather than blurry"
+    },
+    {
+      "path": "xwayland:force_zero_scaling",
+      "module": "xwayland",
+      "luaPath": [
+        "xwayland",
+        "force_zero_scaling"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "forces a scale of 1 on xwayland windows on scaled displays."
+    },
+    {
+      "path": "xwayland:create_abstract_socket",
+      "module": "xwayland",
+      "luaPath": [
+        "xwayland",
+        "create_abstract_socket"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Create the abstract Unix domain socket for XWayland"
+    },
+    {
+      "path": "opengl:nvidia_anti_flicker",
+      "module": "opengl",
+      "luaPath": [
+        "opengl",
+        "nvidia_anti_flicker"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "reduces flickering on nvidia at the cost of possible frame drops on lower-end GPUs."
+    },
+    {
+      "path": "render:direct_scanout",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "direct_scanout"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Enables direct scanout."
+    },
+    {
+      "path": "render:expand_undersized_textures",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "expand_undersized_textures"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Whether to expand textures that have not yet resized to be larger."
+    },
+    {
+      "path": "render:xp_mode",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "xp_mode"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Disable back buffer and bottom layer rendering."
+    },
+    {
+      "path": "render:ctm_animation",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "ctm_animation"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Whether to enable a fade animation for CTM changes."
+    },
+    {
+      "path": "render:cm_enabled",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "cm_enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Enable Color Management pipelines (requires restart to fully take effect)"
+    },
+    {
+      "path": "render:send_content_type",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "send_content_type"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Report content type to allow monitor profile autoswitch"
+    },
+    {
+      "path": "render:cm_auto_hdr",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "cm_auto_hdr"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "hdr",
+            "value": 1
+          },
+          {
+            "label": "hdredid",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Auto-switch to hdr mode when fullscreen app is in hdr"
+    },
+    {
+      "path": "render:new_render_scheduling",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "new_render_scheduling"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable new render scheduling, which should improve FPS on underpowered devices."
+    },
+    {
+      "path": "render:non_shader_cm",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "non_shader_cm"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 3,
+      "defaultExpression": "3",
+      "constraints": {
+        "min": 0,
+        "max": 3,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "always",
+            "value": 1
+          },
+          {
+            "label": "ondemand",
+            "value": 2
+          },
+          {
+            "label": "ignore",
+            "value": 3
+          }
+        ]
+      },
+      "description": "Enable CM without shader."
+    },
+    {
+      "path": "render:cm_sdr_eotf",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "cm_sdr_eotf"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "default",
+      "defaultExpression": "\"default\"",
+      "constraints": {},
+      "description": "Default transfer function for displaying SDR apps."
+    },
+    {
+      "path": "render:commit_timing_enabled",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "commit_timing_enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Enable commit timing proto. Requires restart"
+    },
+    {
+      "path": "render:icc_vcgt_enabled",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "icc_vcgt_enabled"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Enable sending VCGT ramps to KMS with ICC profiles"
+    },
+    {
+      "path": "render:use_shader_blur_blend",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "use_shader_blur_blend"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Use experimental blurred bg blending"
+    },
+    {
+      "path": "render:use_fp16",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "use_fp16"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Use experimental internal FP16 buffer."
+    },
+    {
+      "path": "render:keep_unmodified_copy",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "keep_unmodified_copy"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Keep umodified SDR frame copy for sreensharing."
+    },
+    {
+      "path": "render:non_shader_cm_interop",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "non_shader_cm_interop"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "non_shader_cm interaction with ctm proto (hyprsunset and similar)."
+    },
+    {
+      "path": "render:fp16_sdr_tf",
+      "module": "render",
+      "luaPath": [
+        "render",
+        "fp16_sdr_tf"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1,
+        "choices": [
+          {
+            "label": "monitor",
+            "value": 0
+          },
+          {
+            "label": "linear",
+            "value": 1
+          }
+        ]
+      },
+      "description": "Internal workbuffer transfer function for fp16 in SDR mode"
+    },
+    {
+      "path": "cursor:invisible",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "invisible"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "don't render cursors"
+    },
+    {
+      "path": "cursor:no_hardware_cursors",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "no_hardware_cursors"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "Disabled",
+            "value": 0
+          },
+          {
+            "label": "Enabled",
+            "value": 1
+          },
+          {
+            "label": "Auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "disables hardware cursors."
+    },
+    {
+      "path": "cursor:no_break_fs_vrr",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "no_break_fs_vrr"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "disables scheduling new frames on cursor movement for fullscreen apps with VRR enabled."
+    },
+    {
+      "path": "cursor:min_refresh_rate",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "min_refresh_rate"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 24,
+      "defaultExpression": "24",
+      "constraints": {
+        "min": 10,
+        "max": 500
+      },
+      "description": "minimum refresh rate for cursor movement when no_break_fs_vrr is active."
+    },
+    {
+      "path": "cursor:hotspot_padding",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "hotspot_padding"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "the padding, in logical px, between screen edges and the cursor"
+    },
+    {
+      "path": "cursor:inactive_timeout",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "inactive_timeout"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "in seconds, after how many seconds of cursor's inactivity to hide it. Set to 0 for never."
+    },
+    {
+      "path": "cursor:no_warps",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "no_warps"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, will not warp the cursor in many cases"
+    },
+    {
+      "path": "cursor:persistent_warps",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "persistent_warps"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "When a window is refocused, the cursor returns to its last position relative to that window."
+    },
+    {
+      "path": "cursor:warp_on_change_workspace",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "warp_on_change_workspace"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "force",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Move the cursor to the last focused window after changing the workspace."
+    },
+    {
+      "path": "cursor:warp_on_toggle_special",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "warp_on_toggle_special"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "force",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Move the cursor to the last focused window when toggling a special workspace."
+    },
+    {
+      "path": "cursor:default_monitor",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "default_monitor"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "",
+      "defaultExpression": "STRVAL_EMPTY",
+      "constraints": {},
+      "description": "the name of a default monitor for the cursor to be set to on startup"
+    },
+    {
+      "path": "cursor:zoom_factor",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "zoom_factor"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 1,
+        "max": 10
+      },
+      "description": "the factor to zoom by around the cursor. 1 means no zoom."
+    },
+    {
+      "path": "cursor:zoom_rigid",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "zoom_rigid"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether the zoom should follow the cursor rigidly or loosely"
+    },
+    {
+      "path": "cursor:zoom_disable_aa",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "zoom_disable_aa"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, when zooming, no antialiasing will be used"
+    },
+    {
+      "path": "cursor:zoom_detached_camera",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "zoom_detached_camera"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Detaches the camera from the mouse when zoomed in"
+    },
+    {
+      "path": "cursor:enable_hyprcursor",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "enable_hyprcursor"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to enable hyprcursor support"
+    },
+    {
+      "path": "cursor:hide_on_key_press",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "hide_on_key_press"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Hides the cursor when you press any key until the mouse is moved."
+    },
+    {
+      "path": "cursor:hide_on_touch",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "hide_on_touch"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Hides the cursor when the last input was a touch input until a mouse input is done."
+    },
+    {
+      "path": "cursor:hide_on_tablet",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "hide_on_tablet"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Hides the cursor when the last input was a tablet input until a mouse input is done."
+    },
+    {
+      "path": "cursor:use_cpu_buffer",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "use_cpu_buffer"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Makes HW cursors use a CPU buffer."
+    },
+    {
+      "path": "cursor:sync_gsettings_theme",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "sync_gsettings_theme"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "sync xcursor theme with gsettings"
+    },
+    {
+      "path": "cursor:warp_back_after_non_mouse_input",
+      "module": "cursor",
+      "luaPath": [
+        "cursor",
+        "warp_back_after_non_mouse_input"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "warp the cursor back to where it was after using a non-mouse input to move it."
+    },
+    {
+      "path": "ecosystem:no_update_news",
+      "module": "ecosystem",
+      "luaPath": [
+        "ecosystem",
+        "no_update_news"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disable the popup that shows up when you update hyprland to a new version."
+    },
+    {
+      "path": "ecosystem:no_donation_nag",
+      "module": "ecosystem",
+      "luaPath": [
+        "ecosystem",
+        "no_donation_nag"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disable the popup that shows up twice a year encouraging to donate."
+    },
+    {
+      "path": "ecosystem:enforce_permissions",
+      "module": "ecosystem",
+      "luaPath": [
+        "ecosystem",
+        "enforce_permissions"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to enable permission control."
+    },
+    {
+      "path": "debug:overlay",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "overlay"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "print the debug performance overlay."
+    },
+    {
+      "path": "debug:damage_blink",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "damage_blink"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "flash damaged areas"
+    },
+    {
+      "path": "debug:gl_debugging",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "gl_debugging"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable OpenGL debugging and error checking."
+    },
+    {
+      "path": "debug:disable_logs",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "disable_logs"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "disable logging to a file"
+    },
+    {
+      "path": "debug:disable_time",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "disable_time"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "disables time logging"
+    },
+    {
+      "path": "debug:damage_tracking",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "damage_tracking"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "monitor",
+            "value": 1
+          },
+          {
+            "label": "full",
+            "value": 2
+          }
+        ]
+      },
+      "description": "redraw only the needed bits of the display."
+    },
+    {
+      "path": "debug:enable_stdout_logs",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "enable_stdout_logs"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables logging to stdout"
+    },
+    {
+      "path": "debug:manual_crash",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "manual_crash"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "set to 1 and then back to 0 to crash Hyprland."
+    },
+    {
+      "path": "debug:suppress_errors",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "suppress_errors"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if true, do not display config file parsing errors."
+    },
+    {
+      "path": "debug:disable_scale_checks",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "disable_scale_checks"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "disables verification of the scale factors."
+    },
+    {
+      "path": "debug:error_limit",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "error_limit"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 5,
+      "defaultExpression": "5",
+      "constraints": {
+        "min": 0,
+        "max": 20
+      },
+      "description": "limits the number of displayed config file parsing errors."
+    },
+    {
+      "path": "debug:error_position",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "error_position"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1,
+        "choices": [
+          {
+            "label": "top",
+            "value": 0
+          },
+          {
+            "label": "bottom",
+            "value": 1
+          }
+        ]
+      },
+      "description": "sets the position of the error bar."
+    },
+    {
+      "path": "debug:colored_stdout_logs",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "colored_stdout_logs"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "enables colors in the stdout logs."
+    },
+    {
+      "path": "debug:log_damage",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "log_damage"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables logging the damage."
+    },
+    {
+      "path": "debug:pass",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "pass"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enables render pass debugging."
+    },
+    {
+      "path": "debug:full_cm_proto",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "full_cm_proto"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "claims support for all cm proto features (requires restart)"
+    },
+    {
+      "path": "debug:ds_handle_same_buffer",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "ds_handle_same_buffer"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Special case for DS with unmodified buffer"
+    },
+    {
+      "path": "debug:ds_handle_same_buffer_fifo",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "ds_handle_same_buffer_fifo"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Special case for DS with unmodified buffer unlocks fifo"
+    },
+    {
+      "path": "debug:fifo_pending_workaround",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "fifo_pending_workaround"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Fifo workaround for empty pending list"
+    },
+    {
+      "path": "debug:render_solitary_wo_damage",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "render_solitary_wo_damage"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Render solitary window with empty damage"
+    },
+    {
+      "path": "debug:vfr",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "vfr"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "controls the VFR status of Hyprland. Do not turn off unless debugging"
+    },
+    {
+      "path": "debug:invalidate_fp16",
+      "module": "debug",
+      "luaPath": [
+        "debug",
+        "invalidate_fp16"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "auto",
+            "value": 2
+          }
+        ]
+      },
+      "description": "allow fp16 buffer invalidation."
+    },
+    {
+      "path": "layout:single_window_aspect_ratio",
+      "module": "layout",
+      "luaPath": [
+        "layout",
+        "single_window_aspect_ratio"
+      ],
+      "sourceType": "Vec2",
+      "type": "vector2",
+      "default": [
+        0,
+        0
+      ],
+      "defaultExpression": "Config::VEC2{0, 0}",
+      "constraints": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          1000,
+          1000
+        ]
+      },
+      "description": "If specified, whenever only a single window is open, it will be coerced into the specified aspect ratio."
+    },
+    {
+      "path": "layout:single_window_aspect_ratio_tolerance",
+      "module": "layout",
+      "luaPath": [
+        "layout",
+        "single_window_aspect_ratio_tolerance"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.1,
+      "defaultExpression": "0.1F",
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "description": "Minimum distance for single_window_aspect_ratio to take effect."
+    },
+    {
+      "path": "dwindle:force_split",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "force_split"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "follow_mouse",
+            "value": 0
+          },
+          {
+            "label": "left",
+            "value": 1
+          },
+          {
+            "label": "right",
+            "value": 2
+          }
+        ]
+      },
+      "description": "force a split direction for new windows"
+    },
+    {
+      "path": "dwindle:preserve_split",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "preserve_split"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, the split will not change regardless of what happens to the container."
+    },
+    {
+      "path": "dwindle:smart_split",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "smart_split"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, allows a more precise control over the window split direction based on the cursor's position."
+    },
+    {
+      "path": "dwindle:smart_resizing",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "smart_resizing"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if enabled, resizing direction will be determined by the mouse's position on the window."
+    },
+    {
+      "path": "dwindle:permanent_direction_override",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "permanent_direction_override"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, makes the preselect direction persist."
+    },
+    {
+      "path": "dwindle:special_scale_factor",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "special_scale_factor"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "specifies the scale factor of windows on the special workspace"
+    },
+    {
+      "path": "dwindle:split_width_multiplier",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "split_width_multiplier"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0.1,
+        "max": 3
+      },
+      "description": "specifies the auto-split width multiplier"
+    },
+    {
+      "path": "dwindle:use_active_for_splits",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "use_active_for_splits"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "whether to prefer the active window or the mouse position for splits"
+    },
+    {
+      "path": "dwindle:default_split_ratio",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "default_split_ratio"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0.1,
+        "max": 1.9
+      },
+      "description": "the default split ratio on window open."
+    },
+    {
+      "path": "dwindle:split_bias",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "split_bias"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 1,
+        "choices": [
+          {
+            "label": "directional",
+            "value": 0
+          },
+          {
+            "label": "current",
+            "value": 1
+          }
+        ]
+      },
+      "description": "specifies which window will receive the split ratio."
+    },
+    {
+      "path": "dwindle:precise_mouse_move",
+      "module": "dwindle",
+      "luaPath": [
+        "dwindle",
+        "precise_mouse_move"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "if enabled, bindm movewindow will drop the window more precisely depending on where your mouse is."
+    },
+    {
+      "path": "master:allow_small_split",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "allow_small_split"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "enable adding additional master windows in a horizontal split style"
+    },
+    {
+      "path": "master:special_scale_factor",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "special_scale_factor"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "the scale of the special workspace windows."
+    },
+    {
+      "path": "master:mfact",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "mfact"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.55,
+      "defaultExpression": "0.55",
+      "constraints": {
+        "min": 0,
+        "max": 1
+      },
+      "description": "the size as a percentage of the master window."
+    },
+    {
+      "path": "master:new_status",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "new_status"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "slave",
+      "defaultExpression": "\"slave\"",
+      "constraints": {},
+      "description": "`master`: new window becomes master; `slave`: new windows are added to slave stack; `inherit`: inherit from focused window"
+    },
+    {
+      "path": "master:new_on_top",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "new_on_top"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether a newly open window should be on the top of the stack"
+    },
+    {
+      "path": "master:new_on_active",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "new_on_active"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "none",
+      "defaultExpression": "\"none\"",
+      "constraints": {},
+      "description": "`before`, `after`: place new window relative to the focused window; `none`: place new window according to new_on_top."
+    },
+    {
+      "path": "master:orientation",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "orientation"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "left",
+      "defaultExpression": "\"left\"",
+      "constraints": {},
+      "description": "default placement of the master area"
+    },
+    {
+      "path": "master:slave_count_for_center_master",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "slave_count_for_center_master"
+      ],
+      "sourceType": "Int",
+      "type": "integer",
+      "default": 2,
+      "defaultExpression": "2",
+      "constraints": {
+        "min": 0,
+        "max": 10
+      },
+      "description": "when using orientation=center, make the master window centered only when at least this many slave windows are open."
+    },
+    {
+      "path": "master:center_master_fallback",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "center_master_fallback"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "left",
+      "defaultExpression": "\"left\"",
+      "constraints": {},
+      "description": "Set fallback for center master when slaves are less than slave_count_for_center_master"
+    },
+    {
+      "path": "master:center_ignores_reserved",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "center_ignores_reserved"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "centers the master window on monitor ignoring reserved areas"
+    },
+    {
+      "path": "master:smart_resizing",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "smart_resizing"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "if enabled, resizing direction will be determined by the mouse's position on the window."
+    },
+    {
+      "path": "master:drop_at_cursor",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "drop_at_cursor"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "when enabled, dragging and dropping windows will put them at the cursor position."
+    },
+    {
+      "path": "master:always_keep_position",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "always_keep_position"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "whether to keep the master window in its configured position when there are no slave windows"
+    },
+    {
+      "path": "master:focus_master_on_close",
+      "module": "master",
+      "luaPath": [
+        "master",
+        "focus_master_on_close"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "when enabled, closing a window focuses the master window"
+    },
+    {
+      "path": "scrolling:fullscreen_on_one_column",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "fullscreen_on_one_column"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "when enabled, a single column on a workspace will always span the entire screen."
+    },
+    {
+      "path": "scrolling:column_width",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "column_width"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.5,
+      "defaultExpression": "0.5",
+      "constraints": {
+        "min": 0.1,
+        "max": 1.0
+      },
+      "description": "the default width of a column."
+    },
+    {
+      "path": "scrolling:focus_fit_method",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "focus_fit_method"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 1,
+      "defaultExpression": "1",
+      "constraints": {
+        "min": 0,
+        "max": 1,
+        "choices": [
+          {
+            "label": "center",
+            "value": 0
+          },
+          {
+            "label": "fit",
+            "value": 1
+          }
+        ]
+      },
+      "description": "When a column is focused, what method should be used to bring it into view"
+    },
+    {
+      "path": "scrolling:follow_focus",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "follow_focus"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "when a window is focused, should the layout move to bring it into view automatically"
+    },
+    {
+      "path": "scrolling:follow_min_visible",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "follow_min_visible"
+      ],
+      "sourceType": "Float",
+      "type": "number",
+      "default": 0.4,
+      "defaultExpression": "0.4",
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "description": "when a window is focused, require that at least a given fraction of it is visible for focus to follow"
+    },
+    {
+      "path": "scrolling:explicit_column_widths",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "explicit_column_widths"
+      ],
+      "sourceType": "String",
+      "type": "string",
+      "default": "0.333, 0.5, 0.667, 1.0",
+      "defaultExpression": "\"0.333, 0.5, 0.667, 1.0\"",
+      "constraints": {},
+      "description": "A comma-separated list of preconfigured widths for colresize +conf/-conf"
+    },
+    {
+      "path": "scrolling:direction",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "direction"
+      ],
+      "sourceType": "String",
+      "type": "enum",
+      "default": "right",
+      "defaultExpression": "\"right\"",
+      "constraints": {},
+      "description": "Direction in which new windows appear and the layout scrolls"
+    },
+    {
+      "path": "scrolling:wrap_focus",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "wrap_focus"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Determines if column focus wraps around"
+    },
+    {
+      "path": "scrolling:wrap_swapcol",
+      "module": "scrolling",
+      "luaPath": [
+        "scrolling",
+        "wrap_swapcol"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Determines if column movement wraps around"
+    },
+    {
+      "path": "experimental:wp_cm_1_2",
+      "module": "experimental",
+      "luaPath": [
+        "experimental",
+        "wp_cm_1_2"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "Allow wp-cm-v1 version 2"
+    },
+    {
+      "path": "input-capture:capture_modifiers",
+      "module": "input",
+      "luaPath": [
+        "input_capture",
+        "capture_modifiers"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "If enabled, modifiers are also captured and sent to the program"
+    },
+    {
+      "path": "input-capture:enforce_barriers",
+      "module": "input",
+      "luaPath": [
+        "input_capture",
+        "enforce_barriers"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": true,
+      "defaultExpression": "true",
+      "constraints": {},
+      "description": "If enabled, throw a wayland error when a invalid barrier is received"
+    },
+    {
+      "path": "quirks:prefer_hdr",
+      "module": "quirks",
+      "luaPath": [
+        "quirks",
+        "prefer_hdr"
+      ],
+      "sourceType": "Int",
+      "type": "enum",
+      "default": 0,
+      "defaultExpression": "0",
+      "constraints": {
+        "min": 0,
+        "max": 2,
+        "choices": [
+          {
+            "label": "disable",
+            "value": 0
+          },
+          {
+            "label": "enable",
+            "value": 1
+          },
+          {
+            "label": "gamescope_only",
+            "value": 2
+          }
+        ]
+      },
+      "description": "Prefer HDR mode."
+    },
+    {
+      "path": "quirks:skip_non_kms_dmabuf_formats",
+      "module": "quirks",
+      "luaPath": [
+        "quirks",
+        "skip_non_kms_dmabuf_formats"
+      ],
+      "sourceType": "Bool",
+      "type": "boolean",
+      "default": false,
+      "defaultExpression": "false",
+      "constraints": {},
+      "description": "Do not report dmabuf formats which cannot be imported into KMS"
+    }
+  ]
+}

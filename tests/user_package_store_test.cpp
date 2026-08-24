@@ -137,9 +137,19 @@ PackageFixture makePackage(
 
     QByteArray bundleBytes;
     QBuffer bundle(&bundleBytes);
-    Q_ASSERT(bundle.open(QIODevice::WriteOnly));
+    const bool bundleOpened = bundle.open(QIODevice::WriteOnly);
+    Q_ASSERT(bundleOpened);
+    if (!bundleOpened)
+        return {};
     QString error;
-    Q_ASSERT(writeComponentPackageBundle(bundle, files, error));
+    const bool bundleWritten = writeComponentPackageBundle(
+        bundle,
+        files,
+        error
+    );
+    Q_ASSERT(bundleWritten);
+    if (!bundleWritten)
+        return {};
     bundle.close();
     return {std::move(report), std::move(files), std::move(bundleBytes)};
 }

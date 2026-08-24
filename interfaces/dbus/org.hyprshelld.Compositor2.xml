@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/hyprshelld/Compositor2">
+  <interface name="org.hyprshelld.Compositor2">
+    <!--
+      This dormant interface is served by the existing
+      org.hyprshelld.Compositor1 bus owner. It introduces no second process,
+      store lease, writer, or D-Bus activation name.
+    -->
+    <!-- True only while one authoritative version-2 desired state can be read. -->
+    <property name="Available" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      True only while ordinary desired-state mutations are available. Repair
+      status and repair mutations use their own fail-closed eligibility and
+      authority-and-revision comparisons. Live activation capability is
+      reported separately by RequiredActivation and the Apply result. A
+      future-format snapshot may remain readable but not writable.
+    -->
+    <property name="Writable" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      The canonical 32-character lowercase hexadecimal authority epoch. Empty
+      means no coherent version-2 authority can currently be read.
+    -->
+    <property name="AuthorityId" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="Revision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of normal, recovered, defaulted, unsupported, or unavailable. -->
+    <property name="LoadState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      One of unmanaged, managed, preview, or conflict. Ownership is never implicit.
+      The value is re-probed when the config root changes and before every
+      live activation, adoption, or recovery operation; managed requires the
+      entrypoint, ownership record, and authority GenerationDigest to identify
+      the same verified generation.
+    -->
+    <property name="ManagementState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Exact SHA-256 of the most recently safely re-probed regular compositor
+      entrypoint. Empty means the entrypoint is absent or cannot safely be
+      represented as regular bytes. Config-root changes trigger another probe
+      and PropertiesChanged when this observation changes.
+    -->
+    <property name="EntrypointDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="CatalogDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ActionCatalogDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Zero when no managed generation has been activated, or when revision zero
+      itself is active. ApplyState and GenerationDigest disambiguate the tuple.
+    -->
+    <property name="AppliedRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- One of unavailable, inactive, current, retained, or failed. -->
+    <property name="ApplyState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      One of none, reload, restart, or session. The live executor can confirm
+      reload in this contract version. Restart and session remain explicit
+      pending requirements and fail activation with ActivationRequired.
+    -->
+    <property name="RequiredActivation" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Empty exactly when no managed generation has been activated. -->
+    <property name="GenerationDigest" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      One of idle, awaiting-confirmation, reverting, committing, or failed. A
+      preview is a live, receipt-bound N+1 generation; durable desired/applied
+      authority remains N until the initiating caller confirms it. Committing
+      is non-actionable: the one-way authority decision may already exist and
+      neither timeout nor a caller may roll the live target back.
+    -->
+    <property name="DisplayConfirmationState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Transient N+1 while awaiting confirmation; zero otherwise. -->
+    <property name="DisplayConfirmationRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- UTC Unix milliseconds for presentation; zero otherwise. Enforcement uses a monotonic deadline. -->
+    <property name="DisplayConfirmationDeadlineMs" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Transient generation digest while awaiting confirmation; empty otherwise. -->
+    <property name="DisplayConfirmationGeneration" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      One of unavailable, override, pending, saved, current, or failed.
+      Synchronization consumes the independently verified Config1 shared-border
+      projection and never adopts an unmanaged compositor entrypoint.
+    -->
+    <property name="SharedBorderSyncState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Exact Config1 revision for the verified projection; zero while the Config1
+      source is unavailable.
+    -->
+    <property name="SharedBorderSourceRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Empty outside unavailable or failed synchronization states. -->
+    <property name="SharedBorderSyncError" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      One of unavailable, override, pending, saved, current, or failed.
+      Synchronization consumes the independently verified Config1 spacing
+      projection, while the protected maximized-window rule remains enforced
+      even when ordinary global spacing is overridden.
+    -->
+    <property name="SharedSpacingSyncState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Exact Config1 revision for the verified projection; zero while the Config1
+      source is unavailable.
+    -->
+    <property name="SharedSpacingSourceRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Empty outside unavailable or failed synchronization states. -->
+    <property name="SharedSpacingSyncError" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Returns one complete canonical version-2 desired-state document and the
+      complete authority tuple that owns those exact bytes. The embedded
+      authorityId and revision equal the explicit returned values.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.Unavailable
+    -->
+    <method name="GetSnapshot">
+      <arg name="snapshot" type="ay" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+      <arg name="actionCatalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns the exact canonical scalar-option catalog and one coherent
+      retained authority tuple: authorityId, revision, catalogDigest, and
+      actionCatalogDigest all own these exact bytes and must match one another,
+      GetSnapshot, and the coherent properties. The document is bounded to
+      4 MiB and its SHA-256 digest must equal catalogDigest.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.Unavailable
+    -->
+    <method name="GetOptionCatalog">
+      <arg name="optionCatalog" type="ay" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+      <arg name="actionCatalogDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns the canonical reviewed action catalog and exact authenticated
+      config-schema bytes with one coherent retained authority tuple:
+      authorityId, revision, catalogDigest, and actionCatalogDigest all own
+      these exact bytes and must match one another, GetSnapshot, and the
+      coherent properties. The action catalog is bounded to 1 MiB and the
+      schema to 2 MiB. actionCatalogDigest is the combined reviewed digest for
+      both documents; configSchemaDigest is the SHA-256 of the exact schema
+      bytes returned here. Both documents come from the already parsed retained
+      authority: this method never reopens their source paths and never mutates
+      desired state, persistent or generated files, the managed entrypoint, or
+      live Hyprland configuration.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.Unavailable
+    -->
+    <method name="GetActionCatalog">
+      <arg name="actionCatalog" type="ay" direction="out"/>
+      <arg name="configSchema" type="ay" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="catalogDigest" type="s" direction="out"/>
+      <arg name="actionCatalogDigest" type="s" direction="out"/>
+      <arg name="configSchemaDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Replaces the complete desired state using an authority-epoch and revision
+      compare-and-swap. The candidate must embed exactly expectedAuthorityId
+      and expectedRevision. Compositord owns exactly one monotonic increment.
+      An exact retry with the immediately preceding token after a lost
+      successful response returns the already-committed revision only inside
+      that same authority; it never increments twice. This operation does not
+      activate or reload Hyprland. After availability and writability,
+      AuthorityId is checked before either catalog digest and before revision.
+
+      Before persistence, replacement resolves shared-visual authority from the
+      current verified Config1 projection, then the retained last verified
+      projection, then the current desired resolved values. The candidate must
+      preserve each synchronized border and spacing value unless the resolved
+      group policy explicitly permits an override. It must always contain the
+      exact unique final protected maximized-window rule. A divergent protected
+      value or missing or altered protected rule causes ControlledByHyprShelld
+      before desired state is replaced.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.ConfirmationPending
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.ReadOnly
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor2.Error.InvalidSnapshot
+        org.hyprshelld.Compositor2.Error.RevisionExhausted
+        org.hyprshelld.Compositor2.Error.PersistenceFailed
+        org.hyprshelld.Compositor2.Error.ControlledByHyprShelld
+    -->
+    <method name="ReplaceSnapshot">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="candidateSnapshot" type="ay" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Builds and atomically activates an immutable managed Lua generation for
+      exactly expectedAuthorityId and expectedRevision. An idempotent apply
+      returns the current
+      generation without rebuilding it. For a reload requirement, compositord
+      journals the prior and target entrypoints before atomic publication,
+      connects to the exact running Hyprland instance, and accepts convergence
+      only after the target's exact custom activation-nonce event, the following
+      configreloaded event, a successful reload reply, and an empty JSON
+      configerrors result. Restart and session requirements fail with
+      ActivationRequired before entrypoint publication.
+
+      Before generation preparation, Apply requires a currently verified,
+      available Config1 shared-visual authority. Unavailable or unverified
+      authority causes ControlledByHyprShelld even when the last verified
+      border or spacing policy was an override. With a current verified
+      projection, an explicit group synchronization override permits divergent
+      saved values for that group. Synchronized-value divergence or a missing
+      or altered exact protected maximized-window rule causes
+      ControlledByHyprShelld before any generation is prepared or activated.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.ConfirmationPending
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.ReadOnly
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor2.Error.AdoptionRequired
+        org.hyprshelld.Compositor2.Error.EntrypointChanged
+        org.hyprshelld.Compositor2.Error.ActivationRequired
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.ReloadFailed
+        org.hyprshelld.Compositor2.Error.PersistenceFailed
+        org.hyprshelld.Compositor2.Error.ApplyFailed
+        org.hyprshelld.Compositor2.Error.ControlledByHyprShelld
+    -->
+    <method name="Apply">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Copies the last successfully applied snapshot into a new desired-state
+      revision, then prepares, verifies, and activates that exact content. The
+      new revision is expectedRevision + 1 inside expectedAuthorityId; an older
+      revision is never restored or reused. Recovery never adopts an unmanaged
+      compositor entrypoint. A
+      reload recovery uses the same durable entrypoint journal and exact live
+      proof as Apply. Restart and session requirements return
+      ActivationRequired before entrypoint publication. Recover is intentionally
+      exempt from the shared-visual ownership gate because it restores the
+      whole-compositor last-known-good state. Normal reconciliation then
+      reasserts the current shared-border and shared-spacing policies and the
+      exact protected maximized-window rule.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.ConfirmationPending
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.ReadOnly
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor2.Error.AdoptionRequired
+        org.hyprshelld.Compositor2.Error.EntrypointChanged
+        org.hyprshelld.Compositor2.Error.RecoveryUnavailable
+        org.hyprshelld.Compositor2.Error.ActivationRequired
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.ReloadFailed
+        org.hyprshelld.Compositor2.Error.PersistenceFailed
+        org.hyprshelld.Compositor2.Error.RecoveryFailed
+    -->
+    <method name="Recover">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Explicitly adopts the compositor entrypoint at one authority-and-revision
+      CAS-qualified desired state. An empty expectedEntrypointDigest is valid
+      only when the entrypoint
+      is absent. A non-empty value binds the exact existing regular-file bytes;
+      compositord durably preserves a recoverable original and activation
+      journal before it stages, verifies, and atomically publishes the managed
+      entrypoint. Ownership is finalized only after exact live Reload proof and
+      the authority commit. Startup reconciles an interrupted journal without
+      implicitly adopting unrelated bytes. This method is never invoked
+      automatically during startup. Restart and session requirements return
+      ActivationRequired before entrypoint publication.
+
+      Before staging, adoption applies the same shared-visual ownership check
+      as Apply. It requires a currently verified, available Config1 authority;
+      unavailable or unverified authority causes ControlledByHyprShelld even
+      when the last verified border or spacing policy was an override. A current
+      group synchronization override permits divergent saved values for that
+      group. Synchronized-value divergence or a missing or altered exact
+      protected maximized-window rule causes ControlledByHyprShelld before any
+      generation is prepared or entrypoint is adopted.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.ConfirmationPending
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.ReadOnly
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor2.Error.EntrypointChanged
+        org.hyprshelld.Compositor2.Error.ActivationRequired
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.ReloadFailed
+        org.hyprshelld.Compositor2.Error.PersistenceFailed
+        org.hyprshelld.Compositor2.Error.ApplyFailed
+        org.hyprshelld.Compositor2.Error.ControlledByHyprShelld
+    -->
+    <method name="AdoptManagedConfiguration">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedEntrypointDigest" type="s" direction="in"/>
+      <arg name="appliedRevision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+      <arg name="entrypointDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns a filtered canonical v1 topology and its UTC observation time.
+      Ordinarily this comes from a fresh authenticated `j/monitors all`
+      query. While awaiting display confirmation, it returns the cached exact
+      post-proof topology immediately so discovery cannot starve the monotonic
+      rollback deadline. Upstream JSON is never forwarded directly.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+    -->
+    <method name="GetConnectedDisplays">
+      <arg name="topology" type="ay" direction="out"/>
+      <arg name="observedAtMs" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Returns a filtered canonical v1 inventory and its UTC observation time
+      from a fresh authenticated `j/devices` query. Raw runtime addresses are
+      retained only in the private opaque inventory fingerprint and never
+      cross D-Bus. This read-only view is independent of desired-state and
+      managed-filesystem authority. It is unavailable while a display
+      confirmation capability still exists or its durable commit is active,
+      and old observations are not cached as current.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+    -->
+    <method name="GetConnectedInputDevices">
+      <arg name="inventory" type="ay" direction="out"/>
+      <arg name="observedAtMs" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Stages and proves a monitor-only transient N+1 inside exactly
+      expectedAuthorityId and expectedRevision. The supplied canonical
+      profile is bound to a fresh topology fingerprint and must cover exactly
+      the connected connector names while leaving at least one usable output.
+      Desired, last-good, and activation authority remain N. After proof the
+      initiating unique bus owner receives a private 128-bit confirmation
+      token and a 10..30 second monotonic deadline. Owner disappearance,
+      timeout, topology/runtime change, or failed realization rolls live state
+      back and aborts N+1.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.ConfirmationPending
+        org.hyprshelld.Compositor2.Error.ConfirmationExpired
+        org.hyprshelld.Compositor2.Error.InvalidDisplayProfile
+        org.hyprshelld.Compositor2.Error.InvalidCaller
+        org.hyprshelld.Compositor2.Error.Unavailable
+        org.hyprshelld.Compositor2.Error.ReadOnly
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleCatalogDigest
+        org.hyprshelld.Compositor2.Error.DisplayScopeConflict
+        org.hyprshelld.Compositor2.Error.DisplayTopologyChanged
+        org.hyprshelld.Compositor2.Error.ActivationRequired
+        org.hyprshelld.Compositor2.Error.VerificationFailed
+        org.hyprshelld.Compositor2.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor2.Error.UnsupportedVersion
+        org.hyprshelld.Compositor2.Error.ReloadFailed
+        org.hyprshelld.Compositor2.Error.PersistenceFailed
+        org.hyprshelld.Compositor2.Error.ApplyFailed
+    -->
+    <method name="PreviewDisplayConfiguration">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="profile" type="ay" direction="in"/>
+      <arg name="timeoutSeconds" type="u" direction="in"/>
+      <arg name="previewRevision" type="t" direction="out"/>
+      <arg name="confirmationToken" type="s" direction="out"/>
+      <arg name="deadlineMs" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Recovers an ambiguous Preview reply only for its initiating unique bus
+      owner. The returned authority ID binds the private capability. Foreign
+      and absent previews both return NoDisplayConfirmation so token ownership
+      cannot be probed.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.NoDisplayConfirmation
+    -->
+    <method name="GetPendingDisplayConfirmation">
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="confirmationToken" type="s" direction="out"/>
+      <arg name="previewRevision" type="t" direction="out"/>
+      <arg name="deadlineMs" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Durably commits the exact receipt-bound preview only when
+      expectedAuthorityId and expectedPreviewRevision still match, then
+      finalizes ownership. Once the commit decision may exist, the token
+      becomes non-actionable and no timeout, owner loss, retry, or opposite
+      terminal action can roll back. The retained authority ID, preview
+      revision, catalog digest, and action-catalog digest are rechecked
+      immediately before any Desired write.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.NoDisplayConfirmation
+        org.hyprshelld.Compositor2.Error.ConfirmationExpired
+        org.hyprshelld.Compositor2.Error.DisplayTopologyChanged
+        org.hyprshelld.Compositor2.Error.ApplyFailed
+    -->
+    <method name="ConfirmDisplayConfiguration">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedPreviewRevision" type="t" direction="in"/>
+      <arg name="confirmationToken" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="generationDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Rolls the preview back with exact live proof only when
+      expectedAuthorityId and expectedPreviewRevision still match, then aborts
+      N+1. The retained authority ID, preview revision, catalog digest, and
+      action-catalog digest are rechecked immediately before any Desired write.
+
+      Errors:
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.NoDisplayConfirmation
+        org.hyprshelld.Compositor2.Error.ApplyFailed
+    -->
+    <method name="RevertDisplayConfiguration">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedPreviewRevision" type="t" direction="in"/>
+      <arg name="confirmationToken" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Explicitly retries the current failed effective shared-border tuple. A
+      failed tuple otherwise retries only after its effective Config1 shared
+      policy or derived compositor border values change, or compositor authority
+      changes. A verified Config1 projection Revision-only change that leaves
+      that policy and those values identical advances SharedBorderSourceRevision
+      but does not retry. Source unavailability remains non-mutating. The
+      explicit retry requires the exact current authority ID, revision, catalog
+      digest, and action-catalog digest. The complete tuple is retained and
+      rechecked immediately before any Desired write.
+
+      CAS errors:
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+    -->
+    <method name="RetrySharedBorderSync">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+    </method>
+
+    <!--
+      Explicitly retries the current failed effective shared-spacing tuple and
+      protected maximized-window rule. An unchanged failed tuple is otherwise
+      suppressed until its effective spacing policy, compositor authority, or
+      protected-rule state changes. A Revision-only source update advances the
+      source revision without retrying. The explicit retry requires the exact
+      current authority ID, revision, catalog digest, and action-catalog
+      digest. The complete tuple is retained and rechecked immediately before
+      any Desired write.
+
+      CAS errors:
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+    -->
+    <method name="RetrySharedSpacingSync">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+    </method>
+
+    <!--
+      Returns a read-only short-lived Restart plan for operationKind apply or
+      recovery. The canonical plan bytes, request ID, complete authority CAS,
+      runtime/preflight tuple, disruption facts, plan ID, digest, disclosure
+      version, and monotonic deadline are bound in one lease-owned volatile
+      entry. Restart and repair share at most 64 unexpired plans and 4 MiB of
+      encoded plan state; each entry is at most 64 KiB. Capacity exhaustion
+      returns PlanCapacity without a durable write.
+    -->
+    <method name="GetRestartPlan">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="operationKind" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="plan" type="ay" direction="out"/>
+      <arg name="planId" type="s" direction="out"/>
+      <arg name="planDigest" type="s" direction="out"/>
+      <arg name="disclosureVersion" type="u" direction="out"/>
+    </method>
+
+    <!--
+      Revalidates and consumes the exact issued Restart plan while durably
+      accepting requestId and creating the prepared-authorized operation. The
+      returned status is the latest canonical active status. Expired, missing,
+      process-lost, or mismatched plan capability returns StalePlan without an
+      effect. Before plan revalidation, request lookup precedes
+      current-authority CAS so an exact retry returns its original operation
+      and changed reuse returns RequestIdConflict.
+    -->
+    <method name="AuthorizeRestart">
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedCatalogDigest" type="s" direction="in"/>
+      <arg name="expectedActionCatalogDigest" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="planId" type="s" direction="in"/>
+      <arg name="planDigest" type="s" direction="in"/>
+      <arg name="disclosureVersion" type="u" direction="in"/>
+      <arg name="operationId" type="s" direction="out"/>
+      <arg name="status" type="ay" direction="out"/>
+    </method>
+
+    <!--
+      Returns the one current durable Restart operation and its latest canonical
+      active status. When active is false, every string and byte-array output is
+      empty and revision is zero.
+    -->
+    <method name="GetActiveRestart">
+      <arg name="active" type="b" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="operationId" type="s" direction="out"/>
+      <arg name="status" type="ay" direction="out"/>
+    </method>
+
+    <!--
+      Looks up an operation across active, unread-result, latest-acknowledged,
+      and tombstone-only availability. Active returns its accepted authority
+      tuple and latest canonical active status with the domain-separated status
+      digest. Terminal availability returns the resulting authority tuple and
+      exact immutable terminal public status with its result digest. When found
+      is false, availability, authorityId, payloadDigest, and payload are empty
+      and revision is zero.
+    -->
+    <method name="GetRestartOperation">
+      <arg name="operationId" type="s" direction="in"/>
+      <arg name="found" type="b" direction="out"/>
+      <arg name="availability" type="s" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="payloadDigest" type="s" direction="out"/>
+      <arg name="payload" type="ay" direction="out"/>
+    </method>
+
+    <!--
+      Looks up the durable request mapping before current-authority CAS.
+      availability is exactly active, unread-result, latest-acknowledged, or
+      tombstone-only. Active and terminal payload and payloadDigest semantics match
+      GetRestartOperation. When found is false, every string and byte-array
+      output is empty and revision is zero.
+    -->
+    <method name="LookupRestartRequest">
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="found" type="b" direction="out"/>
+      <arg name="availability" type="s" direction="out"/>
+      <arg name="operationId" type="s" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="payloadDigest" type="s" direction="out"/>
+      <arg name="payload" type="ay" direction="out"/>
+    </method>
+
+    <!--
+      Returns unread immutable Restart results after the supplied sequence. Each
+      row is (sequence, authorityId, revision, operationId, resultDigest,
+      canonicalStatus). limit is 1 through 64 and the complete reply is at most
+      4 MiB; hasMore requires pagination rather than truncation. The latest
+      acknowledged result is returned explicitly even when no unread result
+      remains.
+    -->
+    <method name="GetRestartResults">
+      <arg name="afterResultSequence" type="t" direction="in"/>
+      <arg name="limit" type="u" direction="in"/>
+      <arg name="unreadResults" type="a(tstssay)" direction="out"/>
+      <arg name="nextResultSequence" type="t" direction="out"/>
+      <arg name="hasMore" type="b" direction="out"/>
+      <arg name="hasLatestAcknowledged" type="b" direction="out"/>
+      <arg name="latestSequence" type="t" direction="out"/>
+      <arg name="latestAuthorityId" type="s" direction="out"/>
+      <arg name="latestRevision" type="t" direction="out"/>
+      <arg name="latestOperationId" type="s" direction="out"/>
+      <arg name="latestResultDigest" type="s" direction="out"/>
+      <arg name="latestStatus" type="ay" direction="out"/>
+      <annotation
+        name="org.qtproject.QtDBus.QtTypeName.Out0"
+        value="HyprShelld::Compositor2::RestartResultRows"/>
+    </method>
+
+    <!--
+      Acknowledges exactly one immutable Restart result tuple. Repeating the
+      same acknowledgment is idempotent. Acknowledgment removes the unread slot
+      but retains that result as the explicitly queryable latest acknowledged
+      result; changed tuple reuse fails closed.
+    -->
+    <method name="AcknowledgeRestartResult">
+      <arg name="authorityId" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="in"/>
+      <arg name="operationId" type="s" direction="in"/>
+      <arg name="resultDigest" type="s" direction="in"/>
+    </method>
+
+    <!--
+      Returns the complete bounded canonical repair status. repairId identifies
+      the current durable incident. observedAuthorityKind is exactly v1, v2,
+      absent, or unreadable. V1 carries its exact observed revision without an
+      invented authority ID. V2 carries its exact authority ID and revision;
+      absent and unreadable carry an empty ID and zero revision. The empty ID
+      never supplies meaning by itself. statusDigest binds the exact status.
+      This method remains callable in degraded repair-only mode.
+    -->
+    <method name="GetRepairStatus">
+      <arg name="status" type="ay" direction="out"/>
+      <arg name="repairId" type="s" direction="out"/>
+      <arg name="observedAuthorityKind" type="s" direction="out"/>
+      <arg name="observedAuthorityId" type="s" direction="out"/>
+      <arg name="observedRevision" type="t" direction="out"/>
+      <arg name="statusDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns the exact strongly warned restore plan only when the complete
+      prior authority is provably recoverable. The read-only plan binds the
+      repair incident, authority kind, authority ID, revision, status digest,
+      and client-generated request ID before confirmation. It does not restore
+      or mutate any state.
+
+      Errors include:
+        org.hyprshelld.Compositor2.Error.StaleRepair
+        org.hyprshelld.Compositor2.Error.StaleAuthorityKind
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleStatusDigest
+        org.hyprshelld.Compositor2.Error.ExactPriorUnavailable
+    -->
+    <method name="GetExactPriorRestorePlan">
+      <arg name="expectedRepairId" type="s" direction="in"/>
+      <arg name="expectedAuthorityKind" type="s" direction="in"/>
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedStatusDigest" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="plan" type="ay" direction="out"/>
+      <arg name="planId" type="s" direction="out"/>
+      <arg name="planDigest" type="s" direction="out"/>
+      <arg name="disclosureVersion" type="u" direction="out"/>
+    </method>
+
+    <!--
+      Restores the complete exact prior authority only from its request-bound
+      strongly warned plan. The permanent request tombstone and every
+      comparison bind the repair incident, authority kind, authority ID,
+      revision, exact status digest, request ID, plan ID, plan digest, and
+      disclosure version. Success reports the restored authority kind, ID, and
+      revision together with the already reserved immutable repair-result ID
+      and digest, and never starts Hyprland.
+
+      Errors include:
+        org.hyprshelld.Compositor2.Error.StaleRepair
+        org.hyprshelld.Compositor2.Error.StaleAuthorityKind
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleStatusDigest
+        org.hyprshelld.Compositor2.Error.StalePlan
+        org.hyprshelld.Compositor2.Error.StaleDisclosure
+        org.hyprshelld.Compositor2.Error.ReplayedRequest
+        org.hyprshelld.Compositor2.Error.ExactPriorUnavailable
+    -->
+    <method name="RestoreExactPrior">
+      <arg name="expectedRepairId" type="s" direction="in"/>
+      <arg name="expectedAuthorityKind" type="s" direction="in"/>
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedStatusDigest" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="planId" type="s" direction="in"/>
+      <arg name="planDigest" type="s" direction="in"/>
+      <arg name="disclosureVersion" type="u" direction="in"/>
+      <arg name="restoredAuthorityKind" type="s" direction="out"/>
+      <arg name="restoredAuthorityId" type="s" direction="out"/>
+      <arg name="restoredRevision" type="t" direction="out"/>
+      <arg name="repairResultId" type="s" direction="out"/>
+      <arg name="repairResultDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Returns the exact strongly warned reset plan only when no complete exact
+      prior authority is provably restorable. The read-only plan is bound to
+      the current repair incident, authority kind, observed authority and
+      revision, status digest, and client-generated request ID before
+      confirmation. It does not archive or mutate any state.
+
+      Errors include:
+        org.hyprshelld.Compositor2.Error.StaleRepair
+        org.hyprshelld.Compositor2.Error.StaleAuthorityKind
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleStatusDigest
+        org.hyprshelld.Compositor2.Error.ExactPriorRequired
+    -->
+    <method name="GetResetPlan">
+      <arg name="expectedRepairId" type="s" direction="in"/>
+      <arg name="expectedAuthorityKind" type="s" direction="in"/>
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedStatusDigest" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="plan" type="ay" direction="out"/>
+      <arg name="planId" type="s" direction="out"/>
+      <arg name="planDigest" type="s" direction="out"/>
+      <arg name="disclosureVersion" type="u" direction="out"/>
+    </method>
+
+    <!--
+      Resets only when no exact prior authority is provably restorable and only
+      after a complete descriptor-relative, fsynced archive has succeeded. The
+      permanent request tombstone binds the current repair incident, authority
+      kind, observed authority and revision, exact status and plan digests,
+      client-generated request ID, plan ID, and disclosure version. The request
+      ID is supplied exactly once and precedes the plan tuple. An empty
+      expectedAuthorityId is valid for expectedAuthorityKind v1, absent, or
+      unreadable; it never supplies meaning by itself. V1 must carry its exact
+      revision without an invented epoch; absent and unreadable require revision
+      zero.
+      Success creates a new random v2 authority at revision 1 with no Applied
+      or LastGood claim, reports the durable backup and the already reserved
+      immutable repair-result ID and digest, and never starts Hyprland.
+
+      Errors include:
+        org.hyprshelld.Compositor2.Error.StaleRepair
+        org.hyprshelld.Compositor2.Error.StaleAuthorityKind
+        org.hyprshelld.Compositor2.Error.StaleAuthority
+        org.hyprshelld.Compositor2.Error.StaleRevision
+        org.hyprshelld.Compositor2.Error.StaleStatusDigest
+        org.hyprshelld.Compositor2.Error.StalePlan
+        org.hyprshelld.Compositor2.Error.StaleDisclosure
+        org.hyprshelld.Compositor2.Error.ReplayedRequest
+        org.hyprshelld.Compositor2.Error.ExactPriorRequired
+        org.hyprshelld.Compositor2.Error.BackupFailed
+    -->
+    <method name="ResetAuthorityToDefaults">
+      <arg name="expectedRepairId" type="s" direction="in"/>
+      <arg name="expectedAuthorityKind" type="s" direction="in"/>
+      <arg name="expectedAuthorityId" type="s" direction="in"/>
+      <arg name="expectedRevision" type="t" direction="in"/>
+      <arg name="expectedStatusDigest" type="s" direction="in"/>
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="planId" type="s" direction="in"/>
+      <arg name="planDigest" type="s" direction="in"/>
+      <arg name="disclosureVersion" type="u" direction="in"/>
+      <arg name="newAuthorityKind" type="s" direction="out"/>
+      <arg name="newAuthorityId" type="s" direction="out"/>
+      <arg name="newRevision" type="t" direction="out"/>
+      <arg name="backupId" type="s" direction="out"/>
+      <arg name="repairResultId" type="s" direction="out"/>
+      <arg name="repairResultDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
+      Looks up a durable repair request mapping before current-incident CAS.
+      availability is exactly active, unread-result, latest-acknowledged, or
+      tombstone-only. At durable acceptance repairResultId is already reserved.
+      Active returns outcome active, the accepted observed authority-kind/ID/
+      revision tuple, and the latest canonical active status with its
+      domain-separated status digest; that status is derived from the active
+      record and never occupies an immutable result body or unread slot.
+      Terminal availability returns the resulting authority tuple and exact
+      immutable terminal public result with its result digest. When found is
+      false, every string and byte-array output is empty and revision is zero.
+    -->
+    <method name="LookupRepairRequest">
+      <arg name="requestId" type="s" direction="in"/>
+      <arg name="found" type="b" direction="out"/>
+      <arg name="availability" type="s" direction="out"/>
+      <arg name="repairId" type="s" direction="out"/>
+      <arg name="repairResultId" type="s" direction="out"/>
+      <arg name="outcome" type="s" direction="out"/>
+      <arg name="authorityKind" type="s" direction="out"/>
+      <arg name="authorityId" type="s" direction="out"/>
+      <arg name="revision" type="t" direction="out"/>
+      <arg name="payloadDigest" type="s" direction="out"/>
+      <arg name="payload" type="ay" direction="out"/>
+    </method>
+
+    <!--
+      Returns unread immutable repair results after the supplied sequence. Each
+      row is (sequence, repairResultId, repairId, requestId, outcome,
+      authorityKind, authorityId, revision, resultDigest, canonicalResult).
+      limit is 1 through 64 and the complete reply is at most 4 MiB; hasMore
+      requires pagination rather than truncation. The latest acknowledged
+      result is returned explicitly even when no unread result remains.
+    -->
+    <method name="GetRepairResults">
+      <arg name="afterResultSequence" type="t" direction="in"/>
+      <arg name="limit" type="u" direction="in"/>
+      <arg name="unreadResults" type="a(tsssssstsay)" direction="out"/>
+      <arg name="nextResultSequence" type="t" direction="out"/>
+      <arg name="hasMore" type="b" direction="out"/>
+      <arg name="hasLatestAcknowledged" type="b" direction="out"/>
+      <arg name="latestSequence" type="t" direction="out"/>
+      <arg name="latestRepairResultId" type="s" direction="out"/>
+      <arg name="latestRepairId" type="s" direction="out"/>
+      <arg name="latestRequestId" type="s" direction="out"/>
+      <arg name="latestOutcome" type="s" direction="out"/>
+      <arg name="latestAuthorityKind" type="s" direction="out"/>
+      <arg name="latestAuthorityId" type="s" direction="out"/>
+      <arg name="latestRevision" type="t" direction="out"/>
+      <arg name="latestResultDigest" type="s" direction="out"/>
+      <arg name="latestResult" type="ay" direction="out"/>
+      <annotation
+        name="org.qtproject.QtDBus.QtTypeName.Out0"
+        value="HyprShelld::Compositor2::RepairResultRows"/>
+    </method>
+
+    <!--
+      Acknowledges exactly one immutable repair-result tuple. Repeating the same
+      acknowledgment is idempotent. Acknowledgment removes the unread slot but
+      retains that result as the explicitly queryable latest acknowledged
+      result; changed tuple reuse fails closed.
+    -->
+    <method name="AcknowledgeRepairResult">
+      <arg name="repairId" type="s" direction="in"/>
+      <arg name="repairResultId" type="s" direction="in"/>
+      <arg name="authorityKind" type="s" direction="in"/>
+      <arg name="authorityId" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="in"/>
+      <arg name="resultDigest" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

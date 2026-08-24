@@ -14,6 +14,9 @@ Page {
     required property int shellBorderWidth
     required property int shellBorderRadius
     required property bool syncHyprlandWindowBorders
+    required property int shellInnerSpacing
+    required property int shellOuterSpacing
+    required property bool syncHyprlandWindowSpacing
     required property bool workspaceShowIdentifiers
     required property bool workspaceShowNames
     required property bool workspaceShowApplications
@@ -41,17 +44,28 @@ Page {
     property int borderDraftWidth: shellBorderWidth
     property int borderDraftRadius: shellBorderRadius
     property bool borderDraftSync: syncHyprlandWindowBorders
+    property int spacingDraftInner: shellInnerSpacing
+    property int spacingDraftOuter: shellOuterSpacing
+    property bool spacingDraftSync: syncHyprlandWindowSpacing
+    property bool previewAttachedToTopEdge: false
     readonly property bool compactPreview:
         root.width < 560 || root.height < 640
     readonly property bool defaultShellBorderEnabled: true
     readonly property int defaultShellBorderWidth: 1
     readonly property int defaultShellBorderRadius: 15
     readonly property bool defaultSyncHyprlandWindowBorders: true
+    readonly property int defaultShellInnerSpacing: 8
+    readonly property int defaultShellOuterSpacing: 12
+    readonly property bool defaultSyncHyprlandWindowSpacing: true
     readonly property bool borderDraftDirty:
         borderDraftEnabled !== defaultShellBorderEnabled
         || borderDraftWidth !== defaultShellBorderWidth
         || borderDraftRadius !== defaultShellBorderRadius
         || borderDraftSync !== defaultSyncHyprlandWindowBorders
+    readonly property bool spacingDraftDirty:
+        spacingDraftInner !== defaultShellInnerSpacing
+        || spacingDraftOuter !== defaultShellOuterSpacing
+        || spacingDraftSync !== defaultSyncHyprlandWindowSpacing
 
     readonly property string coreRecoveryMessage: {
         if (coreRecoveryState === "recovered")
@@ -117,6 +131,12 @@ Page {
         bool syncHyprlandWindowBorders
     )
     signal resetSharedBorderRequested()
+    signal sharedSpacingRequested(
+        int innerSpacing,
+        int outerSpacing,
+        bool syncHyprlandWindowSpacing
+    )
+    signal resetSharedSpacingRequested()
     signal workspaceSwitcherRequested(
         bool showIdentifiers,
         bool showNames,
@@ -163,6 +183,38 @@ Page {
         root.resetSharedBorderRequested();
     }
 
+    function synchronizeSpacingDraft() {
+        root.spacingDraftInner = root.shellInnerSpacing;
+        root.spacingDraftOuter = root.shellOuterSpacing;
+        root.spacingDraftSync = root.syncHyprlandWindowSpacing;
+    }
+
+    function requestSharedSpacing(innerSpacing, outerSpacing, sync) {
+        if (!root.coreControlsEnabled) {
+            root.synchronizeSpacingDraft();
+            return;
+        }
+
+        root.spacingDraftInner = Math.max(0, Math.min(32, innerSpacing));
+        root.spacingDraftOuter = Math.max(0, Math.min(32, outerSpacing));
+        root.spacingDraftSync = sync;
+        root.sharedSpacingRequested(
+            root.spacingDraftInner,
+            root.spacingDraftOuter,
+            root.spacingDraftSync
+        );
+    }
+
+    function resetSharedSpacing() {
+        if (!root.coreControlsEnabled)
+            return;
+
+        root.spacingDraftInner = root.defaultShellInnerSpacing;
+        root.spacingDraftOuter = root.defaultShellOuterSpacing;
+        root.spacingDraftSync = root.defaultSyncHyprlandWindowSpacing;
+        root.resetSharedSpacingRequested();
+    }
+
     onShellBorderEnabledChanged: {
         if (!root.coreBusy)
             root.synchronizeBorderDraft();
@@ -179,12 +231,29 @@ Page {
         if (!root.coreBusy)
             root.synchronizeBorderDraft();
     }
-    onCoreBusyChanged: {
+    onShellInnerSpacingChanged: {
         if (!root.coreBusy)
+            root.synchronizeSpacingDraft();
+    }
+    onShellOuterSpacingChanged: {
+        if (!root.coreBusy)
+            root.synchronizeSpacingDraft();
+    }
+    onSyncHyprlandWindowSpacingChanged: {
+        if (!root.coreBusy)
+            root.synchronizeSpacingDraft();
+    }
+    onCoreBusyChanged: {
+        if (!root.coreBusy) {
             root.synchronizeBorderDraft();
+            root.synchronizeSpacingDraft();
+        }
     }
 
-    Component.onCompleted: root.synchronizeBorderDraft()
+    Component.onCompleted: {
+        root.synchronizeBorderDraft();
+        root.synchronizeSpacingDraft();
+    }
 
     background: Rectangle {
         color: root.palette.window
@@ -228,6 +297,21 @@ Page {
                         color: root.palette.placeholderText
                         font.pixelSize: 12
                     }
+
+                    CheckBox {
+                        objectName: "previewMaximizedWindow"
+                        implicitHeight: Math.max(
+                            44,
+                            implicitBackgroundHeight,
+                            implicitContentHeight + topPadding + bottomPadding
+                        )
+                        checked: root.previewAttachedToTopEdge
+                        text: qsTr("Maximized")
+                        Accessible.name: qsTr("Preview a maximized window")
+
+                        onClicked:
+                            root.previewAttachedToTopEdge = checked
+                    }
                 }
 
                 BarPreview {
@@ -241,6 +325,9 @@ Page {
                     shellBorderEnabled: root.borderDraftEnabled
                     shellBorderWidth: root.borderDraftWidth
                     shellBorderRadius: root.borderDraftRadius
+                    shellInnerSpacing: root.spacingDraftInner
+                    shellOuterSpacing: root.spacingDraftOuter
+                    attachedToTopEdge: root.previewAttachedToTopEdge
                     adjusting: heightControl.adjusting
                     configurationAvailable: root.coreServiceAvailable
                     animationsEnabled: root.previewAnimationsEnabled
@@ -355,7 +442,7 @@ Page {
 
                     Label {
                         anchors.fill: parent
-                        text: qsTr("Bar settings are unavailable. The displayed size and border may be stale, and core Bar changes are disabled until settings reconnect.")
+                        text: qsTr("Bar settings are unavailable. The displayed size, spacing, and border may be stale, and core Bar changes are disabled until settings reconnect.")
                         color: "#ffd5a1"
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
@@ -561,6 +648,234 @@ Page {
                             color: root.palette.placeholderText
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "sharedSpacingSettingsCard"
+                    Layout.fillWidth: true
+                    padding: 22
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+
+                            Label {
+                                text: qsTr("Spacing")
+                                color: root.palette.text
+                                font.pixelSize: 18
+                                font.weight: Font.DemiBold
+                                Accessible.role: Accessible.Heading
+                                Accessible.name: text
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Set the space within the desktop frame and around its outer edges.")
+                                color: root.palette.placeholderText
+                                font.pixelSize: 13
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                            }
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: root.width < 720 ? 1 : 2
+                            columnSpacing: 22
+                            rowSpacing: 14
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 12
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Inner spacing")
+                                        color: root.palette.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.Medium
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Space between the floating bar and windows.")
+                                        color: root.palette.placeholderText
+                                        font.pixelSize: 12
+                                        wrapMode: Text.Wrap
+                                        textFormat: Text.PlainText
+                                    }
+                                }
+
+                                SpinBox {
+                                    objectName: "shellInnerSpacing"
+                                    Layout.preferredWidth: 104
+                                    implicitHeight: Math.max(
+                                        44,
+                                        implicitBackgroundHeight,
+                                        implicitContentHeight + topPadding + bottomPadding
+                                    )
+                                    from: 0
+                                    to: 32
+                                    value: root.spacingDraftInner
+                                    editable: false
+                                    enabled: root.coreControlsEnabled
+                                    Accessible.name: qsTr("Shared inner spacing")
+
+                                    onValueModified: root.requestSharedSpacing(
+                                        value,
+                                        root.spacingDraftOuter,
+                                        root.spacingDraftSync
+                                    )
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 12
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Outer spacing")
+                                        color: root.palette.text
+                                        font.pixelSize: 14
+                                        font.weight: Font.Medium
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Space between the floating bar, windows, and monitor edges.")
+                                        color: root.palette.placeholderText
+                                        font.pixelSize: 12
+                                        wrapMode: Text.Wrap
+                                        textFormat: Text.PlainText
+                                    }
+                                }
+
+                                SpinBox {
+                                    objectName: "shellOuterSpacing"
+                                    Layout.preferredWidth: 104
+                                    implicitHeight: Math.max(
+                                        44,
+                                        implicitBackgroundHeight,
+                                        implicitContentHeight + topPadding + bottomPadding
+                                    )
+                                    from: 0
+                                    to: 32
+                                    value: root.spacingDraftOuter
+                                    editable: false
+                                    enabled: root.coreControlsEnabled
+                                    Accessible.name: qsTr("Shared outer spacing")
+
+                                    onValueModified: root.requestSharedSpacing(
+                                        root.spacingDraftInner,
+                                        value,
+                                        root.spacingDraftSync
+                                    )
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 16
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 2
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Sync Hyprland window spacing")
+                                    color: root.palette.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Medium
+                                }
+
+                                Label {
+                                    objectName: "sharedSpacingAuthorityMessage"
+                                    Layout.fillWidth: true
+                                    text: root.spacingDraftSync
+                                        ? qsTr("HyprShelld controls Hyprland's normal inner and outer window gaps. The matching Hyprland options remain read-only while synchronization is on.")
+                                        : qsTr("Hyprland can use its own normal window gaps without changing the HyprShelld bar. The bar still attaches to a covering maximized window; gapless geometry applies once the protected maximize rule has been safely applied.")
+                                    color: root.palette.placeholderText
+                                    font.pixelSize: 12
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+                            }
+
+                            CheckBox {
+                                objectName: "syncHyprlandWindowSpacing"
+                                implicitHeight: Math.max(
+                                    44,
+                                    implicitBackgroundHeight,
+                                    implicitContentHeight + topPadding + bottomPadding
+                                )
+                                checked: root.spacingDraftSync
+                                enabled: root.coreControlsEnabled
+                                text: qsTr("Sync")
+                                Accessible.name: qsTr("Sync Hyprland window spacing with HyprShelld")
+
+                                onClicked: root.requestSharedSpacing(
+                                    root.spacingDraftInner,
+                                    root.spacingDraftOuter,
+                                    checked
+                                )
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Use the maximized preview to see the bar attach with zero margins.")
+                                color: root.palette.placeholderText
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                                textFormat: Text.PlainText
+                            }
+
+                            Button {
+                                objectName: "resetSharedSpacing"
+                                implicitHeight: Math.max(
+                                    44,
+                                    implicitBackgroundHeight,
+                                    implicitContentHeight + topPadding + bottomPadding
+                                )
+                                text: qsTr("Reset")
+                                enabled: root.coreControlsEnabled
+                                    && root.spacingDraftDirty
+                                Accessible.name: qsTr("Reset shared spacing settings")
+
+                                onClicked: root.resetSharedSpacing()
+                            }
                         }
                     }
                 }

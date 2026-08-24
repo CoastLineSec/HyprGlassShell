@@ -4,7 +4,22 @@
   "https://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node name="/org/hyprshelld/Compositor1">
   <interface name="org.hyprshelld.Compositor1">
-    <!-- True only while one authoritative desired-state snapshot can be read. -->
+    <!--
+      Legacy compatibility sentinel. Once the version-2 authority contract is
+      present, this object is registered from process start but never opens a
+      revision-only mutation window. Available and Writable remain permanently
+      false, so no legacy desired-state property tuple is authoritative. The
+      exact readable-method allowlist is GetConnectedDisplays and
+      GetConnectedInputDevices. Every other method, including all desired-state
+      reads, catalog reads, confirmation-capability reads, and every mutation,
+      permanently returns org.hyprshelld.Compositor1.Error.UpgradeRequired.
+      A client that receives UpgradeRequired must move to
+      org.hyprshelld.Compositor2 and must not fall back to this interface.
+      Historical per-member prose below preserves the legacy ABI record but
+      does not widen this exhaustive allowlist.
+    -->
+
+    <!-- Legacy sentinel value: permanently false once Compositor2 is present. -->
     <property name="Available" type="b" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -12,10 +27,8 @@
     </property>
 
     <!--
-      True only while the authoritative desired state can be replaced. Live
-      activation capability is reported separately by RequiredActivation and
-      the Apply result. A future-format snapshot may remain readable but not
-      writable.
+      Legacy sentinel value: permanently false once Compositor2 is present.
+      It never reports a revision-only writable interval.
     -->
     <property name="Writable" type="b" access="read">
       <annotation
@@ -171,6 +184,35 @@
     </property>
 
     <!--
+      One of unavailable, override, pending, saved, current, or failed.
+      Synchronization consumes the independently verified Config1 spacing
+      projection, while the protected maximized-window rule remains enforced
+      even when ordinary global spacing is overridden.
+    -->
+    <property name="SharedSpacingSyncState" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
+      Exact Config1 revision for the verified projection; zero while the Config1
+      source is unavailable.
+    -->
+    <property name="SharedSpacingSourceRevision" type="t" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!-- Empty outside unavailable or failed synchronization states. -->
+    <property name="SharedSpacingSyncError" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <!--
       Returns one complete canonical desired-state document and the revision
       that owns those exact bytes.
 
@@ -199,12 +241,42 @@
     </method>
 
     <!--
+      Returns the canonical reviewed action catalog together with the exact
+      config-schema bytes authenticated by it. The action catalog is bounded
+      to 1 MiB and the schema to 2 MiB. actionCatalogDigest is the combined
+      reviewed digest for both documents and must equal the current
+      ActionCatalogDigest property; configSchemaDigest is the SHA-256 of the
+      exact schema bytes returned here. Both documents come from the already
+      parsed retained authority: this method never reopens their source paths
+      and never mutates desired state, persistent or generated files, the
+      managed entrypoint, or live Hyprland configuration.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+    -->
+    <method name="GetActionCatalog">
+      <arg name="actionCatalog" type="ay" direction="out"/>
+      <arg name="actionCatalogDigest" type="s" direction="out"/>
+      <arg name="configSchema" type="ay" direction="out"/>
+      <arg name="configSchemaDigest" type="s" direction="out"/>
+    </method>
+
+    <!--
       Replaces the complete desired state using a revision compare-and-swap.
       The candidate embeds expectedRevision; compositord owns exactly one
       monotonic increment. An exact retry with the immediately preceding token
       after a lost successful response returns the already-committed revision;
       it never increments twice. This operation does not activate or reload
       Hyprland.
+
+      Before persistence, replacement resolves shared-visual authority from the
+      current verified Config1 projection, then the retained last verified
+      projection, then the current desired resolved values. The candidate must
+      preserve each synchronized border and spacing value unless the resolved
+      group policy explicitly permits an override. It must always contain the
+      exact unique final protected maximized-window rule. A divergent protected
+      value or missing or altered protected rule causes ControlledByHyprShelld
+      before desired state is replaced.
 
       Errors:
         org.hyprshelld.Compositor1.Error.ConfirmationPending
@@ -237,11 +309,12 @@
       ActivationRequired before entrypoint publication.
 
       Before generation preparation, Apply requires a currently verified,
-      available Config1 shared-border authority. Unavailable or unverified
+      available Config1 shared-visual authority. Unavailable or unverified
       authority causes ControlledByHyprShelld even when the last verified
-      policy was an override. With a current verified projection, an explicit
-      synchronization override permits divergent saved border values;
-      otherwise values that diverge from the resolved synchronized values cause
+      border or spacing policy was an override. With a current verified
+      projection, an explicit group synchronization override permits divergent
+      saved values for that group. Synchronized-value divergence or a missing
+      or altered exact protected maximized-window rule causes
       ControlledByHyprShelld before any generation is prepared or activated.
 
       Errors:
@@ -277,9 +350,10 @@
       reload recovery uses the same durable entrypoint journal and exact live
       proof as Apply. Restart and session requirements return
       ActivationRequired before entrypoint publication. Recover is intentionally
-      exempt from the shared-border ownership gate because it restores the
-      whole-compositor last-known-good state; enabled synchronization may then
-      reassert the current shared-border values through normal reconciliation.
+      exempt from the shared-visual ownership gate because it restores the
+      whole-compositor last-known-good state. Normal reconciliation then
+      reasserts the current shared-border and shared-spacing policies and the
+      exact protected maximized-window rule.
 
       Errors:
         org.hyprshelld.Compositor1.Error.ConfirmationPending
@@ -319,13 +393,14 @@
       automatically during startup. Restart and session requirements return
       ActivationRequired before entrypoint publication.
 
-      Before staging, adoption applies the same shared-border ownership check
+      Before staging, adoption applies the same shared-visual ownership check
       as Apply. It requires a currently verified, available Config1 authority;
       unavailable or unverified authority causes ControlledByHyprShelld even
-      when the last verified policy was an override. With a current verified
-      projection, an explicit synchronization override permits divergent saved
-      border values; otherwise divergence causes ControlledByHyprShelld before
-      any generation is prepared or entrypoint is adopted.
+      when the last verified border or spacing policy was an override. A current
+      group synchronization override permits divergent saved values for that
+      group. Synchronized-value divergence or a missing or altered exact
+      protected maximized-window rule causes ControlledByHyprShelld before any
+      generation is prepared or entrypoint is adopted.
 
       Errors:
         org.hyprshelld.Compositor1.Error.ConfirmationPending
@@ -368,6 +443,26 @@
     -->
     <method name="GetConnectedDisplays">
       <arg name="topology" type="ay" direction="out"/>
+      <arg name="observedAtMs" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Returns a filtered canonical v1 inventory and its UTC observation time
+      from a fresh authenticated `j/devices` query. Raw runtime addresses are
+      retained only in the private opaque inventory fingerprint and never
+      cross D-Bus. This read-only view is independent of desired-state and
+      managed-filesystem authority. It is unavailable while a display
+      confirmation capability still exists or its durable commit is active,
+      and old observations are not cached as current.
+
+      Errors:
+        org.hyprshelld.Compositor1.Error.Unavailable
+        org.hyprshelld.Compositor1.Error.RuntimeUnavailable
+        org.hyprshelld.Compositor1.Error.UnsupportedVersion
+        org.hyprshelld.Compositor1.Error.VerificationFailed
+    -->
+    <method name="GetConnectedInputDevices">
+      <arg name="inventory" type="ay" direction="out"/>
       <arg name="observedAtMs" type="t" direction="out"/>
     </method>
 
@@ -465,5 +560,14 @@
       but does not retry. Source unavailability remains non-mutating.
     -->
     <method name="RetrySharedBorderSync"/>
+
+    <!--
+      Explicitly retries the current failed effective shared-spacing tuple and
+      protected maximized-window rule. An unchanged failed tuple is otherwise
+      suppressed until its effective spacing policy, compositor authority, or
+      protected-rule state changes. A Revision-only source update advances the
+      source revision without retrying.
+    -->
+    <method name="RetrySharedSpacingSync"/>
   </interface>
 </node>

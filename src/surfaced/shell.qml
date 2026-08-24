@@ -230,6 +230,8 @@ ShellRoot {
 
         BarSurface {
             workspaceSource: hyprlandWorkspaceSource
+            shellInnerSpacing: ConfigClient.shellInnerSpacing
+            shellOuterSpacing: ConfigClient.shellOuterSpacing
             currentTime: root.currentTime
             shellDegraded: root.shellDegraded
             healthSummary: root.healthSummary

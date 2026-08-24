@@ -64,6 +64,9 @@ ConfigState migratedFormatOneState(
     state.shellBorderWidth = 1;
     state.shellBorderRadius = std::min(16U, height * 3U / 8U);
     state.syncHyprlandWindowBorders = false;
+    state.shellInnerSpacing = 8;
+    state.shellOuterSpacing = 12;
+    state.syncHyprlandWindowSpacing = false;
     state.revision = revision;
     return state;
 }
@@ -92,8 +95,8 @@ private slots:
         const auto object = QJsonDocument::fromJson(
             readFile(paths.activeFile)
         ).object();
-        QCOMPARE(object.size(), 7);
-        QCOMPARE(object.value(QStringLiteral("formatVersion")).toInteger(), 2);
+        QCOMPARE(object.size(), 10);
+        QCOMPARE(object.value(QStringLiteral("formatVersion")).toInteger(), 3);
         QCOMPARE(object.value(QStringLiteral("revision")).toString(), QStringLiteral("0"));
         QCOMPARE(object.value(QStringLiteral("barHeight")).toInteger(), 40);
         QCOMPARE(object.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
@@ -101,6 +104,12 @@ private slots:
         QCOMPARE(object.value(QStringLiteral("shellBorderRadius")).toInteger(), 15);
         QCOMPARE(
             object.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
+            true
+        );
+        QCOMPARE(object.value(QStringLiteral("shellInnerSpacing")).toInteger(), 8);
+        QCOMPARE(object.value(QStringLiteral("shellOuterSpacing")).toInteger(), 12);
+        QCOMPARE(
+            object.value(QStringLiteral("syncHyprlandWindowSpacing")).toBool(),
             true
         );
         QVERIFY(!object.contains(QStringLiteral("workspaceSwitcher")));
@@ -121,6 +130,9 @@ private slots:
         next.shellBorderWidth = 7;
         next.shellBorderRadius = 3;
         next.syncHyprlandWindowBorders = false;
+        next.shellInnerSpacing = 0;
+        next.shellOuterSpacing = 32;
+        next.syncHyprlandWindowSpacing = false;
         next.revision = 1;
         QString error;
         QVERIFY2(
@@ -178,7 +190,7 @@ private slots:
         const auto migrated = QJsonDocument::fromJson(
             readFile(paths.activeFile)
         ).object();
-        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 2);
+        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 3);
         QCOMPARE(migrated.value(QStringLiteral("revision")).toString(), QStringLiteral("7"));
         QCOMPARE(migrated.value(QStringLiteral("barHeight")).toInteger(), height);
         QCOMPARE(migrated.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
@@ -190,6 +202,89 @@ private slots:
         QCOMPARE(
             migrated.value(QStringLiteral("syncHyprlandWindowBorders")).toBool(),
             false
+        );
+        QCOMPARE(migrated.value(QStringLiteral("shellInnerSpacing")).toInteger(), 8);
+        QCOMPARE(migrated.value(QStringLiteral("shellOuterSpacing")).toInteger(), 12);
+        QCOMPARE(
+            migrated.value(QStringLiteral("syncHyprlandWindowSpacing")).toBool(),
+            false
+        );
+    }
+
+    void migratesFormatTwoSpacingWithoutAdvancingRevisionAndIsIdempotent()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = pathsFor(directory.path());
+        const auto snapshot = QByteArrayLiteral(
+            "{\"formatVersion\":2,\"revision\":\"9\",\"barHeight\":56,"
+            "\"shellBorderEnabled\":false,\"shellBorderWidth\":7,"
+            "\"shellBorderRadius\":3,\"syncHyprlandWindowBorders\":true}\n"
+        );
+        QVERIFY(writeFile(paths.activeFile, snapshot));
+
+        const auto loaded = ConfigStore(paths).load();
+        QVERIFY2(loaded.success, qPrintable(loaded.error));
+        QCOMPARE(loaded.state.barHeight, 56U);
+        QCOMPARE(loaded.state.shellBorderEnabled, false);
+        QCOMPARE(loaded.state.shellBorderWidth, 7U);
+        QCOMPARE(loaded.state.shellBorderRadius, 3U);
+        QCOMPARE(loaded.state.syncHyprlandWindowBorders, true);
+        QCOMPARE(loaded.state.shellInnerSpacing, 8U);
+        QCOMPARE(loaded.state.shellOuterSpacing, 12U);
+        QCOMPARE(loaded.state.syncHyprlandWindowSpacing, false);
+        QCOMPARE(loaded.state.revision, quint64(9));
+        QCOMPARE(loaded.recoveryState, ConfigRecoveryState::Normal);
+        QCOMPARE(readFile(paths.activeFile), readFile(paths.recoveryFile));
+
+        const auto migratedBytes = readFile(paths.activeFile);
+        const auto migrated = QJsonDocument::fromJson(migratedBytes).object();
+        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 3);
+        QCOMPARE(migrated.value(QStringLiteral("revision")).toString(), QStringLiteral("9"));
+        QCOMPARE(migrated.value(QStringLiteral("shellInnerSpacing")).toInteger(), 8);
+        QCOMPARE(migrated.value(QStringLiteral("shellOuterSpacing")).toInteger(), 12);
+        QCOMPARE(
+            migrated.value(QStringLiteral("syncHyprlandWindowSpacing")).toBool(),
+            false
+        );
+
+        const auto restarted = ConfigStore(paths).load();
+        QVERIFY2(restarted.success, qPrintable(restarted.error));
+        QCOMPARE(restarted.state, loaded.state);
+        QCOMPARE(restarted.recoveryState, ConfigRecoveryState::Normal);
+        QCOMPARE(readFile(paths.activeFile), migratedBytes);
+        QCOMPARE(readFile(paths.recoveryFile), migratedBytes);
+    }
+
+    void recoversAndMigratesFormatTwoSpacingWithoutAdvancingRevision()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = pathsFor(directory.path());
+        QVERIFY(writeFile(paths.activeFile, QByteArrayLiteral("not json\n")));
+        QVERIFY(writeFile(
+            paths.recoveryFile,
+            QByteArrayLiteral(
+                "{\"formatVersion\":2,\"revision\":\"11\",\"barHeight\":64,"
+                "\"shellBorderEnabled\":true,\"shellBorderWidth\":2,"
+                "\"shellBorderRadius\":6,\"syncHyprlandWindowBorders\":false}\n"
+            )
+        ));
+
+        const auto recovered = ConfigStore(paths).load();
+        QVERIFY2(recovered.success, qPrintable(recovered.error));
+        QCOMPARE(recovered.recoveryState, ConfigRecoveryState::Recovered);
+        QCOMPARE(recovered.state.revision, quint64(11));
+        QCOMPARE(recovered.state.shellInnerSpacing, 8U);
+        QCOMPARE(recovered.state.shellOuterSpacing, 12U);
+        QCOMPARE(recovered.state.syncHyprlandWindowSpacing, false);
+        QCOMPARE(readFile(paths.activeFile), readFile(paths.recoveryFile));
+        QCOMPARE(
+            QJsonDocument::fromJson(readFile(paths.activeFile))
+                .object()
+                .value(QStringLiteral("formatVersion"))
+                .toInteger(),
+            3
         );
     }
 
@@ -227,7 +322,7 @@ private slots:
                 .object()
                 .value(QStringLiteral("formatVersion"))
                 .toInteger(),
-            2
+            3
         );
 
         const auto repairedRecovery = QJsonDocument::fromJson(
@@ -487,7 +582,7 @@ private slots:
         QVERIFY(ConfigStore(paths).load().success);
 
         const QByteArray future(
-            "{\"formatVersion\":3,\"revision\":\"9\",\"barHeight\":80}\n"
+            "{\"formatVersion\":4,\"revision\":\"9\",\"barHeight\":80}\n"
         );
         QVERIFY(writeFile(paths.activeFile, future));
 
@@ -506,7 +601,7 @@ private slots:
 
         const auto active = readFile(paths.activeFile);
         const QByteArray future(
-            "{\"formatVersion\":3,\"revision\":\"9\",\"barHeight\":80}\n"
+            "{\"formatVersion\":4,\"revision\":\"9\",\"barHeight\":80}\n"
         );
         QVERIFY(writeFile(paths.recoveryFile, future));
 
@@ -515,6 +610,32 @@ private slots:
         QVERIFY(loaded.error.contains(QStringLiteral("Unsupported format version")));
         QCOMPARE(readFile(paths.activeFile), active);
         QCOMPARE(readFile(paths.recoveryFile), future);
+    }
+
+    void acceptsAndPreservesSharedSpacingBounds()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto paths = pathsFor(directory.path());
+        const auto snapshot = QByteArrayLiteral(
+            "{\"formatVersion\":3,\"revision\":\"17\",\"barHeight\":40,"
+            "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+            "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true,"
+            "\"shellInnerSpacing\":0,\"shellOuterSpacing\":32,"
+            "\"syncHyprlandWindowSpacing\":false}\n"
+        );
+        QVERIFY(writeFile(paths.activeFile, snapshot));
+
+        const auto loaded = ConfigStore(paths).load();
+        QVERIFY2(loaded.success, qPrintable(loaded.error));
+        QCOMPARE(loaded.state.shellInnerSpacing, 0U);
+        QCOMPARE(loaded.state.shellOuterSpacing, 32U);
+        QCOMPARE(loaded.state.syncHyprlandWindowSpacing, false);
+        QCOMPARE(loaded.state.revision, quint64(17));
+        QCOMPARE(
+            QJsonDocument::fromJson(readFile(paths.activeFile)).object(),
+            QJsonDocument::fromJson(readFile(paths.recoveryFile)).object()
+        );
     }
 
     void defaultsSemanticallyDamagedCoreState_data()
@@ -571,6 +692,44 @@ private slots:
                    "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
                    "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":\"yes\"}\n"
                );
+        QTest::newRow("version-three-missing-spacing")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":3,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true}\n"
+               );
+        QTest::newRow("inner-spacing-fractional")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":3,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true,"
+                   "\"shellInnerSpacing\":8.5,\"shellOuterSpacing\":12,"
+                   "\"syncHyprlandWindowSpacing\":true}\n"
+               );
+        QTest::newRow("inner-spacing-negative")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":3,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true,"
+                   "\"shellInnerSpacing\":-1,\"shellOuterSpacing\":12,"
+                   "\"syncHyprlandWindowSpacing\":true}\n"
+               );
+        QTest::newRow("outer-spacing-too-large")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":3,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true,"
+                   "\"shellInnerSpacing\":8,\"shellOuterSpacing\":33,"
+                   "\"syncHyprlandWindowSpacing\":true}\n"
+               );
+        QTest::newRow("spacing-sync-not-boolean")
+            << QByteArrayLiteral(
+                   "{\"formatVersion\":3,\"revision\":\"0\",\"barHeight\":40,"
+                   "\"shellBorderEnabled\":true,\"shellBorderWidth\":1,"
+                   "\"shellBorderRadius\":15,\"syncHyprlandWindowBorders\":true,"
+                   "\"shellInnerSpacing\":8,\"shellOuterSpacing\":12,"
+                   "\"syncHyprlandWindowSpacing\":\"yes\"}\n"
+               );
     }
 
     void defaultsSemanticallyDamagedCoreState()
@@ -621,6 +780,9 @@ private slots:
         QString error;
         auto next = loaded.state;
         next.barHeight = 56;
+        next.shellInnerSpacing = 0;
+        next.shellOuterSpacing = 32;
+        next.syncHyprlandWindowSpacing = false;
         next.revision = 1;
         const auto persisted = store.persist(
             loaded.state,

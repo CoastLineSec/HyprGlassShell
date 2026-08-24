@@ -20,6 +20,64 @@ namespace {
 constexpr int maximumCatalogDepth = 64;
 constexpr qsizetype maximumStringLength = 4096;
 
+struct CatalogContract final {
+    quint32 contractVersion;
+    const char *reviewedVersion;
+    const char *reviewedTag;
+    const char *reviewedCommit;
+    quint32 minimumPatch;
+    std::optional<quint32> maximumPatch;
+    const char *minimumSupported;
+    const char *fullyQualified;
+    bool requiresSourceManifestDigest;
+    const char *sourceManifestDigest;
+    const char *integrityDigest;
+};
+
+[[nodiscard]] const CatalogContract &activeCatalogContract()
+{
+    static const CatalogContract contract{
+        .contractVersion = currentCatalogContractVersion,
+        .reviewedVersion = "0.56.1",
+        .reviewedTag = "v0.56.1",
+        .reviewedCommit = "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+        .minimumPatch = 0,
+        .maximumPatch = std::nullopt,
+        .minimumSupported = "0.55.0",
+        .fullyQualified = "0.56.x",
+        .requiresSourceManifestDigest = false,
+        .sourceManifestDigest = nullptr,
+        .integrityDigest = reviewedCatalogDigest,
+    };
+    return contract;
+}
+
+[[nodiscard]] const CatalogContract &dormantCatalogContractV2()
+{
+    static const CatalogContract contract{
+        .contractVersion = dormantCatalogV2ContractVersion,
+        .reviewedVersion = "0.56.2",
+        .reviewedTag = "v0.56.2",
+        .reviewedCommit = "efb50993780079460b0cbed1363e2166a2de1d9f",
+        .minimumPatch = 2,
+        .maximumPatch = 2,
+        .minimumSupported = "0.56.2",
+        .fullyQualified = "0.56.2",
+        .requiresSourceManifestDigest = true,
+        .sourceManifestDigest = dormantReviewedSourceManifestDigest,
+        .integrityDigest = dormantReviewedCatalogV2Digest,
+    };
+    return contract;
+}
+
+[[nodiscard]] bool isSha256(const QString &value)
+{
+    static const QRegularExpression expression(
+        QStringLiteral("^[0-9a-f]{64}$")
+    );
+    return expression.match(value).hasMatch();
+}
+
 void addError(
     ValidationErrors &errors,
     QString path,
@@ -1322,7 +1380,8 @@ template<typename Enum, typename Converter>
 [[nodiscard]] HyprlandReleaseRange parseReleaseRange(
     const QJsonObject &object,
     const QString &path,
-    ValidationErrors &errors
+    ValidationErrors &errors,
+    const CatalogContract &contract
 )
 {
     rejectUnknownFields(
@@ -1346,7 +1405,7 @@ template<typename Enum, typename Converter>
         )) {
         result.major = *value;
         if (*value != 0) {
-            addError(errors, path + QStringLiteral(".major"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The v1 authority is pinned to Hyprland major 0."));
+            addError(errors, path + QStringLiteral(".major"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The authority is pinned to Hyprland major 0."));
         }
     }
     if (const auto value = readUnsigned(
@@ -1354,7 +1413,7 @@ template<typename Enum, typename Converter>
         )) {
         result.minor = *value;
         if (*value != 56) {
-            addError(errors, path + QStringLiteral(".minor"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The v1 authority is pinned to Hyprland minor 56."));
+            addError(errors, path + QStringLiteral(".minor"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The authority is pinned to Hyprland minor 56."));
         }
     }
     const auto reviewedText = readString(
@@ -1370,20 +1429,20 @@ template<typename Enum, typename Converter>
             QStringLiteral("A strict reviewed major.minor.patch version is required.")
         );
     }
-    if (!reviewedText.isEmpty() && reviewedText != QStringLiteral("0.56.1")) {
-        addError(errors, path + QStringLiteral(".reviewedVersion"), QStringLiteral("catalog.invalid-version"), QStringLiteral("The catalog must be pinned to reviewed Hyprland 0.56.1."));
+    if (!reviewedText.isEmpty()
+        && reviewedText != QLatin1String(contract.reviewedVersion)) {
+        addError(errors, path + QStringLiteral(".reviewedVersion"), QStringLiteral("catalog.invalid-version"), QStringLiteral("The catalog must use the exact reviewed Hyprland version."));
     }
     result.reviewedTag = readString(
         object, QStringLiteral("reviewedTag"), path, errors, 64
     );
-    if (result.reviewedTag != QStringLiteral("v0.56.1")) {
-        addError(errors, path + QStringLiteral(".reviewedTag"), QStringLiteral("catalog.invalid-reviewed-tag"), QStringLiteral("The catalog must use the reviewed v0.56.1 tag."));
+    if (result.reviewedTag != QLatin1String(contract.reviewedTag)) {
+        addError(errors, path + QStringLiteral(".reviewedTag"), QStringLiteral("catalog.invalid-reviewed-tag"), QStringLiteral("The catalog must use the exact reviewed tag."));
     }
     result.reviewedCommit = readString(
         object, QStringLiteral("reviewedCommit"), path, errors, 40
     );
-    if (result.reviewedCommit
-        != QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")) {
+    if (result.reviewedCommit != QLatin1String(contract.reviewedCommit)) {
         addError(errors, path + QStringLiteral(".reviewedCommit"), QStringLiteral("catalog.invalid-reviewed-commit"), QStringLiteral("The catalog must use the reviewed Hyprland commit."));
     }
     result.repository = readString(
@@ -1396,13 +1455,24 @@ template<typename Enum, typename Converter>
             object, QStringLiteral("minimumPatch"), path, 65535, errors
         )) {
         result.minimumPatch = *value;
-        if (*value != 0) {
-            addError(errors, path + QStringLiteral(".minimumPatch"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The supported 0.56 range begins at patch zero."));
+        if (*value != contract.minimumPatch) {
+            addError(errors, path + QStringLiteral(".minimumPatch"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The catalog has the wrong exact minimum patch."));
         }
     }
     const auto maximum = object.value(QStringLiteral("maximumPatch"));
-    if (maximum.isNull()) {
-        result.maximumPatch = std::nullopt;
+    if (!contract.maximumPatch) {
+        if (maximum.isNull()) {
+            result.maximumPatch = std::nullopt;
+        } else if (const auto value = readUnsigned(
+                       object,
+                       QStringLiteral("maximumPatch"),
+                       path,
+                       65535,
+                       errors
+                   )) {
+            result.maximumPatch = *value;
+            addError(errors, path + QStringLiteral(".maximumPatch"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("This authority requires a null maximumPatch."));
+        }
     } else if (const auto value = readUnsigned(
                    object,
                    QStringLiteral("maximumPatch"),
@@ -1411,15 +1481,18 @@ template<typename Enum, typename Converter>
                    errors
                )) {
         result.maximumPatch = *value;
-        addError(errors, path + QStringLiteral(".maximumPatch"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The reviewed 0.56 authority supports future patch releases and requires a null maximumPatch."));
-        if (*value < result.minimumPatch) {
-            addError(
-                errors,
-                path + QStringLiteral(".maximumPatch"),
-                QStringLiteral("catalog.invalid-version-range"),
-                QStringLiteral("The maximum patch precedes the minimum patch.")
-            );
+        if (*value != *contract.maximumPatch) {
+            addError(errors, path + QStringLiteral(".maximumPatch"), QStringLiteral("catalog.invalid-release-range"), QStringLiteral("The catalog has the wrong exact maximum patch."));
         }
+    }
+    if (result.maximumPatch
+        && *result.maximumPatch < result.minimumPatch) {
+        addError(
+            errors,
+            path + QStringLiteral(".maximumPatch"),
+            QStringLiteral("catalog.invalid-version-range"),
+            QStringLiteral("The maximum patch precedes the minimum patch.")
+        );
     }
     if (result.reviewedVersion.major != result.major
         || result.reviewedVersion.minor != result.minor
@@ -1439,7 +1512,8 @@ template<typename Enum, typename Converter>
 [[nodiscard]] CompatibilityPolicy parseCompatibility(
     const QJsonObject &object,
     const QString &path,
-    ValidationErrors &errors
+    ValidationErrors &errors,
+    const CatalogContract &contract
 )
 {
     rejectUnknownFields(
@@ -1460,8 +1534,8 @@ template<typename Enum, typename Converter>
     );
     if (const auto version = semanticVersionFromString(minimum)) {
         result.minimumSupported = *version;
-        if (*version != SemanticVersion{0, 55, 0}) {
-            addError(errors, path + QStringLiteral(".minimumSupported"), QStringLiteral("catalog.invalid-compatibility-policy"), QStringLiteral("The migration floor must remain Hyprland 0.55.0."));
+        if (minimum != QLatin1String(contract.minimumSupported)) {
+            addError(errors, path + QStringLiteral(".minimumSupported"), QStringLiteral("catalog.invalid-compatibility-policy"), QStringLiteral("The authority has the wrong exact migration floor."));
         }
     } else if (!minimum.isEmpty()) {
         addError(
@@ -1491,24 +1565,28 @@ template<typename Enum, typename Converter>
             QStringLiteral("Too many qualified versions are declared.")
         );
     }
-    static const QRegularExpression pattern(
+    static const QRegularExpression wildcardPattern(
         QStringLiteral("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.x$")
     );
     QSet<QString> seen;
     for (qsizetype index = 0; index < qualified.size(); ++index) {
         const auto valuePath = path + QStringLiteral(".fullyQualified[")
             + QString::number(index) + QLatin1Char(']');
-        if (!qualified.at(index).isString()
-            || !pattern.match(qualified.at(index).toString()).hasMatch()) {
+        const auto text = qualified.at(index).toString();
+        const auto validPattern = contract.contractVersion
+                == currentCatalogContractVersion
+            ? wildcardPattern.match(text).hasMatch()
+            : semanticVersionFromString(text).has_value();
+        if (!qualified.at(index).isString() || !validPattern) {
             addError(
                 errors,
                 valuePath,
                 QStringLiteral("catalog.invalid-version-pattern"),
-                QStringLiteral("A major.minor.x pattern is required.")
+                QStringLiteral("The authority requires its exact qualified-version syntax.")
             );
             continue;
         }
-        const auto value = qualified.at(index).toString();
+        const auto value = text;
         if (seen.contains(value)) {
             addError(
                 errors,
@@ -1520,8 +1598,9 @@ template<typename Enum, typename Converter>
         seen.insert(value);
         result.fullyQualified.append(value);
     }
-    if (result.fullyQualified != QStringList{QStringLiteral("0.56.x")}) {
-        addError(errors, path + QStringLiteral(".fullyQualified"), QStringLiteral("catalog.invalid-compatibility-policy"), QStringLiteral("Only the reviewed 0.56 minor is fully qualified."));
+    if (result.fullyQualified
+        != QStringList{QLatin1String(contract.fullyQualified)}) {
+        addError(errors, path + QStringLiteral(".fullyQualified"), QStringLiteral("catalog.invalid-compatibility-policy"), QStringLiteral("Only the exact reviewed release policy is fully qualified."));
     }
 
     const auto older = readString(
@@ -1664,7 +1743,10 @@ std::optional<SemanticVersion> semanticVersionFromString(const QString &value)
     return SemanticVersion{major, minor, patch};
 }
 
-ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
+[[nodiscard]] static ValidationResult<Catalog> parseCatalogContract(
+    const QByteArrayView bytes,
+    const CatalogContract &contract
+)
 {
     ValidationResult<Catalog> result;
     const auto parsed = JsonSupport::parseStrictObject(
@@ -1675,15 +1757,19 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
         return result;
     }
     const auto &root = *parsed.value;
+    QSet<QString> rootFields{
+        QStringLiteral("contractVersion"),
+        QStringLiteral("hyprland"),
+        QStringLiteral("options"),
+        QStringLiteral("complexSurfaces"),
+        QStringLiteral("compatibility"),
+    };
+    if (contract.requiresSourceManifestDigest) {
+        rootFields.insert(QStringLiteral("sourceManifestDigest"));
+    }
     rejectUnknownFields(
         root,
-        {
-            QStringLiteral("contractVersion"),
-            QStringLiteral("hyprland"),
-            QStringLiteral("options"),
-            QStringLiteral("complexSurfaces"),
-            QStringLiteral("compatibility"),
-        },
+        rootFields,
         QStringLiteral("$"),
         result.errors
     );
@@ -1697,12 +1783,40 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
             result.errors
         )) {
         catalog.contractVersion = *version;
-        if (*version != currentCatalogContractVersion) {
+        if (*version != contract.contractVersion) {
             addError(
                 result.errors,
                 QStringLiteral("$.contractVersion"),
                 QStringLiteral("catalog.unsupported-contract-version"),
-                QStringLiteral("This catalog contract version is not supported.")
+                QStringLiteral("Only catalog contract v%1 is accepted by this parser.")
+                    .arg(contract.contractVersion)
+            );
+        }
+    }
+
+    if (contract.requiresSourceManifestDigest) {
+        catalog.sourceManifestDigest = readString(
+            root,
+            QStringLiteral("sourceManifestDigest"),
+            QStringLiteral("$"),
+            result.errors,
+            64
+        );
+        if (!catalog.sourceManifestDigest.isEmpty()
+            && !isSha256(catalog.sourceManifestDigest)) {
+            addError(
+                result.errors,
+                QStringLiteral("$.sourceManifestDigest"),
+                QStringLiteral("catalog.invalid-source-manifest-digest"),
+                QStringLiteral("A lowercase SHA-256 source-manifest digest is required.")
+            );
+        } else if (catalog.sourceManifestDigest
+            != QLatin1String(contract.sourceManifestDigest)) {
+            addError(
+                result.errors,
+                QStringLiteral("$.sourceManifestDigest"),
+                QStringLiteral("catalog.source-manifest-digest-mismatch"),
+                QStringLiteral("The catalog is not bound to the exact reviewed source manifest.")
             );
         }
     }
@@ -1710,7 +1824,8 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
     catalog.hyprland = parseReleaseRange(
         readObject(root, QStringLiteral("hyprland"), QStringLiteral("$"), result.errors),
         QStringLiteral("$.hyprland"),
-        result.errors
+        result.errors,
+        contract
     );
 
     const auto options = readArray(
@@ -1947,13 +2062,13 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
             result.errors
         ),
         QStringLiteral("$.compatibility"),
-        result.errors
+        result.errors,
+        contract
     );
 
-    const auto targetPattern = QStringLiteral("%1.%2.x")
-        .arg(catalog.hyprland.major)
-        .arg(catalog.hyprland.minor);
-    if (!catalog.compatibility.fullyQualified.contains(targetPattern)) {
+    if (!catalog.compatibility.fullyQualified.contains(
+            QLatin1String(contract.fullyQualified)
+        )) {
         addError(
             result.errors,
             QStringLiteral("$.compatibility.fullyQualified"),
@@ -1969,12 +2084,13 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
             QCryptographicHash::Sha256
         ).toHex()
     );
-    if (catalog.digest != QLatin1String(reviewedCatalogDigest)) {
+    if (catalog.digest != QLatin1String(contract.integrityDigest)) {
         addError(
             result.errors,
             QStringLiteral("$"),
             QStringLiteral("catalog.integrity-mismatch"),
-            QStringLiteral("The canonical catalog does not match the compiled reviewed v1 authority.")
+            QStringLiteral("The canonical catalog does not match the compiled reviewed v%1 authority.")
+                .arg(contract.contractVersion)
         );
     }
 
@@ -1982,6 +2098,16 @@ ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
         result.value = std::move(catalog);
     }
     return result;
+}
+
+ValidationResult<Catalog> parseCatalog(const QByteArrayView bytes)
+{
+    return parseCatalogContract(bytes, activeCatalogContract());
+}
+
+ValidationResult<Catalog> parseDormantCatalogV2(const QByteArrayView bytes)
+{
+    return parseCatalogContract(bytes, dormantCatalogContractV2());
 }
 
 QByteArray canonicalCatalogJson(const Catalog &catalog)

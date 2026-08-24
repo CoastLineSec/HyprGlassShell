@@ -94,6 +94,10 @@ struct AuthoritySnapshot final {
   bool available = false;
   bool writable = false;
   QByteArray desiredState;
+  // Current-authority semantic form of the last positively applied state.
+  // This is an internal provenance seam for per-domain status attribution;
+  // it is never published as a public D-Bus property.
+  QByteArray appliedDesiredState;
   quint64 revision = 0;
   QString catalogDigest;
   QString actionCatalogDigest;
@@ -155,6 +159,13 @@ public:
   // callers must still bind them to AuthoritySnapshot::catalogDigest before
   // publishing them across a trust boundary.
   [[nodiscard]] virtual QByteArray optionCatalog() const = 0;
+  // Returns the canonical action catalog and the exact reviewed config schema
+  // bytes retained by the parsed authority. The action digest binds both
+  // documents, so callers must publish and authenticate them as one pair.
+  [[nodiscard]] virtual QByteArray actionCatalog() const { return {}; }
+  [[nodiscard]] virtual QByteArray configSchema() const { return {}; }
+  [[nodiscard]] virtual Hyprland::ValidationErrors
+  currentActivationSafetyErrors() const = 0;
   [[nodiscard]] virtual AuthorityResult
   replaceSnapshot(quint64 expectedRevision, const QByteArray &candidate) = 0;
   [[nodiscard]] virtual AuthorityResult

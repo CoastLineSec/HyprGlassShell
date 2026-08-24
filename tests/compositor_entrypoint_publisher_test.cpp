@@ -1,4 +1,5 @@
 #include "compositord/activation_backend.h"
+#include "compositord/legacy_entrypoint_records.h"
 #include "compositord/renderer.h"
 
 #include "hyprland/json_support.h"
@@ -399,6 +400,140 @@ class CompositorEntrypointPublisherTest final : public QObject
     Q_OBJECT
 
 private slots:
+    void activeV1PublisherBytesMatchDormantRecoveryCodecs()
+    {
+        const auto bridgePath = [](const PublisherTree &tree) {
+            return QDir(tree.managedRoot).filePath(
+                QStringLiteral("live-activation.pending.json")
+            );
+        };
+
+        // Capture the staging spelling directly from the active writer.
+        PublisherTree stagingTree;
+        QVERIFY(stagingTree.valid());
+        const auto stagingGeneration = stagingTree.generation(
+            QString::fromLatin1(nonceA), QByteArrayLiteral("staging")
+        );
+        auto stagingPublisher = stagingTree.publisher(
+            [](const EntrypointFaultPoint point) {
+                return point
+                    == EntrypointFaultPoint::AfterTargetFileSyncBeforeDirectorySync;
+            }
+        );
+        QVERIFY(stagingPublisher->initialize(stagingTree.context()).success);
+        const auto interrupted = adoptAbsent(
+            *stagingPublisher, stagingGeneration
+        );
+        QVERIFY(!interrupted.success);
+        const auto activeStagingBytes = readBytes(bridgePath(stagingTree));
+        const auto recoveredStaging =
+            parseLegacyLiveActivationBridgeRecordV1(activeStagingBytes);
+        QVERIFY(recoveredStaging);
+        const auto recoveredStagingBytes =
+            serializeLegacyLiveActivationBridgeRecordV1(*recoveredStaging);
+        QVERIFY(recoveredStagingBytes);
+        QCOMPARE(*recoveredStagingBytes, activeStagingBytes);
+
+        // Capture adoption-ready, ownership, and managed-update-ready bytes.
+        PublisherTree managedTree;
+        QVERIFY(managedTree.valid());
+        const auto first = managedTree.generation(
+            QString::fromLatin1(nonceA), QByteArrayLiteral("first")
+        );
+        const auto second = managedTree.generation(
+            QString::fromLatin1(nonceB), QByteArrayLiteral("second")
+        );
+        auto managedPublisher = managedTree.publisher();
+        QVERIFY(managedPublisher->initialize(managedTree.context()).success);
+        const auto adopted = adoptAbsent(*managedPublisher, first);
+        QVERIFY(adopted.success);
+
+        const auto activeAdoptionBytes = readBytes(bridgePath(managedTree));
+        const auto recoveredAdoption =
+            parseLegacyLiveActivationBridgeRecordV1(activeAdoptionBytes);
+        QVERIFY(recoveredAdoption);
+        const auto recoveredAdoptionBytes =
+            serializeLegacyLiveActivationBridgeRecordV1(*recoveredAdoption);
+        QVERIFY(recoveredAdoptionBytes);
+        QCOMPARE(*recoveredAdoptionBytes, activeAdoptionBytes);
+
+        QVERIFY(managedPublisher->finalize(adopted.receipt, true).success);
+        const auto activeOwnershipBytes = readBytes(
+            managedTree.ownershipRecord
+        );
+        const auto recoveredOwnership =
+            parseLegacyEntrypointOwnershipRecordV1(activeOwnershipBytes);
+        QVERIFY(recoveredOwnership);
+        const auto recoveredOwnershipBytes =
+            serializeLegacyEntrypointOwnershipRecordV1(*recoveredOwnership);
+        QVERIFY(recoveredOwnershipBytes);
+        QCOMPARE(*recoveredOwnershipBytes, activeOwnershipBytes);
+
+        const auto updated = managedPublisher->publish(
+            second, false, {}, QByteArrayLiteral("[]"),
+            QStringLiteral("lua")
+        );
+        QVERIFY(updated.success);
+        const auto activeUpdateBytes = readBytes(bridgePath(managedTree));
+        const auto recoveredUpdate =
+            parseLegacyLiveActivationBridgeRecordV1(activeUpdateBytes);
+        QVERIFY(recoveredUpdate);
+        const auto recoveredUpdateBytes =
+            serializeLegacyLiveActivationBridgeRecordV1(*recoveredUpdate);
+        QVERIFY(recoveredUpdateBytes);
+        QCOMPARE(*recoveredUpdateBytes, activeUpdateBytes);
+
+        // Also bind the regular-original adoption and ownership spellings.
+        PublisherTree regularTree;
+        QVERIFY(regularTree.valid());
+        const QByteArray original{"-- exact user original\n"};
+        QVERIFY(writeNew(regularTree.stableEntrypoint, original, 0640));
+        const auto regularGeneration = regularTree.generation(
+            QString::fromLatin1(nonceA), QByteArrayLiteral("regular")
+        );
+        auto regularPublisher = regularTree.publisher();
+        QVERIFY(regularPublisher->initialize(regularTree.context()).success);
+        const auto regularAdoption = regularPublisher->publish(
+            regularGeneration, true, sha256(original), QByteArrayLiteral("[]"),
+            QStringLiteral("lua")
+        );
+        QVERIFY(regularAdoption.success);
+        const auto activeRegularBridgeBytes = readBytes(
+            bridgePath(regularTree)
+        );
+        const auto recoveredRegularBridge =
+            parseLegacyLiveActivationBridgeRecordV1(
+                activeRegularBridgeBytes
+            );
+        QVERIFY(recoveredRegularBridge);
+        const auto recoveredRegularBridgeBytes =
+            serializeLegacyLiveActivationBridgeRecordV1(
+                *recoveredRegularBridge
+            );
+        QVERIFY(recoveredRegularBridgeBytes);
+        QCOMPARE(*recoveredRegularBridgeBytes, activeRegularBridgeBytes);
+
+        QVERIFY(regularPublisher->finalize(
+            regularAdoption.receipt, true
+        ).success);
+        const auto activeRegularOwnershipBytes = readBytes(
+            regularTree.ownershipRecord
+        );
+        const auto recoveredRegularOwnership =
+            parseLegacyEntrypointOwnershipRecordV1(
+                activeRegularOwnershipBytes
+            );
+        QVERIFY(recoveredRegularOwnership);
+        const auto recoveredRegularOwnershipBytes =
+            serializeLegacyEntrypointOwnershipRecordV1(
+                *recoveredRegularOwnership
+            );
+        QVERIFY(recoveredRegularOwnershipBytes);
+        QCOMPARE(
+            *recoveredRegularOwnershipBytes, activeRegularOwnershipBytes
+        );
+    }
+
     void authorityRootReplacementFailsClosed_data()
     {
         QTest::addColumn<QString>("root");

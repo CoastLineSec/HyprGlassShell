@@ -3,7 +3,8 @@
 #include "activation_backend.h"
 #include "configuration_authority.h"
 #include "shared_border_reconciler.h"
-#include "shared_border_source.h"
+#include "shared_spacing_reconciler.h"
+#include "shared_visual_source.h"
 
 #include <QByteArray>
 #include <QDeadlineTimer>
@@ -43,6 +44,9 @@ class CompositorService final : public QObject, protected QDBusContext {
     Q_PROPERTY(QString SharedBorderSyncState READ sharedBorderSyncState)
     Q_PROPERTY(qulonglong SharedBorderSourceRevision READ sharedBorderSourceRevision)
     Q_PROPERTY(QString SharedBorderSyncError READ sharedBorderSyncError)
+    Q_PROPERTY(QString SharedSpacingSyncState READ sharedSpacingSyncState)
+    Q_PROPERTY(qulonglong SharedSpacingSourceRevision READ sharedSpacingSourceRevision)
+    Q_PROPERTY(QString SharedSpacingSyncError READ sharedSpacingSyncError)
 
 public:
     using DisplayDeadlineRemaining = std::function<qint64(
@@ -56,11 +60,14 @@ public:
         QObject *parent = nullptr,
         DisplayDeadlineRemaining displayDeadlineRemaining = {},
         DisplayOwnerPresent displayOwnerPresent = {},
-        std::unique_ptr<SharedBorderSource> sharedBorderSource = {}
+        std::unique_ptr<SharedVisualSource> sharedVisualSource = {},
+        QByteArray inputDeviceInventoryEpoch = {}
     );
 
     // Must be called only after the process owns org.hyprshelld.Compositor1.
-    // Until it succeeds every public method remains fail-closed.
+    // Configuration-authority-dependent methods remain fail-closed until it
+    // succeeds. Authenticated input-device discovery is independent of that
+    // authority.
     [[nodiscard]] bool initializeAuthority(
         std::unique_ptr<ConfigurationAuthority> authority,
         QString &error
@@ -85,6 +92,9 @@ public:
     [[nodiscard]] QString sharedBorderSyncState() const;
     [[nodiscard]] qulonglong sharedBorderSourceRevision() const;
     [[nodiscard]] QString sharedBorderSyncError() const;
+    [[nodiscard]] QString sharedSpacingSyncState() const;
+    [[nodiscard]] qulonglong sharedSpacingSourceRevision() const;
+    [[nodiscard]] QString sharedSpacingSyncError() const;
 
 public slots:
     QByteArray GetSnapshot(
@@ -93,6 +103,11 @@ public slots:
         QString &actionCatalogDigest
     ) const;
     QByteArray GetOptionCatalog(QString &catalogDigest) const;
+    QByteArray GetActionCatalog(
+        QString &actionCatalogDigest,
+        QByteArray &configSchema,
+        QString &configSchemaDigest
+    ) const;
     qulonglong ReplaceSnapshot(
         qulonglong expectedRevision,
         const QString &expectedCatalogDigest,
@@ -121,6 +136,7 @@ public slots:
         QString &entrypointDigest
     );
     QByteArray GetConnectedDisplays(qulonglong &observedAtMs);
+    QByteArray GetConnectedInputDevices(qulonglong &observedAtMs);
     qulonglong PreviewDisplayConfiguration(
         qulonglong expectedRevision,
         const QString &expectedCatalogDigest,
@@ -144,6 +160,7 @@ public slots:
         const QString &confirmationToken
     );
     void RetrySharedBorderSync();
+    void RetrySharedSpacingSync();
 
 signals:
     // Mirrors the exact changed map sent on
@@ -157,7 +174,7 @@ private slots:
     // exposing the confirmation timer or adding a production-only clock API.
     void handleDisplayConfirmationTimeout();
     void handleDisplayOwnerLoss(const QString &owner);
-    void reconcileSharedBorder();
+    void reconcileSharedVisual();
 
 private:
     struct Completion final {
@@ -203,7 +220,8 @@ private:
 
     [[nodiscard]] bool checkMutationCatalogAuthority(
         const QString &expectedCatalogDigest,
-        const QString &expectedActionCatalogDigest
+        const QString &expectedActionCatalogDigest,
+        bool requireWritable
     ) const;
     [[nodiscard]] bool checkMutationAuthority(
         qulonglong expectedRevision,
@@ -240,22 +258,36 @@ private:
     void clearDisplayOwnerWatch();
     void appendDisplayProperties(QVariantMap &changed) const;
     void publishDisplayProperties();
-    void scheduleSharedBorderReconcile();
-    void sharedBorderSourceChanged();
+    void scheduleSharedVisualReconcile();
+    void sharedVisualSourceChanged();
     void setSharedBorderStatus(
         const QString &state,
         qulonglong sourceRevision,
         const QString &error = {}
     );
+    void setSharedSpacingStatus(
+        const QString &state,
+        qulonglong sourceRevision,
+        const QString &error = {}
+    );
     void clearFailedSharedBorderAttempt();
+    void clearFailedSharedSpacingAttempt();
     void failSharedBorder(const QString &error);
+    void failSharedSpacing(const QString &error);
+    void failSharedGroups(
+        bool borderChanged,
+        bool spacingChanged,
+        const QString &error
+    );
     [[nodiscard]] QString sharedBorderAttemptKey() const;
+    [[nodiscard]] QString sharedSpacingAttemptKey() const;
     [[nodiscard]] bool ensureSharedBorderCatalog(QString &error);
-    [[nodiscard]] bool sharedBorderReplacementAllowed(
+    [[nodiscard]] bool ensureSharedSpacingCatalog(QString &error);
+    [[nodiscard]] bool sharedVisualReplacementAllowed(
         const QByteArray &candidate,
         QString &error
     );
-    [[nodiscard]] bool sharedBorderActivationAllowed(
+    [[nodiscard]] bool sharedVisualActivationAllowed(
         const QByteArray &candidate,
         QString &error
     );
@@ -280,7 +312,7 @@ private:
 
     std::unique_ptr<ConfigurationAuthority> authority_;
     std::unique_ptr<ActivationBackend> activationBackend_;
-    std::unique_ptr<SharedBorderSource> sharedBorderSource_;
+    std::unique_ptr<SharedVisualSource> sharedVisualSource_;
     QDBusConnection connection_;
     AuthoritySnapshot snapshot_;
     ManagementStatus management_;
@@ -292,22 +324,35 @@ private:
     std::optional<DisplayConfirmation> displayConfirmation_;
     std::optional<DisplayTerminal> displayTerminal_;
     QString displayConfirmationState_ = QStringLiteral("idle");
+    QByteArray inputDeviceInventoryEpoch_;
     DisplayDeadlineRemaining displayDeadlineRemaining_;
     DisplayOwnerPresent displayOwnerPresent_;
     SharedBorderReconciler sharedBorderReconciler_;
-    std::optional<SharedBorderProjection> lastSharedBorderProjection_;
-    std::optional<quint64> pendingSharedBorderApplyRevision_;
+    SharedSpacingReconciler sharedSpacingReconciler_;
+    std::optional<SharedVisualProjection> lastSharedVisualProjection_;
+    std::optional<quint64> pendingSharedVisualApplyRevision_;
+    bool pendingSharedBorderApply_ = false;
+    bool pendingSharedSpacingApply_ = false;
     QString sharedBorderSyncState_ = QStringLiteral("unavailable");
     quint64 sharedBorderSourceRevision_ = 0;
     QString sharedBorderSyncError_ = QStringLiteral(
         "Shared visual settings are unavailable"
     );
+    QString sharedSpacingSyncState_ = QStringLiteral("unavailable");
+    quint64 sharedSpacingSourceRevision_ = 0;
+    QString sharedSpacingSyncError_ = QStringLiteral(
+        "Shared visual settings are unavailable"
+    );
     QString failedSharedBorderAttempt_;
     QString failedSharedBorderError_;
-    quint64 sharedBorderAuthorityGeneration_ = 0;
-    bool sharedBorderReconcileScheduled_ = false;
-    bool sharedBorderReconcileRunning_ = false;
+    QString failedSharedSpacingAttempt_;
+    QString failedSharedSpacingError_;
+    bool failedGroupsShareOperation_ = false;
+    quint64 sharedVisualAuthorityGeneration_ = 0;
+    bool sharedVisualReconcileScheduled_ = false;
+    bool sharedVisualReconcileRunning_ = false;
     bool forceSharedBorderRetry_ = false;
+    bool forceSharedSpacingRetry_ = false;
 };
 
 } // namespace HyprShelld::Compositor

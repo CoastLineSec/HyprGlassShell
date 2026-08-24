@@ -1,0 +1,2414 @@
+{
+  "formatVersion": 1,
+  "review": {
+    "targetHyprland": "0.56.2",
+    "catalog": "data/hyprland/config-catalog-v2.json",
+    "catalogScalarCount": 353,
+    "catalogComplexSurfaceCount": 12,
+    "reviewedOn": "2026-08-23",
+    "currentWiki": {
+      "track": "latest-git",
+      "commit": "767416d8ad85a3795cdcf02b70945389eeef450b",
+      "commitTimestamp": "2026-08-22T22:08:05Z",
+      "repository": "https://github.com/hyprwm/hyprland-wiki",
+      "configuringIndex": "https://wiki.hypr.land/Configuring/"
+    },
+    "currentRegistryConfirmation": {
+      "commit": "951ab550e7ea050e4b871f99faf87d99c601c44a",
+      "commitTimestamp": "2026-08-23T17:21:04Z",
+      "source": "https://github.com/hyprwm/Hyprland/blob/main/src/config/values/ConfigValues.cpp"
+    },
+    "allowedStatuses": [
+      "implemented",
+      "intentionally-unsupported",
+      "version-gated"
+    ]
+  },
+  "totals": {
+    "catalogScalars": 353,
+    "implementedScalars": 349,
+    "intentionallyUnsupportedScalars": 4,
+    "catalogComplexSurfaces": 12,
+    "implementedComplexSurfaces": 12,
+    "currentWikiVersionGatedScalars": 47,
+    "excludedConfigBearingCapabilities": 4
+  },
+  "ui": {
+    "overviewPage": "HyprlandOverviewPage.qml",
+    "scalarPage": "HyprlandCatalogPage.qml",
+    "scalarControlComponent": "HyprlandOptionRow.qml",
+    "categoryMappings": [
+      {
+        "id": "appearance",
+        "title": "Appearance & Motion",
+        "route": "hyprland/catalog/appearance",
+        "modules": [
+          "animations",
+          "cursor",
+          "decoration"
+        ]
+      },
+      {
+        "id": "input",
+        "title": "Input & Gestures",
+        "route": "hyprland/catalog/input",
+        "modules": [
+          "gestures",
+          "input"
+        ]
+      },
+      {
+        "id": "windows",
+        "title": "Windows & Layouts",
+        "route": "hyprland/catalog/windows",
+        "modules": [
+          "dwindle",
+          "general",
+          "group",
+          "layout",
+          "master",
+          "scrolling"
+        ]
+      },
+      {
+        "id": "shortcuts",
+        "title": "Shortcuts & Submaps",
+        "route": "hyprland/catalog/shortcuts",
+        "modules": [
+          "binds"
+        ]
+      },
+      {
+        "id": "system",
+        "title": "System & Compatibility",
+        "route": "hyprland/catalog/system",
+        "modules": [
+          "debug",
+          "experimental",
+          "misc",
+          "opengl",
+          "quirks",
+          "render",
+          "xwayland"
+        ]
+      },
+      {
+        "id": "session",
+        "title": "Session & Security",
+        "route": "hyprland/catalog/session",
+        "modules": [
+          "ecosystem"
+        ]
+      }
+    ]
+  },
+  "scalarCoverageGroups": [
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "animations",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.animations.enabled",
+        "hyprland.animations.workspace_wraparound"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "cursor",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.cursor.no_break_fs_vrr",
+        "hyprland.cursor.no_hardware_cursors",
+        "hyprland.cursor.use_cpu_buffer",
+        "hyprland.cursor.warp_on_change_workspace",
+        "hyprland.cursor.warp_on_toggle_special"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "cursor",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.cursor.inactive_timeout",
+        "hyprland.cursor.zoom_factor"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "cursor",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.cursor.hotspot_padding",
+        "hyprland.cursor.min_refresh_rate"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "cursor",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.cursor.default_monitor"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "cursor",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.cursor.enable_hyprcursor",
+        "hyprland.cursor.hide_on_key_press",
+        "hyprland.cursor.hide_on_tablet",
+        "hyprland.cursor.hide_on_touch",
+        "hyprland.cursor.invisible",
+        "hyprland.cursor.no_warps",
+        "hyprland.cursor.persistent_warps",
+        "hyprland.cursor.sync_gsettings_theme",
+        "hyprland.cursor.warp_back_after_non_mouse_input",
+        "hyprland.cursor.zoom_detached_camera",
+        "hyprland.cursor.zoom_disable_aa",
+        "hyprland.cursor.zoom_rigid"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "gradient",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.glow.color",
+        "hyprland.decoration.glow.color_inactive",
+        "hyprland.decoration.shadow.color",
+        "hyprland.decoration.shadow.color_inactive"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.active_opacity",
+        "hyprland.decoration.blur.brightness",
+        "hyprland.decoration.blur.contrast",
+        "hyprland.decoration.blur.input_methods_ignorealpha",
+        "hyprland.decoration.blur.noise",
+        "hyprland.decoration.blur.popups_ignorealpha",
+        "hyprland.decoration.blur.vibrancy",
+        "hyprland.decoration.blur.vibrancy_darkness",
+        "hyprland.decoration.dim_around",
+        "hyprland.decoration.dim_special",
+        "hyprland.decoration.dim_strength",
+        "hyprland.decoration.fullscreen_opacity",
+        "hyprland.decoration.inactive_opacity",
+        "hyprland.decoration.rounding_power",
+        "hyprland.decoration.shadow.scale"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.blur.passes",
+        "hyprland.decoration.blur.size",
+        "hyprland.decoration.glow.range",
+        "hyprland.decoration.glow.render_power",
+        "hyprland.decoration.motion_blur.samples",
+        "hyprland.decoration.rounding",
+        "hyprland.decoration.shadow.range",
+        "hyprland.decoration.shadow.render_power"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.screen_shader"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.blur.enabled",
+        "hyprland.decoration.blur.ignore_opacity",
+        "hyprland.decoration.blur.input_methods",
+        "hyprland.decoration.blur.new_optimizations",
+        "hyprland.decoration.blur.popups",
+        "hyprland.decoration.blur.special",
+        "hyprland.decoration.blur.xray",
+        "hyprland.decoration.border_part_of_window",
+        "hyprland.decoration.dim_inactive",
+        "hyprland.decoration.dim_modal",
+        "hyprland.decoration.glow.enabled",
+        "hyprland.decoration.motion_blur.enabled",
+        "hyprland.decoration.shadow.enabled",
+        "hyprland.decoration.shadow.sharp"
+      ]
+    },
+    {
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "module": "decoration",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "vector2",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.decoration.shadow.offset"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "gestures",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.gestures.workspace_swipe_cancel_ratio"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "gestures",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.gestures.close_max_timeout",
+        "hyprland.gestures.workspace_swipe_direction_lock_threshold",
+        "hyprland.gestures.workspace_swipe_distance",
+        "hyprland.gestures.workspace_swipe_min_speed_to_force"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "gestures",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.gestures.scrolling.move_snap_cursor",
+        "hyprland.gestures.scrolling.move_snap_to_grid",
+        "hyprland.gestures.workspace_swipe_create_new",
+        "hyprland.gestures.workspace_swipe_direction_lock",
+        "hyprland.gestures.workspace_swipe_forever",
+        "hyprland.gestures.workspace_swipe_invert",
+        "hyprland.gestures.workspace_swipe_touch",
+        "hyprland.gestures.workspace_swipe_touch_invert",
+        "hyprland.gestures.workspace_swipe_use_r"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input.accel_profile",
+        "hyprland.input.emulate_discrete_scroll",
+        "hyprland.input.float_switch_override_focus",
+        "hyprland.input.focus_on_close",
+        "hyprland.input.follow_mouse",
+        "hyprland.input.off_window_axis_events",
+        "hyprland.input.scroll_method",
+        "hyprland.input.touchpad.drag_3fg",
+        "hyprland.input.touchpad.drag_lock",
+        "hyprland.input.touchpad.tap_button_map",
+        "hyprland.input.virtualkeyboard.share_states"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input.follow_mouse_threshold",
+        "hyprland.input.scroll_factor",
+        "hyprland.input.sensitivity",
+        "hyprland.input.tablettool.pressure_range_max",
+        "hyprland.input.tablettool.pressure_range_min",
+        "hyprland.input.touchpad.scroll_factor"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input.follow_mouse_shrink",
+        "hyprland.input.repeat_delay",
+        "hyprland.input.repeat_rate",
+        "hyprland.input.rotation",
+        "hyprland.input.scroll_button",
+        "hyprland.input.tablet.transform",
+        "hyprland.input.tablettool.eraser_button_mode",
+        "hyprland.input.tablettool.eraser_button_override",
+        "hyprland.input.touchdevice.transform"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input.kb_file",
+        "hyprland.input.kb_layout",
+        "hyprland.input.kb_model",
+        "hyprland.input.kb_options",
+        "hyprland.input.kb_rules",
+        "hyprland.input.kb_variant"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "intentionally-unsupported",
+      "ids": [
+        "hyprland.input.scroll_points"
+      ],
+      "reason": "The tagged value is an opaque custom acceleration mini-language whose point sequence is not represented by the closed scalar schema; Settings preserves and displays it read-only rather than rewriting unparsed text."
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "intentionally-unsupported",
+      "ids": [
+        "hyprland.input.tablet.output"
+      ],
+      "reason": "The value depends on runtime output identity and special empty/current semantics that are not safely typed by the scalar contract; Settings preserves and displays it read-only."
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "intentionally-unsupported",
+      "ids": [
+        "hyprland.input.touchdevice.output"
+      ],
+      "reason": "The value depends on runtime output identity plus the [[Auto]]/empty auto-detection semantics that are not safely typed by the scalar contract; Settings preserves and displays it read-only."
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input-capture.capture_modifiers",
+        "hyprland.input-capture.enforce_barriers",
+        "hyprland.input.force_no_accel",
+        "hyprland.input.left_handed",
+        "hyprland.input.mouse_refocus",
+        "hyprland.input.natural_scroll",
+        "hyprland.input.numlock_by_default",
+        "hyprland.input.resolve_binds_by_sym",
+        "hyprland.input.scroll_button_lock",
+        "hyprland.input.special_fallthrough",
+        "hyprland.input.tablet.absolute_region_position",
+        "hyprland.input.tablet.left_handed",
+        "hyprland.input.tablet.relative_input",
+        "hyprland.input.touchdevice.enabled",
+        "hyprland.input.touchpad.clickfinger_behavior",
+        "hyprland.input.touchpad.disable_while_typing",
+        "hyprland.input.touchpad.flip_x",
+        "hyprland.input.touchpad.flip_y",
+        "hyprland.input.touchpad.middle_button_emulation",
+        "hyprland.input.touchpad.natural_scroll",
+        "hyprland.input.touchpad.tap-and-drag",
+        "hyprland.input.touchpad.tap-to-click",
+        "hyprland.input.virtualkeyboard.release_pressed_on_close"
+      ]
+    },
+    {
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "module": "input",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/input",
+      "control": "vector2",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.input.tablet.active_area_position",
+        "hyprland.input.tablet.active_area_size",
+        "hyprland.input.tablet.region_position",
+        "hyprland.input.tablet.region_size"
+      ]
+    },
+    {
+      "categoryId": "session",
+      "category": "Session & Security",
+      "module": "ecosystem",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/session",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.ecosystem.enforce_permissions",
+        "hyprland.ecosystem.no_donation_nag",
+        "hyprland.ecosystem.no_update_news"
+      ]
+    },
+    {
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "module": "binds",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/shortcuts",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.binds.focus_preferred_method",
+        "hyprland.binds.workspace_center_on"
+      ]
+    },
+    {
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "module": "binds",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/shortcuts",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.binds.drag_threshold",
+        "hyprland.binds.scroll_event_delay"
+      ]
+    },
+    {
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "module": "binds",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/shortcuts",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.binds.allow_pin_fullscreen",
+        "hyprland.binds.allow_workspace_cycles",
+        "hyprland.binds.disable_keybind_grabbing",
+        "hyprland.binds.hide_special_on_workspace_change",
+        "hyprland.binds.ignore_group_lock",
+        "hyprland.binds.movefocus_cycles_fullscreen",
+        "hyprland.binds.movefocus_cycles_groupfirst",
+        "hyprland.binds.pass_mouse_when_bound",
+        "hyprland.binds.window_direction_monitor_fallback",
+        "hyprland.binds.workspace_back_and_forth"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "debug",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.debug.damage_tracking",
+        "hyprland.debug.error_position",
+        "hyprland.debug.invalidate_fp16"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "debug",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.debug.error_limit",
+        "hyprland.debug.manual_crash"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "debug",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.debug.colored_stdout_logs",
+        "hyprland.debug.damage_blink",
+        "hyprland.debug.disable_logs",
+        "hyprland.debug.disable_scale_checks",
+        "hyprland.debug.disable_time",
+        "hyprland.debug.ds_handle_same_buffer",
+        "hyprland.debug.ds_handle_same_buffer_fifo",
+        "hyprland.debug.enable_stdout_logs",
+        "hyprland.debug.fifo_pending_workaround",
+        "hyprland.debug.full_cm_proto",
+        "hyprland.debug.gl_debugging",
+        "hyprland.debug.log_damage",
+        "hyprland.debug.overlay",
+        "hyprland.debug.pass",
+        "hyprland.debug.render_solitary_wo_damage",
+        "hyprland.debug.suppress_errors",
+        "hyprland.debug.vfr"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "experimental",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.experimental.wp_cm_1_2"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "misc",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "color",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.misc.background_color",
+        "hyprland.misc.col.splash"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "misc",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.misc.force_default_wallpaper",
+        "hyprland.misc.initial_workspace_tracking",
+        "hyprland.misc.on_focus_under_fullscreen",
+        "hyprland.misc.vrr"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "misc",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.misc.anr_missed_pings",
+        "hyprland.misc.initial_workspace_token_timeout",
+        "hyprland.misc.lockdead_screen_delay",
+        "hyprland.misc.render_unfocused_fps"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "misc",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.misc.font_family",
+        "hyprland.misc.splash_font_family",
+        "hyprland.misc.swallow_exception_regex",
+        "hyprland.misc.swallow_regex"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "misc",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.misc.allow_session_lock_restore",
+        "hyprland.misc.always_follow_on_dnd",
+        "hyprland.misc.animate_manual_resizes",
+        "hyprland.misc.animate_mouse_windowdragging",
+        "hyprland.misc.close_special_on_empty",
+        "hyprland.misc.disable_autoreload",
+        "hyprland.misc.disable_hyprland_guiutils_check",
+        "hyprland.misc.disable_hyprland_logo",
+        "hyprland.misc.disable_scale_notification",
+        "hyprland.misc.disable_splash_rendering",
+        "hyprland.misc.disable_watchdog_warning",
+        "hyprland.misc.disable_xdg_env_checks",
+        "hyprland.misc.enable_anr_dialog",
+        "hyprland.misc.enable_swallow",
+        "hyprland.misc.exit_window_retains_fullscreen",
+        "hyprland.misc.focus_on_activate",
+        "hyprland.misc.key_press_enables_dpms",
+        "hyprland.misc.layers_hog_keyboard_focus",
+        "hyprland.misc.middle_click_paste",
+        "hyprland.misc.mouse_move_enables_dpms",
+        "hyprland.misc.mouse_move_focuses_monitor",
+        "hyprland.misc.name_vk_after_proc",
+        "hyprland.misc.screencopy_force_8b",
+        "hyprland.misc.session_lock_blur",
+        "hyprland.misc.session_lock_xray",
+        "hyprland.misc.size_limits_tiled"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "opengl",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.opengl.nvidia_anti_flicker"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "quirks",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.quirks.prefer_hdr"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "quirks",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.quirks.skip_non_kms_dmabuf_formats"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "render",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.render.cm_auto_hdr",
+        "hyprland.render.cm_sdr_eotf",
+        "hyprland.render.ctm_animation",
+        "hyprland.render.direct_scanout",
+        "hyprland.render.fp16_sdr_tf",
+        "hyprland.render.keep_unmodified_copy",
+        "hyprland.render.non_shader_cm",
+        "hyprland.render.non_shader_cm_interop",
+        "hyprland.render.use_fp16"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "render",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.render.cm_enabled",
+        "hyprland.render.commit_timing_enabled",
+        "hyprland.render.expand_undersized_textures",
+        "hyprland.render.icc_vcgt_enabled",
+        "hyprland.render.new_render_scheduling",
+        "hyprland.render.send_content_type",
+        "hyprland.render.use_shader_blur_blend",
+        "hyprland.render.xp_mode"
+      ]
+    },
+    {
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "module": "xwayland",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.xwayland.create_abstract_socket",
+        "hyprland.xwayland.enabled",
+        "hyprland.xwayland.force_zero_scaling",
+        "hyprland.xwayland.use_nearest_neighbor"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "dwindle",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.dwindle.force_split",
+        "hyprland.dwindle.split_bias"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "dwindle",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.dwindle.default_split_ratio",
+        "hyprland.dwindle.special_scale_factor",
+        "hyprland.dwindle.split_width_multiplier"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "dwindle",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.dwindle.permanent_direction_override",
+        "hyprland.dwindle.precise_mouse_move",
+        "hyprland.dwindle.preserve_split",
+        "hyprland.dwindle.smart_resizing",
+        "hyprland.dwindle.smart_split",
+        "hyprland.dwindle.use_active_for_splits"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "general",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "gradient",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.general.col.active_border",
+        "hyprland.general.col.inactive_border",
+        "hyprland.general.col.nogroup_border",
+        "hyprland.general.col.nogroup_border_active"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "general",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.general.layout",
+        "hyprland.general.resize_corner"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "general",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.general.border_size",
+        "hyprland.general.extend_border_grab_area",
+        "hyprland.general.gaps_workspaces",
+        "hyprland.general.snap.monitor_gap",
+        "hyprland.general.snap.window_gap"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "general",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.general.float_gaps",
+        "hyprland.general.gaps_in",
+        "hyprland.general.gaps_out",
+        "hyprland.general.locale"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "general",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.general.allow_tearing",
+        "hyprland.general.hover_icon_on_border",
+        "hyprland.general.modal_parent_blocking",
+        "hyprland.general.no_focus_fallback",
+        "hyprland.general.resize_on_border",
+        "hyprland.general.snap.border_overlap",
+        "hyprland.general.snap.enabled",
+        "hyprland.general.snap.respect_gaps"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "color",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.groupbar.text_color",
+        "hyprland.group.groupbar.text_color_inactive",
+        "hyprland.group.groupbar.text_color_locked_active",
+        "hyprland.group.groupbar.text_color_locked_inactive"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "gradient",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.col.border_active",
+        "hyprland.group.col.border_inactive",
+        "hyprland.group.col.border_locked_active",
+        "hyprland.group.col.border_locked_inactive",
+        "hyprland.group.groupbar.col.active",
+        "hyprland.group.groupbar.col.inactive",
+        "hyprland.group.groupbar.col.locked_active",
+        "hyprland.group.groupbar.col.locked_inactive"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.drag_into_group"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.groupbar.gradient_rounding_power",
+        "hyprland.group.groupbar.rounding_power"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.groupbar.font_size",
+        "hyprland.group.groupbar.font_weight_active",
+        "hyprland.group.groupbar.font_weight_inactive",
+        "hyprland.group.groupbar.gaps_in",
+        "hyprland.group.groupbar.gaps_out",
+        "hyprland.group.groupbar.gradient_rounding",
+        "hyprland.group.groupbar.height",
+        "hyprland.group.groupbar.indicator_gap",
+        "hyprland.group.groupbar.indicator_height",
+        "hyprland.group.groupbar.priority",
+        "hyprland.group.groupbar.rounding",
+        "hyprland.group.groupbar.text_offset",
+        "hyprland.group.groupbar.text_padding"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.groupbar.font_family"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "group",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.group.auto_group",
+        "hyprland.group.focus_removed_window",
+        "hyprland.group.group_on_movetoworkspace",
+        "hyprland.group.groupbar.blur",
+        "hyprland.group.groupbar.disable_when_only",
+        "hyprland.group.groupbar.enabled",
+        "hyprland.group.groupbar.gradient_round_only_edges",
+        "hyprland.group.groupbar.gradients",
+        "hyprland.group.groupbar.keep_upper_gap",
+        "hyprland.group.groupbar.middle_click_close",
+        "hyprland.group.groupbar.render_titles",
+        "hyprland.group.groupbar.round_only_edges",
+        "hyprland.group.groupbar.scrolling",
+        "hyprland.group.groupbar.stacked",
+        "hyprland.group.insert_after_current",
+        "hyprland.group.merge_floated_into_tiled_on_groupbar",
+        "hyprland.group.merge_groups_on_drag",
+        "hyprland.group.merge_groups_on_groupbar"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "layout",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.layout.single_window_aspect_ratio_tolerance"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "layout",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "vector2",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.layout.single_window_aspect_ratio"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "master",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.master.center_master_fallback",
+        "hyprland.master.new_on_active",
+        "hyprland.master.new_status",
+        "hyprland.master.orientation"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "master",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.master.mfact",
+        "hyprland.master.special_scale_factor"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "master",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "spinBox",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.master.slave_count_for_center_master"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "master",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.master.allow_small_split",
+        "hyprland.master.always_keep_position",
+        "hyprland.master.center_ignores_reserved",
+        "hyprland.master.drop_at_cursor",
+        "hyprland.master.focus_master_on_close",
+        "hyprland.master.new_on_top",
+        "hyprland.master.smart_resizing"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "scrolling",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "select",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.scrolling.direction",
+        "hyprland.scrolling.focus_fit_method"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "scrolling",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "slider",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.scrolling.column_width",
+        "hyprland.scrolling.follow_min_visible"
+      ]
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "scrolling",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "text",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "intentionally-unsupported",
+      "ids": [
+        "hyprland.scrolling.explicit_column_widths"
+      ],
+      "reason": "The value is a comma-separated numeric mini-language used by +conf/-conf layout messages; no closed typed list is qualified, so Settings preserves and displays it read-only."
+    },
+    {
+      "categoryId": "windows",
+      "category": "Windows & Layouts",
+      "module": "scrolling",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/windows",
+      "control": "toggle",
+      "controlComponent": "HyprlandOptionRow.qml",
+      "status": "implemented",
+      "ids": [
+        "hyprland.scrolling.follow_focus",
+        "hyprland.scrolling.fullscreen_on_one_column",
+        "hyprland.scrolling.wrap_focus",
+        "hyprland.scrolling.wrap_swapcol"
+      ]
+    }
+  ],
+  "complexSurfaceCoverage": [
+    {
+      "id": "animations",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "AppearancePage.qml",
+      "route": "appearance",
+      "control": "AnimationCollectionsSummary.qml + AnimationRuleEditor.qml",
+      "status": "implemented",
+      "implementation": "Ordered animation records share the verified Appearance draft and save transaction."
+    },
+    {
+      "id": "bindings",
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "page": "BindingsPage.qml",
+      "route": "hyprland/bindings",
+      "control": "BindingEditor.qml",
+      "status": "implemented",
+      "implementation": "Ordered closed-action bindings and normalized chords are edited and saved atomically with submaps."
+    },
+    {
+      "id": "curves",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "AppearancePage.qml",
+      "route": "appearance",
+      "control": "AnimationCollectionsSummary.qml + AnimationCurveEditor.qml",
+      "status": "implemented",
+      "implementation": "Named Bezier and spring curves are edited before dependent animations in the verified Appearance draft.",
+      "limitations": [
+        {
+          "id": "curves.structure",
+          "status": "intentionally-unsupported",
+          "reason": "Settings edits every existing Bezier or spring parameter and collection order, but adding, removing, renaming, or changing a curve type remains read-only because those identity-graph changes are restart-classified and the current service has no qualified activation path for a structurally different curve collection. Existing structure is preserved exactly."
+        }
+      ]
+    },
+    {
+      "id": "devices",
+      "categoryId": "devices",
+      "category": "Per-device Input",
+      "page": "InputDevicesPage.qml",
+      "route": "hyprland/devices",
+      "control": "InputDeviceEditor.qml + InputDeviceOverrideRow.qml + InputDevicePreview.qml",
+      "status": "implemented",
+      "implementation": "Ordered per-device profiles are wired to the inputDevices projection and saveInputDevices transaction."
+    },
+    {
+      "id": "environment",
+      "categoryId": "environment",
+      "category": "Environment",
+      "page": "EnvironmentVariablesPage.qml",
+      "route": "hyprland/environment",
+      "control": "typed name/value/scope collection editor",
+      "status": "implemented",
+      "implementation": "Ordered exact-v1 environment records are wired to the environment projection and saveEnvironment transaction.",
+      "limitations": [
+        {
+          "id": "environment.scope.uwsm",
+          "status": "intentionally-unsupported",
+          "reason": "The current renderer deliberately rejects UWSM publishing instead of silently emitting it as hl.env; UWSM records are preserved and editable but save remains blocked until a verified UWSM publisher exists."
+        }
+      ]
+    },
+    {
+      "id": "gestures",
+      "categoryId": "input",
+      "category": "Input & Gestures",
+      "page": "InputPage.qml",
+      "route": "input",
+      "control": "GestureSummaryList.qml + GestureEditor.qml",
+      "status": "implemented",
+      "implementation": "Declarative gesture actions share the verified Input draft and save transaction."
+    },
+    {
+      "id": "layerRules",
+      "categoryId": "rules",
+      "category": "Rules",
+      "page": "RulesPage.qml",
+      "route": "rules",
+      "control": "RuleSummaryList.qml + typed layer-rule editor",
+      "status": "implemented",
+      "implementation": "Layer rules use exact match/effect field definitions and save atomically with window rules."
+    },
+    {
+      "id": "monitors",
+      "categoryId": "displays",
+      "category": "Displays",
+      "page": "DisplaysPage.qml",
+      "route": "displays",
+      "control": "DisplayTopologyPreview.qml + DisplaySettingsCard.qml",
+      "status": "implemented",
+      "implementation": "Connected-output selection and full monitor records use the guarded display-test transaction.",
+      "limitations": [
+        {
+          "id": "monitors.disconnected-selectors",
+          "status": "intentionally-unsupported",
+          "reason": "Rules selected only by description or for currently disconnected outputs are preserved but not editable because the guarded display-preview API accepts only authenticated connected-output identities and cannot safely test an offline target."
+        }
+      ]
+    },
+    {
+      "id": "permissions",
+      "categoryId": "permissions",
+      "category": "Permissions",
+      "page": "PermissionsPage.qml",
+      "route": "hyprland/permissions",
+      "control": "typed binary/type/mode collection editor",
+      "status": "implemented",
+      "implementation": "Ordered exact-v1 permission rules are wired to the permissions projection and savePermissions transaction with restart warnings."
+    },
+    {
+      "id": "submaps",
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "page": "BindingsPage.qml",
+      "route": "hyprland/bindings",
+      "control": "typed ordered submap cards in BindingsPage.qml",
+      "status": "implemented",
+      "implementation": "Submap identity, reset targets, ordering, and binding references are validated and saved atomically."
+    },
+    {
+      "id": "windowRules",
+      "categoryId": "rules",
+      "category": "Rules",
+      "page": "RulesPage.qml",
+      "route": "rules",
+      "control": "RuleSummaryList.qml + typed window-rule editor",
+      "status": "implemented",
+      "implementation": "Window rules expose the closed matcher/effect schema without arbitrary exec and save atomically with layer rules."
+    },
+    {
+      "id": "workspaceRules",
+      "categoryId": "workspaces",
+      "category": "Workspaces",
+      "page": "WorkspacesPage.qml",
+      "route": "workspaces",
+      "control": "WorkspaceRuleSummaryList.qml + WorkspaceRuleEditor.qml",
+      "status": "implemented",
+      "implementation": "Ordered workspace selectors and typed effects share the verified Workspaces draft and save transaction."
+    }
+  ],
+  "currentWikiAdditions": [
+    {
+      "id": "hyprland.binds.drag_center_window",
+      "path": "binds:drag_center_window",
+      "luaPath": [
+        "binds",
+        "drag_center_window"
+      ],
+      "sourceType": "bool",
+      "categoryId": "shortcuts",
+      "category": "Shortcuts & Submaps",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/shortcuts",
+      "control": "none (version-gated)",
+      "candidateControl": "toggle",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.cursor.warp_on_monitor_change",
+      "path": "cursor:warp_on_monitor_change",
+      "luaPath": [
+        "cursor",
+        "warp_on_monitor_change"
+      ],
+      "sourceType": "int",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "spinBox",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.acrylic.aberration",
+      "path": "decoration:blur:acrylic:aberration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "acrylic",
+        "aberration"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.acrylic.bulb",
+      "path": "decoration:blur:acrylic:bulb",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "acrylic",
+        "bulb"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.acrylic.clarity",
+      "path": "decoration:blur:acrylic:clarity",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "acrylic",
+        "clarity"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.acrylic.refraction",
+      "path": "decoration:blur:acrylic:refraction",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "acrylic",
+        "refraction"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.acrylic.tint",
+      "path": "decoration:blur:acrylic:tint",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "acrylic",
+        "tint"
+      ],
+      "sourceType": "color",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "color",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.aurora.color1",
+      "path": "decoration:blur:aurora:color1",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "aurora",
+        "color1"
+      ],
+      "sourceType": "color",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "color",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.aurora.color2",
+      "path": "decoration:blur:aurora:color2",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "aurora",
+        "color2"
+      ],
+      "sourceType": "color",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "color",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.aurora.intensity",
+      "path": "decoration:blur:aurora:intensity",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "aurora",
+        "intensity"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.aurora.speed",
+      "path": "decoration:blur:aurora:speed",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "aurora",
+        "speed"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.drops.speed",
+      "path": "decoration:blur:drops:speed",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "drops",
+        "speed"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.color",
+      "path": "decoration:blur:fluid_jar:color",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "color"
+      ],
+      "sourceType": "color",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "color",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.distortion",
+      "path": "decoration:blur:fluid_jar:distortion",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "distortion"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.fill_amount",
+      "path": "decoration:blur:fluid_jar:fill_amount",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "fill_amount"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.mass",
+      "path": "decoration:blur:fluid_jar:mass",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "mass"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.precision",
+      "path": "decoration:blur:fluid_jar:precision",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "precision"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.speed",
+      "path": "decoration:blur:fluid_jar:speed",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "speed"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.fluid_jar.turbulence",
+      "path": "decoration:blur:fluid_jar:turbulence",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "fluid_jar",
+        "turbulence"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.glass.refraction",
+      "path": "decoration:blur:glass:refraction",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "glass",
+        "refraction"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.glass.roughness",
+      "path": "decoration:blur:glass:roughness",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "glass",
+        "roughness"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.glass.size",
+      "path": "decoration:blur:glass:size",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "glass",
+        "size"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.haze.intensity",
+      "path": "decoration:blur:haze:intensity",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "haze",
+        "intensity"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.haze.iridescence",
+      "path": "decoration:blur:haze:iridescence",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "haze",
+        "iridescence"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.heat_shimmer.speed",
+      "path": "decoration:blur:heat_shimmer:speed",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "heat_shimmer",
+        "speed"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.ripple.duration",
+      "path": "decoration:blur:ripple:duration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "ripple",
+        "duration"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.ripple.radius",
+      "path": "decoration:blur:ripple:radius",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "ripple",
+        "radius"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.ripple.strength",
+      "path": "decoration:blur:ripple:strength",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "ripple",
+        "strength"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.ripple.width",
+      "path": "decoration:blur:ripple:width",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "ripple",
+        "width"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.variant",
+      "path": "decoration:blur:variant",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "variant"
+      ],
+      "sourceType": "string",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "select",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.water.damping",
+      "path": "decoration:blur:water:damping",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "water",
+        "damping"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.water.duration",
+      "path": "decoration:blur:water:duration",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "water",
+        "duration"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.water.radius",
+      "path": "decoration:blur:water:radius",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "water",
+        "radius"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.water.speed",
+      "path": "decoration:blur:water:speed",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "water",
+        "speed"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.blur.water.strength",
+      "path": "decoration:blur:water:strength",
+      "luaPath": [
+        "decoration",
+        "blur",
+        "water",
+        "strength"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.damping",
+      "path": "decoration:wobble:damping",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "damping"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.enabled",
+      "path": "decoration:wobble:enabled",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "enabled"
+      ],
+      "sourceType": "bool",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "toggle",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.intensity",
+      "path": "decoration:wobble:intensity",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "intensity"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.mass",
+      "path": "decoration:wobble:mass",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "mass"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.mesh",
+      "path": "decoration:wobble:mesh",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "mesh"
+      ],
+      "sourceType": "int",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "spinBox",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.stiffness",
+      "path": "decoration:wobble:stiffness",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "stiffness"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.value_epsilon",
+      "path": "decoration:wobble:value_epsilon",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "value_epsilon"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.decoration.wobble.velocity_epsilon",
+      "path": "decoration:wobble:velocity_epsilon",
+      "luaPath": [
+        "decoration",
+        "wobble",
+        "velocity_epsilon"
+      ],
+      "sourceType": "float",
+      "categoryId": "appearance",
+      "category": "Appearance & Motion",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/appearance",
+      "control": "none (version-gated)",
+      "candidateControl": "slider",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.misc.bell_sound",
+      "path": "misc:bell_sound",
+      "luaPath": [
+        "misc",
+        "bell_sound"
+      ],
+      "sourceType": "string",
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "none (version-gated)",
+      "candidateControl": "text",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.misc.float_force_onscreen",
+      "path": "misc:float_force_onscreen",
+      "luaPath": [
+        "misc",
+        "float_force_onscreen"
+      ],
+      "sourceType": "int",
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "none (version-gated)",
+      "candidateControl": "spinBox",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.misc.new_float_force_onscreen",
+      "path": "misc:new_float_force_onscreen",
+      "luaPath": [
+        "misc",
+        "new_float_force_onscreen"
+      ],
+      "sourceType": "int",
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "none (version-gated)",
+      "candidateControl": "spinBox",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.render.not_shown_fifo_lock",
+      "path": "render:not_shown_fifo_lock",
+      "luaPath": [
+        "render",
+        "not_shown_fifo_lock"
+      ],
+      "sourceType": "int",
+      "categoryId": "system",
+      "category": "System & Compatibility",
+      "page": "HyprlandCatalogPage.qml",
+      "route": "hyprland/catalog/system",
+      "control": "none (version-gated)",
+      "candidateControl": "spinBox",
+      "status": "version-gated",
+      "reason": "This path is documented by the official latest-git wiki and confirmed in the current official registry, but is absent from the qualified Hyprland 0.56.2 catalog. Newer-minor values remain read-only until their exact registry, constraints, Lua mapping, renderer, and migration policy are qualified.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    }
+  ],
+  "currentWikiAndRegistryNotes": [
+    {
+      "id": "hyprland.debug.invalidate_buffers",
+      "status": "version-gated",
+      "reason": "The current official registry contains debug:invalidate_buffers, but the reviewed latest-git Variables page does not yet list it. It is not counted in the 47 current-wiki additions and remains outside the pinned 0.56.2 authority.",
+      "source": "https://github.com/hyprwm/Hyprland/blob/main/src/config/values/ConfigValues.cpp"
+    },
+    {
+      "id": "hyprland.debug.fifo_pending_workaround",
+      "status": "implemented",
+      "reason": "The pinned 0.56.2 catalog and the latest-git Variables page list this path, while the current official registry no longer contains it. Settings implements it only for its qualified 0.56.2 target.",
+      "source": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.master.center_ignores_reserved",
+      "status": "implemented",
+      "reason": "The pinned 0.56.2 catalog and current official registry contain this path, although the latest-git Master Layout page currently omits it. Settings implements it for the qualified target.",
+      "source": "https://github.com/hyprwm/Hyprland/blob/main/src/config/values/ConfigValues.cpp"
+    },
+    {
+      "id": "hyprland.input.touchpad.lua-key-normalization",
+      "status": "implemented",
+      "reason": "The registry paths tap-to-click and tap-and-drag map to the Lua keys tap_to_click and tap_and_drag. The latest-git wiki uses the Lua spellings; these are not new scalar options.",
+      "source": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    },
+    {
+      "id": "hyprland.input-capture.lua-category-normalization",
+      "status": "implemented",
+      "reason": "The registry category input-capture maps to the Lua table key input_capture. The latest-git wiki labels the registry category; both pinned scalar records are already covered.",
+      "source": "https://wiki.hypr.land/Configuring/Basics/Variables/"
+    }
+  ],
+  "excludedConfigBearingCapabilities": [
+    {
+      "id": "autostart",
+      "category": "Session & Security",
+      "page": "none",
+      "control": "none",
+      "status": "intentionally-unsupported",
+      "reason": "Hyprland autostart is arbitrary process execution inside a hyprland.start callback. Persisting shell commands cannot provide closed typing, idempotence, provenance, transactional rollback, or safe preview; managed user services or reviewed components are the supported ownership boundary.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Autostart/"
+    },
+    {
+      "id": "arbitrary-exec",
+      "category": "Shortcuts & Submaps",
+      "page": "none",
+      "control": "none",
+      "status": "intentionally-unsupported",
+      "reason": "Raw hl.exec_cmd, hl.exec_raw, and unrestricted command-bearing actions can execute arbitrary code and mutate state outside the compositor transaction. Settings supports only the closed reviewed binding/action and typed rule catalogs.",
+      "documentation": "https://wiki.hypr.land/Configuring/Basics/Dispatchers/"
+    },
+    {
+      "id": "arbitrary-lua",
+      "category": "Session & Security",
+      "page": "none",
+      "control": "none",
+      "status": "intentionally-unsupported",
+      "reason": "Custom Lua functions, event callbacks, timers, required modules, and runtime-generated configuration are executable programs rather than declarative desired state; they cannot be safely diffed, validated, rendered, or rolled back by this settings authority.",
+      "documentation": "https://wiki.hypr.land/Configuring/Advanced-and-Cool/Expanding-functionality/"
+    },
+    {
+      "id": "plugins",
+      "category": "Session & Security",
+      "page": "none",
+      "control": "none",
+      "status": "intentionally-unsupported",
+      "reason": "Hyprland plugins are native shared objects loaded into the compositor process with broad internal access. Their installation trust, ABI/version pinning, build commands, lifecycle, and dynamic plugin-defined namespaces are outside the closed 0.56.2 Settings catalog.",
+      "documentation": "https://wiki.hypr.land/Plugins/Using-Plugins/"
+    }
+  ]
+}

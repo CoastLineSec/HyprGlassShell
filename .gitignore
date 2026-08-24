@@ -4,3 +4,7 @@
 .qmlls.ini
 CMakeUserPresets.json
 compile_commands.json
+
+__pycache__/
+*.py[cod]
+.pytest_cache/

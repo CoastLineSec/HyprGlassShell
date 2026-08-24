@@ -10,27 +10,30 @@ class QDBusServiceWatcher;
 
 namespace HyprShelld::Compositor {
 
-struct SharedBorderProjection final {
+struct SharedVisualProjection final {
     bool borderEnabled = true;
     quint32 borderWidth = 1;
     quint32 borderRadius = 0;
     bool syncWindowBorders = true;
+    quint32 innerSpacing = 8;
+    quint32 outerSpacing = 12;
+    bool syncWindowSpacing = true;
     quint64 revision = 0;
 
     friend bool operator==(
-        const SharedBorderProjection &,
-        const SharedBorderProjection &
+        const SharedVisualProjection &,
+        const SharedVisualProjection &
     ) = default;
 };
 
-class SharedBorderSource : public QObject {
+class SharedVisualSource : public QObject {
     Q_OBJECT
 
 public:
-    explicit SharedBorderSource(QObject *parent = nullptr);
+    explicit SharedVisualSource(QObject *parent = nullptr);
 
     [[nodiscard]] bool available() const;
-    [[nodiscard]] const SharedBorderProjection &projection() const;
+    [[nodiscard]] const SharedVisualProjection &projection() const;
     [[nodiscard]] QString error() const;
 
     virtual void start() = 0;
@@ -40,20 +43,20 @@ signals:
     void changed();
 
 protected:
-    void publishProjection(const SharedBorderProjection &projection);
+    void publishProjection(const SharedVisualProjection &projection);
     void publishUnavailable(const QString &error);
 
 private:
     bool available_ = false;
-    SharedBorderProjection projection_;
+    SharedVisualProjection projection_;
     QString error_ = QStringLiteral("Shared visual settings are unavailable");
 };
 
-class DbusSharedBorderSource final : public SharedBorderSource {
+class DbusSharedVisualSource final : public SharedVisualSource {
     Q_OBJECT
 
 public:
-    explicit DbusSharedBorderSource(
+    explicit DbusSharedVisualSource(
         QDBusConnection connection,
         QObject *parent = nullptr
     );
@@ -79,6 +82,7 @@ private:
     QDBusConnection connection_;
     QDBusServiceWatcher *serviceWatcher_ = nullptr;
     quint64 generation_ = 0;
+    bool projectionEstablished_ = false;
     bool started_ = false;
 };
 

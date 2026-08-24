@@ -21,6 +21,11 @@
 namespace HyprShelld::Hyprland {
 
 inline constexpr quint32 currentDesiredStateFormatVersion = 1;
+// The v2 authority envelope is deliberately parallel and runtime-unselected.
+// The active production codec remains v1 until the complete 0.56.2 rotation
+// lands.
+inline constexpr quint32 dormantDesiredStateV2FormatVersion = 2;
+inline constexpr qsizetype authorityIdHexLength = 32;
 inline constexpr qsizetype maximumDesiredStateBytes = 4 * 1024 * 1024;
 inline constexpr qsizetype maximumOverrides = 353;
 inline constexpr qsizetype maximumMonitors = 64;
@@ -28,7 +33,12 @@ inline constexpr qsizetype maximumDevices = 256;
 inline constexpr qsizetype maximumAnimations = 256;
 inline constexpr qsizetype maximumCurves = 256;
 inline constexpr qsizetype maximumGestures = 64;
-inline constexpr qsizetype maximumWorkspaceRules = 1024;
+inline constexpr qsizetype maximumUserWorkspaceRules = 1024;
+inline constexpr qsizetype maximumWorkspaceRules =
+    maximumUserWorkspaceRules + 1;
+inline constexpr char sharedSpacingWorkspaceRuleId[] =
+    "hyprshelld.internal.shared-spacing.maximized";
+inline constexpr char sharedSpacingWorkspaceRuleSelector[] = "f[1]";
 inline constexpr qsizetype maximumWindowRules = 4096;
 inline constexpr qsizetype maximumLayerRules = 4096;
 inline constexpr qsizetype maximumBindings = 2048;
@@ -310,10 +320,25 @@ struct DesiredState final {
     friend bool operator==(const DesiredState &, const DesiredState &) = default;
 };
 
+// V2 adds an authority epoch around the exact v2 catalog/action-bound semantic
+// state. The in-memory semantic representation deliberately keeps
+// formatVersion == 1 so existing renderer/profile policy cannot silently
+// become a half-migrated runtime; serialized dormant envelopes are v2 only.
+struct DesiredStateV2 final {
+    QString authorityId;
+    DesiredState semanticState;
+
+    friend bool operator==(const DesiredStateV2 &, const DesiredStateV2 &)
+        = default;
+};
+
 [[nodiscard]] ValidationResult<QString> normalizeBindingChord(
     const QStringList &modifiers,
     const QString &key
 );
+
+[[nodiscard]] ValidationResult<QVector<DeviceConfiguration>>
+parseDesiredInputDevices(const QJsonObject &snapshot);
 
 [[nodiscard]] ValidationResult<DesiredState> parseDesiredState(
     QByteArrayView bytes,
@@ -321,10 +346,35 @@ struct DesiredState final {
     const ActionCatalog &actionCatalog
 );
 
+[[nodiscard]] bool isCanonicalAuthorityId(const QString &authorityId);
+
+[[nodiscard]] ValidationResult<DesiredStateV2> parseDormantDesiredStateV2(
+    QByteArrayView bytes,
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalogV2
+);
+
+[[nodiscard]] ValidationErrors validateManagedActivationSafety(
+    const DesiredState &state,
+    const Catalog &catalog
+);
+
 [[nodiscard]] DesiredState defaultDesiredState(
     const Catalog &catalog,
     const ActionCatalog &actionCatalog
 );
+
+// The caller must supply a freshly generated authority ID. This helper never
+// mints an ID and has no empty/sentinel overload.
+[[nodiscard]] ValidationResult<DesiredStateV2>
+defaultDormantDesiredStateV2(
+    const Catalog &catalog,
+    const ActionCatalog &actionCatalogV2,
+    QString authorityId
+);
+
+[[nodiscard]] ValidationResult<QByteArray>
+serializeDormantDesiredStateV2(const DesiredStateV2 &state);
 
 // Compact canonical JSON, terminated by one newline for safe durable-file use.
 [[nodiscard]] QByteArray serializeDesiredState(const DesiredState &state);

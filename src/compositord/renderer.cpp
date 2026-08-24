@@ -360,6 +360,17 @@ void includeSurfaceRequirement(
     return object;
 }
 
+[[nodiscard]] QJsonObject cssGapObject(const QJsonArray &values)
+{
+    Q_ASSERT(values.size() == 4);
+    return {
+        {QStringLiteral("top"), values.at(0)},
+        {QStringLiteral("right"), values.at(1)},
+        {QStringLiteral("bottom"), values.at(2)},
+        {QStringLiteral("left"), values.at(3)},
+    };
+}
+
 void normalizeWorkspaceCssGap(QJsonObject &object, const QString &field)
 {
     if (!object.contains(field)) return;
@@ -367,13 +378,7 @@ void normalizeWorkspaceCssGap(QJsonObject &object, const QString &field)
     // Desired state validates these fields as exact CSS-order arrays. The
     // tagged CLuaConfigCssGap parser reads named fields only; numeric Lua
     // table keys otherwise silently resolve to zero.
-    Q_ASSERT(values.size() == 4);
-    object.insert(field, QJsonObject{
-        {QStringLiteral("top"), values.at(0)},
-        {QStringLiteral("right"), values.at(1)},
-        {QStringLiteral("bottom"), values.at(2)},
-        {QStringLiteral("left"), values.at(3)},
-    });
+    object.insert(field, cssGapObject(values));
 }
 
 [[nodiscard]] QString modifierString(const QStringList &modifiers)
@@ -603,6 +608,254 @@ void normalizeWorkspaceCssGap(QJsonObject &object, const QString &field)
     return result;
 }
 
+struct SemanticLuaPayload final {
+    QMap<QString, QByteArray> moduleBodies;
+    ActivationRequirement activationRequirement =
+        ActivationRequirement::Reload;
+};
+
+[[nodiscard]] std::optional<SemanticLuaPayload> renderSemanticLuaPayload(
+    const Hyprland::DesiredState &state,
+    const Hyprland::Catalog &catalog,
+    const Hyprland::ActionCatalog &actionCatalog,
+    Hyprland::ValidationErrors &errors
+)
+{
+    SemanticLuaPayload payload;
+    auto &moduleBodies = payload.moduleBodies;
+    for (const auto &path : modulePaths) {
+        moduleBodies.insert(path, {});
+    }
+    // Publishing a generation always requires at least a reload, including a
+    // first adoption, an all-default state, and a state that only deletes old
+    // managed values. None is reserved for an already-converged service view.
+    ActivationRequirement required = ActivationRequirement::Reload;
+
+    QMap<QString, QJsonObject> scalarConfig;
+    for (auto iterator = state.overrides.constBegin();
+         iterator != state.overrides.constEnd(); ++iterator) {
+        const auto *option = Hyprland::findOption(catalog, iterator.key());
+        if (!option || option->luaPath.isEmpty()) {
+            addError(errors, QStringLiteral("$.overrides.") + iterator.key(),
+                     QStringLiteral("renderer.missing-catalog-path"),
+                     QStringLiteral("The scalar override has no pinned Lua output path."));
+            continue;
+        }
+        const auto modulePath = moduleForCatalogModule(option->module);
+        auto root = scalarConfig.value(modulePath);
+        auto value = iterator.value();
+        // Only the authenticated CssGap type uses Hyprland's named-field
+        // binding; vectors and other array-backed values stay positional.
+        if (option->type == Hyprland::OptionType::CssGap) {
+            value = cssGapObject(value.toArray());
+        }
+        insertNested(root, option->luaPath, 0, value);
+        scalarConfig.insert(modulePath, root);
+        includeRequirement(required, option->applyMode);
+    }
+    for (auto iterator = scalarConfig.constBegin();
+         iterator != scalarConfig.constEnd(); ++iterator) {
+        appendStatement(
+            moduleBodies[iterator.key()],
+            QByteArrayLiteral("hl.config(") + luaObject(iterator.value())
+                + QByteArrayLiteral(")")
+        );
+    }
+
+    auto &monitors = moduleBodies[QStringLiteral("modules/10-monitors.lua")];
+    for (const auto &record : state.monitors) {
+        appendStatement(monitors, QByteArrayLiteral("hl.monitor(")
+            + luaObject(monitorObject(record)) + QByteArrayLiteral(")"));
+    }
+    if (!state.monitors.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("monitors"));
+
+    auto &environment = moduleBodies[QStringLiteral("modules/20-environment.lua")];
+    for (qsizetype index = 0; index < state.environment.size(); ++index) {
+        const auto &record = state.environment.at(index);
+        if (record.scope == Hyprland::EnvironmentScope::Uwsm) {
+            addError(errors,
+                     QStringLiteral("$.environment[%1].scope").arg(index),
+                     QStringLiteral("renderer.uwsm-unavailable"),
+                     QStringLiteral("UWSM environment integration is deferred and cannot be silently emitted as hl.env."));
+            continue;
+        }
+        appendStatement(environment, QByteArrayLiteral("hl.env(")
+            + luaString(record.name) + QByteArrayLiteral(", ")
+            + luaString(record.value) + QByteArrayLiteral(")"));
+    }
+    if (!state.environment.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("environment"));
+
+    auto &input = moduleBodies[QStringLiteral("modules/30-input.lua")];
+    for (const auto &record : state.devices) {
+        auto object = record.overrides;
+        object.insert(QStringLiteral("name"), record.selector);
+        object.insert(QStringLiteral("enabled"), record.enabled);
+        appendStatement(input, QByteArrayLiteral("hl.device(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    if (!state.devices.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("devices"));
+
+    auto &gestures = moduleBodies[QStringLiteral("modules/31-gestures.lua")];
+    for (qsizetype index = 0; index < state.gestures.size(); ++index) {
+        const auto object = gestureObject(
+            state.gestures.at(index), actionCatalog, errors,
+            QStringLiteral("$.gestures[%1]").arg(index)
+        );
+        appendStatement(gestures, QByteArrayLiteral("hl.gesture(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    if (!state.gestures.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("gestures"));
+
+    auto &workspaces = moduleBodies[QStringLiteral("modules/42-workspaces.lua")];
+    for (const auto &record : state.workspaceRules) {
+        auto object = record.overrides;
+        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_in"));
+        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_out"));
+        normalizeWorkspaceCssGap(object, QStringLiteral("float_gaps"));
+        object.insert(QStringLiteral("workspace"), record.selector);
+        object.insert(QStringLiteral("enabled"), record.enabled);
+        object.insert(QStringLiteral("monitor"), record.monitor);
+        object.insert(QStringLiteral("persistent"), record.persistent);
+        object.insert(QStringLiteral("default"), record.isDefault);
+        object.insert(QStringLiteral("layout"), record.layout);
+        appendStatement(workspaces, QByteArrayLiteral("hl.workspace_rule(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    if (!state.workspaceRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("workspaceRules"));
+
+    auto &animations = moduleBodies[QStringLiteral("modules/51-animations.lua")];
+    // Hyprland retains named curve maps across Lua reloads. Re-register the
+    // pinned built-ins before authored curves so deleting or changing a
+    // same-named override cannot leave stale managed behavior behind.
+    appendStatement(
+        animations,
+        QByteArrayLiteral(
+            "hl.curve(\"default\", { points = { { 0, 0.75 }, { 0.15, 1 } }, type = \"bezier\" })"
+        )
+    );
+    appendStatement(
+        animations,
+        QByteArrayLiteral(
+            "hl.curve(\"default\", { dampening = 25, mass = 1, stiffness = 250, type = \"spring\" })"
+        )
+    );
+    appendStatement(
+        animations,
+        QByteArrayLiteral(
+            "hl.curve(\"linear\", { points = { { 0, 0 }, { 1, 1 } }, type = \"bezier\" })"
+        )
+    );
+    QMap<QString, bool> springCurves;
+    for (const auto &record : state.curves) {
+        QJsonObject object;
+        if (const auto *bezier = std::get_if<Hyprland::BezierCurveParameters>(&record.parameters)) {
+            object.insert(QStringLiteral("type"), QStringLiteral("bezier"));
+            QJsonArray points;
+            for (const auto &point : bezier->points) {
+                points.append(QJsonArray{point.at(0), point.at(1)});
+            }
+            object.insert(QStringLiteral("points"), points);
+            springCurves.insert(record.name, false);
+        } else {
+            const auto &spring = std::get<Hyprland::SpringCurveParameters>(record.parameters);
+            object.insert(QStringLiteral("type"), QStringLiteral("spring"));
+            object.insert(QStringLiteral("stiffness"), spring.stiffness);
+            object.insert(QStringLiteral("dampening"), spring.dampening);
+            object.insert(QStringLiteral("mass"), spring.mass);
+            springCurves.insert(record.name, true);
+        }
+        appendStatement(animations, QByteArrayLiteral("hl.curve(")
+            + luaString(record.name) + QByteArrayLiteral(", ")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    for (const auto &record : state.animations) {
+        QJsonObject object{
+            {QStringLiteral("leaf"), record.name},
+            {QStringLiteral("enabled"), record.enabled},
+            {QStringLiteral("speed"), record.speed},
+        };
+        object.insert(
+            springCurves.value(record.curve, false)
+                ? QStringLiteral("spring") : QStringLiteral("bezier"),
+            record.curve
+        );
+        if (!record.style.isEmpty()) object.insert(QStringLiteral("style"), record.style);
+        appendStatement(animations, QByteArrayLiteral("hl.animation(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    if (!state.curves.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("curves"));
+    if (!state.animations.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("animations"));
+
+    auto &rules = moduleBodies[QStringLiteral("modules/60-rules.lua")];
+    for (const auto &record : state.windowRules) {
+        auto object = marshalledWindowEffects(record.effects);
+        object.insert(QStringLiteral("name"), record.name);
+        object.insert(QStringLiteral("enabled"), record.enabled);
+        object.insert(QStringLiteral("match"), record.match);
+        appendStatement(rules, QByteArrayLiteral("hl.window_rule(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    for (const auto &record : state.layerRules) {
+        auto object = record.effects;
+        object.insert(QStringLiteral("name"), record.name);
+        object.insert(QStringLiteral("enabled"), record.enabled);
+        object.insert(QStringLiteral("match"), record.match);
+        appendStatement(rules, QByteArrayLiteral("hl.layer_rule(")
+            + luaObject(object) + QByteArrayLiteral(")"));
+    }
+    if (!state.windowRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("windowRules"));
+    if (!state.layerRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("layerRules"));
+
+    auto &keybinds = moduleBodies[QStringLiteral("modules/70-keybinds.lua")];
+    QMap<QString, QByteArray> submapBindings;
+    QByteArray topLevelBindings;
+    for (qsizetype index = 0; index < state.bindings.size(); ++index) {
+        const auto &record = state.bindings.at(index);
+        const auto statement = bindingStatement(
+            record, actionCatalog, errors,
+            QStringLiteral("$.bindings[%1]").arg(index)
+        );
+        if (statement.isEmpty()) continue;
+        if (record.submap.isEmpty()) appendStatement(topLevelBindings, statement);
+        else appendStatement(submapBindings[record.submap], statement);
+    }
+    for (const auto &submap : state.submaps) {
+        if (!submap.enabled) continue;
+        QByteArray statement = QByteArrayLiteral("hl.define_submap(")
+            + luaString(submap.name) + QByteArrayLiteral(", ");
+        if (!submap.reset.isEmpty()) {
+            statement += luaString(submap.reset) + QByteArrayLiteral(", ");
+        }
+        statement += QByteArrayLiteral("function()\n");
+        statement += submapBindings.value(submap.name);
+        statement += QByteArrayLiteral("end)");
+        appendStatement(keybinds, statement);
+    }
+    // The tagged Lua API executes a submap definition callback immediately.
+    // Declare every enabled submap first, then emit the default-map binds.
+    keybinds.append(topLevelBindings);
+    if (!state.submaps.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("submaps"));
+    if (!state.bindings.isEmpty()) {
+        includeSurfaceRequirement(required, catalog, QStringLiteral("bindings"));
+    }
+
+    auto &permissions = moduleBodies[QStringLiteral("modules/80-permissions.lua")];
+    for (const auto &record : state.permissions) {
+        appendStatement(permissions, QByteArrayLiteral("hl.permission(")
+            + luaString(record.binary) + QByteArrayLiteral(", ")
+            + luaString(record.type) + QByteArrayLiteral(", ")
+            + luaString(record.mode) + QByteArrayLiteral(")"));
+    }
+    if (!state.permissions.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("permissions"));
+
+    if (!errors.isEmpty()) {
+        return std::nullopt;
+    }
+
+    payload.activationRequirement = required;
+    return payload;
+}
+
 [[nodiscard]] QByteArray createdAtString(const QDateTime &value)
 {
     return value.toUTC().toString(QStringLiteral("yyyy-MM-dd'T'HH:mm:ss.zzz'Z'"))
@@ -614,47 +867,6 @@ void normalizeWorkspaceCssGap(QJsonObject &object, const QString &field)
 QStringList managedModulePaths()
 {
     return modulePaths;
-}
-
-QString activationRequirementName(const ActivationRequirement value)
-{
-    switch (value) {
-    case ActivationRequirement::None: return QStringLiteral("none");
-    case ActivationRequirement::Reload: return QStringLiteral("reload");
-    case ActivationRequirement::Restart: return QStringLiteral("restart");
-    case ActivationRequirement::Session: return QStringLiteral("session");
-    }
-    return QStringLiteral("session");
-}
-
-ActivationRequirement activationRequirementForDesiredState(
-    const Hyprland::DesiredState &state,
-    const Hyprland::Catalog &catalog
-)
-{
-    ActivationRequirement required = ActivationRequirement::Reload;
-    for (auto iterator = state.overrides.constBegin();
-         iterator != state.overrides.constEnd(); ++iterator) {
-        if (const auto *option = Hyprland::findOption(catalog, iterator.key())) {
-            includeRequirement(required, option->applyMode);
-        }
-    }
-    const auto include = [&](const bool nonempty, const QString &surface) {
-        if (nonempty) includeSurfaceRequirement(required, catalog, surface);
-    };
-    include(!state.monitors.isEmpty(), QStringLiteral("monitors"));
-    include(!state.devices.isEmpty(), QStringLiteral("devices"));
-    include(!state.curves.isEmpty(), QStringLiteral("curves"));
-    include(!state.animations.isEmpty(), QStringLiteral("animations"));
-    include(!state.gestures.isEmpty(), QStringLiteral("gestures"));
-    include(!state.workspaceRules.isEmpty(), QStringLiteral("workspaceRules"));
-    include(!state.windowRules.isEmpty(), QStringLiteral("windowRules"));
-    include(!state.layerRules.isEmpty(), QStringLiteral("layerRules"));
-    include(!state.submaps.isEmpty(), QStringLiteral("submaps"));
-    include(!state.bindings.isEmpty(), QStringLiteral("bindings"));
-    include(!state.permissions.isEmpty(), QStringLiteral("permissions"));
-    include(!state.environment.isEmpty(), QStringLiteral("environment"));
-    return required;
 }
 
 RenderResult renderGeneration(
@@ -726,206 +938,13 @@ RenderResult renderGeneration(
         return result;
     }
 
-    QMap<QString, QByteArray> moduleBodies;
-    for (const auto &path : modulePaths) {
-        moduleBodies.insert(path, {});
-    }
-    // Publishing a generation always requires at least a reload, including a
-    // first adoption, an all-default state, and a state that only deletes old
-    // managed values. None is reserved for an already-converged service view.
-    ActivationRequirement required = ActivationRequirement::Reload;
-
-    QMap<QString, QJsonObject> scalarConfig;
-    for (auto iterator = state.overrides.constBegin();
-         iterator != state.overrides.constEnd(); ++iterator) {
-        const auto *option = Hyprland::findOption(catalog, iterator.key());
-        if (!option || option->luaPath.isEmpty()) {
-            addError(result.errors, QStringLiteral("$.overrides.") + iterator.key(),
-                     QStringLiteral("renderer.missing-catalog-path"),
-                     QStringLiteral("The scalar override has no pinned Lua output path."));
-            continue;
-        }
-        const auto modulePath = moduleForCatalogModule(option->module);
-        auto root = scalarConfig.value(modulePath);
-        insertNested(root, option->luaPath, 0, iterator.value());
-        scalarConfig.insert(modulePath, root);
-        includeRequirement(required, option->applyMode);
-    }
-    for (auto iterator = scalarConfig.constBegin();
-         iterator != scalarConfig.constEnd(); ++iterator) {
-        appendStatement(
-            moduleBodies[iterator.key()],
-            QByteArrayLiteral("hl.config(") + luaObject(iterator.value())
-                + QByteArrayLiteral(")")
-        );
-    }
-
-    auto &monitors = moduleBodies[QStringLiteral("modules/10-monitors.lua")];
-    for (const auto &record : state.monitors) {
-        appendStatement(monitors, QByteArrayLiteral("hl.monitor(")
-            + luaObject(monitorObject(record)) + QByteArrayLiteral(")"));
-    }
-    if (!state.monitors.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("monitors"));
-
-    auto &environment = moduleBodies[QStringLiteral("modules/20-environment.lua")];
-    for (qsizetype index = 0; index < state.environment.size(); ++index) {
-        const auto &record = state.environment.at(index);
-        if (record.scope == Hyprland::EnvironmentScope::Uwsm) {
-            addError(result.errors,
-                     QStringLiteral("$.environment[%1].scope").arg(index),
-                     QStringLiteral("renderer.uwsm-unavailable"),
-                     QStringLiteral("UWSM environment integration is deferred and cannot be silently emitted as hl.env."));
-            continue;
-        }
-        appendStatement(environment, QByteArrayLiteral("hl.env(")
-            + luaString(record.name) + QByteArrayLiteral(", ")
-            + luaString(record.value) + QByteArrayLiteral(")"));
-    }
-    if (!state.environment.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("environment"));
-
-    auto &input = moduleBodies[QStringLiteral("modules/30-input.lua")];
-    for (const auto &record : state.devices) {
-        auto object = record.overrides;
-        object.insert(QStringLiteral("name"), record.selector);
-        object.insert(QStringLiteral("enabled"), record.enabled);
-        appendStatement(input, QByteArrayLiteral("hl.device(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    if (!state.devices.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("devices"));
-
-    auto &gestures = moduleBodies[QStringLiteral("modules/31-gestures.lua")];
-    for (qsizetype index = 0; index < state.gestures.size(); ++index) {
-        const auto object = gestureObject(
-            state.gestures.at(index), actionCatalog, result.errors,
-            QStringLiteral("$.gestures[%1]").arg(index)
-        );
-        appendStatement(gestures, QByteArrayLiteral("hl.gesture(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    if (!state.gestures.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("gestures"));
-
-    auto &workspaces = moduleBodies[QStringLiteral("modules/42-workspaces.lua")];
-    for (const auto &record : state.workspaceRules) {
-        auto object = record.overrides;
-        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_in"));
-        normalizeWorkspaceCssGap(object, QStringLiteral("gaps_out"));
-        normalizeWorkspaceCssGap(object, QStringLiteral("float_gaps"));
-        object.insert(QStringLiteral("workspace"), record.selector);
-        object.insert(QStringLiteral("enabled"), record.enabled);
-        object.insert(QStringLiteral("monitor"), record.monitor);
-        object.insert(QStringLiteral("persistent"), record.persistent);
-        object.insert(QStringLiteral("default"), record.isDefault);
-        object.insert(QStringLiteral("layout"), record.layout);
-        appendStatement(workspaces, QByteArrayLiteral("hl.workspace_rule(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    if (!state.workspaceRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("workspaceRules"));
-
-    auto &animations = moduleBodies[QStringLiteral("modules/51-animations.lua")];
-    QMap<QString, bool> springCurves;
-    for (const auto &record : state.curves) {
-        QJsonObject object;
-        if (const auto *bezier = std::get_if<Hyprland::BezierCurveParameters>(&record.parameters)) {
-            object.insert(QStringLiteral("type"), QStringLiteral("bezier"));
-            QJsonArray points;
-            for (const auto &point : bezier->points) {
-                points.append(QJsonArray{point.at(0), point.at(1)});
-            }
-            object.insert(QStringLiteral("points"), points);
-            springCurves.insert(record.name, false);
-        } else {
-            const auto &spring = std::get<Hyprland::SpringCurveParameters>(record.parameters);
-            object.insert(QStringLiteral("type"), QStringLiteral("spring"));
-            object.insert(QStringLiteral("stiffness"), spring.stiffness);
-            object.insert(QStringLiteral("dampening"), spring.dampening);
-            object.insert(QStringLiteral("mass"), spring.mass);
-            springCurves.insert(record.name, true);
-        }
-        appendStatement(animations, QByteArrayLiteral("hl.curve(")
-            + luaString(record.name) + QByteArrayLiteral(", ")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    for (const auto &record : state.animations) {
-        QJsonObject object{
-            {QStringLiteral("leaf"), record.name},
-            {QStringLiteral("enabled"), record.enabled},
-            {QStringLiteral("speed"), record.speed},
-        };
-        object.insert(
-            springCurves.value(record.curve, false)
-                ? QStringLiteral("spring") : QStringLiteral("bezier"),
-            record.curve
-        );
-        if (!record.style.isEmpty()) object.insert(QStringLiteral("style"), record.style);
-        appendStatement(animations, QByteArrayLiteral("hl.animation(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    if (!state.curves.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("curves"));
-    if (!state.animations.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("animations"));
-
-    auto &rules = moduleBodies[QStringLiteral("modules/60-rules.lua")];
-    for (const auto &record : state.windowRules) {
-        auto object = marshalledWindowEffects(record.effects);
-        object.insert(QStringLiteral("name"), record.name);
-        object.insert(QStringLiteral("enabled"), record.enabled);
-        object.insert(QStringLiteral("match"), record.match);
-        appendStatement(rules, QByteArrayLiteral("hl.window_rule(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    for (const auto &record : state.layerRules) {
-        auto object = record.effects;
-        object.insert(QStringLiteral("name"), record.name);
-        object.insert(QStringLiteral("enabled"), record.enabled);
-        object.insert(QStringLiteral("match"), record.match);
-        appendStatement(rules, QByteArrayLiteral("hl.layer_rule(")
-            + luaObject(object) + QByteArrayLiteral(")"));
-    }
-    if (!state.windowRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("windowRules"));
-    if (!state.layerRules.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("layerRules"));
-
-    auto &keybinds = moduleBodies[QStringLiteral("modules/70-keybinds.lua")];
-    QMap<QString, QByteArray> submapBindings;
-    QByteArray topLevelBindings;
-    for (qsizetype index = 0; index < state.bindings.size(); ++index) {
-        const auto &record = state.bindings.at(index);
-        const auto statement = bindingStatement(
-            record, actionCatalog, result.errors,
-            QStringLiteral("$.bindings[%1]").arg(index)
-        );
-        if (statement.isEmpty()) continue;
-        if (record.submap.isEmpty()) appendStatement(topLevelBindings, statement);
-        else appendStatement(submapBindings[record.submap], statement);
-    }
-    for (const auto &submap : state.submaps) {
-        if (!submap.enabled) continue;
-        QByteArray statement = QByteArrayLiteral("hl.define_submap(")
-            + luaString(submap.name) + QByteArrayLiteral(", ");
-        if (!submap.reset.isEmpty()) {
-            statement += luaString(submap.reset) + QByteArrayLiteral(", ");
-        }
-        statement += QByteArrayLiteral("function()\n");
-        statement += submapBindings.value(submap.name);
-        statement += QByteArrayLiteral("end)");
-        appendStatement(keybinds, statement);
-    }
-    // The tagged Lua API executes a submap definition callback immediately.
-    // Declare every enabled submap first, then emit the default-map binds.
-    keybinds.append(topLevelBindings);
-    if (!state.submaps.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("submaps"));
-    if (std::ranges::any_of(state.bindings, [](const auto &record) { return record.enabled; })) {
-        includeSurfaceRequirement(required, catalog, QStringLiteral("bindings"));
-    }
-
-    auto &permissions = moduleBodies[QStringLiteral("modules/80-permissions.lua")];
-    for (const auto &record : state.permissions) {
-        appendStatement(permissions, QByteArrayLiteral("hl.permission(")
-            + luaString(record.binary) + QByteArrayLiteral(", ")
-            + luaString(record.type) + QByteArrayLiteral(", ")
-            + luaString(record.mode) + QByteArrayLiteral(")"));
-    }
-    if (!state.permissions.isEmpty()) includeSurfaceRequirement(required, catalog, QStringLiteral("permissions"));
-
-    if (!result.errors.isEmpty()) {
+    auto payload = renderSemanticLuaPayload(
+        state,
+        catalog,
+        actionCatalog,
+        result.errors
+    );
+    if (!payload) {
         return result;
     }
 
@@ -933,10 +952,10 @@ RenderResult renderGeneration(
     rendered.snapshotDigest = sha256(canonicalState);
     rendered.activationNonce = activationNonce;
     rendered.createdAt = QString::fromLatin1(createdAtString(createdAtUtc));
-    rendered.activationRequirement = required;
+    rendered.activationRequirement = payload->activationRequirement;
     const auto header = managedHeader(userCustomPath);
-    for (auto iterator = moduleBodies.constBegin();
-         iterator != moduleBodies.constEnd(); ++iterator) {
+    for (auto iterator = payload->moduleBodies.constBegin();
+         iterator != payload->moduleBodies.constEnd(); ++iterator) {
         GeneratedFile file{
             .path = iterator.key(),
             .contents = header + iterator.value(),
@@ -1051,6 +1070,311 @@ RenderResult renderGeneration(
     rendered.manifest = manifestWithoutGeneration;
     rendered.manifest.insert(QStringLiteral("generation"), rendered.generation);
     rendered.manifestBytes = Hyprland::JsonSupport::canonicalJson(rendered.manifest);
+    rendered.manifestBytes.append('\n');
+    result.value = std::move(rendered);
+    return result;
+}
+
+DormantRenderResultV2 renderDormantGenerationV2(
+    const Hyprland::DesiredStateV2 &state,
+    const Hyprland::Catalog &catalogV2,
+    const Hyprland::ActionCatalog &actionCatalogV2,
+    const QString &generationRoot,
+    const QString &userCustomPath,
+    const QString &activationNonce,
+    const QDateTime &createdAtUtc
+)
+{
+    DormantRenderResultV2 result;
+    if (!safeAbsolutePath(generationRoot)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.generationRoot"),
+            QStringLiteral("renderer-v2.invalid-path"),
+            QStringLiteral(
+                "The immutable generation root must be a clean absolute path."
+            )
+        );
+    }
+    if (!safeAbsolutePath(userCustomPath)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.userCustomPath"),
+            QStringLiteral("renderer-v2.invalid-path"),
+            QStringLiteral("The user custom path must be a clean absolute path.")
+        );
+    }
+    const auto cleanGenerationPrefix = generationRoot + QLatin1Char('/');
+    if (safeAbsolutePath(generationRoot)
+        && (userCustomPath == generationRoot
+            || userCustomPath.startsWith(cleanGenerationPrefix))) {
+        addError(
+            result.errors,
+            QStringLiteral("$.userCustomPath"),
+            QStringLiteral("renderer-v2.custom-inside-generation"),
+            QStringLiteral(
+                "The user-owned custom file must remain outside the immutable generation tree."
+            )
+        );
+    }
+    if (!Hyprland::isCanonicalAuthorityId(activationNonce)) {
+        addError(
+            result.errors,
+            QStringLiteral("$.activationNonce"),
+            QStringLiteral("renderer-v2.invalid-nonce"),
+            QStringLiteral(
+                "The activation nonce must be exactly 32 lowercase hexadecimal characters and cannot be all zero."
+            )
+        );
+    }
+    if (safeAbsolutePath(generationRoot)
+        && QDir(generationRoot).dirName() != activationNonce) {
+        addError(
+            result.errors,
+            QStringLiteral("$.generationRoot"),
+            QStringLiteral("renderer-v2.generation-root-mismatch"),
+            QStringLiteral(
+                "The immutable generation directory must be keyed by the activation nonce."
+            )
+        );
+    }
+    if (!createdAtUtc.isValid()) {
+        addError(
+            result.errors,
+            QStringLiteral("$.createdAt"),
+            QStringLiteral("renderer-v2.invalid-time"),
+            QStringLiteral("A valid UTC creation instant is required.")
+        );
+    }
+
+    const auto canonicalStateResult =
+        Hyprland::serializeDormantDesiredStateV2(state);
+    if (!canonicalStateResult) {
+        result.errors.append(canonicalStateResult.errors);
+    }
+
+    Hyprland::ValidationResult<Hyprland::DesiredStateV2> reparsed;
+    if (canonicalStateResult) {
+        reparsed = Hyprland::parseDormantDesiredStateV2(
+            QByteArrayView(*canonicalStateResult.value),
+            catalogV2,
+            actionCatalogV2
+        );
+        if (!reparsed) {
+            result.errors.append(reparsed.errors);
+        } else if (*reparsed.value != state) {
+            addError(
+                result.errors,
+                QStringLiteral("$"),
+                QStringLiteral("renderer-v2.unvalidated-state"),
+                QStringLiteral(
+                    "The dormant v2 desired state is not the canonical strict-parser product."
+                )
+            );
+        }
+    }
+    if (state.semanticState.readOnly
+        || state.semanticState.opaqueFutureDocument) {
+        addError(
+            result.errors,
+            QStringLiteral("$"),
+            QStringLiteral("renderer-v2.read-only-state"),
+            QStringLiteral(
+                "A compatibility-preserved read-only state cannot be rendered."
+            )
+        );
+    }
+    if (!result.errors.isEmpty()) {
+        return result;
+    }
+
+    auto canonicalState = *canonicalStateResult.value;
+    if (!canonicalState.endsWith('\n')) {
+        addError(
+            result.errors,
+            QStringLiteral("$"),
+            QStringLiteral("renderer-v2.invalid-canonical-state"),
+            QStringLiteral(
+                "The dormant v2 serializer must terminate canonical JSON with one newline."
+            )
+        );
+        return result;
+    }
+    canonicalState.chop(1);
+
+    auto payload = renderSemanticLuaPayload(
+        reparsed.value->semanticState,
+        catalogV2,
+        actionCatalogV2,
+        result.errors
+    );
+    if (!payload) {
+        return result;
+    }
+
+    DormantRenderedGenerationV2 rendered;
+    rendered.authorityId = state.authorityId;
+    rendered.snapshotDigest = sha256(canonicalState);
+    rendered.sourceManifestDigest = catalogV2.sourceManifestDigest;
+    rendered.activationNonce = activationNonce;
+    rendered.createdAt = QString::fromLatin1(createdAtString(createdAtUtc));
+    rendered.activationRequirement = payload->activationRequirement;
+    const auto header = managedHeader(userCustomPath);
+    for (auto iterator = payload->moduleBodies.constBegin();
+         iterator != payload->moduleBodies.constEnd(); ++iterator) {
+        GeneratedFile file{
+            .path = iterator.key(),
+            .contents = header + iterator.value(),
+        };
+        file.size = static_cast<quint64>(file.contents.size());
+        file.sha256 = sha256(file.contents);
+        rendered.files.insert(file.path, std::move(file));
+    }
+
+    QByteArray loader = header;
+    loader += "local function hyprshelld_is_verifier()\n";
+    loader += "    local cmdline = io.open(\"/proc/self/cmdline\", \"rb\")\n";
+    loader += "    if not cmdline then return true end\n";
+    loader += "    local arguments = cmdline:read(\"*a\")\n";
+    loader += "    local closed = cmdline:close()\n";
+    loader += "    if not arguments or not closed then return true end\n";
+    loader += "    if #arguments == 0 or string.byte(arguments, -1) ~= 0 then return true end\n";
+    loader += "    local parsed = 0\n";
+    loader += "    for argument in string.gmatch(arguments, \"([^%z]+)%z\") do\n";
+    loader += "        parsed = parsed + 1\n";
+    loader += "        if argument == \"--verify-config\" then return true end\n";
+    loader += "    end\n";
+    loader += "    return parsed == 0\n";
+    loader += "end\n\n";
+    loader += "local function hyprshelld_read_bounded(path)\n";
+    loader += "    local file = io.open(path, \"rb\")\n";
+    loader += "    if not file then return nil end\n";
+    loader += "    local bytes = file:read(4097)\n";
+    loader += "    local closed = file:close()\n";
+    loader += "    if not bytes or not closed or #bytes > 4096 then return nil end\n";
+    loader += "    return bytes\n";
+    loader += "end\n\n";
+    loader += "local function hyprshelld_runtime_ready()\n";
+    loader += "    local runtime = os.getenv(\"XDG_RUNTIME_DIR\")\n";
+    loader += "    local signature = os.getenv(\"HYPRLAND_INSTANCE_SIGNATURE\")\n";
+    loader += "    if not runtime or not signature or #runtime == 0 or #runtime > 4096 then return false end\n";
+    loader += "    if string.sub(runtime, 1, 1) ~= \"/\" or string.find(runtime, \"//\", 1, true) then return false end\n";
+    loader += "    if #runtime > 1 and string.sub(runtime, -1) == \"/\" then return false end\n";
+    loader += "    for part in string.gmatch(runtime, \"[^/]+\") do\n";
+    loader += "        if part == \".\" or part == \"..\" then return false end\n";
+    loader += "    end\n";
+    loader += "    if #signature == 0 or #signature > 192 or signature == \".\" or signature == \"..\" then return false end\n";
+    loader += "    if string.find(signature, \"[^A-Za-z0-9_.-]\") then return false end\n";
+    loader += "    local stat = hyprshelld_read_bounded(\"/proc/self/stat\")\n";
+    loader += "    if not stat then return false end\n";
+    loader += "    local pid = string.match(stat, \"^(%d+) %(\")\n";
+    loader += "    if not pid or string.sub(pid, 1, 1) == \"0\" then return false end\n";
+    loader += "    local lock = hyprshelld_read_bounded(runtime .. \"/hypr/\" .. signature .. \"/hyprland.lock\")\n";
+    loader += "    if not lock then return false end\n";
+    loader += "    local lock_pid = string.match(lock, \"^(%d+)\\n\")\n";
+    loader += "    return lock_pid == pid\n";
+    loader += "end\n\n";
+    loader += "hl.on(\"config.reloaded\", function()\n";
+    loader += "    if hyprshelld_is_verifier() or not hyprshelld_runtime_ready() then return end\n";
+    loader += "    hl.dispatch(hl.dsp.event(";
+    loader += luaString(QStringLiteral("hyprshelld:") + activationNonce);
+    loader += "))\nend)\n\n";
+    for (const auto &path : modulePaths) {
+        loader += "require(";
+        loader += luaString(QDir(generationRoot).filePath(path));
+        loader += ")\n";
+    }
+    loader += "require(";
+    loader += luaString(userCustomPath);
+    loader += ")\n";
+    GeneratedFile entrypoint{
+        .path = rendered.entrypoint,
+        .contents = loader,
+    };
+    entrypoint.size = static_cast<quint64>(entrypoint.contents.size());
+    entrypoint.sha256 = sha256(entrypoint.contents);
+    rendered.files.insert(entrypoint.path, std::move(entrypoint));
+
+    QJsonObject files;
+    for (auto iterator = rendered.files.constBegin();
+         iterator != rendered.files.constEnd(); ++iterator) {
+        files.insert(
+            iterator.key(),
+            QJsonObject{
+                {QStringLiteral("sha256"), iterator->sha256},
+                {
+                    QStringLiteral("size"),
+                    static_cast<qint64>(iterator->size),
+                },
+            }
+        );
+    }
+    const QJsonObject compatible{
+        {QStringLiteral("major"), static_cast<qint64>(catalogV2.hyprland.major)},
+        {QStringLiteral("minor"), static_cast<qint64>(catalogV2.hyprland.minor)},
+        {
+            QStringLiteral("reviewedVersion"),
+            Hyprland::toString(catalogV2.hyprland.reviewedVersion),
+        },
+        {
+            QStringLiteral("minimumPatch"),
+            static_cast<qint64>(catalogV2.hyprland.minimumPatch),
+        },
+        {
+            QStringLiteral("maximumPatch"),
+            static_cast<qint64>(*catalogV2.hyprland.maximumPatch),
+        },
+    };
+    QJsonObject manifestWithoutGeneration{
+        {
+            QStringLiteral("formatVersion"),
+            static_cast<qint64>(dormantGenerationV2FormatVersion),
+        },
+        {
+            QStringLiteral("contractVersion"),
+            static_cast<qint64>(dormantGenerationV2ContractVersion),
+        },
+        {QStringLiteral("authorityId"), rendered.authorityId},
+        {QStringLiteral("snapshotDigest"), rendered.snapshotDigest},
+        {
+            QStringLiteral("sourceManifestDigest"),
+            rendered.sourceManifestDigest,
+        },
+        {
+            QStringLiteral("catalogDigest"),
+            reparsed.value->semanticState.catalogDigest,
+        },
+        {
+            QStringLiteral("actionCatalogDigest"),
+            reparsed.value->semanticState.actionCatalogDigest,
+        },
+        {
+            QStringLiteral("revision"),
+            QString::number(reparsed.value->semanticState.revision),
+        },
+        {
+            QStringLiteral("targetHyprland"),
+            reparsed.value->semanticState.targetHyprland,
+        },
+        {QStringLiteral("compatibleHyprland"), compatible},
+        {
+            QStringLiteral("rendererVersion"),
+            static_cast<qint64>(dormantRendererV2Version),
+        },
+        {QStringLiteral("activationNonce"), activationNonce},
+        {QStringLiteral("createdAt"), rendered.createdAt},
+        {QStringLiteral("entrypoint"), rendered.entrypoint},
+        {QStringLiteral("files"), files},
+    };
+    rendered.generation = sha256(
+        Hyprland::JsonSupport::canonicalJson(manifestWithoutGeneration)
+    );
+    rendered.manifest = manifestWithoutGeneration;
+    rendered.manifest.insert(
+        QStringLiteral("generation"), rendered.generation
+    );
+    rendered.manifestBytes =
+        Hyprland::JsonSupport::canonicalJson(rendered.manifest);
     rendered.manifestBytes.append('\n');
     result.value = std::move(rendered);
     return result;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "configuration_authority.h"
+#include "hyprland/input_device_inventory.h"
 #include "renderer.h"
 
 #include <QByteArray>
@@ -91,6 +92,14 @@ struct ConnectedDisplaysResult final {
     std::optional<Hyprland::ConnectedDisplayTopology> topology;
 };
 
+struct ConnectedInputDevicesResult final {
+    bool success = false;
+    QString errorCode;
+    QString errorMessage;
+    QString runtimeIdentity;
+    std::optional<Hyprland::ConnectedInputDeviceInventory> inventory;
+};
+
 enum class RuntimeActivationMode {
     ManagedReload,
     AdoptionFullReset,
@@ -151,6 +160,27 @@ public:
     {
         Q_UNUSED(maximumWaitMilliseconds)
         return connectedDisplays();
+    }
+    [[nodiscard]] virtual ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch
+    )
+    {
+        Q_UNUSED(serviceEpoch)
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "Connected-input-device discovery is unavailable"
+            ),
+        };
+    }
+    [[nodiscard]] virtual ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch,
+        int maximumWaitMilliseconds
+    )
+    {
+        Q_UNUSED(maximumWaitMilliseconds)
+        return connectedInputDevices(serviceEpoch);
     }
 };
 
@@ -299,6 +329,27 @@ public:
         Q_UNUSED(maximumWaitMilliseconds)
         return connectedDisplays();
     }
+    [[nodiscard]] virtual ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch
+    )
+    {
+        Q_UNUSED(serviceEpoch)
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "Connected-input-device discovery is unavailable"
+            ),
+        };
+    }
+    [[nodiscard]] virtual ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch,
+        int maximumWaitMilliseconds
+    )
+    {
+        Q_UNUSED(maximumWaitMilliseconds)
+        return connectedInputDevices(serviceEpoch);
+    }
     [[nodiscard]] virtual BackendResult verifyPendingTarget(
         const ActivationReceipt &,
         QStringView
@@ -423,6 +474,13 @@ public:
     [[nodiscard]] ConnectedDisplaysResult connectedDisplays(
         int maximumWaitMilliseconds
     ) override;
+    [[nodiscard]] ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch
+    ) override;
+    [[nodiscard]] ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch,
+        int maximumWaitMilliseconds
+    ) override;
 
 private:
     struct Impl;
@@ -464,6 +522,13 @@ public:
     ) override;
     [[nodiscard]] ConnectedDisplaysResult connectedDisplays() override;
     [[nodiscard]] ConnectedDisplaysResult connectedDisplays(
+        int maximumWaitMilliseconds
+    ) override;
+    [[nodiscard]] ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch
+    ) override;
+    [[nodiscard]] ConnectedInputDevicesResult connectedInputDevices(
+        QByteArrayView serviceEpoch,
         int maximumWaitMilliseconds
     ) override;
     [[nodiscard]] BackendResult verifyPendingTarget(

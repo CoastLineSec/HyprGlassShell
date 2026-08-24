@@ -1,8 +1,10 @@
 #include "compositord/activation_backend.h"
 #include "compositord/compositor_service.h"
 #include "compositord/shared_border_reconciler.h"
+#include "compositord/shared_spacing_reconciler.h"
 
 #include "hyprland/catalog.h"
+#include "hyprland/action_catalog.h"
 #include "hyprland/json_support.h"
 
 #include <QCryptographicHash>
@@ -33,6 +35,8 @@ constexpr auto generationId =
 constexpr auto snapshotId =
     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 constexpr auto activationNonce = "0123456789abcdef0123456789abcdef";
+constexpr auto inputDeviceInventoryEpoch =
+    "fedcba9876543210fedcba9876543210";
 
 [[nodiscard]] QString sha256(const QByteArrayView bytes)
 {
@@ -51,6 +55,22 @@ constexpr auto activationNonce = "0123456789abcdef0123456789abcdef";
     return parsed ? canonicalCatalogJson(*parsed.value) : QByteArray{};
 }
 
+[[nodiscard]] QByteArray protectedConfigSchema()
+{
+    QFile file(QFINDTESTDATA("../interfaces/hyprland/v1/config.schema.json"));
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
+}
+
+[[nodiscard]] QByteArray protectedActionCatalog()
+{
+    QFile file(QFINDTESTDATA("../data/hyprland/action-catalog-v1.json"));
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    const auto parsed = parseActionCatalog(file.readAll(), protectedConfigSchema());
+    return parsed ? canonicalActionCatalogJson(*parsed.value) : QByteArray{};
+}
+
+[[nodiscard]] QJsonObject exactProtectedSpacingRule();
+
 [[nodiscard]] QByteArray sharedBorderSnapshot(
     const quint64 revision,
     const QString &catalogDigest,
@@ -63,14 +83,20 @@ constexpr auto activationNonce = "0123456789abcdef0123456789abcdef";
         {QStringLiteral("revision"), QString::number(revision)},
         {QStringLiteral("targetHyprland"), QStringLiteral("0.56.1")},
         {QStringLiteral("catalogDigest"), catalogDigest},
-        {QStringLiteral("actionCatalogDigest"), QStringLiteral("actions-v1")},
+        {
+            QStringLiteral("actionCatalogDigest"),
+            QString::fromLatin1(reviewedActionCatalogDigest)
+        },
         {QStringLiteral("overrides"), overrides},
         {QStringLiteral("monitors"), QJsonArray{}},
         {QStringLiteral("devices"), QJsonArray{}},
         {QStringLiteral("curves"), QJsonArray{}},
         {QStringLiteral("animations"), QJsonArray{}},
         {QStringLiteral("gestures"), QJsonArray{}},
-        {QStringLiteral("workspaceRules"), QJsonArray{}},
+        {
+            QStringLiteral("workspaceRules"),
+            QJsonArray{exactProtectedSpacingRule()}
+        },
         {QStringLiteral("windowRules"), QJsonArray{}},
         {QStringLiteral("layerRules"), QJsonArray{}},
         {QStringLiteral("submaps"), QJsonArray{}},
@@ -86,6 +112,28 @@ constexpr auto activationNonce = "0123456789abcdef0123456789abcdef";
     return bytes;
 }
 
+[[nodiscard]] QJsonObject exactProtectedSpacingRule()
+{
+    return {
+        {
+            QStringLiteral("id"),
+            QStringLiteral("hyprshelld.internal.shared-spacing.maximized")
+        },
+        {QStringLiteral("selector"), QStringLiteral("f[1]")},
+        {QStringLiteral("enabled"), true},
+        {QStringLiteral("monitor"), QString()},
+        {QStringLiteral("persistent"), false},
+        {QStringLiteral("isDefault"), false},
+        {QStringLiteral("layout"), QString()},
+        {
+            QStringLiteral("overrides"),
+            QJsonObject{{
+                QStringLiteral("gaps_out"), QJsonArray{0, 0, 0, 0}
+            }}
+        },
+    };
+}
+
 [[nodiscard]] QByteArray snapshotAtRevision(
     const QByteArray &candidate,
     const quint64 revision
@@ -96,6 +144,50 @@ constexpr auto activationNonce = "0123456789abcdef0123456789abcdef";
     auto bytes = JsonSupport::canonicalJson(object);
     bytes.append('\n');
     return bytes;
+}
+
+[[nodiscard]] std::optional<QByteArray> reconciledSharedVisualSnapshot(
+    const QByteArray &snapshot,
+    const quint64 expectedRevision,
+    const QString &catalogDigest,
+    const SharedVisualProjection &projection,
+    const bool reconcileBorder,
+    const bool reconcileSpacing,
+    QString &error
+)
+{
+    auto candidate = snapshot;
+    if (reconcileBorder) {
+        SharedBorderReconciler border;
+        if (!border.configure(protectedCatalog(), catalogDigest, error)) {
+            return std::nullopt;
+        }
+        const auto edit = border.edit(
+            candidate,
+            expectedRevision,
+            catalogDigest,
+            projection,
+            error
+        );
+        if (!edit) return std::nullopt;
+        candidate = edit->candidate;
+    }
+    if (reconcileSpacing) {
+        SharedSpacingReconciler spacing;
+        if (!spacing.configure(protectedCatalog(), catalogDigest, error)) {
+            return std::nullopt;
+        }
+        const auto edit = spacing.edit(
+            candidate,
+            expectedRevision,
+            catalogDigest,
+            projection,
+            error
+        );
+        if (!edit) return std::nullopt;
+        candidate = edit->candidate;
+    }
+    return candidate;
 }
 
 [[nodiscard]] bool writeFile(
@@ -152,13 +244,16 @@ struct EntrypointTree final {
 
 [[nodiscard]] AuthoritySnapshot dirtySnapshot()
 {
+    const auto catalogDigest = sha256(protectedCatalog());
+    const auto desiredState = sharedBorderSnapshot(5, catalogDigest);
     return {
         .available = true,
         .writable = true,
-        .desiredState = QByteArrayLiteral("{\"revision\":\"5\"}\n"),
+        .desiredState = desiredState,
+        .appliedDesiredState = snapshotAtRevision(desiredState, 4),
         .revision = 5,
-        .catalogDigest = QStringLiteral("catalog-v1"),
-        .actionCatalogDigest = QStringLiteral("actions-v1"),
+        .catalogDigest = catalogDigest,
+        .actionCatalogDigest = QString::fromLatin1(reviewedActionCatalogDigest),
         .loadState = QStringLiteral("ready"),
         .appliedRevision = 4,
         .applyState = QStringLiteral("dirty"),
@@ -174,6 +269,7 @@ struct EntrypointTree final {
 {
     auto snapshot = dirtySnapshot();
     snapshot.desiredState = desired;
+    snapshot.appliedDesiredState = desired;
     snapshot.revision = revision;
     snapshot.appliedRevision = revision;
     snapshot.applyState = QStringLiteral("current");
@@ -273,6 +369,40 @@ struct EntrypointTree final {
     };
 }
 
+[[nodiscard]] ConnectedInputDeviceInventory connectedInputDeviceInventory()
+{
+    const auto digest = QString(64, QLatin1Char('e'));
+    QByteArray document = JsonSupport::canonicalJson(QJsonObject{
+        {QStringLiteral("formatVersion"), 1},
+        {QStringLiteral("inventoryDigest"), digest},
+        {QStringLiteral("records"), QJsonArray{QJsonObject{
+             {QStringLiteral("sessionSelector"), QStringLiteral("keyboard-1")},
+             {QStringLiteral("observedKind"), QStringLiteral("keyboard")},
+             {QStringLiteral("activeKeymap"), QStringLiteral("English (US)")},
+         }}},
+        {QStringLiteral("unaddressable"), QJsonObject{
+             {QStringLiteral("switches"), 1},
+             {QStringLiteral("tabletPads"), 2},
+             {QStringLiteral("tabletTools"), 3},
+         }},
+    });
+    document.append('\n');
+    return {
+        .records = QVector<ConnectedInputDevice>{ConnectedInputDevice{
+            .sessionSelector = QStringLiteral("keyboard-1"),
+            .observedKind = ConnectedInputDeviceKind::Keyboard,
+            .activeKeymap = QStringLiteral("English (US)"),
+        }},
+        .unaddressable = {
+            .switches = 1,
+            .tabletPads = 2,
+            .tabletTools = 3,
+        },
+        .inventoryDigest = digest,
+        .document = document,
+    };
+}
+
 [[nodiscard]] QByteArray displayProfileBytes(
     const ConnectedDisplayTopology &topology
 )
@@ -325,7 +455,13 @@ public:
     QByteArray lastReplaceCandidate;
     QByteArray optionCatalogBytes;
     mutable int optionCatalogCalls = 0;
-    QStringList calls;
+    QByteArray actionCatalogBytes;
+    QByteArray configSchemaBytes;
+    mutable int actionCatalogCalls = 0;
+    mutable int configSchemaCalls = 0;
+    ValidationErrors activationSafetyErrors;
+    mutable int activationSafetyCalls = 0;
+    mutable QStringList calls;
 
     AuthorityResult initialize() override
     {
@@ -335,6 +471,10 @@ public:
             startupTrace->append(QStringLiteral("authority-initialize"));
         }
         if (initializeResult.success) {
+            if (initializeResult.snapshot.applyState == QStringLiteral("current")) {
+                initializeResult.snapshot.appliedDesiredState =
+                    initializeResult.snapshot.desiredState;
+            }
             current = initializeResult.snapshot;
         }
         return initializeResult;
@@ -365,6 +505,25 @@ public:
         return optionCatalogBytes;
     }
 
+    QByteArray actionCatalog() const override
+    {
+        ++actionCatalogCalls;
+        return actionCatalogBytes;
+    }
+
+    QByteArray configSchema() const override
+    {
+        ++configSchemaCalls;
+        return configSchemaBytes;
+    }
+
+    ValidationErrors currentActivationSafetyErrors() const override
+    {
+        ++activationSafetyCalls;
+        calls.append(QStringLiteral("activation-safety"));
+        return activationSafetyErrors;
+    }
+
     AuthorityResult replaceSnapshot(
         const quint64 expectedRevision,
         const QByteArray &candidate
@@ -375,13 +534,21 @@ public:
         lastReplaceCandidate = candidate;
         calls.append(QStringLiteral("replace"));
         if (replaceHook) {
-            const auto result = replaceHook(expectedRevision, candidate);
+            auto result = replaceHook(expectedRevision, candidate);
             if (result.success) {
+                if (result.snapshot.applyState == QStringLiteral("current")) {
+                    result.snapshot.appliedDesiredState =
+                        result.snapshot.desiredState;
+                }
                 current = result.snapshot;
             }
             return result;
         }
         if (replaceResult.success) {
+            if (replaceResult.snapshot.applyState == QStringLiteral("current")) {
+                replaceResult.snapshot.appliedDesiredState =
+                    replaceResult.snapshot.desiredState;
+            }
             current = replaceResult.snapshot;
         }
         return replaceResult;
@@ -427,6 +594,10 @@ public:
         ++commitCalls;
         calls.append(QStringLiteral("commit"));
         if (commitResult.success) {
+            if (commitResult.snapshot.applyState == QStringLiteral("current")) {
+                commitResult.snapshot.appliedDesiredState =
+                    commitResult.snapshot.desiredState;
+            }
             current = commitResult.snapshot;
         }
         return commitResult;
@@ -460,10 +631,13 @@ public:
     ConnectedDisplaysResult connectedResult;
     QVector<ConnectedDisplaysResult> connectedSequence;
     int connectedSequenceIndex = 0;
+    ConnectedInputDevicesResult connectedInputResult;
     BackendResult verifyPendingResult;
     bool reconcileResultConfigured = false;
     bool bindResultConfigured = false;
     bool finalizeResultConfigured = false;
+    std::function<void()> finalizeHook;
+    std::function<void()> rollbackHook;
     QString managementWatchPathValue;
     mutable int statusCalls = 0;
     mutable QVector<ActivationRequirement> capabilityChecks;
@@ -475,6 +649,8 @@ public:
     int finalizeCalls = 0;
     int connectedCalls = 0;
     QVector<int> connectedMaximumWaits;
+    int connectedInputCalls = 0;
+    QVector<QByteArray> connectedInputEpochs;
     mutable int verifyPendingCalls = 0;
     QStringList calls;
     QByteArray lastRollbackToken;
@@ -561,6 +737,7 @@ public:
         ++rollbackCalls;
         calls.append(QStringLiteral("rollback"));
         lastRollbackToken = receipt.rollbackToken;
+        if (rollbackHook) rollbackHook();
         statusValue = rollbackResult.status;
         return rollbackResult;
     }
@@ -573,6 +750,7 @@ public:
         ++finalizeCalls;
         lastFinalizeToken = receipt.rollbackToken;
         lastFinalizeGeneration = committedGeneration.toString();
+        if (finalizeHook) finalizeHook();
         if (finalizeResultConfigured) {
             statusValue = finalizeResult.status;
             return finalizeResult;
@@ -601,6 +779,15 @@ public:
         return connectedResult;
     }
 
+    ConnectedInputDevicesResult connectedInputDevices(
+        const QByteArrayView serviceEpoch
+    ) override
+    {
+        ++connectedInputCalls;
+        connectedInputEpochs.append(serviceEpoch.toByteArray());
+        return connectedInputResult;
+    }
+
     BackendResult verifyPendingTarget(
         const ActivationReceipt &receipt,
         QStringView generation
@@ -613,7 +800,7 @@ public:
     }
 };
 
-class FakeSharedBorderSource final : public SharedBorderSource
+class FakeSharedBorderSource final : public SharedVisualSource
 {
 public:
     int startCalls = 0;
@@ -629,7 +816,7 @@ public:
         ++refreshCalls;
     }
 
-    void setProjection(const SharedBorderProjection &projection)
+    void setProjection(const SharedVisualProjection &projection)
     {
         publishProjection(projection);
     }
@@ -669,15 +856,28 @@ struct ServiceHarness final {
             nullptr,
             std::move(deadlineRemaining),
             std::move(ownerPresent),
-            std::move(ownedSharedBorderSource)
+            std::move(ownedSharedBorderSource),
+            QByteArray(inputDeviceInventoryEpoch)
         );
 
         auto ownedAuthority = std::make_unique<FakeAuthority>();
         authority = ownedAuthority.get();
         authority->startupTrace = &startupTrace;
+        authority->optionCatalogBytes = protectedCatalog();
+        authority->actionCatalogBytes = protectedActionCatalog();
+        authority->configSchemaBytes = protectedConfigSchema();
+        auto normalizedInitial = initial;
+        if (normalizedInitial.appliedDesiredState.isEmpty()
+            && normalizedInitial.appliedRevision > 0
+            && QJsonDocument::fromJson(normalizedInitial.desiredState).isObject()) {
+            normalizedInitial.appliedDesiredState = snapshotAtRevision(
+                normalizedInitial.desiredState,
+                normalizedInitial.appliedRevision
+            );
+        }
         authority->initializeResult = {
             .success = true,
-            .snapshot = initial,
+            .snapshot = normalizedInitial,
         };
         QString error;
         if (!service->initializeAuthority(std::move(ownedAuthority), error)) {
@@ -696,6 +896,7 @@ void setSharedBorderOverride(
         .borderWidth = 1,
         .borderRadius = 0,
         .syncWindowBorders = false,
+        .syncWindowSpacing = false,
         .revision = revision,
     });
 }
@@ -750,6 +951,133 @@ class CompositorServiceTest final : public QObject
     Q_OBJECT
 
 private slots:
+    void sharedSpacingEditorOwnsExactDerivedGapsAndProtectedRule()
+    {
+        const auto catalog = protectedCatalog();
+        QVERIFY(!catalog.isEmpty());
+        const auto digest = sha256(catalog);
+        SharedSpacingReconciler reconciler;
+        QString error;
+        QVERIFY2(reconciler.configure(catalog, digest, error), qPrintable(error));
+
+        auto snapshot = sharedBorderSnapshot(
+            5,
+            digest,
+            QJsonObject{{QStringLiteral("hyprland.animations.enabled"), false}}
+        );
+        auto snapshotObject = QJsonDocument::fromJson(snapshot).object();
+        snapshotObject.insert(QStringLiteral("workspaceRules"), QJsonArray{});
+        snapshot = JsonSupport::canonicalJson(snapshotObject);
+        snapshot.append('\n');
+        const SharedVisualProjection projection{
+            .borderEnabled = true,
+            .borderWidth = 1,
+            .borderRadius = 15,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 17,
+        };
+        const auto edit = reconciler.edit(
+            snapshot, 5, digest, projection, error
+        );
+        QVERIFY2(edit.has_value(), qPrintable(error));
+        QVERIFY(edit->changed);
+        QVERIFY(edit->spacingChanged);
+        QVERIFY(edit->protectedRuleChanged);
+        auto candidate = QJsonDocument::fromJson(edit->candidate).object();
+        const auto overrides = candidate.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        QCOMPARE(
+            overrides.value(QStringLiteral("hyprland.general.gaps_in"))
+                .toArray(),
+            QJsonArray({8, 8, 8, 8})
+        );
+        QCOMPARE(
+            overrides.value(QStringLiteral("hyprland.general.gaps_out"))
+                .toArray(),
+            QJsonArray({0, 12, 12, 12})
+        );
+        QCOMPARE(
+            overrides.value(QStringLiteral("hyprland.animations.enabled"))
+                .toBool(),
+            false
+        );
+        QCOMPARE(
+            candidate.value(QStringLiteral("workspaceRules")).toArray(),
+            QJsonArray({exactProtectedSpacingRule()})
+        );
+        QVERIFY(reconciler.hasExactFinalProtectedRule(
+            edit->candidate, error
+        ));
+
+        const QJsonObject userRule{
+            {QStringLiteral("id"), QStringLiteral("user-one")},
+            {QStringLiteral("selector"), QStringLiteral("1")},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("monitor"), QString()},
+            {QStringLiteral("persistent"), false},
+            {QStringLiteral("isDefault"), false},
+            {QStringLiteral("layout"), QString()},
+            {QStringLiteral("overrides"), QJsonObject{}},
+        };
+        candidate.insert(
+            QStringLiteral("workspaceRules"),
+            QJsonArray{exactProtectedSpacingRule(), userRule}
+        );
+        snapshot = JsonSupport::canonicalJson(candidate) + '\n';
+        const auto moved = reconciler.edit(
+            snapshot, 5, digest, projection, error
+        );
+        QVERIFY2(moved.has_value(), qPrintable(error));
+        const auto movedRules = QJsonDocument::fromJson(moved->candidate)
+                                    .object()
+                                    .value(QStringLiteral("workspaceRules"))
+                                    .toArray();
+        QCOMPARE(movedRules, QJsonArray({userRule, exactProtectedSpacingRule()}));
+
+        candidate.insert(
+            QStringLiteral("workspaceRules"),
+            QJsonArray{
+                userRule,
+                exactProtectedSpacingRule(),
+                exactProtectedSpacingRule(),
+            }
+        );
+        snapshot = JsonSupport::canonicalJson(candidate) + '\n';
+        const auto duplicated = reconciler.edit(
+            snapshot, 5, digest, projection, error
+        );
+        QVERIFY(!duplicated.has_value());
+        QVERIFY(error.contains(QStringLiteral("duplicated")));
+
+        auto spoofed = exactProtectedSpacingRule();
+        spoofed.insert(QStringLiteral("selector"), QStringLiteral("1"));
+        candidate.insert(
+            QStringLiteral("workspaceRules"), QJsonArray{spoofed}
+        );
+        snapshot = JsonSupport::canonicalJson(candidate) + '\n';
+        const auto reservedId = reconciler.edit(
+            snapshot, 5, digest, projection, error
+        );
+        QVERIFY(!reservedId.has_value());
+        QVERIFY(error.contains(QStringLiteral("invalid")));
+
+        spoofed = exactProtectedSpacingRule();
+        spoofed.insert(QStringLiteral("id"), QStringLiteral("user-spoof"));
+        candidate.insert(
+            QStringLiteral("workspaceRules"), QJsonArray{spoofed}
+        );
+        snapshot = JsonSupport::canonicalJson(candidate) + '\n';
+        const auto reservedSelector = reconciler.edit(
+            snapshot, 5, digest, projection, error
+        );
+        QVERIFY(!reservedSelector.has_value());
+        QVERIFY(error.contains(QStringLiteral("invalid")));
+    }
+
     void sharedBorderEditorChangesOnlyOwnedValuesAndElidesDefaults()
     {
         const auto catalog = protectedCatalog();
@@ -768,11 +1096,12 @@ private slots:
                 {QStringLiteral("hyprland.decoration.rounding"), 9},
             }
         );
-        const SharedBorderProjection projection{
+        const SharedVisualProjection projection{
             .borderEnabled = false,
             .borderWidth = 20,
             .borderRadius = 0,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 12,
         };
         const auto edit = reconciler.edit(
@@ -822,11 +1151,12 @@ private slots:
         harness.authority->optionCatalogBytes = catalog;
         QCOMPARE(harness.sharedBorderSource->startCalls, 1);
 
-        const SharedBorderProjection projection{
+        const SharedVisualProjection projection{
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 17,
         };
         SharedBorderReconciler editor;
@@ -922,11 +1252,12 @@ private slots:
         ServiceHarness harness(initial, management);
         harness.authority->optionCatalogBytes = catalog;
 
-        const SharedBorderProjection projection{
+        const SharedVisualProjection projection{
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 17,
         };
         SharedBorderReconciler editor;
@@ -962,6 +1293,7 @@ private slots:
         current.applyState = QStringLiteral("current");
         current.requiredActivation.reset();
         current.generationDigest = QString::fromLatin1(generationId);
+        current.appliedDesiredState = current.desiredState;
         harness.authority->commitResult = {
             .success = true,
             .snapshot = current,
@@ -999,6 +1331,474 @@ private slots:
                  ).toBool(), false);
     }
 
+    void sharedVisualSyncCoalescesBorderAndSpacingIntoOneCasAndApply()
+    {
+        const auto catalog = protectedCatalog();
+        QVERIFY(!catalog.isEmpty());
+        const auto digest = sha256(catalog);
+        auto initial = committedSnapshot(
+            5,
+            sharedBorderSnapshot(
+                5,
+                digest,
+                QJsonObject{{
+                    QStringLiteral("hyprland.animations.enabled"), false
+                }}
+            )
+        );
+        initial.catalogDigest = digest;
+        auto management = managedStatus();
+        management.managedGeneration = QString::fromLatin1(generationId);
+        ServiceHarness harness(initial, management);
+
+        const SharedVisualProjection projection{
+            .borderEnabled = true,
+            .borderWidth = 4,
+            .borderRadius = 8,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 31,
+        };
+        QString error;
+        const auto candidate = reconciledSharedVisualSnapshot(
+            initial.desiredState,
+            initial.revision,
+            digest,
+            projection,
+            true,
+            true,
+            error
+        );
+        QVERIFY2(candidate.has_value(), qPrintable(error));
+
+        auto saved = initial;
+        saved.revision++;
+        saved.appliedRevision = initial.revision;
+        saved.applyState = QStringLiteral("retained");
+        saved.requiredActivation = ActivationRequirement::Reload;
+        saved.desiredState = snapshotAtRevision(*candidate, saved.revision);
+        harness.authority->replaceResult = {
+            .success = true,
+            .snapshot = saved,
+        };
+        harness.authority->prepareApplyResult = {
+            .success = true,
+            .snapshot = saved,
+            .prepared = preparedGeneration(
+                ActivationRequirement::Reload, saved.revision
+            ),
+        };
+        auto current = saved;
+        current.appliedRevision = current.revision;
+        current.applyState = QStringLiteral("current");
+        current.requiredActivation.reset();
+        current.generationDigest = QString::fromLatin1(generationId);
+        current.appliedDesiredState = current.desiredState;
+        harness.authority->commitResult = {
+            .success = true,
+            .snapshot = current,
+        };
+        harness.backend->activationResult = {
+            .success = true,
+            .activationMayHaveOccurred = true,
+            .generation = QString::fromLatin1(generationId),
+            .confirmedRequirement = ActivationRequirement::Reload,
+            .receipt = {QByteArrayLiteral("shared-visual-coalesced")},
+            .status = management,
+        };
+
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("current"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("current"));
+        QCOMPARE(harness.service->sharedBorderSourceRevision(),
+                 qulonglong(projection.revision));
+        QCOMPARE(harness.service->sharedSpacingSourceRevision(),
+                 qulonglong(projection.revision));
+        QCOMPARE(harness.authority->replaceCalls, 1);
+        QCOMPARE(harness.authority->prepareApplyCalls, 1);
+        QCOMPARE(harness.backend->activateCalls, 1);
+        QCOMPARE(harness.authority->commitCalls, 1);
+        QCOMPARE(harness.authority->lastReplaceCandidate, *candidate);
+
+        const auto object = QJsonDocument::fromJson(
+            harness.authority->lastReplaceCandidate
+        ).object();
+        const auto overrides = object.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        QCOMPARE(overrides.value(
+                     QStringLiteral("hyprland.general.gaps_in")
+                 ).toArray(), QJsonArray({8, 8, 8, 8}));
+        QCOMPARE(overrides.value(
+                     QStringLiteral("hyprland.general.gaps_out")
+                 ).toArray(), QJsonArray({0, 12, 12, 12}));
+        QCOMPARE(object.value(QStringLiteral("workspaceRules")).toArray(),
+                 QJsonArray({exactProtectedSpacingRule()}));
+    }
+
+    void unsyncedSpacingRepairsProtectedRuleWithoutActivatingDirtyBase()
+    {
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        QJsonObject overrides{
+            {QStringLiteral("hyprland.general.gaps_in"),
+             QJsonArray({2, 3, 4, 5})},
+            {QStringLiteral("hyprland.general.gaps_out"),
+             QJsonArray({6, 7, 8, 9})},
+            {QStringLiteral("hyprland.animations.enabled"), false},
+        };
+        auto withoutRule = QJsonDocument::fromJson(
+            sharedBorderSnapshot(5, digest, overrides)
+        ).object();
+        withoutRule.insert(QStringLiteral("workspaceRules"), QJsonArray{});
+        auto desired = JsonSupport::canonicalJson(withoutRule);
+        desired.append('\n');
+
+        auto initial = dirtySnapshot();
+        initial.catalogDigest = digest;
+        initial.desiredState = desired;
+        initial.appliedDesiredState = snapshotAtRevision(desired, 4);
+        initial.generationDigest = QStringLiteral("old-generation");
+        auto management = managedStatus();
+        management.managedGeneration = initial.generationDigest;
+        ServiceHarness harness(initial, management);
+
+        SharedVisualProjection projection{
+            .borderEnabled = true,
+            .borderWidth = 1,
+            .borderRadius = 0,
+            .syncWindowBorders = false,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = false,
+            .revision = 40,
+        };
+        QString error;
+        const auto candidate = reconciledSharedVisualSnapshot(
+            initial.desiredState,
+            initial.revision,
+            digest,
+            projection,
+            false,
+            true,
+            error
+        );
+        QVERIFY2(candidate.has_value(), qPrintable(error));
+        auto saved = initial;
+        saved.revision++;
+        saved.desiredState = snapshotAtRevision(*candidate, saved.revision);
+        saved.applyState = QStringLiteral("retained");
+        saved.requiredActivation = ActivationRequirement::Reload;
+        harness.authority->replaceResult = {
+            .success = true,
+            .snapshot = saved,
+        };
+
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("override"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("saved"));
+        QCOMPARE(harness.authority->replaceCalls, 1);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        const auto replacement = QJsonDocument::fromJson(
+            harness.authority->lastReplaceCandidate
+        ).object();
+        const auto replacementOverrides = replacement.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        QCOMPARE(replacementOverrides.value(
+                     QStringLiteral("hyprland.general.gaps_in")
+                 ).toArray(), QJsonArray({2, 3, 4, 5}));
+        QCOMPARE(replacementOverrides.value(
+                     QStringLiteral("hyprland.general.gaps_out")
+                 ).toArray(), QJsonArray({6, 7, 8, 9}));
+        QCOMPARE(replacement.value(
+                     QStringLiteral("workspaceRules")
+                 ).toArray(), QJsonArray({exactProtectedSpacingRule()}));
+
+        projection.revision++;
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedSpacingSourceRevision(),
+                     qulonglong(projection.revision));
+        QCOMPARE(harness.service->sharedSpacingSyncState(),
+                 QStringLiteral("saved"));
+        QCOMPARE(harness.authority->replaceCalls, 1);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+
+        harness.authority->prepareApplyResult = {
+            .success = true,
+            .snapshot = saved,
+            .prepared = preparedGeneration(
+                ActivationRequirement::Reload, saved.revision
+            ),
+        };
+        auto current = saved;
+        current.appliedRevision = current.revision;
+        current.applyState = QStringLiteral("current");
+        current.requiredActivation.reset();
+        current.generationDigest = QString::fromLatin1(generationId);
+        current.appliedDesiredState = current.desiredState;
+        harness.authority->commitResult = {
+            .success = true,
+            .snapshot = current,
+        };
+        harness.backend->activationResult = {
+            .success = true,
+            .activationMayHaveOccurred = true,
+            .generation = QString::fromLatin1(generationId),
+            .confirmedRequirement = ActivationRequirement::Reload,
+            .receipt = {QByteArrayLiteral("protected-rule-apply")},
+            .status = management,
+        };
+        QString generation;
+        QCOMPARE(harness.service->Apply(
+                     saved.revision,
+                     digest,
+                     saved.actionCatalogDigest,
+                     generation
+                 ), qulonglong(saved.revision));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("override"));
+        QCOMPARE(harness.authority->prepareApplyCalls, 1);
+        QCOMPARE(harness.backend->activateCalls, 1);
+        QCOMPARE(harness.authority->commitCalls, 1);
+
+        auto unrelatedObject = QJsonDocument::fromJson(
+            current.desiredState
+        ).object();
+        auto unrelatedOverrides = unrelatedObject.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        unrelatedOverrides.insert(
+            QStringLiteral("hyprland.animations.enabled"), true
+        );
+        unrelatedObject.insert(QStringLiteral("overrides"), unrelatedOverrides);
+        auto unrelatedCandidate = JsonSupport::canonicalJson(unrelatedObject);
+        unrelatedCandidate.append('\n');
+        auto unrelated = current;
+        unrelated.revision++;
+        unrelated.appliedRevision = current.revision;
+        unrelated.applyState = QStringLiteral("retained");
+        unrelated.requiredActivation = ActivationRequirement::Reload;
+        unrelated.desiredState = snapshotAtRevision(
+            unrelatedCandidate, unrelated.revision
+        );
+        unrelated.appliedDesiredState = current.desiredState;
+        harness.authority->replaceResult = {
+            .success = true,
+            .snapshot = unrelated,
+        };
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     current.revision,
+                     digest,
+                     current.actionCatalogDigest,
+                     unrelatedCandidate
+                 ), qulonglong(unrelated.revision));
+        projection.revision++;
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedSpacingSourceRevision(),
+                     qulonglong(projection.revision));
+        QCOMPARE(harness.service->sharedSpacingSyncState(),
+                 QStringLiteral("override"));
+
+        harness.backend->statusValue = {
+            .state = ManagementState::Conflict,
+            .entrypointKind = EntrypointKind::Regular,
+        };
+        projection.revision++;
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("saved"));
+    }
+
+    void sharedVisualCurrentProofUsesAppliedValuesAndLiveGeneration()
+    {
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        SharedVisualProjection projection{
+            .borderEnabled = true,
+            .borderWidth = 4,
+            .borderRadius = 8,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 50,
+        };
+        QString error;
+        const auto target = reconciledSharedVisualSnapshot(
+            sharedBorderSnapshot(5, digest),
+            5,
+            digest,
+            projection,
+            true,
+            true,
+            error
+        );
+        QVERIFY2(target.has_value(), qPrintable(error));
+        auto initial = committedSnapshot(5, *target);
+        initial.catalogDigest = digest;
+        auto management = managedStatus();
+        management.managedGeneration = QString::fromLatin1(generationId);
+        ServiceHarness harness(initial, management);
+
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("current"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("current"));
+
+        auto unrelatedObject = QJsonDocument::fromJson(
+            initial.desiredState
+        ).object();
+        auto unrelatedOverrides = unrelatedObject.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        unrelatedOverrides.insert(
+            QStringLiteral("hyprland.animations.enabled"), false
+        );
+        unrelatedObject.insert(QStringLiteral("overrides"), unrelatedOverrides);
+        auto unrelatedCandidate = JsonSupport::canonicalJson(unrelatedObject);
+        unrelatedCandidate.append('\n');
+        auto dirty = initial;
+        dirty.revision++;
+        dirty.appliedRevision = initial.revision;
+        dirty.applyState = QStringLiteral("retained");
+        dirty.requiredActivation = ActivationRequirement::Reload;
+        dirty.desiredState = snapshotAtRevision(
+            unrelatedCandidate, dirty.revision
+        );
+        dirty.appliedDesiredState = initial.desiredState;
+        harness.authority->replaceResult = {
+            .success = true,
+            .snapshot = dirty,
+        };
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     initial.revision,
+                     digest,
+                     initial.actionCatalogDigest,
+                     unrelatedCandidate
+                 ), qulonglong(dirty.revision));
+
+        projection.revision++;
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedBorderSourceRevision(),
+                     qulonglong(projection.revision));
+        QCOMPARE(harness.service->sharedBorderSyncState(),
+                 QStringLiteral("current"));
+        QCOMPARE(harness.service->sharedSpacingSyncState(),
+                 QStringLiteral("current"));
+        QCOMPARE(harness.authority->replaceCalls, 1);
+        QCOMPARE(harness.backend->activateCalls, 0);
+
+        projection.borderWidth = 6;
+        projection.borderRadius = 10;
+        projection.innerSpacing = 9;
+        projection.outerSpacing = 14;
+        projection.revision++;
+        const auto correctedCandidate = reconciledSharedVisualSnapshot(
+            dirty.desiredState,
+            dirty.revision,
+            digest,
+            projection,
+            true,
+            true,
+            error
+        );
+        QVERIFY2(correctedCandidate.has_value(), qPrintable(error));
+        auto corrected = dirty;
+        corrected.revision++;
+        corrected.desiredState = snapshotAtRevision(
+            *correctedCandidate, corrected.revision
+        );
+        harness.authority->replaceResult = {
+            .success = true,
+            .snapshot = corrected,
+        };
+        harness.sharedBorderSource->setProjection(projection);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("saved"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("saved"));
+        QCOMPARE(harness.authority->replaceCalls, 2);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+    }
+
+    void sharedVisualCurrentProofFailsClosedForEveryManagementDrift()
+    {
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        SharedVisualProjection baseline{
+            .borderEnabled = true,
+            .borderWidth = 4,
+            .borderRadius = 8,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 60,
+        };
+        QString error;
+        const auto target = reconciledSharedVisualSnapshot(
+            sharedBorderSnapshot(5, digest),
+            5,
+            digest,
+            baseline,
+            true,
+            true,
+            error
+        );
+        QVERIFY2(target.has_value(), qPrintable(error));
+
+        const QVector<ManagementStatus> drifts{
+            ManagementStatus{
+                .state = ManagementState::Conflict,
+                .entrypointKind = EntrypointKind::Regular,
+            },
+            ManagementStatus{
+                .state = ManagementState::Unmanaged,
+                .entrypointKind = EntrypointKind::Absent,
+            },
+            ManagementStatus{
+                .state = ManagementState::Managed,
+                .entrypointKind = EntrypointKind::Regular,
+                .entrypointDigest = QStringLiteral("managed-entrypoint"),
+                .managedGeneration = QStringLiteral("different-generation"),
+            },
+        };
+        for (qsizetype index = 0; index < drifts.size(); ++index) {
+            auto initial = committedSnapshot(5, *target);
+            initial.catalogDigest = digest;
+            auto management = managedStatus();
+            management.managedGeneration = QString::fromLatin1(generationId);
+            ServiceHarness harness(initial, management);
+            auto projection = baseline;
+            projection.revision += static_cast<quint64>(index);
+            harness.sharedBorderSource->setProjection(projection);
+            QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                         QStringLiteral("current"));
+            QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                         QStringLiteral("current"));
+
+            harness.backend->statusValue = drifts.at(index);
+            projection.revision++;
+            harness.sharedBorderSource->setProjection(projection);
+            QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                         QStringLiteral("saved"));
+            QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                         QStringLiteral("saved"));
+            QCOMPARE(harness.authority->replaceCalls, 0);
+            QCOMPARE(harness.backend->activateCalls, 0);
+        }
+    }
+
     void sharedBorderSyncRefreshesManagementBeforeAutoApplyClassification()
     {
         const auto catalog = protectedCatalog();
@@ -1013,11 +1813,12 @@ private slots:
         ServiceHarness harness(initial, initialManagement);
         harness.authority->optionCatalogBytes = catalog;
 
-        const SharedBorderProjection projection{
+        const SharedVisualProjection projection{
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 18,
         };
         SharedBorderReconciler editor;
@@ -1094,6 +1895,7 @@ private slots:
             .borderWidth = 6,
             .borderRadius = 10,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 2,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -1172,6 +1974,7 @@ private slots:
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 2,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -1200,6 +2003,7 @@ private slots:
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = false,
+            .syncWindowSpacing = false,
             .revision = 3,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -1275,6 +2079,7 @@ private slots:
                 .borderWidth = 4,
                 .borderRadius = 8,
                 .syncWindowBorders = true,
+                .syncWindowSpacing = false,
                 .revision = 2,
             });
             QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -1315,11 +2120,17 @@ private slots:
             }
         );
         ServiceHarness harness(initial);
+        QVERIFY(harness.service->available());
+        QVERIFY(harness.service->writable());
+        QCOMPARE(harness.service->catalogDigest(), digest);
+        QCOMPARE(harness.service->actionCatalogDigest(),
+                 initial.actionCatalogDigest);
         harness.sharedBorderSource->setProjection({
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = false,
+            .syncWindowSpacing = false,
             .revision = 3,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -1395,11 +2206,12 @@ private slots:
                  ),
                  qulonglong(divergent.revision));
 
-        const SharedBorderProjection synced{
+        const SharedVisualProjection synced{
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 2,
         };
         SharedBorderReconciler editor;
@@ -1528,11 +2340,12 @@ private slots:
                  ),
                  qulonglong(divergent.revision));
 
-        const SharedBorderProjection synced{
+        const SharedVisualProjection synced{
             .borderEnabled = true,
             .borderWidth = 4,
             .borderRadius = 8,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 2,
         };
         SharedBorderReconciler editor;
@@ -1722,11 +2535,12 @@ private slots:
             .snapshot = initial,
         };
 
-        auto projection = SharedBorderProjection{
+        auto projection = SharedVisualProjection{
             .borderEnabled = true,
             .borderWidth = 7,
             .borderRadius = 9,
             .syncWindowBorders = true,
+            .syncWindowSpacing = false,
             .revision = 4,
         };
         harness.sharedBorderSource->setProjection(projection);
@@ -1761,12 +2575,12 @@ private slots:
             const auto changed = arguments.at(0).toMap();
             if (changed.value(QStringLiteral("SharedBorderSourceRevision"))
                     .toULongLong() == projection.revision) {
-                QVERIFY(!changed.contains(
-                    QStringLiteral("SharedBorderSyncState")
-                ));
-                QVERIFY(!changed.contains(
-                    QStringLiteral("SharedBorderSyncError")
-                ));
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedBorderSyncState")
+                         ).toString(), QStringLiteral("failed"));
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedBorderSyncError")
+                         ).toString(), retainedError);
                 foundSuppressedRevision = true;
             }
         }
@@ -1780,7 +2594,7 @@ private slots:
         QCOMPARE(harness.authority->replaceCalls, 3);
     }
 
-    void sharedBorderActivationFailureSuppressesRevisionOnlyUpdatesUntilRetry()
+    void sharedVisualActivationFailureSuppressesBothGroupsUntilEitherRetry()
     {
         const auto catalog = protectedCatalog();
         QVERIFY(!catalog.isEmpty());
@@ -1794,30 +2608,33 @@ private slots:
         ServiceHarness harness(initial, management);
         harness.authority->optionCatalogBytes = catalog;
 
-        auto projection = SharedBorderProjection{
+        auto projection = SharedVisualProjection{
             .borderEnabled = true,
             .borderWidth = 7,
             .borderRadius = 9,
             .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
             .revision = 30,
         };
-        SharedBorderReconciler editor;
         QString error;
-        QVERIFY(editor.configure(catalog, digest, error));
-        const auto edit = editor.edit(
+        const auto candidate = reconciledSharedVisualSnapshot(
             initial.desiredState,
             initial.revision,
             digest,
             projection,
+            true,
+            true,
             error
         );
-        QVERIFY(edit && edit->changed);
+        QVERIFY2(candidate.has_value(), qPrintable(error));
         auto saved = initial;
         saved.revision++;
         saved.appliedRevision = initial.revision;
         saved.applyState = QStringLiteral("retained");
         saved.requiredActivation = ActivationRequirement::Reload;
-        saved.desiredState = snapshotAtRevision(edit->candidate, saved.revision);
+        saved.desiredState = snapshotAtRevision(*candidate, saved.revision);
         harness.authority->replaceResult = {
             .success = true,
             .snapshot = saved,
@@ -1837,12 +2654,14 @@ private slots:
             .success = false,
             .activationMayHaveOccurred = false,
             .errorCode = QStringLiteral("ApplyFailed"),
-            .errorMessage = QStringLiteral("injected shared-border activation failure"),
+            .errorMessage = QStringLiteral("injected shared-visual activation failure"),
             .status = management,
         };
 
         harness.sharedBorderSource->setProjection(projection);
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("failed"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
                      QStringLiteral("failed"));
         QCOMPARE(harness.service->sharedBorderSourceRevision(),
                  qulonglong(projection.revision));
@@ -1852,6 +2671,7 @@ private slots:
         QCOMPARE(harness.authority->abortCalls, 1);
         const auto retainedError = harness.service->sharedBorderSyncError();
         QVERIFY(!retainedError.isEmpty());
+        QCOMPARE(harness.service->sharedSpacingSyncError(), retainedError);
 
         QSignalSpy published(
             harness.service.get(),
@@ -1863,26 +2683,41 @@ private slots:
                      qulonglong(projection.revision));
         QCOMPARE(harness.service->sharedBorderSyncState(),
                  QStringLiteral("failed"));
+        QCOMPARE(harness.service->sharedSpacingSyncState(),
+                 QStringLiteral("failed"));
         QCOMPARE(harness.service->sharedBorderSyncError(), retainedError);
+        QCOMPARE(harness.service->sharedSpacingSyncError(), retainedError);
         QTest::qWait(20);
         QCOMPARE(harness.authority->prepareApplyCalls, 1);
         QCOMPARE(harness.backend->activateCalls, 1);
         QCOMPARE(harness.authority->abortCalls, 1);
         bool foundSuppressedRevision = false;
+        bool foundCompleteSpacingRevision = false;
         for (const auto &arguments : published) {
             const auto changed = arguments.at(0).toMap();
             if (changed.value(QStringLiteral("SharedBorderSourceRevision"))
                     .toULongLong() == projection.revision) {
-                QVERIFY(!changed.contains(
-                    QStringLiteral("SharedBorderSyncState")
-                ));
-                QVERIFY(!changed.contains(
-                    QStringLiteral("SharedBorderSyncError")
-                ));
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedBorderSyncState")
+                         ).toString(), QStringLiteral("failed"));
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedBorderSyncError")
+                         ).toString(), retainedError);
                 foundSuppressedRevision = true;
+            }
+            if (changed.value(QStringLiteral("SharedSpacingSourceRevision"))
+                    .toULongLong() == projection.revision) {
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedSpacingSyncState")
+                         ).toString(), QStringLiteral("failed"));
+                QCOMPARE(changed.value(
+                             QStringLiteral("SharedSpacingSyncError")
+                         ).toString(), retainedError);
+                foundCompleteSpacingRevision = true;
             }
         }
         QVERIFY(foundSuppressedRevision);
+        QVERIFY(foundCompleteSpacingRevision);
 
         published.clear();
         harness.sharedBorderSource->loseSource(
@@ -1890,7 +2725,11 @@ private slots:
         );
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
                      QStringLiteral("unavailable"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("unavailable"));
         QCOMPARE(harness.service->sharedBorderSyncError(),
+                 QStringLiteral("Config1 owner is refreshing"));
+        QCOMPARE(harness.service->sharedSpacingSyncError(),
                  QStringLiteral("Config1 owner is refreshing"));
         QCOMPARE(harness.authority->prepareApplyCalls, 1);
         QCOMPARE(harness.backend->activateCalls, 1);
@@ -1902,7 +2741,10 @@ private slots:
                      qulonglong(projection.revision));
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
                      QStringLiteral("failed"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("failed"));
         QCOMPARE(harness.service->sharedBorderSyncError(), retainedError);
+        QCOMPARE(harness.service->sharedSpacingSyncError(), retainedError);
         QTest::qWait(20);
         QCOMPARE(harness.authority->prepareApplyCalls, 1);
         QCOMPARE(harness.backend->activateCalls, 1);
@@ -1923,7 +2765,7 @@ private slots:
         }
         QVERIFY(foundRestoredFailure);
 
-        harness.service->RetrySharedBorderSync();
+        harness.service->RetrySharedSpacingSync();
         QTRY_COMPARE(harness.authority->prepareApplyCalls, 2);
         QTRY_COMPARE(harness.backend->activateCalls, 2);
         QCOMPARE(harness.authority->abortCalls, 2);
@@ -1934,30 +2776,47 @@ private slots:
         QCOMPARE(harness.authority->abortCalls, 2);
         QCOMPARE(harness.service->sharedBorderSyncState(),
                  QStringLiteral("failed"));
+        QCOMPARE(harness.service->sharedSpacingSyncState(),
+                 QStringLiteral("failed"));
         QCOMPARE(harness.service->sharedBorderSourceRevision(),
                  qulonglong(projection.revision));
     }
 
-    void sharedBorderSyncDefersForTheWholeDisplayConfirmation()
+    void sharedVisualSyncDefersForTheWholeDisplayConfirmation()
     {
         const auto catalog = protectedCatalog();
         const auto digest = sha256(catalog);
-        auto initial = committedSnapshot(
-            5, sharedBorderSnapshot(5, digest)
+        const SharedVisualProjection initialProjection{
+            .borderEnabled = true,
+            .borderWidth = 1,
+            .borderRadius = 0,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 1,
+        };
+        QString error;
+        const auto initialCandidate = reconciledSharedVisualSnapshot(
+            sharedBorderSnapshot(5, digest),
+            5,
+            digest,
+            initialProjection,
+            true,
+            true,
+            error
         );
+        QVERIFY2(initialCandidate.has_value(), qPrintable(error));
+        auto initial = committedSnapshot(5, *initialCandidate);
         initial.catalogDigest = digest;
         auto initialManagement = managedStatus();
         initialManagement.managedGeneration = QString::fromLatin1(generationId);
         ServiceHarness harness(initial, initialManagement);
         harness.authority->optionCatalogBytes = catalog;
-        harness.sharedBorderSource->setProjection({
-            .borderEnabled = true,
-            .borderWidth = 1,
-            .borderRadius = 0,
-            .syncWindowBorders = true,
-            .revision = 1,
-        });
+        harness.sharedBorderSource->setProjection(initialProjection);
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("current"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
                      QStringLiteral("current"));
 
         const auto topology = connectedDisplayTopology();
@@ -1980,30 +2839,32 @@ private slots:
         QCOMPARE(harness.service->displayConfirmationState(),
                  QStringLiteral("awaiting-confirmation"));
 
-        const SharedBorderProjection changedProjection{
+        const SharedVisualProjection changedProjection{
             .borderEnabled = true,
             .borderWidth = 5,
             .borderRadius = 7,
             .syncWindowBorders = true,
+            .innerSpacing = 10,
+            .outerSpacing = 14,
+            .syncWindowSpacing = true,
             .revision = 2,
         };
-        SharedBorderReconciler editor;
-        QString error;
-        QVERIFY(editor.configure(catalog, digest, error));
-        const auto edit = editor.edit(
+        const auto candidate = reconciledSharedVisualSnapshot(
             initial.desiredState,
             initial.revision,
             digest,
             changedProjection,
+            true,
+            true,
             error
         );
-        QVERIFY(edit && edit->changed);
+        QVERIFY2(candidate.has_value(), qPrintable(error));
         auto saved = initial;
         saved.revision++;
         saved.appliedRevision = initial.revision;
         saved.applyState = QStringLiteral("retained");
         saved.requiredActivation = ActivationRequirement::Reload;
-        saved.desiredState = snapshotAtRevision(edit->candidate, saved.revision);
+        saved.desiredState = snapshotAtRevision(*candidate, saved.revision);
         harness.authority->replaceResult = {
             .success = true,
             .snapshot = saved,
@@ -2020,6 +2881,7 @@ private slots:
         current.applyState = QStringLiteral("current");
         current.requiredActivation.reset();
         current.generationDigest = QString::fromLatin1(generationId);
+        current.appliedDesiredState = current.desiredState;
         harness.authority->commitResult = {
             .success = true,
             .snapshot = current,
@@ -2031,6 +2893,8 @@ private slots:
 
         harness.sharedBorderSource->setProjection(changedProjection);
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("pending"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
                      QStringLiteral("pending"));
         QCOMPARE(harness.authority->replaceCalls, 0);
         QCOMPARE(harness.authority->prepareApplyCalls, 0);
@@ -2047,36 +2911,48 @@ private slots:
         };
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
                      QStringLiteral("current"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
+                     QStringLiteral("current"));
         QCOMPARE(harness.authority->replaceCalls, 1);
         QCOMPARE(harness.authority->prepareApplyCalls, 1);
         QCOMPARE(harness.backend->adoptCalls, 0);
     }
 
-    void recoveryReassertsEnabledSharedBorderPolicyAsANewRevision()
+    void recoveryReassertsBothSharedVisualPoliciesAsOneNewRevision()
     {
         const auto catalog = protectedCatalog();
         const auto digest = sha256(catalog);
-        const QJsonObject syncedOverrides{
-            {QStringLiteral("hyprland.general.border_size"), 4},
-            {QStringLiteral("hyprland.decoration.rounding"), 8},
+        const SharedVisualProjection projection{
+            .borderEnabled = true,
+            .borderWidth = 4,
+            .borderRadius = 8,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 9,
         };
-        auto initial = committedSnapshot(
-            5, sharedBorderSnapshot(5, digest, syncedOverrides)
+        QString error;
+        const auto initialCandidate = reconciledSharedVisualSnapshot(
+            sharedBorderSnapshot(5, digest),
+            5,
+            digest,
+            projection,
+            true,
+            true,
+            error
         );
+        QVERIFY2(initialCandidate.has_value(), qPrintable(error));
+        auto initial = committedSnapshot(5, *initialCandidate);
         initial.catalogDigest = digest;
         auto initialManagement = managedStatus();
         initialManagement.managedGeneration = QString::fromLatin1(generationId);
         ServiceHarness harness(initial, initialManagement);
         harness.authority->optionCatalogBytes = catalog;
-        const SharedBorderProjection projection{
-            .borderEnabled = true,
-            .borderWidth = 4,
-            .borderRadius = 8,
-            .syncWindowBorders = true,
-            .revision = 9,
-        };
         harness.sharedBorderSource->setProjection(projection);
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("current"));
+        QTRY_COMPARE(harness.service->sharedSpacingSyncState(),
                      QStringLiteral("current"));
 
         auto recovered = initial;
@@ -2085,6 +2961,7 @@ private slots:
         recovered.desiredState = sharedBorderSnapshot(
             recovered.revision, digest
         );
+        recovered.appliedDesiredState = recovered.desiredState;
         harness.authority->prepareRecoveryResult = {
             .success = true,
             .snapshot = initial,
@@ -2117,23 +2994,22 @@ private slots:
                  qulonglong(recovered.revision));
         QCOMPARE(harness.authority->prepareRecoveryCalls, 1);
 
-        SharedBorderReconciler editor;
-        QString error;
-        QVERIFY(editor.configure(catalog, digest, error));
-        const auto edit = editor.edit(
+        const auto candidate = reconciledSharedVisualSnapshot(
             recovered.desiredState,
             recovered.revision,
             digest,
             projection,
+            true,
+            true,
             error
         );
-        QVERIFY(edit && edit->changed);
+        QVERIFY2(candidate.has_value(), qPrintable(error));
         auto saved = recovered;
         saved.revision++;
         saved.appliedRevision = recovered.revision;
         saved.applyState = QStringLiteral("retained");
         saved.requiredActivation = ActivationRequirement::Reload;
-        saved.desiredState = snapshotAtRevision(edit->candidate, saved.revision);
+        saved.desiredState = snapshotAtRevision(*candidate, saved.revision);
         harness.authority->replaceResult = {
             .success = true,
             .snapshot = saved,
@@ -2150,6 +3026,7 @@ private slots:
         current.applyState = QStringLiteral("current");
         current.requiredActivation.reset();
         current.generationDigest = QString::fromLatin1(generationId);
+        current.appliedDesiredState = current.desiredState;
         harness.authority->commitResult = {
             .success = true,
             .snapshot = current,
@@ -2160,8 +3037,6 @@ private slots:
 
         QTRY_COMPARE(harness.service->revision(),
                      qulonglong(current.revision));
-        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
-                     QStringLiteral("current"));
         QCOMPARE(harness.authority->replaceCalls, 1);
         QCOMPARE(harness.authority->prepareApplyCalls, 1);
         QCOMPARE(harness.authority->commitCalls, 2);
@@ -2215,6 +3090,87 @@ private slots:
             QVERIFY(digest.isEmpty());
             QCOMPARE(harness.authority->optionCatalogCalls, 1);
         }
+    }
+
+    void actionAuthorityReturnsTheExactRetainedPairWithoutMutation()
+    {
+        const auto actionCatalog = protectedActionCatalog();
+        const auto schema = protectedConfigSchema();
+        QVERIFY(!actionCatalog.isEmpty());
+        QVERIFY(!schema.isEmpty());
+        auto initial = dirtySnapshot();
+        initial.actionCatalogDigest = QString::fromLatin1(
+            reviewedActionCatalogDigest
+        );
+        ServiceHarness harness(initial);
+        harness.authority->actionCatalogBytes = actionCatalog;
+        harness.authority->configSchemaBytes = schema;
+
+        QString digest = QStringLiteral("must-be-replaced");
+        QByteArray replySchema = QByteArrayLiteral("must-be-replaced");
+        QString schemaDigest = QStringLiteral("must-be-replaced");
+        QCOMPARE(
+            harness.service->GetActionCatalog(
+                digest, replySchema, schemaDigest
+            ),
+            actionCatalog
+        );
+        QCOMPARE(digest, initial.actionCatalogDigest);
+        QCOMPARE(replySchema, schema);
+        QCOMPARE(schemaDigest, sha256(schema));
+        QCOMPARE(harness.authority->actionCatalogCalls, 1);
+        QCOMPARE(harness.authority->configSchemaCalls, 1);
+        QCOMPARE(harness.authority->replaceCalls, 0);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.authority->prepareRecoveryCalls, 0);
+        QCOMPARE(harness.authority->current, initial);
+    }
+
+    void actionAuthorityFailsClosedAndClearsEveryOutput()
+    {
+        const auto verifyFailure = [](
+            const QByteArray &actionCatalog,
+            const QByteArray &schema,
+            const QString &snapshotDigest = QString::fromLatin1(
+                reviewedActionCatalogDigest
+            )
+        ) {
+            auto initial = dirtySnapshot();
+            initial.actionCatalogDigest = snapshotDigest;
+            ServiceHarness harness(initial);
+            harness.authority->actionCatalogBytes = actionCatalog;
+            harness.authority->configSchemaBytes = schema;
+            QString digest = QStringLiteral("must-be-cleared");
+            QByteArray replySchema = QByteArrayLiteral("must-be-cleared");
+            QString schemaDigest = QStringLiteral("must-be-cleared");
+            QVERIFY(harness.service->GetActionCatalog(
+                digest, replySchema, schemaDigest
+            ).isEmpty());
+            QVERIFY(digest.isEmpty());
+            QVERIFY(replySchema.isEmpty());
+            QVERIFY(schemaDigest.isEmpty());
+            QCOMPARE(harness.authority->actionCatalogCalls, 1);
+            QCOMPARE(harness.authority->configSchemaCalls, 1);
+            QCOMPARE(harness.authority->replaceCalls, 0);
+        };
+
+        const auto canonicalAction = protectedActionCatalog();
+        const auto schema = protectedConfigSchema();
+        verifyFailure({}, schema);
+        verifyFailure(canonicalAction, {});
+        auto tampered = canonicalAction;
+        tampered.append('\n');
+        verifyFailure(tampered, schema);
+        verifyFailure(
+            QByteArray(maximumActionCatalogBytes + 1, 'x'), schema
+        );
+        verifyFailure(
+            canonicalAction,
+            QByteArray(maximumActionSchemaBytes + 1, 'x')
+        );
+        verifyFailure(
+            canonicalAction, schema, QString(64, QLatin1Char('f'))
+        );
     }
 
     void inspectorDistinguishesAbsentFromRegular()
@@ -2403,7 +3359,11 @@ private slots:
     {
         const auto initial = dirtySnapshot();
         ServiceHarness harness(initial);
-        const QByteArray candidate{"candidate"};
+        const auto candidate = sharedBorderSnapshot(
+            initial.revision,
+            initial.catalogDigest,
+            QJsonObject{{QStringLiteral("hyprland.animations.enabled"), false}}
+        );
 
         QCOMPARE(harness.service->ReplaceSnapshot(
                      initial.revision + 1,
@@ -2433,13 +3393,14 @@ private slots:
             .borderWidth = 1,
             .borderRadius = 0,
             .syncWindowBorders = false,
+            .syncWindowSpacing = false,
             .revision = 1,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
                      QStringLiteral("override"));
         auto next = initial;
         next.revision++;
-        next.desiredState = candidate;
+        next.desiredState = snapshotAtRevision(candidate, next.revision);
         harness.authority->replaceResult = {
             .success = true,
             .snapshot = next,
@@ -2453,6 +3414,149 @@ private slots:
                  qulonglong(next.revision));
         QCOMPARE(harness.authority->replaceCalls, 1);
         QCOMPARE(harness.service->revision(), qulonglong(next.revision));
+    }
+
+    void restartRequiredApplyStopsBeforePreparationOrPublication()
+    {
+        auto initial = dirtySnapshot();
+        initial.requiredActivation = ActivationRequirement::Restart;
+        ServiceHarness harness(initial);
+        setSharedBorderOverride(harness);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("override"));
+        harness.backend->supported = {ActivationRequirement::Reload};
+        QSignalSpy published(
+            harness.service.get(), &CompositorService::propertiesPublished
+        );
+        QVERIFY(published.isValid());
+
+        QString generation = QStringLiteral("sentinel");
+        QCOMPARE(harness.service->Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(generation, initial.generationDigest);
+        QCOMPARE(harness.backend->capabilityChecks,
+                 QVector{ActivationRequirement::Restart});
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        QCOMPARE(harness.backend->adoptCalls, 0);
+        QCOMPARE(harness.authority->commitCalls, 0);
+        QCOMPARE(harness.backend->finalizeCalls, 0);
+        QCOMPARE(harness.service->revision(), qulonglong(initial.revision));
+        QCOMPARE(harness.service->appliedRevision(),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(harness.service->generationDigest(), initial.generationDigest);
+        QVERIFY(published.isEmpty());
+    }
+
+    void exactCurrentApplyFailsClosedOnManagedActivationSafety()
+    {
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        auto initial = committedSnapshot(
+            5, sharedBorderSnapshot(5, digest)
+        );
+        initial.catalogDigest = digest;
+        auto management = managedStatus();
+        management.managedGeneration = QString::fromLatin1(generationId);
+        ServiceHarness harness(initial, management);
+        harness.authority->optionCatalogBytes = catalog;
+        setSharedBorderOverride(harness);
+        QTRY_COMPARE(
+            harness.service->sharedBorderSyncState(),
+            QStringLiteral("override")
+        );
+        harness.authority->activationSafetyErrors = {{
+            .path = QStringLiteral(
+                "$.overrides.hyprland.decoration.glow.range"
+            ),
+            .code = QStringLiteral("state.unsafe-glow-range"),
+            .message = QStringLiteral(
+                "Inner glow can be enabled only when its range is at least "
+                "10; disable glow or raise the range."
+            ),
+        }};
+
+        QString generation;
+        QCOMPARE(harness.service->Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(generation, initial.generationDigest);
+        QCOMPARE(harness.authority->activationSafetyCalls, 1);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        QCOMPARE(harness.authority->commitCalls, 0);
+
+        harness.authority->activationSafetyErrors.clear();
+        QCOMPARE(harness.service->Apply(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     generation
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(harness.authority->activationSafetyCalls, 2);
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        QCOMPARE(harness.authority->commitCalls, 0);
+    }
+
+    void restartRequiredAdoptionStopsBeforePreparationOrPublication()
+    {
+        auto initial = dirtySnapshot();
+        initial.appliedRevision = 0;
+        initial.appliedDesiredState.clear();
+        initial.generationDigest.clear();
+        initial.requiredActivation = ActivationRequirement::Restart;
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Unmanaged,
+                .entrypointKind = EntrypointKind::Absent,
+            }
+        );
+        setSharedBorderOverride(harness);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("override"));
+        harness.backend->supported = {ActivationRequirement::Reload};
+        QSignalSpy published(
+            harness.service.get(), &CompositorService::propertiesPublished
+        );
+        QVERIFY(published.isValid());
+
+        QString generation = QStringLiteral("sentinel-generation");
+        QString entrypoint = QStringLiteral("sentinel-entrypoint");
+        QCOMPARE(harness.service->AdoptManagedConfiguration(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     QString{},
+                     generation,
+                     entrypoint
+                 ),
+                 qulonglong(0));
+        QVERIFY(generation.isEmpty());
+        QVERIFY(entrypoint.isEmpty());
+        QCOMPARE(harness.backend->capabilityChecks,
+                 QVector{ActivationRequirement::Restart});
+        QCOMPARE(harness.authority->prepareApplyCalls, 0);
+        QCOMPARE(harness.backend->adoptCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        QCOMPARE(harness.authority->commitCalls, 0);
+        QCOMPARE(harness.backend->finalizeCalls, 0);
+        QCOMPARE(harness.service->revision(), qulonglong(initial.revision));
+        QCOMPARE(harness.service->appliedRevision(), qulonglong(0));
+        QVERIFY(harness.service->generationDigest().isEmpty());
+        QCOMPARE(harness.service->managementState(), QStringLiteral("unmanaged"));
+        QVERIFY(published.isEmpty());
     }
 
     void recoveryUsesPreparedRequirementRatherThanDesiredRequirement()
@@ -2504,46 +3608,220 @@ private slots:
         QCOMPARE(harness.service->requiredActivation(), QStringLiteral("none"));
     }
 
-    void replaceDelegatesPreviousTokenForLostResponseRetry()
+    void previousTokenRetrySurvivesSharedVisualPolicyChangeExactly()
     {
-        auto current = dirtySnapshot();
-        current.revision = 6;
-        current.desiredState = QByteArrayLiteral("current revision six");
-        ServiceHarness harness(current);
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        const SharedVisualProjection synced{
+            .borderEnabled = true,
+            .borderWidth = 4,
+            .borderRadius = 8,
+            .syncWindowBorders = true,
+            .innerSpacing = 8,
+            .outerSpacing = 12,
+            .syncWindowSpacing = true,
+            .revision = 2,
+        };
+        QString error;
+        const auto priorCandidate = reconciledSharedVisualSnapshot(
+            sharedBorderSnapshot(5, digest),
+            5,
+            digest,
+            synced,
+            true,
+            true,
+            error
+        );
+        QVERIFY2(priorCandidate.has_value(), qPrintable(error));
+        auto current = committedSnapshot(
+            6, snapshotAtRevision(*priorCandidate, 6)
+        );
+        current.catalogDigest = digest;
+        auto management = managedStatus();
+        management.managedGeneration = QString::fromLatin1(generationId);
+        ServiceHarness harness(current, management);
         harness.sharedBorderSource->setProjection({
             .borderEnabled = true,
             .borderWidth = 1,
             .borderRadius = 0,
             .syncWindowBorders = false,
+            .syncWindowSpacing = false,
             .revision = 1,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
                      QStringLiteral("override"));
-        harness.authority->replaceResult = {
-            .success = true,
-            .snapshot = current,
+        harness.authority->replaceHook = [current, priorCandidate](
+            const quint64 expectedRevision,
+            const QByteArray &candidate
+        ) {
+            if (expectedRevision == 5 && candidate == *priorCandidate) {
+                return AuthorityResult{
+                    .success = true,
+                    .snapshot = current,
+                };
+            }
+            return AuthorityResult{
+                .success = false,
+                .errorCode = QStringLiteral("StaleRevision"),
+                .errorMessage = QStringLiteral(
+                    "The immediately preceding candidate was not committed"
+                ),
+                .snapshot = current,
+            };
         };
-        const QByteArray priorCandidate{"candidate embedding revision five"};
+
+        auto divergentPolicy = synced;
+        divergentPolicy.borderWidth = 6;
+        divergentPolicy.borderRadius = 10;
+        divergentPolicy.innerSpacing = 9;
+        divergentPolicy.outerSpacing = 14;
+        divergentPolicy.revision++;
+        harness.sharedBorderSource->setProjection(divergentPolicy);
 
         QCOMPARE(harness.service->ReplaceSnapshot(
                      5,
                      current.catalogDigest,
                      current.actionCatalogDigest,
-                     priorCandidate
+                     *priorCandidate
                  ),
                  qulonglong(6));
         QCOMPARE(harness.authority->replaceCalls, 1);
         QCOMPARE(harness.authority->lastReplaceExpected, quint64(5));
-        QCOMPARE(harness.authority->lastReplaceCandidate, priorCandidate);
+        QCOMPARE(harness.authority->lastReplaceCandidate, *priorCandidate);
+        QCOMPARE(harness.authority->replaceCalls, 1);
+
+        auto nonexactObject = QJsonDocument::fromJson(
+            *priorCandidate
+        ).object();
+        auto nonexactOverrides = nonexactObject.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        nonexactOverrides.insert(
+            QStringLiteral("hyprland.animations.enabled"), false
+        );
+        nonexactObject.insert(QStringLiteral("overrides"), nonexactOverrides);
+        auto nonexact = JsonSupport::canonicalJson(nonexactObject);
+        nonexact.append('\n');
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     5,
+                     current.catalogDigest,
+                     current.actionCatalogDigest,
+                     nonexact
+                 ), qulonglong(6));
+        QCOMPARE(harness.authority->replaceCalls, 2);
+        QCOMPARE(harness.service->revision(), qulonglong(6));
+        QCOMPARE(harness.backend->activateCalls, 0);
 
         QCOMPARE(harness.service->ReplaceSnapshot(
                      4,
                      current.catalogDigest,
                      current.actionCatalogDigest,
-                     QByteArrayLiteral("too old")
+                     sharedBorderSnapshot(4, current.catalogDigest)
                  ),
                  qulonglong(6));
+        QCOMPARE(harness.authority->replaceCalls, 2);
+    }
+
+    void activeDisplayConfirmationAllowsOnlyExactPreviousTokenRetry()
+    {
+        const auto catalog = protectedCatalog();
+        const auto digest = sha256(catalog);
+        const auto priorCandidate = sharedBorderSnapshot(
+            4,
+            digest,
+            QJsonObject{{QStringLiteral("hyprland.animations.enabled"), false}}
+        );
+        auto current = committedSnapshot(
+            5, snapshotAtRevision(priorCandidate, 5)
+        );
+        current.catalogDigest = digest;
+        auto management = managedStatus();
+        management.managedGeneration = QString::fromLatin1(generationId);
+        ServiceHarness harness(current, management);
+        setSharedBorderOverride(harness);
+        QTRY_COMPARE(harness.service->sharedBorderSyncState(),
+                     QStringLiteral("override"));
+
+        const auto topology = connectedDisplayTopology();
+        configureDisplayPreview(harness, current, topology);
+        QString token;
+        qulonglong deadline = 0;
+        QString previewGeneration;
+        QCOMPARE(harness.service->PreviewDisplayConfiguration(
+                     current.revision,
+                     current.catalogDigest,
+                     current.actionCatalogDigest,
+                     displayProfileBytes(topology),
+                     15,
+                     token,
+                     deadline,
+                     previewGeneration
+                 ), qulonglong(current.revision + 1));
+        QVERIFY(!harness.service->writable());
+        QCOMPARE(harness.service->displayConfirmationState(),
+                 QStringLiteral("awaiting-confirmation"));
+
+        auto pendingSnapshot = current;
+        pendingSnapshot.writable = false;
+        harness.authority->replaceHook = [pendingSnapshot, priorCandidate](
+            const quint64 expectedRevision,
+            const QByteArray &candidate
+        ) {
+            if (expectedRevision == 4 && candidate == priorCandidate) {
+                return AuthorityResult{
+                    .success = true,
+                    .snapshot = pendingSnapshot,
+                };
+            }
+            return AuthorityResult{
+                .success = false,
+                .errorCode = QStringLiteral("StaleRevision"),
+                .errorMessage = QStringLiteral(
+                    "The immediately preceding candidate was not committed"
+                ),
+                .snapshot = pendingSnapshot,
+            };
+        };
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     4,
+                     current.catalogDigest,
+                     current.actionCatalogDigest,
+                     priorCandidate
+                 ), qulonglong(current.revision));
         QCOMPARE(harness.authority->replaceCalls, 1);
+        QVERIFY(!harness.service->writable());
+        QCOMPARE(harness.service->displayConfirmationState(),
+                 QStringLiteral("awaiting-confirmation"));
+
+        auto nonexactObject = QJsonDocument::fromJson(priorCandidate).object();
+        auto nonexactOverrides = nonexactObject.value(
+            QStringLiteral("overrides")
+        ).toObject();
+        nonexactOverrides.insert(
+            QStringLiteral("hyprland.animations.enabled"), true
+        );
+        nonexactObject.insert(QStringLiteral("overrides"), nonexactOverrides);
+        auto nonexact = JsonSupport::canonicalJson(nonexactObject);
+        nonexact.append('\n');
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     4,
+                     current.catalogDigest,
+                     current.actionCatalogDigest,
+                     nonexact
+                 ), qulonglong(current.revision));
+        QCOMPARE(harness.authority->replaceCalls, 2);
+        QCOMPARE(harness.service->displayConfirmationState(),
+                 QStringLiteral("awaiting-confirmation"));
+
+        QCOMPARE(harness.service->ReplaceSnapshot(
+                     current.revision,
+                     current.catalogDigest,
+                     current.actionCatalogDigest,
+                     current.desiredState
+                 ), qulonglong(current.revision));
+        QCOMPARE(harness.authority->replaceCalls, 2);
+        QCOMPARE(harness.service->displayConfirmationState(),
+                 QStringLiteral("awaiting-confirmation"));
     }
 
     void uncertainReplacePublicationMakesServiceUnavailable()
@@ -2555,6 +3833,7 @@ private slots:
             .borderWidth = 1,
             .borderRadius = 0,
             .syncWindowBorders = false,
+            .syncWindowSpacing = false,
             .revision = 1,
         });
         QTRY_COMPARE(harness.service->sharedBorderSyncState(),
@@ -2577,7 +3856,14 @@ private slots:
                      initial.revision,
                      initial.catalogDigest,
                      initial.actionCatalogDigest,
-                     QByteArrayLiteral("candidate")
+                     sharedBorderSnapshot(
+                         initial.revision,
+                         initial.catalogDigest,
+                         QJsonObject{{
+                             QStringLiteral("hyprland.animations.enabled"),
+                             false
+                         }}
+                     )
                  ),
                  qulonglong(0));
         QCOMPARE(harness.authority->replaceCalls, 1);
@@ -2813,6 +4099,55 @@ private slots:
             QCOMPARE(harness.backend->adoptCalls, 0);
             QCOMPARE(harness.authority->commitCalls, 0);
         }
+    }
+
+    void adoptionStopsWhenManagedActivationSafetyRejectsStaging()
+    {
+        auto initial = dirtySnapshot();
+        initial.appliedRevision = 0;
+        initial.appliedDesiredState.clear();
+        initial.generationDigest.clear();
+        ServiceHarness harness(
+            initial,
+            {
+                .state = ManagementState::Unmanaged,
+                .entrypointKind = EntrypointKind::Absent,
+            }
+        );
+        setSharedBorderOverride(harness);
+        QTRY_COMPARE(
+            harness.service->sharedBorderSyncState(),
+            QStringLiteral("override")
+        );
+        harness.authority->prepareApplyResult = {
+            .success = false,
+            .errorCode = QStringLiteral("VerificationFailed"),
+            .errorMessage = QStringLiteral(
+                "state.unsafe-glow-range: Inner glow can be enabled only "
+                "when its range is at least 10; disable glow or raise the "
+                "range."
+            ),
+            .snapshot = initial,
+        };
+
+        QString generation;
+        QString entrypoint;
+        QCOMPARE(harness.service->AdoptManagedConfiguration(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     QString{},
+                     generation,
+                     entrypoint
+                 ),
+                 qulonglong(initial.appliedRevision));
+        QCOMPARE(harness.authority->prepareApplyCalls, 1);
+        QCOMPARE(harness.backend->adoptCalls, 0);
+        QCOMPARE(harness.backend->activateCalls, 0);
+        QCOMPARE(harness.authority->commitCalls, 0);
+        QCOMPARE(harness.authority->abortCalls, 0);
+        QVERIFY(generation.isEmpty());
+        QVERIFY(entrypoint.isEmpty());
     }
 
     void unsupportedPreparedRecoveryAbortsWithoutPublishing()
@@ -3522,6 +4857,193 @@ private slots:
         QCOMPARE(harness.authority->commitCalls, 0);
         QCOMPARE(harness.service->applyState(), QStringLiteral("failed"));
         QVERIFY(!harness.service->available());
+    }
+
+    void inputDeviceDiscoveryIsIndependentAndReceiptBound()
+    {
+        const auto initial = dirtySnapshot();
+        ServiceHarness harness(initial);
+        const auto inventory = connectedInputDeviceInventory();
+        harness.backend->connectedInputResult = {
+            .success = true,
+            .runtimeIdentity = QStringLiteral("authenticated-runtime"),
+            .inventory = inventory,
+        };
+
+        qulonglong observedAtMs = 0;
+        QCOMPARE(harness.service->GetConnectedInputDevices(observedAtMs),
+                 inventory.document);
+        QVERIFY(observedAtMs > 0);
+        QCOMPARE(harness.backend->connectedInputCalls, 1);
+        QCOMPARE(harness.backend->connectedInputEpochs,
+                 QVector<QByteArray>{QByteArray(inputDeviceInventoryEpoch)});
+
+        harness.backend->connectedInputResult = {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral("device query failed"),
+        };
+        observedAtMs = 99;
+        QVERIFY(harness.service->GetConnectedInputDevices(observedAtMs).isEmpty());
+        QCOMPARE(observedAtMs, qulonglong(0));
+        QCOMPARE(harness.backend->connectedInputCalls, 2);
+
+    }
+
+    void inputDeviceDiscoveryDoesNotRequireDesiredStateAuthority()
+    {
+        auto ownedBackend = std::make_unique<FakeActivationBackend>();
+        auto *backend = ownedBackend.get();
+        const auto inventory = connectedInputDeviceInventory();
+        backend->connectedInputResult = {
+            .success = true,
+            .runtimeIdentity = QStringLiteral("authenticated-runtime"),
+            .inventory = inventory,
+        };
+        CompositorService service(
+            std::move(ownedBackend),
+            QDBusConnection(QStringLiteral("input-devices-without-authority")),
+            nullptr,
+            {},
+            {},
+            {},
+            QByteArray(inputDeviceInventoryEpoch)
+        );
+
+        qulonglong observedAtMs = 0;
+        QCOMPARE(service.GetConnectedInputDevices(observedAtMs),
+                 inventory.document);
+        QVERIFY(observedAtMs > 0);
+        QCOMPARE(backend->connectedInputCalls, 1);
+        QCOMPARE(backend->connectedInputEpochs,
+                 QVector<QByteArray>{QByteArray(inputDeviceInventoryEpoch)});
+        QVERIFY(!service.available());
+    }
+
+    void inputDeviceDiscoveryIsBlockedDuringDisplayReconciliation()
+    {
+        auto initial = committedSnapshot();
+        initial.generationDigest = QStringLiteral("old-generation");
+        ServiceHarness harness(initial);
+        const auto inventory = connectedInputDeviceInventory();
+        harness.backend->connectedInputResult = {
+            .success = true,
+            .runtimeIdentity = QStringLiteral("authenticated-runtime"),
+            .inventory = inventory,
+        };
+        const auto topology = connectedDisplayTopology();
+        configureDisplayPreview(harness, initial, topology);
+
+        QString token;
+        qulonglong deadline = 0;
+        QString previewGeneration;
+        QCOMPARE(harness.service->PreviewDisplayConfiguration(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     displayProfileBytes(topology),
+                     10,
+                     token,
+                     deadline,
+                     previewGeneration
+                 ),
+                 qulonglong(6));
+
+        qulonglong observedAtMs = 99;
+        QVERIFY(harness.service->GetConnectedInputDevices(observedAtMs).isEmpty());
+        QCOMPARE(observedAtMs, qulonglong(0));
+        QCOMPARE(harness.backend->connectedInputCalls, 0);
+
+        auto committed = committedSnapshot(
+            6, QByteArrayLiteral("{\"revision\":\"6\"}\n")
+        );
+        harness.authority->commitResult = {
+            .success = true,
+            .commitDecisionDurable = true,
+            .commitDecisionMayExist = true,
+            .snapshot = committed,
+        };
+        auto target = managedStatus();
+        target.managedGeneration = QString::fromLatin1(generationId);
+        harness.backend->finalizeResultConfigured = true;
+        harness.backend->finalizeResult = {
+            .success = true,
+            .status = target,
+        };
+        bool blockedWhileCommitting = false;
+        harness.backend->finalizeHook = [&] {
+            qulonglong committingObservedAt = 99;
+            blockedWhileCommitting =
+                harness.service->GetConnectedInputDevices(committingObservedAt)
+                    .isEmpty()
+                && committingObservedAt == 0
+                && harness.backend->connectedInputCalls == 0;
+        };
+
+        QString confirmedGeneration;
+        QCOMPARE(harness.service->ConfirmDisplayConfiguration(
+                     token, confirmedGeneration
+                 ),
+                 qulonglong(6));
+        QVERIFY(blockedWhileCommitting);
+
+        observedAtMs = 0;
+        QCOMPARE(harness.service->GetConnectedInputDevices(observedAtMs),
+                 inventory.document);
+        QVERIFY(observedAtMs > 0);
+        QCOMPARE(harness.backend->connectedInputCalls, 1);
+    }
+
+    void inputDeviceDiscoveryIsBlockedWhileDisplayRollbackIsRunning()
+    {
+        auto initial = committedSnapshot();
+        initial.generationDigest = QStringLiteral("old-generation");
+        ServiceHarness harness(initial);
+        const auto inventory = connectedInputDeviceInventory();
+        harness.backend->connectedInputResult = {
+            .success = true,
+            .runtimeIdentity = QStringLiteral("authenticated-runtime"),
+            .inventory = inventory,
+        };
+        const auto topology = connectedDisplayTopology();
+        configureDisplayPreview(harness, initial, topology);
+
+        QString token;
+        qulonglong deadline = 0;
+        QString previewGeneration;
+        QCOMPARE(harness.service->PreviewDisplayConfiguration(
+                     initial.revision,
+                     initial.catalogDigest,
+                     initial.actionCatalogDigest,
+                     displayProfileBytes(topology),
+                     10,
+                     token,
+                     deadline,
+                     previewGeneration
+                 ),
+                 qulonglong(6));
+
+        bool blockedWhileReverting = false;
+        harness.backend->rollbackHook = [&] {
+            qulonglong observedAtMs = 99;
+            blockedWhileReverting =
+                harness.service->GetConnectedInputDevices(observedAtMs)
+                    .isEmpty()
+                && observedAtMs == 0
+                && harness.backend->connectedInputCalls == 0;
+        };
+
+        QCOMPARE(harness.service->RevertDisplayConfiguration(token),
+                 qulonglong(initial.revision));
+        QVERIFY(blockedWhileReverting);
+        QCOMPARE(harness.service->displayConfirmationState(),
+                 QStringLiteral("idle"));
+
+        qulonglong observedAtMs = 0;
+        QCOMPARE(harness.service->GetConnectedInputDevices(observedAtMs),
+                 inventory.document);
+        QVERIFY(observedAtMs > 0);
+        QCOMPARE(harness.backend->connectedInputCalls, 1);
     }
 
     void pendingDisplayQueriesUseProvedCacheAndConfirmProofIsDeadlineBound()
@@ -4734,6 +6256,12 @@ private slots:
         auto initial = committedSnapshot();
         initial.generationDigest = QStringLiteral("old-generation");
         ServiceHarness harness(initial);
+        const auto inventory = connectedInputDeviceInventory();
+        harness.backend->connectedInputResult = {
+            .success = true,
+            .runtimeIdentity = QStringLiteral("authenticated-runtime"),
+            .inventory = inventory,
+        };
         const auto topology = connectedDisplayTopology();
         configureDisplayPreview(harness, initial, topology);
         const auto committed = committedSnapshot(
@@ -4781,6 +6309,15 @@ private slots:
         QCOMPARE(harness.service->displayConfirmationRevision(), qulonglong(0));
         QVERIFY(!harness.service->available());
         QCOMPARE(harness.service->managementState(), QStringLiteral("conflict"));
+
+        // Terminal display failure has already revoked the preview capability.
+        // Device diagnostics remain independent even though desired-state
+        // authority is now unavailable.
+        qulonglong observedAtMs = 0;
+        QCOMPARE(harness.service->GetConnectedInputDevices(observedAtMs),
+                 inventory.document);
+        QVERIFY(observedAtMs > 0);
+        QCOMPARE(harness.backend->connectedInputCalls, 1);
 
         QCOMPARE(harness.service->RevertDisplayConfiguration(token),
                  qulonglong(0));

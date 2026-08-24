@@ -17,6 +17,56 @@ namespace {
 
 constexpr int maximumActionDocumentDepth = 64;
 
+struct ActionCatalogContract final {
+    quint32 contractVersion;
+    const char *reviewedVersion;
+    const char *reviewedTag;
+    const char *reviewedCommit;
+    bool requiresPatchRange;
+    quint32 minimumPatch;
+    quint32 maximumPatch;
+    bool requiresSourceManifestDigest;
+    const char *sourceManifestDigest;
+    const char *dispatcherSourceSha256;
+    const char *integrityDigest;
+};
+
+[[nodiscard]] const ActionCatalogContract &activeActionCatalogContract()
+{
+    static const ActionCatalogContract contract{
+        .contractVersion = currentActionCatalogContractVersion,
+        .reviewedVersion = "0.56.1",
+        .reviewedTag = "v0.56.1",
+        .reviewedCommit = "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+        .requiresPatchRange = false,
+        .minimumPatch = 0,
+        .maximumPatch = 0,
+        .requiresSourceManifestDigest = false,
+        .sourceManifestDigest = nullptr,
+        .dispatcherSourceSha256 = "76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223",
+        .integrityDigest = reviewedActionCatalogDigest,
+    };
+    return contract;
+}
+
+[[nodiscard]] const ActionCatalogContract &dormantActionCatalogContractV2()
+{
+    static const ActionCatalogContract contract{
+        .contractVersion = dormantActionCatalogV2ContractVersion,
+        .reviewedVersion = "0.56.2",
+        .reviewedTag = "v0.56.2",
+        .reviewedCommit = "efb50993780079460b0cbed1363e2166a2de1d9f",
+        .requiresPatchRange = true,
+        .minimumPatch = 2,
+        .maximumPatch = 2,
+        .requiresSourceManifestDigest = true,
+        .sourceManifestDigest = dormantReviewedSourceManifestDigest,
+        .dispatcherSourceSha256 = "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+        .integrityDigest = dormantReviewedActionCatalogV2Digest,
+    };
+    return contract;
+}
+
 void addError(
     ValidationErrors &errors,
     QString path,
@@ -120,6 +170,35 @@ void rejectUnknownFields(
 {
     return value.isDouble() && std::isfinite(value.toDouble())
         && std::floor(value.toDouble()) == value.toDouble();
+}
+
+[[nodiscard]] std::optional<quint32> readPatch(
+    const QJsonObject &object,
+    const QString &key,
+    const QString &path,
+    ValidationErrors &errors
+)
+{
+    const auto value = object.value(key);
+    if (!isInteger(value) || value.toDouble() < 0
+        || value.toDouble() > 65535) {
+        addError(
+            errors,
+            path + QLatin1Char('.') + key,
+            QStringLiteral("action-catalog.invalid-patch-range"),
+            QStringLiteral("A supported unsigned patch number is required.")
+        );
+        return std::nullopt;
+    }
+    return static_cast<quint32>(value.toDouble());
+}
+
+[[nodiscard]] bool isSha256(const QString &value)
+{
+    static const QRegularExpression expression(
+        QStringLiteral("^[0-9a-f]{64}$")
+    );
+    return expression.match(value).hasMatch();
 }
 
 [[nodiscard]] std::optional<qsizetype> schemaSize(
@@ -1211,9 +1290,11 @@ void validateContract(
 
 } // namespace
 
-ValidationResult<ActionCatalog> parseActionCatalog(
+[[nodiscard]] static ValidationResult<ActionCatalog>
+parseActionCatalogContract(
     const QByteArrayView actionCatalogBytes,
-    const QByteArrayView configSchemaBytes
+    const QByteArrayView configSchemaBytes,
+    const ActionCatalogContract &contract
 )
 {
     ValidationResult<ActionCatalog> result;
@@ -1233,35 +1314,101 @@ ValidationResult<ActionCatalog> parseActionCatalog(
     }
     const auto &root = *actionParsed.value;
     const auto &schemaRoot = *schemaParsed.value;
+    QSet<QString> rootFields{
+        QStringLiteral("contractVersion"), QStringLiteral("hyprland"),
+        QStringLiteral("configSchemaDigest"), QStringLiteral("source"),
+        QStringLiteral("dispatcherActions"), QStringLiteral("semanticActions"),
+        QStringLiteral("gestureActions"), QStringLiteral("excluded"),
+    };
+    if (contract.requiresSourceManifestDigest) {
+        rootFields.insert(QStringLiteral("sourceManifestDigest"));
+    }
     rejectUnknownFields(
         root,
-        {
-            QStringLiteral("contractVersion"), QStringLiteral("hyprland"),
-            QStringLiteral("configSchemaDigest"), QStringLiteral("source"),
-            QStringLiteral("dispatcherActions"), QStringLiteral("semanticActions"),
-            QStringLiteral("gestureActions"), QStringLiteral("excluded"),
-        },
+        rootFields,
         QStringLiteral("$"),
         result.errors
     );
     ActionCatalog catalog;
     const auto contractVersion = root.value(QStringLiteral("contractVersion"));
-    if (!isInteger(contractVersion) || contractVersion.toDouble() != currentActionCatalogContractVersion) addError(result.errors, QStringLiteral("$.contractVersion"), QStringLiteral("action-catalog.unsupported-contract-version"), QStringLiteral("Only action catalog contract v1 is supported."));
-    else catalog.contractVersion = currentActionCatalogContractVersion;
+    if (!isInteger(contractVersion)
+        || contractVersion.toDouble() != contract.contractVersion) {
+        addError(
+            result.errors,
+            QStringLiteral("$.contractVersion"),
+            QStringLiteral("action-catalog.unsupported-contract-version"),
+            QStringLiteral("Only action catalog contract v%1 is supported.")
+                .arg(contract.contractVersion)
+        );
+    } else {
+        catalog.contractVersion = contract.contractVersion;
+    }
 
     const auto hyprland = readObject(root, QStringLiteral("hyprland"), QStringLiteral("$"), result.errors);
-    rejectUnknownFields(hyprland, {QStringLiteral("reviewedVersion"), QStringLiteral("reviewedTag"), QStringLiteral("reviewedCommit")}, QStringLiteral("$.hyprland"), result.errors);
+    QSet<QString> hyprlandFields{
+        QStringLiteral("reviewedVersion"),
+        QStringLiteral("reviewedTag"),
+        QStringLiteral("reviewedCommit"),
+    };
+    if (contract.requiresPatchRange) {
+        hyprlandFields.insert(QStringLiteral("minimumPatch"));
+        hyprlandFields.insert(QStringLiteral("maximumPatch"));
+    }
+    rejectUnknownFields(
+        hyprland,
+        hyprlandFields,
+        QStringLiteral("$.hyprland"),
+        result.errors
+    );
     const auto reviewed = readString(hyprland, QStringLiteral("reviewedVersion"), QStringLiteral("$.hyprland"), 32, result.errors);
     if (const auto version = semanticVersionFromString(reviewed)) catalog.reviewedVersion = *version;
     else if (!reviewed.isEmpty()) addError(result.errors, QStringLiteral("$.hyprland.reviewedVersion"), QStringLiteral("action-catalog.invalid-version"), QStringLiteral("A strict reviewed version is required."));
     catalog.reviewedTag = readString(hyprland, QStringLiteral("reviewedTag"), QStringLiteral("$.hyprland"), 64, result.errors);
     catalog.reviewedCommit = readString(hyprland, QStringLiteral("reviewedCommit"), QStringLiteral("$.hyprland"), 40, result.errors);
-    static const QString expectedVersion = QStringLiteral("0.56.1");
-    static const QString expectedTag = QStringLiteral("v0.56.1");
-    static const QString expectedCommit = QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0");
-    if (reviewed != expectedVersion) addError(result.errors, QStringLiteral("$.hyprland.reviewedVersion"), QStringLiteral("action-catalog.invalid-version"), QStringLiteral("The authority must be pinned to Hyprland 0.56.1."));
-    if (catalog.reviewedTag != expectedTag) addError(result.errors, QStringLiteral("$.hyprland.reviewedTag"), QStringLiteral("action-catalog.invalid-tag"), QStringLiteral("The authority must use the reviewed v0.56.1 tag."));
-    if (catalog.reviewedCommit != expectedCommit) addError(result.errors, QStringLiteral("$.hyprland.reviewedCommit"), QStringLiteral("action-catalog.invalid-commit"), QStringLiteral("The authority must use the reviewed Hyprland commit."));
+    if (reviewed != QLatin1String(contract.reviewedVersion)) addError(result.errors, QStringLiteral("$.hyprland.reviewedVersion"), QStringLiteral("action-catalog.invalid-version"), QStringLiteral("The authority must use the exact reviewed Hyprland version."));
+    if (catalog.reviewedTag != QLatin1String(contract.reviewedTag)) addError(result.errors, QStringLiteral("$.hyprland.reviewedTag"), QStringLiteral("action-catalog.invalid-tag"), QStringLiteral("The authority must use the exact reviewed tag."));
+    if (catalog.reviewedCommit != QLatin1String(contract.reviewedCommit)) addError(result.errors, QStringLiteral("$.hyprland.reviewedCommit"), QStringLiteral("action-catalog.invalid-commit"), QStringLiteral("The authority must use the reviewed Hyprland commit."));
+    if (contract.requiresPatchRange) {
+        if (const auto minimum = readPatch(
+                hyprland,
+                QStringLiteral("minimumPatch"),
+                QStringLiteral("$.hyprland"),
+                result.errors
+            )) {
+            catalog.minimumPatch = *minimum;
+            if (*minimum != contract.minimumPatch) {
+                addError(result.errors, QStringLiteral("$.hyprland.minimumPatch"), QStringLiteral("action-catalog.invalid-patch-range"), QStringLiteral("The authority has the wrong exact minimum patch."));
+            }
+        }
+        if (const auto maximum = readPatch(
+                hyprland,
+                QStringLiteral("maximumPatch"),
+                QStringLiteral("$.hyprland"),
+                result.errors
+            )) {
+            catalog.maximumPatch = *maximum;
+            if (*maximum != contract.maximumPatch) {
+                addError(result.errors, QStringLiteral("$.hyprland.maximumPatch"), QStringLiteral("action-catalog.invalid-patch-range"), QStringLiteral("The authority has the wrong exact maximum patch."));
+            }
+        }
+    }
+
+    if (contract.requiresSourceManifestDigest) {
+        catalog.sourceManifestDigest = readString(
+            root,
+            QStringLiteral("sourceManifestDigest"),
+            QStringLiteral("$"),
+            64,
+            result.errors
+        );
+        if (!catalog.sourceManifestDigest.isEmpty()
+            && !isSha256(catalog.sourceManifestDigest)) {
+            addError(result.errors, QStringLiteral("$.sourceManifestDigest"), QStringLiteral("action-catalog.invalid-source-manifest-digest"), QStringLiteral("A lowercase SHA-256 source-manifest digest is required."));
+        } else if (catalog.sourceManifestDigest
+            != QLatin1String(contract.sourceManifestDigest)) {
+            addError(result.errors, QStringLiteral("$.sourceManifestDigest"), QStringLiteral("action-catalog.source-manifest-digest-mismatch"), QStringLiteral("The action catalog is not bound to the exact reviewed source manifest."));
+        }
+    }
 
     catalog.configSchemaDigest = readString(root, QStringLiteral("configSchemaDigest"), QStringLiteral("$"), 64, result.errors);
     const auto actualSchemaDigest = QString::fromLatin1(QCryptographicHash::hash(configSchemaBytes, QCryptographicHash::Sha256).toHex());
@@ -1274,7 +1421,7 @@ ValidationResult<ActionCatalog> parseActionCatalog(
     catalog.source.commit = readString(source, QStringLiteral("commit"), QStringLiteral("$.source"), 40, result.errors);
     catalog.source.path = readString(source, QStringLiteral("path"), QStringLiteral("$.source"), 256, result.errors);
     catalog.source.sha256 = readString(source, QStringLiteral("sha256"), QStringLiteral("$.source"), 64, result.errors);
-    if (catalog.source.repository != QStringLiteral("https://github.com/hyprwm/Hyprland") || catalog.source.tag != catalog.reviewedTag || catalog.source.commit != catalog.reviewedCommit || catalog.source.path != QStringLiteral("src/config/lua/bindings/LuaBindingsDispatchers.cpp") || catalog.source.sha256 != QStringLiteral("76488e1f4893fcf835c13ed98e51ab4d1c72d76a12c753eb0ad3a2237bf95223")) addError(result.errors, QStringLiteral("$.source"), QStringLiteral("action-catalog.invalid-provenance"), QStringLiteral("The source provenance is incomplete or inconsistent."));
+    if (catalog.source.repository != QStringLiteral("https://github.com/hyprwm/Hyprland") || catalog.source.tag != catalog.reviewedTag || catalog.source.commit != catalog.reviewedCommit || catalog.source.path != QStringLiteral("src/config/lua/bindings/LuaBindingsDispatchers.cpp") || catalog.source.sha256 != QLatin1String(contract.dispatcherSourceSha256)) addError(result.errors, QStringLiteral("$.source"), QStringLiteral("action-catalog.invalid-provenance"), QStringLiteral("The source provenance is incomplete or inconsistent."));
 
     const auto definitions = schemaRoot.value(QStringLiteral("$defs"));
     if (!definitions.isObject() || definitions.toObject().size() > 1024) {
@@ -1368,20 +1515,48 @@ ValidationResult<ActionCatalog> parseActionCatalog(
 
     catalog.canonicalDocument = root;
     catalog.canonicalConfigSchema = schemaRoot;
+    catalog.configSchemaDocument = QByteArray(
+        configSchemaBytes.data(), configSchemaBytes.size()
+    );
     QByteArray digestInput = JsonSupport::canonicalJson(root);
     digestInput.append('\n');
     digestInput.append(configSchemaBytes.data(), configSchemaBytes.size());
     catalog.digest = QString::fromLatin1(QCryptographicHash::hash(digestInput, QCryptographicHash::Sha256).toHex());
-    if (catalog.digest != QLatin1String(reviewedActionCatalogDigest)) {
+    if (catalog.digest != QLatin1String(contract.integrityDigest)) {
         addError(
             result.errors,
             QStringLiteral("$"),
             QStringLiteral("action-catalog.integrity-mismatch"),
-            QStringLiteral("The action catalog and exact config schema bytes do not match the compiled reviewed v1 authority.")
+            QStringLiteral("The action catalog and exact config schema bytes do not match the compiled reviewed v%1 authority.")
+                .arg(contract.contractVersion)
         );
     }
     if (result.errors.isEmpty()) result.value = std::move(catalog);
     return result;
+}
+
+ValidationResult<ActionCatalog> parseActionCatalog(
+    const QByteArrayView actionCatalogBytes,
+    const QByteArrayView configSchemaBytes
+)
+{
+    return parseActionCatalogContract(
+        actionCatalogBytes,
+        configSchemaBytes,
+        activeActionCatalogContract()
+    );
+}
+
+ValidationResult<ActionCatalog> parseDormantActionCatalogV2(
+    const QByteArrayView actionCatalogBytes,
+    const QByteArrayView configSchemaBytes
+)
+{
+    return parseActionCatalogContract(
+        actionCatalogBytes,
+        configSchemaBytes,
+        dormantActionCatalogContractV2()
+    );
 }
 
 QByteArray canonicalActionCatalogJson(const ActionCatalog &catalog)

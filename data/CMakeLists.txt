@@ -115,16 +115,35 @@ install(
     DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/schemas/hyprland/v1"
 )
 
+set(
+    hyprshelld_hyprland_v2_schema_files
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/action-catalog.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/catalog.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/config-template.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/generation-manifest.schema.json"
+    "${PROJECT_SOURCE_DIR}/interfaces/hyprland/v2/source-manifest.schema.json"
+)
+
+install(
+    FILES ${hyprshelld_hyprland_v2_schema_files}
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/schemas/hyprland/v2"
+)
+
 install(
     FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/hyprland/action-catalog-v1.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland/action-catalog-v2.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/hyprland/config-catalog-v1.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland/config-catalog-v2.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/hyprland/source-manifest-v2.json"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/hyprland"
 )
 
 install(
     FILES
         "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor1.xml"
+        "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.Compositor2.xml"
         "${PROJECT_SOURCE_DIR}/interfaces/dbus/org.hyprshelld.ComponentRuntime1.xml"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/dbus"
 )
@@ -133,6 +152,7 @@ install(
     FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/defaults/components.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/defaults/hyprland.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/defaults/hyprland-template.json"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/hyprshelld/defaults"
 )
 

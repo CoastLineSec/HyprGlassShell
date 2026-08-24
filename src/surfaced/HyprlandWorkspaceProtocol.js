@@ -114,6 +114,11 @@ function normalizeMonitors(rawMonitors) {
         const activeWorkspace = isObject(monitor)
             ? monitor.activeWorkspace
             : null;
+        const specialWorkspace = isObject(monitor)
+            ? monitor.specialWorkspace
+            : null;
+        const specialWorkspaceActive = isObject(specialWorkspace)
+            && specialWorkspace.id !== 0;
         if (!isObject(monitor)
                 || !isInteger(monitor.id)
                 || typeof monitor.name !== "string"
@@ -123,7 +128,15 @@ function normalizeMonitors(rawMonitors) {
                 || !isObject(activeWorkspace)
                 || !isInteger(activeWorkspace.id)
                 || typeof activeWorkspace.name !== "string"
-                || activeWorkspace.name.length === 0) {
+                || activeWorkspace.name.length === 0
+                || !isObject(specialWorkspace)
+                || !isInteger(specialWorkspace.id)
+                || typeof specialWorkspace.name !== "string"
+                || (specialWorkspaceActive
+                    && (specialWorkspace.name.length === 0
+                        || specialWorkspace.name.indexOf("special:") !== 0))
+                || (!specialWorkspaceActive
+                    && specialWorkspace.name.length !== 0)) {
             ++skipped;
             continue;
         }
@@ -134,7 +147,15 @@ function normalizeMonitors(rawMonitors) {
             name: monitor.name,
             focused: monitor.focused,
             activeWorkspaceId: activeWorkspace.id,
-            activeWorkspaceName: activeWorkspace.name
+            activeWorkspaceName: activeWorkspace.name,
+            specialWorkspaceId: specialWorkspace.id,
+            specialWorkspaceName: specialWorkspace.name,
+            visibleWorkspaceId: specialWorkspaceActive
+                ? specialWorkspace.id
+                : activeWorkspace.id,
+            visibleWorkspaceName: specialWorkspaceActive
+                ? specialWorkspace.name
+                : activeWorkspace.name
         });
     }
 
@@ -160,6 +181,7 @@ function normalizeWorkspaces(rawWorkspaces) {
                 || !isInteger(workspace.monitorID)
                 || !isInteger(workspace.windows)
                 || workspace.windows < 0
+                || typeof workspace.hasfullscreen !== "boolean"
                 || typeof workspace.ispersistent !== "boolean") {
             ++skipped;
             continue;
@@ -172,6 +194,7 @@ function normalizeWorkspaces(rawWorkspaces) {
             monitorName: workspace.monitor,
             monitorId: workspace.monitorID,
             windowCount: workspace.windows,
+            hasFullscreen: workspace.hasfullscreen,
             persistent: workspace.ispersistent,
             lastWindowAddress: normalizeAddress(workspace.lastwindow),
             urgent: false
@@ -201,9 +224,16 @@ function normalizeClients(rawClients) {
                 || !isInteger(client.monitor)
                 || typeof client.mapped !== "boolean"
                 || typeof client.hidden !== "boolean"
+                || typeof client.visible !== "boolean"
+                || typeof client.floating !== "boolean"
+                || !isInteger(client.fullscreen)
+                || client.fullscreen < 0
+                || client.fullscreen > 2
+                || typeof client.fullscreenHandler !== "string"
                 || typeof client.class !== "string"
                 || typeof client.initialClass !== "string"
-                || !isInteger(client.focusHistoryID)) {
+                || !isInteger(client.focusHistoryID)
+                || client.focusHistoryID < -1) {
             ++skipped;
             continue;
         }
@@ -219,6 +249,10 @@ function normalizeClients(rawClients) {
             title: typeof client.title === "string" ? client.title : "",
             mapped: client.mapped,
             hidden: client.hidden,
+            visible: client.visible,
+            floating: client.floating,
+            fullscreenMode: client.fullscreen,
+            fullscreenHandler: client.fullscreenHandler,
             focusHistoryId: client.focusHistoryID,
             active: client.focusHistoryID === 0,
             urgent: false
@@ -375,6 +409,19 @@ function buildSnapshot(
                 error: "Hyprland returned incomplete active workspace state."
             };
         }
+        if (monitor.specialWorkspaceId !== 0) {
+            const special = workspacesById[
+                String(monitor.specialWorkspaceId)
+            ];
+            if (!special
+                    || special.monitorName !== monitor.name
+                    || special.name !== monitor.specialWorkspaceName) {
+                return {
+                    ok: false,
+                    error: "Hyprland returned incomplete special workspace state."
+                };
+            }
+        }
     }
     for (let index = 0; index < clients.values.length; ++index) {
         const client = clients.values[index];
@@ -386,6 +433,22 @@ function buildSnapshot(
             return {
                 ok: false,
                 error: "Hyprland returned a client outside its workspace."
+            };
+        }
+        if (client.fullscreenMode !== 0
+                && client.fullscreenHandler !== "default"
+                && client.fullscreenHandler !== "scrolling") {
+            return {
+                ok: false,
+                error: "Hyprland returned an unknown fullscreen handler."
+            };
+        }
+        if (client.fullscreenMode !== 0
+                && client.floating
+                && client.fullscreenHandler !== "default") {
+            return {
+                ok: false,
+                error: "Hyprland returned an inconsistent fullscreen handler."
             };
         }
     }
@@ -424,10 +487,20 @@ const relevantEvents = {
     moveworkspace: true,
     moveworkspacev2: true,
     renameworkspace: true,
+    changeworkspaceid: true,
     openwindow: true,
     closewindow: true,
     movewindow: true,
     movewindowv2: true,
+    changefloatingmode: true,
+    fullscreen: true,
+    activespecial: true,
+    activespecialv2: true,
+    minimized: true,
+    pin: true,
+    togglegroup: true,
+    moveintogroup: true,
+    moveoutofgroup: true,
     activewindow: true,
     activewindowv2: true,
     urgent: true,
@@ -550,6 +623,77 @@ function findClient(snapshot, address) {
             return snapshot.clients[index];
     }
     return null;
+}
+
+function visibleWorkspaceCoveringMode(snapshot, outputName) {
+    const monitor = findMonitor(snapshot, outputName);
+    if (!monitor)
+        return 0;
+
+    const workspace = findWorkspace(
+        snapshot,
+        outputName,
+        monitor.visibleWorkspaceId
+    );
+    if (!workspace
+            || workspace.name !== monitor.visibleWorkspaceName
+            || !workspace.hasFullscreen) {
+        return 0;
+    }
+
+    let candidates = [];
+    let coveringPriority = Number.MAX_SAFE_INTEGER;
+    for (let index = 0; index < snapshot.clients.length; ++index) {
+        const client = snapshot.clients[index];
+        if (!client.mapped
+                || client.hidden
+                || !client.visible
+                || client.fullscreenMode === 0
+                || client.workspaceId !== workspace.id
+                || client.workspaceName !== workspace.name
+                || client.monitorId !== monitor.id) {
+            continue;
+        }
+
+        const priority = client.floating
+            ? 0
+            : client.fullscreenHandler === "default" ? 1 : 2;
+        if (priority > coveringPriority)
+            continue;
+        if (priority < coveringPriority) {
+            coveringPriority = priority;
+            candidates = [];
+        }
+        candidates.push(client);
+    }
+    if (candidates.length === 1)
+        return candidates[0].fullscreenMode;
+    if (candidates.length === 0)
+        return 0;
+
+    const lastWindowMatches = candidates.filter(client => {
+        return workspace.lastWindowAddress.length > 0
+            && client.address === workspace.lastWindowAddress;
+    });
+    if (lastWindowMatches.length === 1)
+        return lastWindowMatches[0].fullscreenMode;
+
+    let lowestFocusHistory = Number.MAX_SAFE_INTEGER;
+    for (let index = 0; index < candidates.length; ++index) {
+        if (candidates[index].focusHistoryId >= 0) {
+            lowestFocusHistory = Math.min(
+                lowestFocusHistory,
+                candidates[index].focusHistoryId
+            );
+        }
+    }
+    const focusMatches = candidates.filter(client => {
+        return client.focusHistoryId >= 0
+            && client.focusHistoryId === lowestFocusHistory;
+    });
+    return focusMatches.length === 1
+        ? focusMatches[0].fullscreenMode
+        : 0;
 }
 
 function validWorkspaceName(value) {

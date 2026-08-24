@@ -40,6 +40,11 @@ ConfigClient::ConfigClient(QDBusConnection connection, QObject *parent)
     , syncHyprlandWindowBorders_(
           ConfigValues::defaultSyncHyprlandWindowBorders
       )
+    , shellInnerSpacing_(ConfigValues::defaultShellInnerSpacing)
+    , shellOuterSpacing_(ConfigValues::defaultShellOuterSpacing)
+    , syncHyprlandWindowSpacing_(
+          ConfigValues::defaultSyncHyprlandWindowSpacing
+      )
 {
     interface_ = new OrgHyprshelldConfig1Interface(
         serviceName,
@@ -106,6 +111,21 @@ uint ConfigClient::shellBorderRadius() const
 bool ConfigClient::syncHyprlandWindowBorders() const
 {
     return syncHyprlandWindowBorders_;
+}
+
+uint ConfigClient::shellInnerSpacing() const
+{
+    return shellInnerSpacing_;
+}
+
+uint ConfigClient::shellOuterSpacing() const
+{
+    return shellOuterSpacing_;
+}
+
+bool ConfigClient::syncHyprlandWindowSpacing() const
+{
+    return syncHyprlandWindowSpacing_;
 }
 
 qulonglong ConfigClient::revision() const
@@ -178,6 +198,31 @@ bool ConfigClient::defaultSyncHyprlandWindowBorders() const
     return ConfigValues::defaultSyncHyprlandWindowBorders;
 }
 
+uint ConfigClient::minimumShellSpacing() const
+{
+    return ConfigValues::minimumShellSpacing;
+}
+
+uint ConfigClient::maximumShellSpacing() const
+{
+    return ConfigValues::maximumShellSpacing;
+}
+
+uint ConfigClient::defaultShellInnerSpacing() const
+{
+    return ConfigValues::defaultShellInnerSpacing;
+}
+
+uint ConfigClient::defaultShellOuterSpacing() const
+{
+    return ConfigValues::defaultShellOuterSpacing;
+}
+
+bool ConfigClient::defaultSyncHyprlandWindowSpacing() const
+{
+    return ConfigValues::defaultSyncHyprlandWindowSpacing;
+}
+
 QString ConfigClient::lastErrorName() const
 {
     return lastErrorName_;
@@ -218,6 +263,24 @@ void ConfigClient::resetSharedBorder()
     beginMutation(interface_->ResetSharedBorder());
 }
 
+void ConfigClient::setSharedSpacing(
+    const uint inner,
+    const uint outer,
+    const bool syncHyprlandWindowSpacing
+)
+{
+    beginMutation(interface_->SetSharedSpacing(
+        inner,
+        outer,
+        syncHyprlandWindowSpacing
+    ));
+}
+
+void ConfigClient::resetSharedSpacing()
+{
+    beginMutation(interface_->ResetSharedSpacing());
+}
+
 void ConfigClient::clearError()
 {
     if (lastErrorName_.isEmpty() && lastErrorMessage_.isEmpty()) {
@@ -245,6 +308,9 @@ void ConfigClient::propertiesChanged(
             || property == QStringLiteral("ShellBorderWidth")
             || property == QStringLiteral("ShellBorderRadius")
             || property == QStringLiteral("SyncHyprlandWindowBorders")
+            || property == QStringLiteral("ShellInnerSpacing")
+            || property == QStringLiteral("ShellOuterSpacing")
+            || property == QStringLiteral("SyncHyprlandWindowSpacing")
             || property == QStringLiteral("Revision")
             || property == QStringLiteral("RecoveryState")) {
             setAvailable(false);
@@ -331,6 +397,9 @@ bool ConfigClient::applyProperties(
         QStringLiteral("ShellBorderWidth"),
         QStringLiteral("ShellBorderRadius"),
         QStringLiteral("SyncHyprlandWindowBorders"),
+        QStringLiteral("ShellInnerSpacing"),
+        QStringLiteral("ShellOuterSpacing"),
+        QStringLiteral("SyncHyprlandWindowSpacing"),
         QStringLiteral("Revision"),
         QStringLiteral("RecoveryState"),
     };
@@ -348,6 +417,11 @@ bool ConfigClient::applyProperties(
         QStringLiteral("ShellBorderRadius"),
         QStringLiteral("SyncHyprlandWindowBorders"),
     };
+    const QStringList sharedSpacingProperties{
+        QStringLiteral("ShellInnerSpacing"),
+        QStringLiteral("ShellOuterSpacing"),
+        QStringLiteral("SyncHyprlandWindowSpacing"),
+    };
     auto sharedBorderSupplied = false;
     for (const auto &name : sharedBorderProperties) {
         sharedBorderSupplied = sharedBorderSupplied
@@ -360,8 +434,20 @@ bool ConfigClient::applyProperties(
             }
         }
     }
+    auto sharedSpacingSupplied = false;
+    for (const auto &name : sharedSpacingProperties) {
+        sharedSpacingSupplied = sharedSpacingSupplied
+            || properties.contains(name);
+    }
+    if (sharedSpacingSupplied) {
+        for (const auto &name : sharedSpacingProperties) {
+            if (!properties.contains(name)) {
+                return false;
+            }
+        }
+    }
     if ((properties.contains(QStringLiteral("BarHeight"))
-         || sharedBorderSupplied)
+         || sharedBorderSupplied || sharedSpacingSupplied)
         && !properties.contains(QStringLiteral("Revision"))) {
         return false;
     }
@@ -371,6 +457,9 @@ bool ConfigClient::applyProperties(
     auto nextShellBorderWidth = shellBorderWidth_;
     auto nextShellBorderRadius = shellBorderRadius_;
     auto nextSyncHyprlandWindowBorders = syncHyprlandWindowBorders_;
+    auto nextShellInnerSpacing = shellInnerSpacing_;
+    auto nextShellOuterSpacing = shellOuterSpacing_;
+    auto nextSyncHyprlandWindowSpacing = syncHyprlandWindowSpacing_;
     auto nextRevision = revision_;
     auto nextRecoveryState = recoveryState_;
 
@@ -435,6 +524,45 @@ bool ConfigClient::applyProperties(
         nextSyncHyprlandWindowBorders = syncHyprlandWindowBorders->toBool();
     }
 
+    const auto shellInnerSpacing = properties.constFind(
+        QStringLiteral("ShellInnerSpacing")
+    );
+    if (shellInnerSpacing != properties.cend()) {
+        if (shellInnerSpacing->metaType().id() != QMetaType::UInt) {
+            return false;
+        }
+        nextShellInnerSpacing = shellInnerSpacing->toUInt();
+        if (nextShellInnerSpacing < ConfigValues::minimumShellSpacing
+            || nextShellInnerSpacing > ConfigValues::maximumShellSpacing) {
+            return false;
+        }
+    }
+
+    const auto shellOuterSpacing = properties.constFind(
+        QStringLiteral("ShellOuterSpacing")
+    );
+    if (shellOuterSpacing != properties.cend()) {
+        if (shellOuterSpacing->metaType().id() != QMetaType::UInt) {
+            return false;
+        }
+        nextShellOuterSpacing = shellOuterSpacing->toUInt();
+        if (nextShellOuterSpacing < ConfigValues::minimumShellSpacing
+            || nextShellOuterSpacing > ConfigValues::maximumShellSpacing) {
+            return false;
+        }
+    }
+
+    const auto syncHyprlandWindowSpacing = properties.constFind(
+        QStringLiteral("SyncHyprlandWindowSpacing")
+    );
+    if (syncHyprlandWindowSpacing != properties.cend()) {
+        if (syncHyprlandWindowSpacing->metaType().id() != QMetaType::Bool) {
+            return false;
+        }
+        nextSyncHyprlandWindowSpacing =
+            syncHyprlandWindowSpacing->toBool();
+    }
+
     const auto revision = properties.constFind(QStringLiteral("Revision"));
     if (revision != properties.cend()) {
         if (revision->metaType().id() != QMetaType::ULongLong) {
@@ -459,22 +587,42 @@ bool ConfigClient::applyProperties(
         || nextShellBorderWidth != shellBorderWidth_
         || nextShellBorderRadius != shellBorderRadius_
         || nextSyncHyprlandWindowBorders != syncHyprlandWindowBorders_;
+    const auto sharedSpacingChanged =
+        nextShellInnerSpacing != shellInnerSpacing_
+        || nextShellOuterSpacing != shellOuterSpacing_
+        || nextSyncHyprlandWindowSpacing != syncHyprlandWindowSpacing_;
     const auto revisionChanged = nextRevision != revision_;
     const auto recoveryStateChanged = nextRecoveryState != recoveryState_;
+
+    if (projectionEstablished_
+        && revision != properties.cend()
+        && (nextRevision < revision_
+            || (nextRevision == revision_
+                && (barHeightChanged || sharedBorderChanged
+                    || sharedSpacingChanged)))) {
+        return false;
+    }
 
     barHeight_ = nextBarHeight;
     shellBorderEnabled_ = nextShellBorderEnabled;
     shellBorderWidth_ = nextShellBorderWidth;
     shellBorderRadius_ = nextShellBorderRadius;
     syncHyprlandWindowBorders_ = nextSyncHyprlandWindowBorders;
+    shellInnerSpacing_ = nextShellInnerSpacing;
+    shellOuterSpacing_ = nextShellOuterSpacing;
+    syncHyprlandWindowSpacing_ = nextSyncHyprlandWindowSpacing;
     revision_ = nextRevision;
     recoveryState_ = nextRecoveryState;
+    projectionEstablished_ = true;
 
     if (barHeightChanged) {
         emit this->barHeightChanged();
     }
     if (sharedBorderChanged) {
         emit this->sharedBorderChanged();
+    }
+    if (sharedSpacingChanged) {
+        emit this->sharedSpacingChanged();
     }
     if (revisionChanged) {
         emit this->revisionChanged();

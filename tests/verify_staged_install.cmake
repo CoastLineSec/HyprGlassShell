@@ -83,10 +83,15 @@ set(required_files
     "${data_root}/hyprshelld/components/io.github.coastlinesec.hyprshelld.workspace-switcher/settings.schema.json"
     "${data_root}/hyprshelld/defaults/components.json"
     "${data_root}/hyprshelld/defaults/hyprland.json"
+    "${data_root}/hyprshelld/defaults/hyprland-template.json"
     "${data_root}/hyprshelld/dbus/org.hyprshelld.ComponentRuntime1.xml"
     "${data_root}/hyprshelld/dbus/org.hyprshelld.Compositor1.xml"
+    "${data_root}/hyprshelld/dbus/org.hyprshelld.Compositor2.xml"
     "${data_root}/hyprshelld/hyprland/action-catalog-v1.json"
+    "${data_root}/hyprshelld/hyprland/action-catalog-v2.json"
     "${data_root}/hyprshelld/hyprland/config-catalog-v1.json"
+    "${data_root}/hyprshelld/hyprland/config-catalog-v2.json"
+    "${data_root}/hyprshelld/hyprland/source-manifest-v2.json"
     "${data_root}/hyprshelld/schemas/components/v1/manifest.schema.json"
     "${data_root}/hyprshelld/schemas/components/v1/integrity.schema.json"
     "${data_root}/hyprshelld/schemas/components/v1/settings.schema.json"
@@ -97,6 +102,12 @@ set(required_files
     "${data_root}/hyprshelld/schemas/hyprland/v1/config.schema.json"
     "${data_root}/hyprshelld/schemas/hyprland/v1/generation-manifest.schema.json"
     "${data_root}/hyprshelld/schemas/hyprland/v1/source-manifest.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/action-catalog.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/catalog.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/config.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/config-template.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/generation-manifest.schema.json"
+    "${data_root}/hyprshelld/schemas/hyprland/v2/source-manifest.schema.json"
     "${data_root}/hyprshelld/surfaced/shell.qml"
     "${data_root}/hyprshelld/surfaced/BarSurface.qml"
     "${data_root}/hyprshelld/surfaced/HyprlandWorkspaceSource.qml"
@@ -125,6 +136,19 @@ foreach(path IN LISTS required_files)
         message(FATAL_ERROR "Staged installation is missing: ${path}")
     endif()
 endforeach()
+
+file(
+    GLOB_RECURSE installed_shortcut_reference_files
+    LIST_DIRECTORIES false
+    "${STAGE_DIRECTORY}/*keyboard-shortcuts-reference-v1.json"
+    "${STAGE_DIRECTORY}/*legacy-keybindings.lua"
+)
+if(installed_shortcut_reference_files)
+    message(FATAL_ERROR
+        "The immutable keyboard shortcut source/artifact must remain embedded and private: "
+        "${installed_shortcut_reference_files}"
+    )
+endif()
 
 set(
     settings_desktop_file

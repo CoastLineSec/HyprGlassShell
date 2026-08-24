@@ -28,7 +28,11 @@
     "curves": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/curve"}},
     "animations": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/animation"}},
     "gestures": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/gesture"}},
-    "workspaceRules": {"type": "array", "maxItems": 1024, "items": {"$ref": "#/$defs/workspaceRule"}},
+    "workspaceRules": {
+      "type": "array", "maxItems": 1025,
+      "items": {"$ref": "#/$defs/workspaceRule"},
+      "$comment": "At most 1024 user records plus the one exact protected HyprShelld maximized-workspace record. Core validation enforces the user-record count."
+    },
     "windowRules": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/windowRule"}},
     "layerRules": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/layerRule"}},
     "submaps": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/submap"}},
@@ -58,6 +62,10 @@
       "$comment": "A positive toggle target or multiplier; Hyprland clamps the resulting cursor zoom to 1..100."
     },
     "stableId": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "userWorkspaceRuleId": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "pattern": "^(?!hyprshelld\\.internal\\.shared-spacing\\.maximized$)[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
     "shortString": {"type": "string", "maxLength": 256, "pattern": "^[^\\u0000-\\u001f\\u007f]*$"},
     "nonEmptyString": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^\\u0000-\\u001f\\u007f]+$"},
     "boundedString": {"type": "string", "maxLength": 4096, "pattern": "^[^\\u0000]*$"},
@@ -464,15 +472,34 @@
       }
     },
     "workspaceRule": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
-      "properties": {
-        "id": {"$ref": "#/$defs/stableId"}, "selector": {"$ref": "#/$defs/workspaceSelector"},
-        "enabled": {"type": "boolean"},
-        "monitor": {"oneOf": [{"const": ""}, {"$ref": "#/$defs/staticMonitorSelector"}]},
-        "persistent": {"type": "boolean"}, "isDefault": {"type": "boolean"},
-        "layout": {"enum": ["", "dwindle", "master", "scrolling", "monocle"]}, "overrides": {"$ref": "#/$defs/workspaceOverrides"}
-      }
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
+          "properties": {
+            "id": {"$ref": "#/$defs/userWorkspaceRuleId"},
+            "selector": {"$ref": "#/$defs/workspaceSelector"},
+            "enabled": {"type": "boolean"},
+            "monitor": {"oneOf": [{"const": ""}, {"$ref": "#/$defs/staticMonitorSelector"}]},
+            "persistent": {"type": "boolean"}, "isDefault": {"type": "boolean"},
+            "layout": {"enum": ["", "dwindle", "master", "scrolling", "monocle"]},
+            "overrides": {"$ref": "#/$defs/workspaceOverrides"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
+          "properties": {
+            "id": {"const": "hyprshelld.internal.shared-spacing.maximized"},
+            "selector": {"const": "f[1]"},
+            "enabled": {"const": true}, "monitor": {"const": ""},
+            "persistent": {"const": false}, "isDefault": {"const": false},
+            "layout": {"const": ""},
+            "overrides": {"const": {"gaps_out": [0, 0, 0, 0]}}
+          }
+        }
+      ],
+      "$comment": "The bracket selector is admitted only by the exact protected HyprShelld record; ordinary workspace rules retain the closed safe selector subset."
     },
     "windowMatch": {
       "type": "object", "additionalProperties": false, "minProperties": 1,

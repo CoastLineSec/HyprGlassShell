@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/hyprland/v2/action-catalog.schema.json",
+  "title": "HyprShelld dormant Hyprland action catalog v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "hyprland", "sourceManifestDigest", "configSchemaDigest", "source", "dispatcherActions", "semanticActions", "gestureActions", "excluded"],
+  "properties": {
+    "contractVersion": {"const": 2},
+    "hyprland": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reviewedVersion", "reviewedTag", "reviewedCommit", "minimumPatch", "maximumPatch"],
+      "properties": {
+        "reviewedVersion": {"const": "0.56.2"},
+        "reviewedTag": {"const": "v0.56.2"},
+        "reviewedCommit": {"const": "efb50993780079460b0cbed1363e2166a2de1d9f"},
+        "minimumPatch": {"const": 2},
+        "maximumPatch": {"const": 2}
+      }
+    },
+    "sourceManifestDigest": {"$ref": "#/$defs/sha256"},
+    "configSchemaDigest": {"$ref": "#/$defs/sha256"},
+    "source": {"$ref": "#/$defs/source"},
+    "dispatcherActions": {
+      "type": "array", "minItems": 47, "maxItems": 47,
+      "items": {"$ref": "#/$defs/dispatcherAction"}
+    },
+    "semanticActions": {
+      "type": "array", "minItems": 29, "maxItems": 29,
+      "items": {"$ref": "#/$defs/semanticAction"}
+    },
+    "gestureActions": {
+      "type": "array", "minItems": 10, "maxItems": 10,
+      "items": {"$ref": "#/$defs/gestureAction"}
+    },
+    "excluded": {
+      "type": "array", "minItems": 9, "maxItems": 9,
+      "items": {"$ref": "#/$defs/excluded"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "tag", "commit", "path", "sha256"],
+      "properties": {
+        "repository": {"const": "https://github.com/hyprwm/Hyprland"},
+        "tag": {"const": "v0.56.2"},
+        "commit": {"const": "efb50993780079460b0cbed1363e2166a2de1d9f"},
+        "path": {"const": "src/config/lua/bindings/LuaBindingsDispatchers.cpp"},
+        "sha256": {"const": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de"}
+      }
+    },
+    "actionId": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "pattern": "^[a-z][A-Za-z0-9_]*(?:\\.[a-z][A-Za-z0-9_]*)*$"
+    },
+    "luaSegment": {
+      "type": "string", "minLength": 1, "maxLength": 64,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "schemaRef": {
+      "type": "string", "minLength": 1, "maxLength": 256,
+      "pattern": "^config\\.schema\\.json#/\\$defs/[A-Za-z][A-Za-z0-9]*$"
+    },
+    "documentation": {
+      "type": "string", "maxLength": 2048,
+      "pattern": "^https://wiki\\.hypr\\.land/0\\.56\\.0/"
+    },
+    "label": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "$comment": "Runtime additionally requires Unicode NFC and rejects every Unicode control/format category code point.",
+      "pattern": "^[^\\u0000-\\u001f\\u007f\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069\\ufeff]+$"
+    },
+    "description": {
+      "type": "string", "minLength": 1, "maxLength": 512,
+      "$comment": "Runtime additionally requires Unicode NFC and rejects every Unicode control/format category code point.",
+      "pattern": "^[^\\u0000-\\u001f\\u007f\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069\\ufeff]+$"
+    },
+    "dispatcherInvocation": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind"], "properties": {"kind": {"const": "none"}}
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind"], "properties": {"kind": {"const": "table"}}
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "field"],
+          "properties": {
+            "kind": {"const": "scalar"},
+            "field": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {"kind": {"const": "empty-object-none-otherwise-table"}}
+        }
+      ]
+    },
+    "semanticInvocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "namespace"],
+      "properties": {
+        "kind": {"const": "broker"},
+        "namespace": {"enum": ["defaultApp", "hyprshelld"]}
+      }
+    },
+    "gestureParameter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["argument", "field"],
+      "properties": {
+        "argument": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+        "field": {"$ref": "#/$defs/luaSegment"}
+      }
+    },
+    "gestureInvocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "actionField", "parameters"],
+      "properties": {
+        "kind": {"const": "gesture-table"},
+        "actionField": {"const": "action"},
+        "parameters": {
+          "type": "array", "maxItems": 2, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/gestureParameter"}
+        }
+      }
+    },
+    "dispatcherAction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "description", "luaPath", "invocation", "uiTier", "risk", "argumentsSchemaRef", "documentation"],
+      "properties": {
+        "id": {"$ref": "#/$defs/actionId"},
+        "label": {"$ref": "#/$defs/label"},
+        "description": {"$ref": "#/$defs/description"},
+        "luaPath": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"$ref": "#/$defs/luaSegment"}},
+        "invocation": {"$ref": "#/$defs/dispatcherInvocation"},
+        "uiTier": {"enum": ["common", "advanced", "expert"]},
+        "risk": {"enum": ["safe", "caution", "dangerous"]},
+        "argumentsSchemaRef": {"$ref": "#/$defs/schemaRef"},
+        "documentation": {"$ref": "#/$defs/documentation"}
+      }
+    },
+    "semanticAction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "description", "actionType", "invocation", "uiTier", "risk", "argumentsSchemaRef", "documentation"],
+      "properties": {
+        "id": {"$ref": "#/$defs/actionId"},
+        "label": {"$ref": "#/$defs/label"},
+        "description": {"$ref": "#/$defs/description"},
+        "actionType": {"enum": ["defaultApp", "hyprshelld"]},
+        "invocation": {"$ref": "#/$defs/semanticInvocation"},
+        "uiTier": {"enum": ["common", "advanced", "expert"]},
+        "risk": {"enum": ["safe", "caution", "dangerous"]},
+        "argumentsSchemaRef": {"$ref": "#/$defs/schemaRef"},
+        "documentation": {"$ref": "#/$defs/documentation"}
+      }
+    },
+    "gestureAction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "description", "luaAction", "invocation", "uiTier", "risk", "actionSchemaRef", "documentation"],
+      "properties": {
+        "id": {"$ref": "#/$defs/actionId"},
+        "label": {"$ref": "#/$defs/label"},
+        "description": {"$ref": "#/$defs/description"},
+        "luaAction": {"$ref": "#/$defs/luaSegment"},
+        "invocation": {"$ref": "#/$defs/gestureInvocation"},
+        "uiTier": {"enum": ["common", "advanced", "expert"]},
+        "risk": {"enum": ["safe", "caution", "dangerous"]},
+        "actionSchemaRef": {"$ref": "#/$defs/schemaRef"},
+        "documentation": {"$ref": "#/$defs/documentation"}
+      }
+    },
+    "excluded": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "surface", "reason"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "surface": {"enum": ["dispatcher", "gesture", "workspaceRule", "windowRuleEffect", "bindingOption", "bindingKey"]},
+        "reason": {"type": "string", "minLength": 1, "maxLength": 512}
+      }
+    }
+  }
+}

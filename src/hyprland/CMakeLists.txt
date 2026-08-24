@@ -22,9 +22,24 @@ qt_add_library(
         desired_state.h
         monitor_profile.cpp
         monitor_profile.h
+        input_device_inventory.cpp
+        input_device_inventory.h
+        keyboard_shortcut_reference.cpp
+        keyboard_shortcut_reference.h
         json_support.cpp
         json_support.h
         validation.h
+)
+
+qt_add_resources(
+    hyprshelld-hyprland-core
+    hyprshelld_keyboard_shortcut_reference
+    PREFIX
+        "/hyprshelld/hyprland"
+    BASE
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/keyboard-shortcuts-reference-v1.json"
 )
 
 set_target_properties(

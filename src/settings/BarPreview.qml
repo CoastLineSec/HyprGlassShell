@@ -11,6 +11,9 @@ Control {
     required property bool shellBorderEnabled
     required property int shellBorderWidth
     required property int shellBorderRadius
+    property int shellInnerSpacing: 8
+    property int shellOuterSpacing: 12
+    property bool attachedToTopEdge: false
     required property bool workspaceShowIdentifiers
     required property bool workspaceShowNames
     required property bool workspaceShowApplications
@@ -147,6 +150,12 @@ Control {
                 workspace.active || workspace.occupied)
             : root.basePreviewWorkspaces
     readonly property real previewScale: barFrame.scale
+    readonly property int renderedInnerSpacing: Math.max(
+        0, Math.min(32, shellInnerSpacing)
+    )
+    readonly property int renderedOuterSpacing: Math.max(
+        0, Math.min(32, shellOuterSpacing)
+    )
 
     implicitHeight: 286
     padding: 14
@@ -224,11 +233,14 @@ Control {
                 id: barFrame
 
                 objectName: "previewBarFrame"
-                x: 18
-                y: 18
-                width: Math.max(560, parent.width - 36)
+                x: root.attachedToTopEdge ? 0 : root.renderedOuterSpacing
+                y: root.attachedToTopEdge ? 0 : root.renderedOuterSpacing
+                width: Math.max(560, parent.width - x * 2)
                 height: previewBar.height
-                scale: Math.min(1, Math.max(0, parent.width - 36) / width)
+                scale: Math.min(
+                    1,
+                    Math.max(0, parent.width - x * 2) / width
+                )
                 transformOrigin: Item.TopLeft
 
                 Bar {
@@ -256,14 +268,24 @@ Control {
                         }
                     }
                 }
+
+                Binding {
+                    target: previewBar
+                    property: "attachedToTopEdge"
+                    value: root.attachedToTopEdge
+                }
             }
 
             Rectangle {
                 id: reservedBoundary
 
-                x: 18
-                y: barFrame.y + barFrame.height * barFrame.scale + 10
-                width: Math.max(0, parent.width - 36)
+                x: root.attachedToTopEdge ? 0 : 18
+                y: barFrame.y + barFrame.height * barFrame.scale
+                    + (root.attachedToTopEdge
+                        ? 0 : root.renderedInnerSpacing)
+                width: root.attachedToTopEdge
+                    ? parent.width
+                    : Math.max(0, parent.width - 36)
                 height: 1
                 color: root.palette.highlight
                 opacity: 0.45
@@ -277,7 +299,9 @@ Control {
                 }
 
                 objectName: "reservedWorkspaceLabel"
-                text: qsTr("Reserved workspace")
+                text: root.attachedToTopEdge
+                    ? qsTr("Maximized workspace")
+                    : qsTr("Reserved workspace")
                 color: root.palette.placeholderText
                 font.pixelSize: 11
             }
@@ -285,11 +309,16 @@ Control {
             Rectangle {
                 id: primaryWindow
 
-                x: 34
-                y: reservedBoundary.y + 26
-                width: Math.max(120, parent.width * 0.55)
-                height: Math.max(54, parent.height - y - 22)
-                radius: 10
+                x: root.attachedToTopEdge ? 0 : 34
+                y: reservedBoundary.y
+                    + (root.attachedToTopEdge ? 1 : 26)
+                width: root.attachedToTopEdge
+                    ? parent.width
+                    : Math.max(120, parent.width * 0.55)
+                height: root.attachedToTopEdge
+                    ? Math.max(0, parent.height - y)
+                    : Math.max(54, parent.height - y - 22)
+                radius: root.attachedToTopEdge ? 0 : 10
                 color: Qt.rgba(
                     root.palette.base.r,
                     root.palette.base.g,
@@ -331,6 +360,7 @@ Control {
             }
 
             Rectangle {
+                visible: !root.attachedToTopEdge
                 x: primaryWindow.x + primaryWindow.width + 14
                 y: primaryWindow.y + 16
                 width: Math.max(70, parent.width - x - 34)

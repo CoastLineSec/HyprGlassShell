@@ -15,7 +15,8 @@
 namespace HyprShelld {
 namespace {
 
-constexpr auto formatVersion = 2;
+constexpr auto formatVersion = 3;
+constexpr auto borderFormatVersion = 2;
 constexpr auto legacyFormatVersion = 1;
 constexpr qsizetype maximumSnapshotBytes = 64 * 1024;
 
@@ -60,6 +61,18 @@ QByteArray serialize(
     object.insert(
         QStringLiteral("syncHyprlandWindowBorders"),
         state.syncHyprlandWindowBorders
+    );
+    object.insert(
+        QStringLiteral("shellInnerSpacing"),
+        static_cast<qint64>(state.shellInnerSpacing)
+    );
+    object.insert(
+        QStringLiteral("shellOuterSpacing"),
+        static_cast<qint64>(state.shellOuterSpacing)
+    );
+    object.insert(
+        QStringLiteral("syncHyprlandWindowSpacing"),
+        state.syncHyprlandWindowSpacing
     );
     if (legacyWorkspaceSettings) {
         object.insert(
@@ -225,7 +238,9 @@ ReadResult readSnapshot(const QString &path)
             .error = QStringLiteral("Unsupported format version in %1").arg(path),
         };
     }
-    if (version != legacyFormatVersion && version != formatVersion) {
+    if (version != legacyFormatVersion
+        && version != borderFormatVersion
+        && version != formatVersion) {
         return {
             .status = FileStatus::Damaged,
             .error = QStringLiteral("Invalid format version in %1").arg(path),
@@ -302,6 +317,40 @@ ReadResult readSnapshot(const QString &path)
         state.shellBorderRadius = static_cast<quint32>(radius);
         state.syncHyprlandWindowBorders = syncValue.toBool();
     }
+
+    if (version < formatVersion) {
+        state.shellInnerSpacing = ConfigValues::defaultShellInnerSpacing;
+        state.shellOuterSpacing = ConfigValues::defaultShellOuterSpacing;
+        state.syncHyprlandWindowSpacing = false;
+    } else {
+        const auto innerValue = object.value(
+            QStringLiteral("shellInnerSpacing")
+        );
+        const auto outerValue = object.value(
+            QStringLiteral("shellOuterSpacing")
+        );
+        const auto syncValue = object.value(
+            QStringLiteral("syncHyprlandWindowSpacing")
+        );
+        const auto inner = innerValue.toInteger(-1);
+        const auto outer = outerValue.toInteger(-1);
+        if (!innerValue.isDouble()
+            || inner < ConfigValues::minimumShellSpacing
+            || inner > ConfigValues::maximumShellSpacing
+            || !outerValue.isDouble()
+            || outer < ConfigValues::minimumShellSpacing
+            || outer > ConfigValues::maximumShellSpacing
+            || !syncValue.isBool()) {
+            return {
+                .status = FileStatus::Damaged,
+                .error = QStringLiteral("Invalid shared spacing in %1")
+                             .arg(path),
+            };
+        }
+        state.shellInnerSpacing = static_cast<quint32>(inner);
+        state.shellOuterSpacing = static_cast<quint32>(outer);
+        state.syncHyprlandWindowSpacing = syncValue.toBool();
+    }
     state.revision = revision;
 
     return {
@@ -316,7 +365,7 @@ ReadResult readSnapshot(const QString &path)
         .hadLegacyWorkspaceBlock = object.contains(
             QStringLiteral("workspaceSwitcher")
         ),
-        .requiresMigration = version == legacyFormatVersion,
+        .requiresMigration = version != formatVersion,
     };
 }
 

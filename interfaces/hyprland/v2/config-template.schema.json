@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/hyprland/v2/config-template.schema.json",
+  "title": "HyprShelld dormant Hyprland authority template v2",
+  "description": "Non-authoritative deterministic content for the exact patched Hyprland 0.56.2 authority. The future lease-owning store must supply a fresh authorityId before this template can become runtime state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion", "revision", "targetHyprland", "catalogDigest", "actionCatalogDigest",
+    "overrides", "monitors", "devices", "curves", "animations",
+    "gestures", "workspaceRules", "windowRules", "layerRules",
+    "submaps", "bindings", "permissions", "environment"
+  ],
+  "properties": {
+    "formatVersion": {"const": 2},
+    "revision": {"const": "0"},
+    "targetHyprland": {"const": "0.56.2"},
+    "catalogDigest": {"$ref": "#/$defs/sha256"},
+    "actionCatalogDigest": {"$ref": "#/$defs/sha256"},
+    "overrides": {"type": "object", "maxProperties": 0},
+    "monitors": {"type": "array", "maxItems": 0},
+    "devices": {"type": "array", "maxItems": 0},
+    "curves": {"type": "array", "maxItems": 0},
+    "animations": {"type": "array", "maxItems": 0},
+    "gestures": {"type": "array", "maxItems": 0},
+    "workspaceRules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"$ref": "#/$defs/protectedWorkspaceRule"}
+    },
+    "windowRules": {"type": "array", "maxItems": 0},
+    "layerRules": {"type": "array", "maxItems": 0},
+    "submaps": {"type": "array", "maxItems": 0},
+    "bindings": {"type": "array", "maxItems": 0},
+    "permissions": {"type": "array", "maxItems": 0},
+    "environment": {"type": "array", "maxItems": 0}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "protectedWorkspaceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
+      "properties": {
+        "id": {"const": "hyprshelld.internal.shared-spacing.maximized"},
+        "selector": {"const": "f[1]"},
+        "enabled": {"const": true},
+        "monitor": {"const": ""},
+        "persistent": {"const": false},
+        "isDefault": {"const": false},
+        "layout": {"const": ""},
+        "overrides": {"const": {"gaps_out": [0, 0, 0, 0]}}
+      }
+    }
+  }
+}

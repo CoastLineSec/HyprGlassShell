@@ -52,6 +52,23 @@ constexpr auto nonce =
     }])json");
 }
 
+[[nodiscard]] QByteArray validDeviceReply()
+{
+    return QByteArrayLiteral(R"json({
+        "mice":[{
+            "address":"0x20","name":"pointer-main",
+            "defaultSpeed":0.0,"scrollFactor":1.0
+        }],
+        "keyboards":[{
+            "address":"0x10","name":"keyboard-main","rules":"",
+            "model":"","layout":"us","variant":"","options":"",
+            "active_layout_index":none,"active_keymap":"English (US)",
+            "capsLock":false,"numLock":false,"main":true
+        }],
+        "tablets":[],"touch":[],"switches":[]
+    })json");
+}
+
 [[nodiscard]] QByteArray environmentValue(
     const char *name,
     const QByteArray &fallback = {}
@@ -272,6 +289,15 @@ void appendCommand(const QString &path, const QByteArrayView command)
     if (monitorReplyBytes > 0) {
         monitorsReply = QByteArray(monitorReplyBytes, 'x');
     }
+    auto devicesReply = environmentValue(
+        "HYPRSHELLD_FAKE_DEVICES", validDeviceReply()
+    );
+    const auto deviceReplyBytes = environmentValue(
+        "HYPRSHELLD_FAKE_DEVICE_BYTES", "0"
+    ).toInt();
+    if (deviceReplyBytes > 0) {
+        devicesReply = QByteArray(deviceReplyBytes, 'x');
+    }
     const auto logPath = QFile::decodeName(qgetenv("HYPRSHELLD_FAKE_LOG"));
     const auto delay = environmentValue("HYPRSHELLD_FAKE_DELAY_MS", "0")
                            .toInt();
@@ -304,6 +330,8 @@ void appendCommand(const QString &path, const QByteArrayView command)
             reply = version;
         } else if (command == "j/monitors all") {
             reply = monitorsReply;
+        } else if (command == "j/devices") {
+            reply = devicesReply;
         } else if (command == "j/configerrors") {
             reply = errorCount++ == 0 ? baselineErrors : observedErrors;
         } else if (command == "j/status") {
@@ -347,8 +375,10 @@ void appendCommand(const QString &path, const QByteArrayView command)
             endpointReplaced = true;
         }
 
+        const auto isDiscoveryQuery = command == "j/monitors all"
+            || command == "j/devices";
         if (!endpointReplaced && replaceEndpoint == "lock"
-            && command == "j/monitors all") {
+            && isDiscoveryQuery) {
             QFile replacement(lock.fileName());
             if (!replacement.open(QIODevice::WriteOnly | QIODevice::Truncate)
                 || replacement.write(
@@ -362,7 +392,7 @@ void appendCommand(const QString &path, const QByteArrayView command)
             endpointReplaced = true;
         }
         if (!endpointReplaced && replaceEndpoint == "instance"
-            && command == "j/monitors all") {
+            && isDiscoveryQuery) {
             const auto moved = instanceRoot + QStringLiteral(".replaced");
             if (!QDir().rename(instanceRoot, moved)
                 || !QDir().mkpath(instanceRoot)
@@ -402,6 +432,8 @@ struct FakeOptions final {
     QByteArray reloadReply = "ok";
     QByteArray monitors = validMonitorReply();
     int monitorReplyBytes = 0;
+    QByteArray devices = validDeviceReply();
+    int deviceReplyBytes = 0;
     QByteArray lock = "exact";
     QByteArray replaceEndpoint;
     QByteArray exitAfter;
@@ -490,6 +522,14 @@ public:
         environment.insert(
             QStringLiteral("HYPRSHELLD_FAKE_MONITOR_BYTES"),
             QString::number(options.monitorReplyBytes)
+        );
+        environment.insert(
+            QStringLiteral("HYPRSHELLD_FAKE_DEVICES"),
+            QString::fromUtf8(options.devices)
+        );
+        environment.insert(
+            QStringLiteral("HYPRSHELLD_FAKE_DEVICE_BYTES"),
+            QString::number(options.deviceReplyBytes)
         );
         environment.insert(
             QStringLiteral("HYPRSHELLD_FAKE_LOCK"),
@@ -611,6 +651,16 @@ private:
         return {};
     }
     return *prepared.session;
+}
+
+void configureInputDiscoveryPolicy(HyprlandIpcRuntime &runtime)
+{
+    runtime.setVersionPolicy({
+        .major = 0,
+        .minor = 56,
+        .minimumPatch = 0,
+        .maximumPatch = std::nullopt,
+    });
 }
 
 } // namespace
@@ -789,6 +839,293 @@ private slots:
             QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
         }
         QVERIFY(peer.commands().isEmpty());
+    }
+
+    void connectedInputDevicesUsesExactAuthenticatedRawIpc()
+    {
+        FakePeer peer;
+        QVERIFY2(peer.start(), qPrintable(peer.error));
+        auto runtime = peer.runtime();
+        configureInputDiscoveryPolicy(*runtime);
+
+        const auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch")
+        );
+        QVERIFY2(connected.success, qPrintable(connected.errorMessage));
+        QVERIFY(connected.inventory.has_value());
+        QCOMPARE(connected.runtimeIdentity.size(), 64);
+        QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{64}$"))
+                    .match(connected.runtimeIdentity).hasMatch());
+        QCOMPARE(connected.inventory->records.size(), 2);
+        QCOMPARE(connected.inventory->records.at(0).sessionSelector,
+                 QStringLiteral("keyboard-main"));
+        QCOMPARE(connected.inventory->records.at(0).observedKind,
+                 HyprShelld::Hyprland::ConnectedInputDeviceKind::Keyboard);
+        QVERIFY(connected.inventory->records.at(0).activeKeymap.has_value());
+        QCOMPARE(*connected.inventory->records.at(0).activeKeymap,
+                 QStringLiteral("English (US)"));
+        QCOMPARE(connected.inventory->records.at(1).sessionSelector,
+                 QStringLiteral("pointer-main"));
+        QCOMPARE(connected.inventory->records.at(1).observedKind,
+                 HyprShelld::Hyprland::ConnectedInputDeviceKind::Pointer);
+        QVERIFY(!connected.inventory->document.contains(
+            QByteArrayLiteral("0x10")
+        ));
+        QVERIFY(!connected.inventory->document.contains(
+            QByteArrayLiteral("0x20")
+        ));
+        QVERIFY(!connected.inventory->document.contains(
+            connected.runtimeIdentity.toUtf8()
+        ));
+        QVERIFY(connected.inventory->document.endsWith('\n'));
+
+        peer.stop();
+        QCOMPARE(peer.commands(), QStringList({
+            QStringLiteral("j/version"),
+            QStringLiteral("j/devices"),
+        }));
+    }
+
+    void connectedInputDevicesValidatesPolicyAndEpochBeforeRuntimeIo()
+    {
+        FakePeer peer;
+        QVERIFY2(peer.start(), qPrintable(peer.error));
+        HyprlandIpcRuntime runtime(
+            peer.runtimeRoot, QString::fromLatin1(signature),
+            peer.stableEntrypoint, 1000,
+            [](const int timeout) {
+                return HyprlandIpcRuntime::InstanceSignatureResult{
+                    .success = timeout > 0,
+                    .signature = QString::fromLatin1(signature),
+                };
+            }
+        );
+
+        auto connected = runtime.connectedInputDevices(
+            QByteArrayView("service-epoch")
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(peer.commands().isEmpty());
+
+        configureInputDiscoveryPolicy(runtime);
+        connected = runtime.connectedInputDevices(QByteArrayView());
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("VerificationFailed"));
+        QVERIFY(peer.commands().isEmpty());
+
+        const QByteArray oversizedEpoch(513, 'e');
+        connected = runtime.connectedInputDevices(oversizedEpoch);
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("VerificationFailed"));
+        QVERIFY(peer.commands().isEmpty());
+    }
+
+    void connectedInputDevicesUsesConfiguredOpenEnded056Policy_data()
+    {
+        QTest::addColumn<QByteArray>("version");
+        QTest::addColumn<bool>("accepted");
+
+        QTest::newRow("minimum-patch")
+            << QByteArrayLiteral(R"({"version":"0.56.0"})") << true;
+        QTest::newRow("pinned-observed-patch")
+            << QByteArrayLiteral(R"({"version":"0.56.1"})") << true;
+        QTest::newRow("later-same-minor-patch")
+            << QByteArrayLiteral(R"({"version":"0.56.9999"})") << true;
+        QTest::newRow("older-minor")
+            << QByteArrayLiteral(R"({"version":"0.55.99"})") << false;
+        QTest::newRow("newer-minor")
+            << QByteArrayLiteral(R"({"version":"0.57.0"})") << false;
+        QTest::newRow("different-major")
+            << QByteArrayLiteral(R"({"version":"1.56.0"})") << false;
+        QTest::newRow("duplicate-version")
+            << QByteArrayLiteral(
+                   R"({"version":"0.56.1","version":"0.56.1"})"
+               )
+            << false;
+    }
+
+    void connectedInputDevicesUsesConfiguredOpenEnded056Policy()
+    {
+        QFETCH(QByteArray, version);
+        QFETCH(bool, accepted);
+        FakePeer peer;
+        FakeOptions options;
+        options.version = version;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime();
+        configureInputDiscoveryPolicy(*runtime);
+
+        const auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch")
+        );
+        QCOMPARE(connected.success, accepted);
+        if (accepted) {
+            QVERIFY(connected.inventory.has_value());
+            QCOMPARE(peer.commands(), QStringList({
+                QStringLiteral("j/version"),
+                QStringLiteral("j/devices"),
+            }));
+        } else {
+            QCOMPARE(connected.errorCode, QStringLiteral("UnsupportedVersion"));
+            QVERIFY(!connected.inventory.has_value());
+            QCOMPARE(peer.commands(), QStringList({QStringLiteral("j/version")}));
+        }
+    }
+
+    void connectedInputDevicesMapsReplyFailures_data()
+    {
+        QTest::addColumn<QByteArray>("reply");
+        QTest::addColumn<int>("replyBytes");
+        QTest::addColumn<QString>("errorCode");
+
+        QTest::newRow("not-an-object")
+            << QByteArrayLiteral("[]") << 0
+            << QStringLiteral("VerificationFailed");
+        QTest::newRow("missing-closed-root")
+            << QByteArrayLiteral("{}") << 0
+            << QStringLiteral("VerificationFailed");
+        QTest::newRow("wrong-bare-token")
+            << QByteArrayLiteral(
+                   R"({"mice":[],"keyboards":[{"address":"0x10","name":"keyboard-main","rules":"","model":"","layout":"us","variant":"","options":"","active_layout_index":None,"active_keymap":"US","capsLock":false,"numLock":false,"main":true}],"tablets":[],"touch":[],"switches":[]})"
+               )
+            << 0 << QStringLiteral("VerificationFailed");
+        QTest::newRow("reply-over-512-kib")
+            << QByteArray() << (512 * 1024 + 1)
+            << QStringLiteral("RuntimeUnavailable");
+    }
+
+    void connectedInputDevicesMapsReplyFailures()
+    {
+        QFETCH(QByteArray, reply);
+        QFETCH(int, replyBytes);
+        QFETCH(QString, errorCode);
+        FakePeer peer;
+        FakeOptions options;
+        options.devices = reply;
+        options.deviceReplyBytes = replyBytes;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(1500);
+        configureInputDiscoveryPolicy(*runtime);
+
+        const auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch")
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, errorCode);
+        QVERIFY(!connected.inventory.has_value());
+        QVERIFY(connected.runtimeIdentity.isEmpty());
+    }
+
+    void connectedInputDevicesHonorsOneClampedDeadline()
+    {
+        FakePeer peer;
+        FakeOptions options;
+        options.delayMilliseconds = 80;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(2500);
+        configureInputDiscoveryPolicy(*runtime);
+
+        QElapsedTimer elapsed;
+        elapsed.start();
+        auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch"), 120
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(elapsed.elapsed() < 700);
+
+        elapsed.restart();
+        connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch"), 0
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(elapsed.elapsed() < 100);
+    }
+
+    void connectedInputDevicesCountsSharedPrepareMutexWaitInDeadline()
+    {
+        FakePeer peer;
+        FakeOptions options;
+        options.delayMilliseconds = 100;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(1800);
+        configureInputDiscoveryPolicy(*runtime);
+
+        auto preparation = std::async(std::launch::async, [&] {
+            return runtime->prepare(
+                ActivationRequirement::Reload,
+                RuntimeActivationMode::ManagedReload
+            );
+        });
+        QTRY_VERIFY_WITH_TIMEOUT(
+            peer.commands().contains(QStringLiteral("j/version")), 1000
+        );
+
+        const auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch"), 50
+        );
+        QVERIFY(!connected.success);
+        QCOMPARE(connected.errorCode, QStringLiteral("RuntimeUnavailable"));
+        QVERIFY(!peer.commands().contains(QStringLiteral("j/devices")));
+
+        QVERIFY(preparation.wait_for(2s) == std::future_status::ready);
+        const auto prepared = preparation.get();
+        if (prepared.success && prepared.session) {
+            runtime->cancel(*prepared.session);
+        }
+        QCOMPARE(peer.commands().count(QStringLiteral("j/version")), 1);
+    }
+
+    void connectedInputDevicesRevalidatesEveryPinnedIdentity_data()
+    {
+        QTest::addColumn<QByteArray>("lockMode");
+        QTest::addColumn<QByteArray>("replacement");
+        QTest::addColumn<QByteArray>("exitAfter");
+
+        QTest::newRow("lock-pid-mismatch")
+            << QByteArray("wrong-pid") << QByteArray() << QByteArray();
+        QTest::newRow("control-socket-replaced")
+            << QByteArray("exact") << QByteArray("control") << QByteArray();
+        QTest::newRow("event-socket-replaced")
+            << QByteArray("exact") << QByteArray("event-query") << QByteArray();
+        QTest::newRow("lock-pid-changed-after-query")
+            << QByteArray("exact") << QByteArray("lock") << QByteArray();
+        QTest::newRow("instance-directory-replaced")
+            << QByteArray("exact") << QByteArray("instance") << QByteArray();
+        QTest::newRow("peer-dies-after-version")
+            << QByteArray("exact") << QByteArray()
+            << QByteArray("j/version");
+        QTest::newRow("peer-dies-after-devices")
+            << QByteArray("exact") << QByteArray()
+            << QByteArray("j/devices");
+    }
+
+    void connectedInputDevicesRevalidatesEveryPinnedIdentity()
+    {
+        QFETCH(QByteArray, lockMode);
+        QFETCH(QByteArray, replacement);
+        QFETCH(QByteArray, exitAfter);
+        FakePeer peer;
+        FakeOptions options;
+        options.lock = lockMode;
+        options.replaceEndpoint = replacement;
+        options.exitAfter = exitAfter;
+        QVERIFY2(peer.start(options), qPrintable(peer.error));
+        auto runtime = peer.runtime(1200);
+        configureInputDiscoveryPolicy(*runtime);
+
+        const auto connected = runtime->connectedInputDevices(
+            QByteArrayView("service-epoch")
+        );
+        QVERIFY(!connected.success);
+        QVERIFY(
+            connected.errorCode == QStringLiteral("VerificationFailed")
+            || connected.errorCode == QStringLiteral("RuntimeUnavailable")
+        );
+        QVERIFY(!connected.inventory.has_value());
+        QVERIFY(connected.runtimeIdentity.isEmpty());
     }
 
     void managedReloadProvesOrderedNonceBoundary()

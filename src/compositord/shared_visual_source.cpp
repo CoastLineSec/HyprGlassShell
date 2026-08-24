@@ -1,4 +1,6 @@
-#include "shared_border_source.h"
+#include "shared_visual_source.h"
+
+#include "config/config_values.h"
 
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
@@ -28,7 +30,7 @@ QVariant unwrapped(const QVariant &value)
     return value;
 }
 
-std::optional<SharedBorderProjection> decode(const QVariantMap &properties)
+std::optional<SharedVisualProjection> decode(const QVariantMap &properties)
 {
     const auto enabled = unwrapped(properties.value(
         QStringLiteral("ShellBorderEnabled")
@@ -42,6 +44,15 @@ std::optional<SharedBorderProjection> decode(const QVariantMap &properties)
     const auto sync = unwrapped(properties.value(
         QStringLiteral("SyncHyprlandWindowBorders")
     ));
+    const auto innerSpacing = unwrapped(properties.value(
+        QStringLiteral("ShellInnerSpacing")
+    ));
+    const auto outerSpacing = unwrapped(properties.value(
+        QStringLiteral("ShellOuterSpacing")
+    ));
+    const auto syncSpacing = unwrapped(properties.value(
+        QStringLiteral("SyncHyprlandWindowSpacing")
+    ));
     const auto revision = unwrapped(properties.value(
         QStringLiteral("Revision")
     ));
@@ -49,32 +60,50 @@ std::optional<SharedBorderProjection> decode(const QVariantMap &properties)
         || width.metaType().id() != QMetaType::UInt
         || radius.metaType().id() != QMetaType::UInt
         || sync.metaType().id() != QMetaType::Bool
+        || innerSpacing.metaType().id() != QMetaType::UInt
+        || outerSpacing.metaType().id() != QMetaType::UInt
+        || syncSpacing.metaType().id() != QMetaType::Bool
         || revision.metaType().id() != QMetaType::ULongLong
-        || width.toUInt() > 20U
-        || radius.toUInt() > 20U) {
+        || width.toUInt() > ConfigValues::maximumShellBorderWidth
+        || radius.toUInt() > ConfigValues::maximumShellBorderRadius
+        || innerSpacing.toUInt() > ConfigValues::maximumShellSpacing
+        || outerSpacing.toUInt() > ConfigValues::maximumShellSpacing) {
         return std::nullopt;
     }
-    return SharedBorderProjection{
+    return SharedVisualProjection{
         .borderEnabled = enabled.toBool(),
         .borderWidth = width.toUInt(),
         .borderRadius = radius.toUInt(),
         .syncWindowBorders = sync.toBool(),
+        .innerSpacing = innerSpacing.toUInt(),
+        .outerSpacing = outerSpacing.toUInt(),
+        .syncWindowSpacing = syncSpacing.toBool(),
         .revision = revision.toULongLong(),
     };
 }
 
-bool includesSharedBorderProperty(
+const QStringList borderProperties{
+    QStringLiteral("ShellBorderEnabled"),
+    QStringLiteral("ShellBorderWidth"),
+    QStringLiteral("ShellBorderRadius"),
+    QStringLiteral("SyncHyprlandWindowBorders"),
+};
+
+const QStringList spacingProperties{
+    QStringLiteral("ShellInnerSpacing"),
+    QStringLiteral("ShellOuterSpacing"),
+    QStringLiteral("SyncHyprlandWindowSpacing"),
+};
+
+bool includesSharedVisualProperty(
     const QVariantMap &changed,
     const QStringList &invalidated
 )
 {
-    for (const auto &name : {
-             QStringLiteral("ShellBorderEnabled"),
-             QStringLiteral("ShellBorderWidth"),
-             QStringLiteral("ShellBorderRadius"),
-             QStringLiteral("SyncHyprlandWindowBorders"),
-             QStringLiteral("Revision"),
-         }) {
+    auto names = borderProperties;
+    names.append(spacingProperties);
+    names.append(QStringLiteral("Revision"));
+    for (const auto &name : names) {
         if (changed.contains(name) || invalidated.contains(name)) {
             return true;
         }
@@ -82,15 +111,12 @@ bool includesSharedBorderProperty(
     return false;
 }
 
-bool invalidatesSharedBorderProperty(const QStringList &invalidated)
+bool invalidatesSharedVisualProperty(const QStringList &invalidated)
 {
-    for (const auto &name : {
-             QStringLiteral("ShellBorderEnabled"),
-             QStringLiteral("ShellBorderWidth"),
-             QStringLiteral("ShellBorderRadius"),
-             QStringLiteral("SyncHyprlandWindowBorders"),
-             QStringLiteral("Revision"),
-         }) {
+    auto names = borderProperties;
+    names.append(spacingProperties);
+    names.append(QStringLiteral("Revision"));
+    for (const auto &name : names) {
         if (invalidated.contains(name)) {
             return true;
         }
@@ -98,20 +124,41 @@ bool invalidatesSharedBorderProperty(const QStringList &invalidated)
     return false;
 }
 
-qsizetype suppliedSharedBorderValues(const QVariantMap &changed)
+qsizetype suppliedValues(
+    const QVariantMap &changed,
+    const QStringList &names
+)
 {
     qsizetype supplied = 0;
-    for (const auto &name : {
-             QStringLiteral("ShellBorderEnabled"),
-             QStringLiteral("ShellBorderWidth"),
-             QStringLiteral("ShellBorderRadius"),
-             QStringLiteral("SyncHyprlandWindowBorders"),
-         }) {
+    for (const auto &name : names) {
         if (changed.contains(name)) {
             ++supplied;
         }
     }
     return supplied;
+}
+
+QVariantMap propertiesFor(const SharedVisualProjection &projection)
+{
+    return {
+        {QStringLiteral("ShellBorderEnabled"), projection.borderEnabled},
+        {QStringLiteral("ShellBorderWidth"), projection.borderWidth},
+        {QStringLiteral("ShellBorderRadius"), projection.borderRadius},
+        {
+            QStringLiteral("SyncHyprlandWindowBorders"),
+            projection.syncWindowBorders,
+        },
+        {QStringLiteral("ShellInnerSpacing"), projection.innerSpacing},
+        {QStringLiteral("ShellOuterSpacing"), projection.outerSpacing},
+        {
+            QStringLiteral("SyncHyprlandWindowSpacing"),
+            projection.syncWindowSpacing,
+        },
+        {
+            QStringLiteral("Revision"),
+            QVariant::fromValue<qulonglong>(projection.revision),
+        },
+    };
 }
 
 QString boundedError(QString error)
@@ -128,28 +175,28 @@ QString boundedError(QString error)
 
 } // namespace
 
-SharedBorderSource::SharedBorderSource(QObject *parent)
+SharedVisualSource::SharedVisualSource(QObject *parent)
     : QObject(parent)
 {
 }
 
-bool SharedBorderSource::available() const
+bool SharedVisualSource::available() const
 {
     return available_;
 }
 
-const SharedBorderProjection &SharedBorderSource::projection() const
+const SharedVisualProjection &SharedVisualSource::projection() const
 {
     return projection_;
 }
 
-QString SharedBorderSource::error() const
+QString SharedVisualSource::error() const
 {
     return error_;
 }
 
-void SharedBorderSource::publishProjection(
-    const SharedBorderProjection &projection
+void SharedVisualSource::publishProjection(
+    const SharedVisualProjection &projection
 )
 {
     const auto changed = !available_ || projection != projection_
@@ -162,7 +209,7 @@ void SharedBorderSource::publishProjection(
     }
 }
 
-void SharedBorderSource::publishUnavailable(const QString &error)
+void SharedVisualSource::publishUnavailable(const QString &error)
 {
     const auto nextError = boundedError(error);
     const auto changed = available_ || nextError != error_;
@@ -173,11 +220,11 @@ void SharedBorderSource::publishUnavailable(const QString &error)
     }
 }
 
-DbusSharedBorderSource::DbusSharedBorderSource(
+DbusSharedVisualSource::DbusSharedVisualSource(
     QDBusConnection connection,
     QObject *parent
 )
-    : SharedBorderSource(parent)
+    : SharedVisualSource(parent)
     , connection_(std::move(connection))
 {
     serviceWatcher_ = new QDBusServiceWatcher(
@@ -190,7 +237,7 @@ DbusSharedBorderSource::DbusSharedBorderSource(
         serviceWatcher_,
         &QDBusServiceWatcher::serviceOwnerChanged,
         this,
-        &DbusSharedBorderSource::serviceOwnerChanged
+        &DbusSharedVisualSource::serviceOwnerChanged
     );
     connection_.connect(
         serviceName,
@@ -202,7 +249,7 @@ DbusSharedBorderSource::DbusSharedBorderSource(
     );
 }
 
-void DbusSharedBorderSource::start()
+void DbusSharedVisualSource::start()
 {
     if (started_) {
         return;
@@ -211,14 +258,14 @@ void DbusSharedBorderSource::start()
     refresh();
 }
 
-void DbusSharedBorderSource::requestRefresh()
+void DbusSharedVisualSource::requestRefresh()
 {
     if (started_) {
         refresh();
     }
 }
 
-void DbusSharedBorderSource::serviceOwnerChanged(
+void DbusSharedVisualSource::serviceOwnerChanged(
     const QString &name,
     const QString &oldOwner,
     const QString &newOwner
@@ -236,14 +283,14 @@ void DbusSharedBorderSource::serviceOwnerChanged(
     }
 }
 
-void DbusSharedBorderSource::propertiesChanged(
+void DbusSharedVisualSource::propertiesChanged(
     const QString &changedInterface,
     const QVariantMap &changed,
     const QStringList &invalidated
 )
 {
     if (!started_ || changedInterface != interfaceName
-        || !includesSharedBorderProperty(changed, invalidated)) {
+        || !includesSharedVisualProperty(changed, invalidated)) {
         return;
     }
 
@@ -253,26 +300,50 @@ void DbusSharedBorderSource::propertiesChanged(
         ));
         refresh();
     };
-    if (invalidatesSharedBorderProperty(invalidated)) {
+    if (invalidatesSharedVisualProperty(invalidated)) {
         markStaleAndRefresh();
         return;
     }
 
-    const auto suppliedValues = suppliedSharedBorderValues(changed);
+    const auto suppliedBorder = suppliedValues(changed, borderProperties);
+    const auto suppliedSpacing = suppliedValues(changed, spacingProperties);
     const auto suppliesRevision = changed.contains(QStringLiteral("Revision"));
-    if (suppliedValues == 4 && suppliesRevision) {
-        const auto next = decode(changed);
-        if (!next
-            || (available() && next->revision < projection().revision)) {
+    const auto completeBorder = suppliedBorder == borderProperties.size();
+    const auto completeSpacing = suppliedSpacing == spacingProperties.size();
+    const auto partialBorder = suppliedBorder > 0 && !completeBorder;
+    const auto partialSpacing = suppliedSpacing > 0 && !completeSpacing;
+    if (partialBorder || partialSpacing
+        || ((completeBorder || completeSpacing) && !suppliesRevision)) {
+        markStaleAndRefresh();
+        return;
+    }
+
+    if ((completeBorder || completeSpacing) && suppliesRevision) {
+        if (!available() && !(completeBorder && completeSpacing)) {
+            markStaleAndRefresh();
+            return;
+        }
+        auto merged = available() ? propertiesFor(projection()) : QVariantMap{};
+        for (auto iterator = changed.constBegin(); iterator != changed.constEnd();
+             ++iterator) {
+            merged.insert(iterator.key(), iterator.value());
+        }
+        const auto next = decode(merged);
+        if (!next || (projectionEstablished_
+                && (next->revision < projection().revision
+                    || (next->revision == projection().revision
+                        && *next != projection())))) {
             markStaleAndRefresh();
             return;
         }
         ++generation_;
+        projectionEstablished_ = true;
         publishProjection(*next);
         return;
     }
 
-    if (suppliedValues == 0 && suppliesRevision && available()) {
+    if (suppliedBorder == 0 && suppliedSpacing == 0
+        && suppliesRevision && available()) {
         const auto revision = unwrapped(changed.value(
             QStringLiteral("Revision")
         ));
@@ -289,7 +360,7 @@ void DbusSharedBorderSource::propertiesChanged(
     markStaleAndRefresh();
 }
 
-void DbusSharedBorderSource::refresh()
+void DbusSharedVisualSource::refresh()
 {
     auto message = QDBusMessage::createMethodCall(
         serviceName,
@@ -325,6 +396,16 @@ void DbusSharedBorderSource::refresh()
                 ));
                 return;
             }
+            if (projectionEstablished_
+                && (projection->revision < this->projection().revision
+                    || (projection->revision == this->projection().revision
+                        && *projection != this->projection()))) {
+                publishUnavailable(QStringLiteral(
+                    "Shared visual settings returned a stale projection"
+                ));
+                return;
+            }
+            projectionEstablished_ = true;
             publishProjection(*projection);
         }
     );

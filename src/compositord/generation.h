@@ -31,6 +31,16 @@ struct GenerationResult final {
     std::optional<VerifiedGeneration> generation;
 };
 
+// Pure qualification-time validation. This deliberately has no filesystem or
+// GenerationStore path, so a dormant v2 artifact cannot be published by the
+// active v1 store.
+[[nodiscard]] Hyprland::ValidationErrors validateDormantGenerationV2(
+    const DormantRenderedGenerationV2 &rendered,
+    const Hyprland::DesiredStateV2 &state,
+    const Hyprland::Catalog &catalogV2,
+    const Hyprland::ActionCatalog &actionCatalogV2
+);
+
 class GenerationStore final {
 public:
     explicit GenerationStore(PersistentStore &store);

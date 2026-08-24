@@ -17,6 +17,10 @@ struct ConfigState final {
     quint32 shellBorderRadius = ConfigValues::defaultShellBorderRadius;
     bool syncHyprlandWindowBorders =
         ConfigValues::defaultSyncHyprlandWindowBorders;
+    quint32 shellInnerSpacing = ConfigValues::defaultShellInnerSpacing;
+    quint32 shellOuterSpacing = ConfigValues::defaultShellOuterSpacing;
+    bool syncHyprlandWindowSpacing =
+        ConfigValues::defaultSyncHyprlandWindowSpacing;
     quint64 revision = 0;
 
     friend bool operator==(const ConfigState &, const ConfigState &) = default;

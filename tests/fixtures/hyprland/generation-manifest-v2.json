@@ -1,0 +1,29 @@
+{
+  "formatVersion": 2,
+  "contractVersion": 2,
+  "authorityId": "0123456789abcdef0123456789abcdef",
+  "generation": "d5a4ab2f71d396d2a16b0dfa2ad3c647b583bf4c5f0c6f9f24a0e1b3934957f6",
+  "snapshotDigest": "d0ba9d6640ee281789416bbed615ec64dee418175a09dab58393feb542db20cd",
+  "sourceManifestDigest": "f67f9214c47770268e66dd43d94b3af68dcbcac701312edcd52eedffb157f60d",
+  "catalogDigest": "3158d318945aeb03728426412933d737b5cf9cbd1dc384e296c11a9628ff6b88",
+  "actionCatalogDigest": "3625e37617810539823ae829de80eb5488b06b0e71d4c0be1f0356e00d019db8",
+  "revision": "0",
+  "targetHyprland": "0.56.2",
+  "compatibleHyprland": {
+    "major": 0,
+    "minor": 56,
+    "reviewedVersion": "0.56.2",
+    "minimumPatch": 2,
+    "maximumPatch": 2
+  },
+  "rendererVersion": 2,
+  "activationNonce": "0123456789abcdef0123456789abcdef",
+  "createdAt": "2026-08-09T00:00:00Z",
+  "entrypoint": "hyprland.lua",
+  "files": {
+    "hyprland.lua": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  }
+}

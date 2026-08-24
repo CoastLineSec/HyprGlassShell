@@ -1,5 +1,7 @@
 #include "transaction.h"
 
+#include "activation_requirement.h"
+
 #include "hyprland/json_support.h"
 
 #include <QCryptographicHash>
@@ -19,6 +21,35 @@ namespace HyprShelld::Compositor {
 namespace {
 
 using Hyprland::DesiredState;
+
+constexpr char preSharedSpacingActionCatalogDigest[] =
+    "72e063a5476308cefdd2771367ffeed9a8e553b3a2d7141f4e08c3e105a5deb2";
+constexpr char sharedSpacingActionCatalogDigest[] =
+    "1438f04a169b4ecfc945078403d6286154bc89a0e32cb3a1a5073d209e0c358b";
+constexpr char sharedSpacingConfigSchemaDigest[] =
+    "75e299cc9f5d3a3289450df089cad4aa22efd26ba2f11fbbf27d46f78b898202";
+constexpr char preDeviceQuarantineCatalogDigest[] =
+    "0232f9b036849e2b9423d5960dd32f22001c79b5b6b6696330f481d1d0c657e0";
+constexpr char deviceQuarantineCatalogDigest[] =
+    "10d6c8bfd757407e93ebb379afb7f29df89dacd2a75936ab3d2cbe873d539388";
+constexpr char bindingsQuarantineCatalogDigest[] =
+    "402c8a8c570dd3760d4d7bea8c358c7f12021a7c51457e62a4771d69a581254b";
+
+[[nodiscard]] bool acceptsPreSharedSpacingAuthority(
+    const Hyprland::ActionCatalog &actions
+) {
+  return Hyprland::actionCatalogDigest(actions)
+          == QLatin1String(sharedSpacingActionCatalogDigest)
+      && actions.configSchemaDigest
+          == QLatin1String(sharedSpacingConfigSchemaDigest);
+}
+
+[[nodiscard]] bool acceptsBindingsQuarantineAuthority(
+    const Hyprland::Catalog &catalog
+) {
+  return Hyprland::catalogDigest(catalog)
+      == QLatin1String(bindingsQuarantineCatalogDigest);
+}
 
 [[nodiscard]] int duplicateDescriptor(const int descriptor)
 {
@@ -93,6 +124,128 @@ compatibleHyprlandObject(const Hyprland::Catalog &catalog) {
   return result;
 }
 
+struct CompatibleDesiredState final {
+  DesiredState state;
+  bool preSharedSpacingAuthority = false;
+  bool preDeviceQuarantineAuthority = false;
+  bool preBindingsQuarantineAuthority = false;
+};
+
+[[nodiscard]] std::optional<CompatibleDesiredState>
+parseCompatibleDesiredState(
+    const QByteArrayView bytes,
+    const Hyprland::Catalog &catalog,
+    const Hyprland::ActionCatalog &actions
+) {
+  const auto current = Hyprland::parseDesiredState(bytes, catalog, actions);
+  if (current
+      && Hyprland::serializeDesiredState(*current.value) == bytes) {
+    return CompatibleDesiredState{.state = *current.value};
+  }
+
+  const auto object = Hyprland::JsonSupport::parseStrictObject(
+      bytes, Hyprland::maximumDesiredStateBytes, 64
+  );
+  if (!object) {
+    return std::nullopt;
+  }
+
+  const auto storedCatalogDigest = object.value->value(
+      QStringLiteral("catalogDigest")
+  ).toString();
+  const auto storedActionCatalogDigest = object.value->value(
+      QStringLiteral("actionCatalogDigest")
+  ).toString();
+  const auto preDeviceQuarantineAuthority =
+      acceptsBindingsQuarantineAuthority(catalog)
+      && storedCatalogDigest
+          == QLatin1String(preDeviceQuarantineCatalogDigest);
+  const auto preBindingsQuarantineAuthority =
+      acceptsBindingsQuarantineAuthority(catalog)
+      && storedCatalogDigest
+          == QLatin1String(deviceQuarantineCatalogDigest);
+  const auto currentCatalogAuthority =
+      storedCatalogDigest == Hyprland::catalogDigest(catalog);
+  const auto preSharedSpacingAuthority =
+      acceptsPreSharedSpacingAuthority(actions)
+      && storedActionCatalogDigest
+          == QLatin1String(preSharedSpacingActionCatalogDigest);
+  const auto currentActionAuthority =
+      storedActionCatalogDigest == Hyprland::actionCatalogDigest(actions);
+  if ((!preDeviceQuarantineAuthority
+       && !preBindingsQuarantineAuthority
+       && !currentCatalogAuthority)
+      || (!preSharedSpacingAuthority && !currentActionAuthority)
+      || (!preDeviceQuarantineAuthority
+          && !preBindingsQuarantineAuthority
+          && !preSharedSpacingAuthority)) {
+    return std::nullopt;
+  }
+
+  auto migratedObject = *object.value;
+  migratedObject.insert(
+      QStringLiteral("catalogDigest"), Hyprland::catalogDigest(catalog)
+  );
+  migratedObject.insert(
+      QStringLiteral("actionCatalogDigest"),
+      Hyprland::actionCatalogDigest(actions)
+  );
+  auto migratedBytes = Hyprland::JsonSupport::canonicalJson(migratedObject);
+  migratedBytes.append('\n');
+  const auto migrated = Hyprland::parseDesiredState(
+      QByteArrayView(migratedBytes), catalog, actions
+  );
+  if (!migrated || migrated.value->readOnly) {
+    return std::nullopt;
+  }
+  if (preSharedSpacingAuthority) {
+    for (const auto &rule : migrated.value->workspaceRules) {
+      if (rule.id == QLatin1String(Hyprland::sharedSpacingWorkspaceRuleId)
+          || rule.selector == QLatin1String(
+              Hyprland::sharedSpacingWorkspaceRuleSelector
+          )) {
+        return std::nullopt;
+      }
+    }
+  }
+
+  auto legacyState = *migrated.value;
+  legacyState.catalogDigest = storedCatalogDigest;
+  legacyState.actionCatalogDigest = storedActionCatalogDigest;
+  if (Hyprland::serializeDesiredState(legacyState) != bytes) {
+    return std::nullopt;
+  }
+  return CompatibleDesiredState{
+      .state = std::move(legacyState),
+      .preSharedSpacingAuthority = preSharedSpacingAuthority,
+      .preDeviceQuarantineAuthority = preDeviceQuarantineAuthority,
+      .preBindingsQuarantineAuthority = preBindingsQuarantineAuthority,
+  };
+}
+
+[[nodiscard]] std::optional<DesiredState> currentAuthorityState(
+    const CompatibleDesiredState &stored,
+    const Hyprland::Catalog &catalog,
+    const Hyprland::ActionCatalog &actions
+) {
+  if (!stored.preSharedSpacingAuthority
+      && !stored.preDeviceQuarantineAuthority
+      && !stored.preBindingsQuarantineAuthority) {
+    return stored.state;
+  }
+  auto current = stored.state;
+  current.catalogDigest = Hyprland::catalogDigest(catalog);
+  current.actionCatalogDigest = Hyprland::actionCatalogDigest(actions);
+  const auto bytes = Hyprland::serializeDesiredState(current);
+  const auto verified = Hyprland::parseDesiredState(
+      QByteArrayView(bytes), catalog, actions
+  );
+  if (!verified || *verified.value != current) {
+    return std::nullopt;
+  }
+  return current;
+}
+
 [[nodiscard]] std::optional<ActivationRequirement>
 parseRequirement(const QString &name) {
   if (name == QStringLiteral("reload"))
@@ -102,108 +255,6 @@ parseRequirement(const QString &name) {
   if (name == QStringLiteral("session"))
     return ActivationRequirement::Session;
   return std::nullopt;
-}
-
-[[nodiscard]] int rank(const ActivationRequirement requirement) {
-  switch (requirement) {
-  case ActivationRequirement::None:
-    return 0;
-  case ActivationRequirement::Reload:
-    return 1;
-  case ActivationRequirement::Restart:
-    return 2;
-  case ActivationRequirement::Session:
-    return 3;
-  }
-  return 3;
-}
-
-[[nodiscard]] ActivationRequirement
-strongest(const ActivationRequirement left, const ActivationRequirement right) {
-  return rank(left) >= rank(right) ? left : right;
-}
-
-[[nodiscard]] ActivationRequirement
-fromApplyMode(const Hyprland::ApplyMode mode) {
-  if (mode == Hyprland::ApplyMode::Session) {
-    return ActivationRequirement::Session;
-  }
-  if (mode == Hyprland::ApplyMode::Restart) {
-    return ActivationRequirement::Restart;
-  }
-  return ActivationRequirement::Reload;
-}
-
-[[nodiscard]] const Hyprland::ComplexSurfaceDefinition *
-surface(const Hyprland::Catalog &catalog, const QString &id) {
-  const auto found = std::ranges::find_if(
-      catalog.complexSurfaces,
-      [&id](const auto &candidate) { return candidate.id == id; });
-  return found == catalog.complexSurfaces.end() ? nullptr : &*found;
-}
-
-template <typename Values>
-void includeSurfaceDelta(ActivationRequirement &result, const Values &before,
-                         const Values &after, const Hyprland::Catalog &catalog,
-                         const QString &id) {
-  if (before == after)
-    return;
-  if (const auto *definition = surface(catalog, id)) {
-    result = strongest(result, fromApplyMode(definition->applyMode));
-  }
-}
-
-[[nodiscard]] ActivationRequirement
-deltaRequirement(const std::optional<DesiredState> &before,
-                 const DesiredState &after, const Hyprland::Catalog &catalog) {
-  if (!before) {
-    return activationRequirementForDesiredState(after, catalog);
-  }
-  ActivationRequirement result = ActivationRequirement::Reload;
-  QSet<QString> optionIds;
-  for (auto iterator = before->overrides.constBegin();
-       iterator != before->overrides.constEnd(); ++iterator) {
-    optionIds.insert(iterator.key());
-  }
-  for (auto iterator = after.overrides.constBegin();
-       iterator != after.overrides.constEnd(); ++iterator) {
-    optionIds.insert(iterator.key());
-  }
-  for (const auto &id : optionIds) {
-    const auto oldValue = before->overrides.value(id, QJsonValue::Undefined);
-    const auto newValue = after.overrides.value(id, QJsonValue::Undefined);
-    if (Hyprland::JsonSupport::canonicalJson(oldValue) ==
-        Hyprland::JsonSupport::canonicalJson(newValue))
-      continue;
-    if (const auto *option = Hyprland::findOption(catalog, id)) {
-      result = strongest(result, fromApplyMode(option->applyMode));
-    }
-  }
-  includeSurfaceDelta(result, before->monitors, after.monitors, catalog,
-                      QStringLiteral("monitors"));
-  includeSurfaceDelta(result, before->devices, after.devices, catalog,
-                      QStringLiteral("devices"));
-  includeSurfaceDelta(result, before->curves, after.curves, catalog,
-                      QStringLiteral("curves"));
-  includeSurfaceDelta(result, before->animations, after.animations, catalog,
-                      QStringLiteral("animations"));
-  includeSurfaceDelta(result, before->gestures, after.gestures, catalog,
-                      QStringLiteral("gestures"));
-  includeSurfaceDelta(result, before->workspaceRules, after.workspaceRules,
-                      catalog, QStringLiteral("workspaceRules"));
-  includeSurfaceDelta(result, before->windowRules, after.windowRules, catalog,
-                      QStringLiteral("windowRules"));
-  includeSurfaceDelta(result, before->layerRules, after.layerRules, catalog,
-                      QStringLiteral("layerRules"));
-  includeSurfaceDelta(result, before->submaps, after.submaps, catalog,
-                      QStringLiteral("submaps"));
-  includeSurfaceDelta(result, before->bindings, after.bindings, catalog,
-                      QStringLiteral("bindings"));
-  includeSurfaceDelta(result, before->permissions, after.permissions, catalog,
-                      QStringLiteral("permissions"));
-  includeSurfaceDelta(result, before->environment, after.environment, catalog,
-                      QStringLiteral("environment"));
-  return result;
 }
 
 struct AppliedRecord final {
@@ -385,11 +436,12 @@ parsePendingBytes(const QByteArrayView bytes, const Hyprland::Catalog &catalog,
   auto candidateBytes = Hyprland::JsonSupport::canonicalJson(
       object.value(QStringLiteral("candidateSnapshot")));
   candidateBytes.append('\n');
-  const auto candidate = Hyprland::parseDesiredState(
-      QByteArrayView(candidateBytes), catalog, actions);
+  const auto candidate = parseCompatibleDesiredState(
+      QByteArrayView(candidateBytes), catalog, actions
+  );
   const auto after = parseAppliedObject(
       object.value(QStringLiteral("afterActivation")).toObject());
-  if (!candidate || !after || after->revision != candidate.value->revision ||
+  if (!candidate || !after || after->revision != candidate->state.revision ||
       after->snapshotDigest != hashBytes(candidateBytes) ||
       object.value(QStringLiteral("snapshotDigest")).toString() !=
           after->snapshotDigest)
@@ -405,11 +457,11 @@ parsePendingBytes(const QByteArrayView bytes, const Hyprland::Catalog &catalog,
       return std::nullopt;
   }
   if ((kind == PendingKind::Apply &&
-       candidate.value->revision != expectedRevision) ||
+       candidate->state.revision != expectedRevision) ||
       ((kind == PendingKind::Recovery ||
         kind == PendingKind::DisplayPreview) &&
        (expectedRevision == std::numeric_limits<quint64>::max() ||
-        candidate.value->revision != expectedRevision + 1))) {
+        candidate->state.revision != expectedRevision + 1))) {
     return std::nullopt;
   }
   if (kind == PendingKind::Apply &&
@@ -421,7 +473,7 @@ parsePendingBytes(const QByteArrayView bytes, const Hyprland::Catalog &catalog,
       .phase = phase,
       .expectedRevision = expectedRevision,
       .beforeDesiredDigest = beforeDesiredDigest,
-      .candidate = std::move(*candidate.value),
+      .candidate = std::move(candidate->state),
       .candidateBytes = std::move(candidateBytes),
       .snapshotDigest = after->snapshotDigest,
       .after = *after,
@@ -461,6 +513,7 @@ struct ConfigurationTransaction::Impl final {
   QByteArray lastGoodBytes;
   std::optional<AppliedRecord> applied;
   std::optional<PendingRecord> pending;
+  bool desiredSemanticallyMatchesApplied = false;
 
   Impl(StorePaths storePaths, Hyprland::Catalog scalarCatalog,
        Hyprland::ActionCatalog actionCatalog)
@@ -485,6 +538,9 @@ struct ConfigurationTransaction::Impl final {
     result.available = true;
     result.writable = !desired.readOnly && !pending.has_value();
     result.desiredState = desiredBytes;
+    if (appliedState) {
+      result.appliedDesiredState = Hyprland::serializeDesiredState(*appliedState);
+    }
     result.revision = desired.revision;
     result.catalogDigest = desired.catalogDigest;
     result.actionCatalogDigest = desired.actionCatalogDigest;
@@ -497,7 +553,10 @@ struct ConfigurationTransaction::Impl final {
       result.applyState = QStringLiteral("retained");
       return result;
     }
-    if (applied && applied->snapshotDigest == desiredDigest && !pending) {
+    if (applied
+        && (applied->snapshotDigest == desiredDigest
+            || desiredSemanticallyMatchesApplied)
+        && !pending) {
       result.applyState = QStringLiteral("current");
       return result;
     }
@@ -506,8 +565,9 @@ struct ConfigurationTransaction::Impl final {
     if (pending) {
       result.requiredActivation = pending->after.requirement;
     } else {
-      result.requiredActivation =
-          deltaRequirement(appliedState, desired, catalog);
+      result.requiredActivation = activationRequirementForDelta(
+          appliedState ? &*appliedState : nullptr, desired, catalog
+      );
     }
     return result;
   }
@@ -527,16 +587,16 @@ struct ConfigurationTransaction::Impl final {
                   : stored.errorMessage;
       return false;
     }
-    const auto parsed = Hyprland::parseDesiredState(
-        QByteArrayView(stored.bytes), catalog, actions);
-    if (!parsed ||
-        Hyprland::serializeDesiredState(*parsed.value) != stored.bytes) {
+    const auto parsed = parseCompatibleDesiredState(
+        QByteArrayView(stored.bytes), catalog, actions
+    );
+    if (!parsed) {
       error = QStringLiteral(
           "A persistent compositor snapshot is invalid or non-canonical");
       return false;
     }
     bytes = stored.bytes;
-    state = *parsed.value;
+    state = parsed->state;
     return true;
   }
 
@@ -579,12 +639,11 @@ struct ConfigurationTransaction::Impl final {
                     : lastGoodRead.errorMessage;
         return false;
       }
-      const auto parsed = Hyprland::parseDesiredState(
-          QByteArrayView(lastGoodRead.bytes), catalog, actions);
-      if (!parsed || parsed.value->readOnly ||
-          Hyprland::serializeDesiredState(*parsed.value) !=
-              lastGoodRead.bytes ||
-          parsed.value->revision != record.before->revision ||
+      const auto parsed = parseCompatibleDesiredState(
+          QByteArrayView(lastGoodRead.bytes), catalog, actions
+      );
+      if (!parsed || parsed->state.readOnly
+          || parsed->state.revision != record.before->revision ||
           hashBytes(lastGoodRead.bytes) != record.before->snapshotDigest) {
         error = QStringLiteral(
             "The prior last-good snapshot changed after prepare");
@@ -608,6 +667,23 @@ struct ConfigurationTransaction::Impl final {
       return false;
     }
     const auto &generation = *verified.generation;
+    const auto candidateCatalogDigest = record.candidate.catalogDigest;
+    const auto catalogAuthorityCompatible =
+        candidateCatalogDigest == Hyprland::catalogDigest(catalog)
+        || (acceptsBindingsQuarantineAuthority(catalog)
+            && (candidateCatalogDigest == QLatin1String(
+                    preDeviceQuarantineCatalogDigest
+                )
+                || candidateCatalogDigest == QLatin1String(
+                    deviceQuarantineCatalogDigest
+                )));
+    const auto candidateActionDigest = record.candidate.actionCatalogDigest;
+    const auto actionAuthorityCompatible =
+        candidateActionDigest == Hyprland::actionCatalogDigest(actions)
+        || (acceptsPreSharedSpacingAuthority(actions)
+            && candidateActionDigest == QLatin1String(
+                preSharedSpacingActionCatalogDigest
+            ));
     if (generation.id != record.after.generation ||
         generation.entrypoint != record.after.entrypoint ||
         generation.snapshotDigest != record.snapshotDigest ||
@@ -620,18 +696,17 @@ struct ConfigurationTransaction::Impl final {
         QByteArrayView(generation.manifest), 4 * 1024 * 1024, 32);
     if (!manifest ||
         manifest.value->value(QStringLiteral("catalogDigest")).toString() !=
-            Hyprland::catalogDigest(catalog) ||
+            candidateCatalogDigest ||
         manifest.value->value(QStringLiteral("actionCatalogDigest"))
-                .toString() != Hyprland::actionCatalogDigest(actions) ||
+                .toString() != candidateActionDigest ||
         manifest.value->value(QStringLiteral("targetHyprland")).toString() !=
             record.candidate.targetHyprland ||
         !manifest.value->value(QStringLiteral("compatibleHyprland"))
              .isObject() ||
         manifest.value->value(QStringLiteral("compatibleHyprland"))
                 .toObject() != compatibleHyprlandObject(catalog) ||
-        record.candidate.catalogDigest != Hyprland::catalogDigest(catalog) ||
-        record.candidate.actionCatalogDigest !=
-            Hyprland::actionCatalogDigest(actions)) {
+        !catalogAuthorityCompatible ||
+        !actionAuthorityCompatible) {
       error = QStringLiteral(
           "The generation is outside the active catalog authority");
       return false;
@@ -707,22 +782,21 @@ struct ConfigurationTransaction::Impl final {
       error = lastGoodRead.errorMessage;
       return false;
     } else {
-      const auto parsedLast = Hyprland::parseDesiredState(
-          QByteArrayView(lastGoodRead.bytes), catalog, actions);
-      if (!parsedLast || parsedLast.value->readOnly ||
-          Hyprland::serializeDesiredState(*parsedLast.value) !=
-              lastGoodRead.bytes) {
+      const auto parsedLast = parseCompatibleDesiredState(
+          QByteArrayView(lastGoodRead.bytes), catalog, actions
+      );
+      if (!parsedLast || parsedLast->state.readOnly) {
         error = QStringLiteral(
             "Pending recovery found an invalid last-good snapshot");
         return false;
       }
       const auto lastGoodDigest = hashBytes(lastGoodRead.bytes);
       lastGoodIsAfter =
-          parsedLast.value->revision == pending->candidate.revision &&
+          parsedLast->state.revision == pending->candidate.revision &&
           lastGoodDigest == pending->snapshotDigest;
       lastGoodIsBefore =
           pending->before &&
-          parsedLast.value->revision == pending->before->revision &&
+          parsedLast->state.revision == pending->before->revision &&
           lastGoodDigest == pending->before->snapshotDigest;
     }
     if (!lastGoodIsBefore && !lastGoodIsAfter) {
@@ -774,6 +848,7 @@ struct ConfigurationTransaction::Impl final {
   }
 
   [[nodiscard]] bool loadSnapshots(QString &error) {
+    desiredSemanticallyMatchesApplied = false;
     auto desiredRead = store.read(StoreFile::Desired);
     auto lastGoodRead = store.read(StoreFile::LastGood);
     const auto activationRead = store.read(StoreFile::Activation);
@@ -818,18 +893,34 @@ struct ConfigurationTransaction::Impl final {
       return false;
     }
 
-    const auto parsedDesired = Hyprland::parseDesiredState(
-        QByteArrayView(desiredRead.bytes), catalog, actions);
-    if (!parsedDesired || Hyprland::serializeDesiredState(
-                              *parsedDesired.value) != desiredRead.bytes) {
-      error = parsedDesired
-                  ? QStringLiteral("The desired snapshot is not canonical")
-                  : QStringLiteral("The desired snapshot is invalid: %1")
-                        .arg(describeErrors(parsedDesired.errors));
+    const auto parsedDesired = parseCompatibleDesiredState(
+        QByteArrayView(desiredRead.bytes), catalog, actions
+    );
+    if (!parsedDesired) {
+      error = QStringLiteral(
+          "The desired snapshot is invalid or outside compatible authority"
+      );
       return false;
     }
-    desired = *parsedDesired.value;
-    desiredBytes = desiredRead.bytes;
+    const auto currentDesired = currentAuthorityState(
+        *parsedDesired, catalog, actions
+    );
+    if (!currentDesired) {
+      error = QStringLiteral(
+          "The desired snapshot cannot be migrated to current authority"
+      );
+      return false;
+    }
+    desired = *currentDesired;
+    desiredBytes = Hyprland::serializeDesiredState(desired);
+    const auto migrateDesiredAuthority =
+        parsedDesired->preSharedSpacingAuthority
+        || parsedDesired->preDeviceQuarantineAuthority
+        || parsedDesired->preBindingsQuarantineAuthority;
+    if (!migrateDesiredAuthority && desiredBytes != desiredRead.bytes) {
+      error = QStringLiteral("The desired snapshot is not canonical");
+      return false;
+    }
     desiredDigest = hashBytes(desiredBytes);
     if (desired.readOnly)
       loadState = QStringLiteral("unsupported");
@@ -843,6 +934,13 @@ struct ConfigurationTransaction::Impl final {
       applied.reset();
       appliedState.reset();
       lastGoodBytes.clear();
+      if (migrateDesiredAuthority) {
+        const auto migrated = store.write(StoreFile::Desired, desiredBytes);
+        if (!migrated.success) {
+          error = migrated.errorMessage;
+          return false;
+        }
+      }
       return true;
     }
     if (!activationRead.present()) {
@@ -850,28 +948,45 @@ struct ConfigurationTransaction::Impl final {
           QStringLiteral("Last-good state exists without activation metadata");
       return false;
     }
-    const auto parsedLast = Hyprland::parseDesiredState(
-        QByteArrayView(lastGoodRead.bytes), catalog, actions);
+    const auto parsedLast = parseCompatibleDesiredState(
+        QByteArrayView(lastGoodRead.bytes), catalog, actions
+    );
     const auto parsedActivation = parseAppliedBytes(activationRead.bytes);
-    if (!parsedLast || parsedLast.value->readOnly || !parsedActivation ||
-        Hyprland::serializeDesiredState(*parsedLast.value) !=
-            lastGoodRead.bytes ||
-        parsedActivation->revision != parsedLast.value->revision ||
+    if (!parsedLast || parsedLast->state.readOnly || !parsedActivation ||
+        parsedActivation->revision != parsedLast->state.revision ||
         parsedActivation->snapshotDigest != hashBytes(lastGoodRead.bytes)) {
       error = QStringLiteral("Last-good and activation metadata disagree");
       return false;
     }
     PendingRecord proof{
-        .candidate = *parsedLast.value,
+        .candidate = parsedLast->state,
         .candidateBytes = lastGoodRead.bytes,
         .snapshotDigest = parsedActivation->snapshotDigest,
         .after = *parsedActivation,
     };
     if (!crossCheckGeneration(proof, error))
       return false;
+    const auto currentApplied = currentAuthorityState(
+        *parsedLast, catalog, actions
+    );
+    if (!currentApplied) {
+      error = QStringLiteral(
+          "The last-good snapshot cannot be migrated to current authority"
+      );
+      return false;
+    }
     applied = *parsedActivation;
-    appliedState = *parsedLast.value;
+    appliedState = *currentApplied;
     lastGoodBytes = lastGoodRead.bytes;
+    desiredSemanticallyMatchesApplied =
+        applied->revision == desired.revision && *appliedState == desired;
+    if (migrateDesiredAuthority) {
+      const auto migrated = store.write(StoreFile::Desired, desiredBytes);
+      if (!migrated.success) {
+        error = migrated.errorMessage;
+        return false;
+      }
+    }
     return true;
   }
 
@@ -883,8 +998,18 @@ struct ConfigurationTransaction::Impl final {
       DesiredState candidate,
       QByteArray candidateBytes
   ) {
+    const auto safetyErrors = Hyprland::validateManagedActivationSafety(
+        candidate, catalog
+    );
+    if (!safetyErrors.isEmpty()) {
+      return fail(
+          QStringLiteral("VerificationFailed"), describeErrors(safetyErrors)
+      );
+    }
     const auto candidateDigest = hashBytes(candidateBytes);
-    auto requirement = deltaRequirement(appliedState, candidate, catalog);
+    auto requirement = activationRequirementForDelta(
+        appliedState ? &*appliedState : nullptr, candidate, catalog
+    );
     const auto directory = generations.directoryForNonce(nonce);
     auto rendered = renderGeneration(candidate, catalog, actions, directory,
                                      paths.userCustomPath(), nonce, createdAt);
@@ -1013,7 +1138,8 @@ struct ConfigurationTransaction::Impl final {
                   QStringLiteral("The desired revision changed"));
     const auto exactAppliedBaseline = applied && appliedState
         && applied->revision == desired.revision
-        && applied->snapshotDigest == desiredDigest
+        && (applied->snapshotDigest == desiredDigest
+            || desiredSemanticallyMatchesApplied)
         && *appliedState == desired;
     if (!exactAppliedBaseline) {
       return fail(
@@ -1127,6 +1253,21 @@ QByteArray ConfigurationTransaction::optionCatalog() const {
   return Hyprland::canonicalCatalogJson(impl_->catalog);
 }
 
+QByteArray ConfigurationTransaction::actionCatalog() const {
+  return Hyprland::canonicalActionCatalogJson(impl_->actions);
+}
+
+QByteArray ConfigurationTransaction::configSchema() const {
+  return impl_->actions.configSchemaDocument;
+}
+
+Hyprland::ValidationErrors
+ConfigurationTransaction::currentActivationSafetyErrors() const {
+  return Hyprland::validateManagedActivationSafety(
+      impl_->desired, impl_->catalog
+  );
+}
+
 AuthorityResult
 ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
                                           const QByteArray &candidateBytes) {
@@ -1137,11 +1278,6 @@ ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
   if (impl_->desired.readOnly)
     return impl_->fail(QStringLiteral("ReadOnly"),
                        QStringLiteral("The desired snapshot is read-only"));
-  if (impl_->pending)
-    return impl_->fail(
-        QStringLiteral("ConfirmationPending"),
-        QStringLiteral("A compositor transaction is already pending")
-    );
   const auto currentToken = expectedRevision == impl_->desired.revision;
   const auto possibleRetry =
       expectedRevision != std::numeric_limits<quint64>::max() &&
@@ -1170,12 +1306,14 @@ ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
     return impl_->fail(QStringLiteral("StaleRevision"),
                        QStringLiteral("The desired revision changed"));
   }
+  if (impl_->pending)
+    return impl_->fail(
+        QStringLiteral("ConfirmationPending"),
+        QStringLiteral("A compositor transaction is already pending")
+    );
   if (canonical == impl_->desiredBytes) {
     return {.success = true, .snapshot = impl_->snapshot()};
   }
-  if (impl_->pending)
-    return impl_->fail(QStringLiteral("PersistenceFailed"),
-                       QStringLiteral("A compositor transaction is pending"));
   if (expectedRevision == std::numeric_limits<quint64>::max()) {
     return impl_->fail(QStringLiteral("RevisionExhausted"),
                        QStringLiteral("The desired revision cannot advance"));
@@ -1191,6 +1329,14 @@ ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
         QStringLiteral(
             "The incremented candidate failed canonical validation"));
   }
+  const auto safetyErrors = Hyprland::validateManagedActivationSafety(
+      next, impl_->catalog
+  );
+  if (!safetyErrors.isEmpty()) {
+    return impl_->fail(
+        QStringLiteral("InvalidSnapshot"), describeErrors(safetyErrors)
+    );
+  }
   const auto persisted = impl_->store.write(StoreFile::Desired, canonical);
   if (!persisted.success) {
     if (persisted.committedButNotDurable)
@@ -1201,6 +1347,7 @@ ConfigurationTransaction::replaceSnapshot(const quint64 expectedRevision,
   impl_->desired = std::move(next);
   impl_->desiredBytes = std::move(canonical);
   impl_->desiredDigest = hashBytes(impl_->desiredBytes);
+  impl_->desiredSemanticallyMatchesApplied = false;
   impl_->loadState = QStringLiteral("normal");
   return {.success = true, .snapshot = impl_->snapshot()};
 }
@@ -1330,6 +1477,7 @@ ConfigurationTransaction::commitApply(const QString &generation) {
   impl_->applied = committed.after;
   impl_->appliedState = committed.candidate;
   impl_->lastGoodBytes = committed.candidateBytes;
+  impl_->desiredSemanticallyMatchesApplied = false;
   return {
       .success = true,
       .commitDecisionDurable = true,

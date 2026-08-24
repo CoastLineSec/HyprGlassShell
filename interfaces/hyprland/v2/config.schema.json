@@ -1,0 +1,908 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coastlinesec.github.io/hyprshelld/schemas/hyprland/v2/config.schema.json",
+  "title": "HyprShelld dormant Hyprland authority envelope v2",
+  "description": "Dormant authority-envelope candidate over the exact patched Hyprland 0.56.2 typed surface. It is packaged for qualification but is not selected by the production codec or any runtime path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion", "authorityId", "revision", "targetHyprland", "catalogDigest", "actionCatalogDigest",
+    "overrides", "monitors", "devices", "curves", "animations",
+    "gestures", "workspaceRules", "windowRules", "layerRules",
+    "submaps", "bindings", "permissions", "environment"
+  ],
+  "properties": {
+    "formatVersion": {"const": 2},
+    "authorityId": {"$ref": "#/$defs/authorityId"},
+    "revision": {"$ref": "#/$defs/revision"},
+    "targetHyprland": {"$ref": "#/$defs/hyprlandVersion"},
+    "catalogDigest": {"$ref": "#/$defs/sha256"},
+    "actionCatalogDigest": {"$ref": "#/$defs/sha256"},
+    "overrides": {
+      "type": "object",
+      "maxProperties": 353,
+      "propertyNames": {"pattern": "^hyprland\\.[a-z][a-z0-9_.-]*(?:\\.[a-z][a-z0-9_.-]*)+$"},
+      "additionalProperties": {"$ref": "#/$defs/optionValue"}
+    },
+    "monitors": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/monitor"}},
+    "devices": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/device"}},
+    "curves": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/curve"}},
+    "animations": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/animation"}},
+    "gestures": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/gesture"}},
+    "workspaceRules": {
+      "type": "array", "maxItems": 1025,
+      "items": {"$ref": "#/$defs/workspaceRule"},
+      "$comment": "At most 1024 user records plus the one exact protected HyprShelld maximized-workspace record. Core validation enforces the user-record count."
+    },
+    "windowRules": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/windowRule"}},
+    "layerRules": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/layerRule"}},
+    "submaps": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/submap"}},
+    "bindings": {"type": "array", "maxItems": 2048, "items": {"$ref": "#/$defs/binding"}},
+    "permissions": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/permission"}},
+    "environment": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/environmentVariable"}}
+  },
+  "$defs": {
+    "authorityId": {
+      "type": "string",
+      "pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+      "$comment": "Exactly 128 random authority-epoch bits encoded as lowercase hexadecimal. The all-zero sentinel is forbidden."
+    },
+    "revision": {
+      "type": "string", "maxLength": 20,
+      "pattern": "^(?:0|[1-9][0-9]{0,18}|(?:1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615))$",
+      "$comment": "Canonical unsigned 64-bit decimal revision."
+    },
+    "hyprlandVersion": {
+      "type": "string", "maxLength": 15,
+      "pattern": "^0\\.56\\.(?:0|[1-9][0-9]{0,8}|[1-3][0-9]{9}|4[01][0-9]{8}|42[0-8][0-9]{7}|429[0-3][0-9]{6}|4294[0-8][0-9]{5}|42949[0-5][0-9]{4}|429496[0-6][0-9]{3}|4294967[01][0-9]{2}|42949672[0-8][0-9]|429496729[0-5])$",
+      "$comment": "The grammar remains uint32 patch-bounded for strict migration and read-only preservation. Editable v2 authority is separately bound to exact patched 0.56.2 catalog digests."
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fullscreenMode": {"type": "integer", "minimum": 0, "maximum": 2},
+    "boundedCoordinate": {
+      "type": "number", "minimum": -1000000, "maximum": 1000000,
+      "$comment": "Safety envelope for compositor-space positions, sizes, and relative deltas; values outside one million logical pixels are not useful managed state."
+    },
+    "cursorZoomLevel": {
+      "type": "number", "minimum": 0.01, "maximum": 100,
+      "$comment": "A positive toggle target or multiplier; Hyprland clamps the resulting cursor zoom to 1..100."
+    },
+    "stableId": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "userWorkspaceRuleId": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "pattern": "^(?!hyprshelld\\.internal\\.shared-spacing\\.maximized$)[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "shortString": {"type": "string", "maxLength": 256, "pattern": "^[^\\u0000-\\u001f\\u007f]*$"},
+    "nonEmptyString": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[^\\u0000-\\u001f\\u007f]+$"},
+    "boundedString": {"type": "string", "maxLength": 4096, "pattern": "^[^\\u0000]*$"},
+    "regexString": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^[^\\u0000-\\u001f\\u007f]+$"},
+    "color": {"type": "string", "pattern": "^0x[0-9A-F]{8}$"},
+    "gradient": {
+      "type": "object", "additionalProperties": false,
+      "required": ["colors", "angle"],
+      "properties": {
+        "colors": {"type": "array", "minItems": 1, "maxItems": 10, "items": {"$ref": "#/$defs/color"}},
+        "angle": {"type": "number", "minimum": -3600, "maximum": 3600}
+      }
+    },
+    "vector2": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+    "cssGap": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "integer"}},
+    "expressionVector2": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"$ref": "#/$defs/boundedCoordinate"},
+      "$comment": "The retained typed surface persists resolved numeric vectors only; opaque Hyprland expression strings are excluded."
+    },
+    "optionValue": {
+      "anyOf": [
+        {"type": "boolean"}, {"type": "number"}, {"$ref": "#/$defs/boundedString"},
+        {"$ref": "#/$defs/gradient"},
+        {"type": "array", "minItems": 2, "maxItems": 4, "items": {"type": "number"}}
+      ]
+    },
+    "modifiers": {
+      "type": "array", "maxItems": 8, "uniqueItems": true,
+      "items": {"enum": ["shift", "caps", "ctrl", "alt", "mod2", "mod3", "super", "mod5"]}
+    },
+    "bindingKey": {
+      "oneOf": [
+        {"enum": ["catchall", "mouse_down", "mouse_up", "mouse_left", "mouse_right"]},
+        {
+          "type": "string", "maxLength": 9,
+          "pattern": "^mouse:(?:27[2-9]|2[89][0-9]|[3-6][0-9]{2}|7[0-5][0-9]|76[0-7])$"
+        },
+        {
+          "type": "string", "maxLength": 15,
+          "pattern": "^code:(?:0|[1-9][0-9]{0,8}|[1-3][0-9]{9}|4[01][0-9]{8}|42[0-8][0-9]{7}|429[0-3][0-9]{6}|4294[0-8][0-9]{5}|42949[0-5][0-9]{4}|429496[0-6][0-9]{3}|4294967[01][0-9]{2}|42949672[0-8][0-9]|429496729[0-4])$"
+        },
+        {
+          "type": "string", "minLength": 1, "maxLength": 64,
+          "pattern": "^(?!(?:catchall|mouse_down|mouse_up|mouse_left|mouse_right)$)[A-Za-z0-9_]+$",
+          "$comment": "Runtime validates this token with xkb_keysym_from_name, rejects XKB_KEY_NoSymbol, and stores the canonical keysym name. Punctuation keys use names such as comma and plus."
+        }
+      ],
+      "$comment": "Managed bindings contain exactly one non-modifier key token. code values use xkb_keycode_t's legal 0..4294967294 domain; mouse buttons use Linux input-event codes 272..767."
+    },
+    "actionModifiers": {
+      "type": "string", "maxLength": 41,
+      "pattern": "^(?! )(?!.* $)(?!.*  )(?:SHIFT(?: |$))?(?:CAPS(?: |$))?(?:CTRL(?: |$))?(?:ALT(?: |$))?(?:MOD2(?: |$))?(?:MOD3(?: |$))?(?:SUPER(?: |$))?(?:MOD5)?$",
+      "$comment": "Canonical uppercase modifier tokens, each at most once and in stable order; the empty string means no modifiers."
+    },
+    "actionKey": {
+      "oneOf": [
+        {
+          "type": "string", "maxLength": 9,
+          "pattern": "^mouse:(?:27[2-9]|2[89][0-9]|[3-6][0-9]{2}|7[0-5][0-9]|76[0-7])$"
+        },
+        {
+          "type": "string", "maxLength": 15,
+          "pattern": "^code:(?:0|[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$"
+        },
+        {
+          "type": "string", "minLength": 1, "maxLength": 64,
+          "pattern": "^(?!(?:catchall|mouse_down|mouse_up|mouse_left|mouse_right)$)[A-Za-z0-9_]+$",
+          "$comment": "Runtime validates this token with xkb_keysym_from_name and rejects XKB_KEY_NoSymbol."
+        }
+      ],
+      "$comment": "Dispatcher shortcut injection excludes catchall, wheel, switch, and compound key forms. code values are bounded to tagged std::stoi's signed-int domain."
+    },
+    "windowSelector": {
+      "oneOf": [
+        {"enum": ["active", "floating", "tiled"]},
+        {
+          "type": "string", "maxLength": 525,
+          "pattern": "^(?:class|initialclass|title|initialtitle|tag):[^\\u0000-\\u001f\\u007f]{1,512}$",
+          "$comment": "Runtime compiles the selector payload with RE2 and requires a valid expression."
+        },
+        {
+          "type": "string", "maxLength": 25,
+          "pattern": "^stableid:[1-9a-f][0-9a-f]{0,15}$"
+        },
+        {
+          "type": "string", "maxLength": 26,
+          "pattern": "^address:0x[1-9a-f][0-9a-f]{0,15}$"
+        },
+        {
+          "type": "string", "maxLength": 14,
+          "pattern": "^pid:(?:[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$"
+        }
+      ],
+      "$comment": "Closed canonical subset of tagged CViewQuery selectors. Prefix abbreviations and unprefixed class regexes are intentionally rejected."
+    },
+    "windowTagToken": {
+      "type": "string", "minLength": 1, "maxLength": 129,
+      "pattern": "^[+-]?[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "$comment": "A leading plus or minus applies or removes a tag. Authored dynamic-tag asterisks are excluded from managed state."
+    },
+    "workspaceSelector": {
+      "oneOf": [
+        {
+          "type": "string", "maxLength": 10,
+          "pattern": "^(?:[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$"
+        },
+        {
+          "type": "string", "minLength": 6, "maxLength": 133,
+          "pattern": "^name:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+        },
+        {
+          "type": "string", "minLength": 7, "maxLength": 136,
+          "pattern": "^special(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?$"
+        }
+      ],
+      "$comment": "Fail-closed managed subset: positive numeric IDs, exact names, and special workspace selectors. Alias and bracket-predicate grammars are excluded until a typed parser exists."
+    },
+    "existingWorkspaceSelector": {
+      "$ref": "#/$defs/workspaceSelector",
+      "$comment": "A selector which must resolve to an already existing workspace at application time."
+    },
+    "workspaceSpec": {
+      "oneOf": [
+        {"$ref": "#/$defs/workspaceSelector"},
+        {"enum": ["previous", "previous_per_monitor", "next", "empty"]}
+      ],
+      "$comment": "Closed creation/navigation subset. Relative r/m/e workspace expressions remain deliberately excluded."
+    },
+    "monitorSpec": {
+      "oneOf": [
+        {"enum": ["current", "left", "right", "up", "down"]},
+        {
+          "type": "string", "maxLength": 11,
+          "pattern": "^[+-](?:[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$"
+        },
+        {
+          "type": "string", "maxLength": 10,
+          "pattern": "^(?:0|[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])$"
+        },
+        {
+          "type": "string", "minLength": 1, "maxLength": 128,
+          "pattern": "^(?!(?:current|left|right|up|down)$)(?![0-9]+$)[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+        },
+        {
+          "type": "string", "minLength": 6, "maxLength": 261,
+          "pattern": "^desc:[^\\u0000-\\u001f\\u007f]{1,256}$",
+          "$comment": "Runtime additionally rejects Unicode control/format code points before querying monitor descriptions."
+        }
+      ],
+      "$comment": "Canonical, disjoint managed subset of tagged monitor config strings. Direction aliases and zero relative offsets are rejected."
+    },
+    "monitorEffect": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target", "silent"],
+      "properties": {
+        "target": {"oneOf": [{"$ref": "#/$defs/monitorSpec"}, {"const": "unset"}]},
+        "silent": {"type": "boolean"}
+      }
+    },
+    "staticMonitorSelector": {
+      "oneOf": [
+        {
+          "type": "string", "minLength": 1, "maxLength": 128,
+          "pattern": "^(?!(?:current|left|right|up|down)$)(?![0-9]+$)[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+        },
+        {
+          "type": "string", "minLength": 6, "maxLength": 261,
+          "pattern": "^desc:[^\\u0000-\\u001f\\u007f]{1,256}$"
+        }
+      ],
+      "$comment": "Stable nonempty output name/description selector; context-dependent monitor navigation, numeric IDs, and catch-all forms are excluded."
+    },
+    "workspaceEffect": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target", "silent"],
+      "properties": {
+        "target": {"oneOf": [{"$ref": "#/$defs/workspaceSpec"}, {"const": "unset"}]},
+        "silent": {"type": "boolean"}
+      }
+    },
+    "monitorScale": {
+      "anyOf": [
+        {"type": "number", "minimum": 0.25, "maximum": 3.4028234663852886e38},
+        {"const": "auto"}
+      ]
+    },
+    "monitorMode": {
+      "oneOf": [
+        {"enum": ["preferred", "highrr", "highres", "maxwidth"]},
+        {
+          "type": "string",
+          "maxLength": 24,
+          "pattern": "^[1-9][0-9]{0,4}x[1-9][0-9]{0,4}(?:@(?:[1-9][0-9]{0,3}(?:\\.[0-9]{1,3})?|0\\.[0-9]{0,2}[1-9]))?$"
+        }
+      ],
+      "$comment": "The retained typed surface intentionally excludes raw DRM modelines. Width and height are bounded to five decimal digits; refresh is greater than zero and below 10000 Hz with at most three fractional digits."
+    },
+    "monitorPosition": {
+      "oneOf": [
+        {
+          "enum": [
+            "auto", "auto-right", "auto-left", "auto-up", "auto-down",
+            "auto-center-right", "auto-center-left", "auto-center-up", "auto-center-down"
+          ]
+        },
+        {
+          "type": "string",
+          "maxLength": 17,
+          "pattern": "^(?:0|[+-]?(?:[1-9][0-9]{0,5}|1000000))x(?:0|[+-]?(?:[1-9][0-9]{0,5}|1000000))$"
+        }
+      ],
+      "$comment": "Explicit monitor coordinates use the same plus-or-minus one-million logical-pixel safety envelope as typed compositor coordinates."
+    },
+    "monitor": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "id", "selector", "enabled", "mode", "position", "scale", "reserved",
+        "transform", "mirror", "bitdepth", "cm", "sdrEotf", "sdrBrightness",
+        "sdrSaturation", "vrr", "icc", "supportsWideColor", "supportsHdr",
+        "sdrMinLuminance", "sdrMaxLuminance", "minLuminance", "maxLuminance",
+        "maxAvgLuminance"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "selector": {"$ref": "#/$defs/staticMonitorSelector"},
+        "enabled": {"type": "boolean"},
+        "mode": {"$ref": "#/$defs/monitorMode"},
+        "position": {"$ref": "#/$defs/monitorPosition"},
+        "scale": {"$ref": "#/$defs/monitorScale"},
+        "reserved": {"$ref": "#/$defs/cssGap"},
+        "transform": {"type": "integer", "minimum": 0, "maximum": 7},
+        "mirror": {"oneOf": [{"const": ""}, {"$ref": "#/$defs/staticMonitorSelector"}]},
+        "bitdepth": {"enum": [8, 10]},
+        "cm": {"enum": ["auto", "srgb", "wide", "edid", "hdr", "hdredid", "dcip3", "dp3", "adobe"]},
+        "sdrEotf": {"enum": ["default", "auto", "srgb", "gamma22", "gamma22force"]},
+        "sdrBrightness": {"type": "number", "minimum": 0, "maximum": 10},
+        "sdrSaturation": {"type": "number", "minimum": 0, "maximum": 10},
+        "vrr": {"type": "integer", "minimum": -1, "maximum": 3},
+        "icc": {"$ref": "#/$defs/shortString"},
+        "supportsWideColor": {"type": "integer", "minimum": -1, "maximum": 1},
+        "supportsHdr": {"type": "integer", "minimum": -1, "maximum": 1},
+        "sdrMinLuminance": {"type": "number", "minimum": 0, "maximum": 10000},
+        "sdrMaxLuminance": {"type": "integer", "minimum": -1, "maximum": 2147483647},
+        "minLuminance": {"type": "number", "minimum": -1, "maximum": 10000},
+        "maxLuminance": {"type": "integer", "minimum": -1, "maximum": 2147483647},
+        "maxAvgLuminance": {"type": "integer", "minimum": -1, "maximum": 2147483647}
+      }
+    },
+    "deviceOverrides": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "sensitivity": {"type": "number", "minimum": -1, "maximum": 1},
+        "accel_profile": {"enum": ["", "adaptive", "flat"]},
+        "rotation": {"type": "integer", "minimum": 0, "maximum": 359},
+        "kb_file": {"$ref": "#/$defs/shortString"},
+        "kb_layout": {"$ref": "#/$defs/shortString"},
+        "kb_variant": {"$ref": "#/$defs/shortString"},
+        "kb_options": {"$ref": "#/$defs/shortString"},
+        "kb_rules": {"$ref": "#/$defs/shortString"},
+        "kb_model": {"$ref": "#/$defs/shortString"},
+        "repeat_rate": {"type": "integer", "minimum": 0, "maximum": 200},
+        "repeat_delay": {"type": "integer", "minimum": 0, "maximum": 2000},
+        "natural_scroll": {"type": "boolean"},
+        "tap_button_map": {"enum": ["", "lrm", "lmr"]},
+        "numlock_by_default": {"type": "boolean"},
+        "resolve_binds_by_sym": {"type": "boolean"},
+        "disable_while_typing": {"type": "boolean"},
+        "clickfinger_behavior": {"type": "boolean"},
+        "middle_button_emulation": {"type": "boolean"},
+        "tap_to_click": {"type": "boolean"},
+        "tap_and_drag": {"type": "boolean"},
+        "drag_lock": {"type": "integer", "minimum": 0, "maximum": 2},
+        "left_handed": {"type": "boolean"},
+        "scroll_method": {"enum": ["", "2fg", "edge", "on_button_down", "no_scroll"]},
+        "scroll_button": {"type": "integer", "minimum": 0, "maximum": 300},
+        "scroll_button_lock": {"type": "boolean"},
+        "scroll_factor": {"type": "number", "minimum": 0, "maximum": 100},
+        "transform": {"type": "integer", "minimum": -1, "maximum": 7},
+        "region_position": {"$ref": "#/$defs/vector2"},
+        "absolute_region_position": {"type": "boolean"},
+        "region_size": {"$ref": "#/$defs/vector2"},
+        "relative_input": {"type": "boolean"},
+        "active_area_position": {"$ref": "#/$defs/vector2"},
+        "active_area_size": {"$ref": "#/$defs/vector2"},
+        "flip_x": {"type": "boolean"},
+        "flip_y": {"type": "boolean"},
+        "drag_3fg": {"type": "integer", "minimum": 0, "maximum": 2},
+        "keybinds": {"type": "boolean"},
+        "share_states": {"type": "integer", "minimum": 0, "maximum": 2},
+        "release_pressed_on_close": {"type": "boolean"}
+      }
+    },
+    "device": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "selector", "kind", "enabled", "overrides"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "selector": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"enum": ["keyboard", "pointer", "touchpad", "touch", "tablet", "tabletTool", "switch", "other"]},
+        "enabled": {"type": "boolean"},
+        "overrides": {"$ref": "#/$defs/deviceOverrides"}
+      }
+    },
+    "bezierCurve": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "type", "points"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/nonEmptyString"},
+        "type": {"const": "bezier"},
+        "points": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": -1, "maximum": 2}}
+        }
+      }
+    },
+    "springCurve": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "type", "stiffness", "dampening", "mass"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/nonEmptyString"},
+        "type": {"const": "spring"},
+        "stiffness": {"type": "number", "exclusiveMinimum": 0.5, "maximum": 1000000},
+        "dampening": {"type": "number", "exclusiveMinimum": 0.5, "maximum": 1000000},
+        "mass": {"type": "number", "exclusiveMinimum": 0.5, "maximum": 1000000}
+      }
+    },
+    "curve": {"oneOf": [{"$ref": "#/$defs/bezierCurve"}, {"$ref": "#/$defs/springCurve"}]},
+    "animationLeaf": {
+      "enum": [
+        "global", "windows", "layers", "fade", "border", "borderangle", "shadowangle", "glowangle",
+        "workspaces", "zoomFactor", "monitorAdded", "layersIn", "layersOut", "windowsIn", "windowsOut",
+        "windowsMove", "fadeIn", "fadeOut", "fadeSwitch", "fadeShadow", "fadeGlow", "fadeDim", "fadeLayers",
+        "fadeLayersIn", "fadeLayersOut", "fadePopups", "fadePopupsIn", "fadePopupsOut", "fadeDpms",
+        "workspacesIn", "workspacesOut", "specialWorkspace", "specialWorkspaceIn", "specialWorkspaceOut"
+      ]
+    },
+    "windowAnimationStyle": {
+      "type": "string", "maxLength": 128,
+      "pattern": "^(?:|slide(?: (?:top|bottom|left|right))?|gnome|gnomed|popin(?: (?:0|[1-9][0-9]?|100)%)?)$"
+    },
+    "workspaceAnimationStyle": {
+      "type": "string", "maxLength": 128,
+      "pattern": "^(?:|fade|(?:slide|slidevert|slidefade|slidefadevert)(?: (?:top|bottom|left|right))?(?: (?:0|[1-9][0-9]?|100)%)?)$"
+    },
+    "angleAnimationStyle": {"enum": ["", "loop", "once"]},
+    "layerAnimationStyle": {
+      "type": "string", "maxLength": 128,
+      "pattern": "^(?:|fade|slide(?: (?:top|bottom|left|right))?|popin(?: (?:0|[1-9][0-9]?|100)%)?)$"
+    },
+    "animation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "enabled", "speed", "curve", "style"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/animationLeaf"},
+        "enabled": {"type": "boolean"}, "speed": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+        "curve": {"$ref": "#/$defs/nonEmptyString"}, "style": {"type": "string", "maxLength": 128}
+      },
+      "allOf": [
+        {"if": {"required": ["name"], "properties": {"name": {"enum": ["windows", "windowsIn", "windowsOut", "windowsMove"]}}}, "then": {"properties": {"style": {"$ref": "#/$defs/windowAnimationStyle"}}}},
+        {"if": {"required": ["name"], "properties": {"name": {"enum": ["workspaces", "workspacesIn", "workspacesOut", "specialWorkspace", "specialWorkspaceIn", "specialWorkspaceOut"]}}}, "then": {"properties": {"style": {"$ref": "#/$defs/workspaceAnimationStyle"}}}},
+        {"if": {"required": ["name"], "properties": {"name": {"enum": ["borderangle", "shadowangle", "glowangle"]}}}, "then": {"properties": {"style": {"$ref": "#/$defs/angleAnimationStyle"}}}},
+        {"if": {"required": ["name"], "properties": {"name": {"enum": ["layers", "layersIn", "layersOut"]}}}, "then": {"properties": {"style": {"$ref": "#/$defs/layerAnimationStyle"}}}},
+        {"if": {"required": ["name"], "properties": {"name": {"enum": ["global", "fade", "border", "zoomFactor", "monitorAdded", "fadeIn", "fadeOut", "fadeSwitch", "fadeShadow", "fadeGlow", "fadeDim", "fadeLayers", "fadeLayersIn", "fadeLayersOut", "fadePopups", "fadePopupsIn", "fadePopupsOut", "fadeDpms"]}}}, "then": {"properties": {"style": {"const": ""}}}}
+      ]
+    },
+    "gestureAction": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {"type": {"enum": ["workspace", "resize", "move", "close", "scrollMove", "unset"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "workspace"], "properties": {"type": {"const": "special"}, "workspace": {"$ref": "#/$defs/nonEmptyString"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "mode"], "properties": {"type": {"const": "float"}, "mode": {"enum": ["float", "tile", "toggle"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "mode"], "properties": {"type": {"const": "fullscreen"}, "mode": {"enum": ["fullscreen", "maximize"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "zoomLevel", "mode"], "properties": {"type": {"const": "cursorZoom"}, "zoomLevel": {"$ref": "#/$defs/cursorZoomLevel"}, "mode": {"enum": ["toggle", "mult", "live"]}}}
+      ]
+    },
+    "gesture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "fingers", "direction", "modifiers", "scale", "disableInhibit", "action"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "fingers": {"type": "integer", "minimum": 2, "maximum": 9},
+        "direction": {"enum": ["swipe", "left", "right", "up", "down", "horizontal", "vertical", "pinch", "pinchIn", "pinchOut"]},
+        "modifiers": {"$ref": "#/$defs/modifiers"},
+        "scale": {"type": "number", "minimum": 0.1, "maximum": 10},
+        "disableInhibit": {"type": "boolean"},
+        "action": {"$ref": "#/$defs/gestureAction"}
+      }
+    },
+    "workspaceLayoutOptions": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "orientation": {"enum": ["left", "right", "top", "bottom", "center"]},
+        "direction": {"enum": ["left", "right", "up", "down"]}
+      }
+    },
+    "workspaceOverrides": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "gaps_in": {"$ref": "#/$defs/cssGap"}, "gaps_out": {"$ref": "#/$defs/cssGap"},
+        "float_gaps": {"$ref": "#/$defs/cssGap"}, "border_size": {"type": "integer"},
+        "no_border": {"type": "boolean"}, "no_rounding": {"type": "boolean"}, "decorate": {"type": "boolean"},
+        "no_shadow": {"type": "boolean"}, "default_name": {"$ref": "#/$defs/shortString"},
+        "animation": {"$ref": "#/$defs/workspaceAnimationStyle"}, "layout_opts": {"$ref": "#/$defs/workspaceLayoutOptions"}
+      }
+    },
+    "workspaceRule": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
+          "properties": {
+            "id": {"$ref": "#/$defs/userWorkspaceRuleId"},
+            "selector": {"$ref": "#/$defs/workspaceSelector"},
+            "enabled": {"type": "boolean"},
+            "monitor": {"oneOf": [{"const": ""}, {"$ref": "#/$defs/staticMonitorSelector"}]},
+            "persistent": {"type": "boolean"}, "isDefault": {"type": "boolean"},
+            "layout": {"enum": ["", "dwindle", "master", "scrolling", "monocle"]},
+            "overrides": {"$ref": "#/$defs/workspaceOverrides"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "selector", "enabled", "monitor", "persistent", "isDefault", "layout", "overrides"],
+          "properties": {
+            "id": {"const": "hyprshelld.internal.shared-spacing.maximized"},
+            "selector": {"const": "f[1]"},
+            "enabled": {"const": true}, "monitor": {"const": ""},
+            "persistent": {"const": false}, "isDefault": {"const": false},
+            "layout": {"const": ""},
+            "overrides": {"const": {"gaps_out": [0, 0, 0, 0]}}
+          }
+        }
+      ],
+      "$comment": "The bracket selector is admitted only by the exact protected HyprShelld record. The pinned private 0.56.2 source patch maps that record's sole gaps_out override to in-memory float_gaps only when no explicit float_gaps exists; every ordinary workspace selector retains upstream independent float-gap behavior."
+    },
+    "windowMatch": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "class": {"$ref": "#/$defs/regexString"}, "title": {"$ref": "#/$defs/regexString"},
+        "initial_class": {"$ref": "#/$defs/regexString"}, "initial_title": {"$ref": "#/$defs/regexString"},
+        "float": {"type": "boolean"}, "tag": {"$ref": "#/$defs/nonEmptyString"}, "xwayland": {"type": "boolean"},
+        "fullscreen": {"type": "boolean"}, "pin": {"type": "boolean"}, "focus": {"type": "boolean"},
+        "group": {"type": "boolean"}, "modal": {"type": "boolean"},
+        "fullscreen_state_internal": {"$ref": "#/$defs/fullscreenMode"}, "fullscreen_state_client": {"$ref": "#/$defs/fullscreenMode"},
+        "workspace": {"$ref": "#/$defs/workspaceSelector"}, "content": {"$ref": "#/$defs/regexString"},
+        "xdg_tag": {"$ref": "#/$defs/regexString"}, "namespace": {"$ref": "#/$defs/regexString"}
+      }
+    },
+    "windowFullscreenStateEffect": {
+      "type": "object", "additionalProperties": false,
+      "required": ["internal"],
+      "properties": {
+        "internal": {"$ref": "#/$defs/fullscreenMode"},
+        "client": {"$ref": "#/$defs/fullscreenMode"}
+      },
+      "$comment": "A missing client mode preserves the tagged parser's optional client state."
+    },
+    "windowOpacityEffect": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active", "overrideActive", "overrideInactive", "overrideFullscreen"],
+      "properties": {
+        "active": {"type": "number", "minimum": 0, "maximum": 1},
+        "inactive": {"type": "number", "minimum": 0, "maximum": 1},
+        "fullscreen": {"type": "number", "minimum": 0, "maximum": 1},
+        "overrideActive": {"type": "boolean"},
+        "overrideInactive": {"type": "boolean"},
+        "overrideFullscreen": {"type": "boolean"}
+      },
+      "$comment": "If inactive or fullscreen is absent, emission uses active, matching the tagged single-alpha fallback. Override booleans map to each alpha token's optional override marker."
+    },
+    "suppressEvents": {
+      "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true,
+      "items": {
+        "enum": [
+          "fullscreen", "maximize", "activate", "activatefocus",
+          "fullscreenoutput", "x11configurerequest"
+        ]
+      }
+    },
+    "windowEffects": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "float": {"type": "boolean"}, "tile": {"type": "boolean"}, "fullscreen": {"type": "boolean"},
+        "maximize": {"type": "boolean"}, "center": {"type": "boolean"}, "pseudo": {"type": "boolean"},
+        "no_initial_focus": {"type": "boolean"}, "pin": {"type": "boolean"},
+        "fullscreen_state": {"$ref": "#/$defs/windowFullscreenStateEffect"}, "move": {"$ref": "#/$defs/expressionVector2"},
+        "size": {"$ref": "#/$defs/expressionVector2"}, "monitor": {"$ref": "#/$defs/monitorEffect"},
+        "workspace": {"$ref": "#/$defs/workspaceEffect"},
+        "suppress_event": {"$ref": "#/$defs/suppressEvents"}, "content": {"enum": ["none", "photo", "video", "game"]},
+        "no_close_for": {
+          "type": "integer", "minimum": 0, "maximum": 2147483647,
+          "$comment": "Milliseconds; bounded to the signed int storage used by the tagged window-rule applicator."
+        }, "scrolling_width": {
+          "type": "number", "minimum": 0, "maximum": 1,
+          "$comment": "Fractional scrolling-layout column width; bounded to the practical 0..1 domain used by tagged tests and float storage."
+        },
+        "rounding": {"type": "integer", "minimum": 0, "maximum": 20}, "border_size": {"type": "integer"},
+        "rounding_power": {"type": "number", "minimum": 1, "maximum": 10},
+        "scroll_mouse": {"type": "number", "minimum": 0.01, "maximum": 10}, "scroll_touchpad": {"type": "number", "minimum": 0.01, "maximum": 10},
+        "animation": {"$ref": "#/$defs/windowAnimationStyle"}, "idle_inhibit": {"enum": ["none", "always", "focus", "fullscreen"]},
+        "opacity": {"$ref": "#/$defs/windowOpacityEffect"}, "tag": {"$ref": "#/$defs/windowTagToken"},
+        "max_size": {"$ref": "#/$defs/expressionVector2"}, "min_size": {"$ref": "#/$defs/expressionVector2"},
+        "border_color": {"$ref": "#/$defs/gradient"}, "persistent_size": {"type": "boolean"},
+        "allows_input": {"type": "boolean"}, "dim_around": {"type": "boolean"}, "decorate": {"type": "boolean"},
+        "focus_on_activate": {"type": "boolean"}, "keep_aspect_ratio": {"type": "boolean"},
+        "nearest_neighbor": {"type": "boolean"}, "no_anim": {"type": "boolean"}, "no_blur": {"type": "boolean"},
+        "no_dim": {"type": "boolean"}, "no_focus": {"type": "boolean"}, "no_follow_mouse": {"type": "boolean"},
+        "no_max_size": {"type": "boolean"}, "no_shadow": {"type": "boolean"}, "no_shortcuts_inhibit": {"type": "boolean"},
+        "opaque": {"type": "boolean"}, "force_rgbx": {"type": "boolean"}, "sync_fullscreen": {"type": "boolean"},
+        "immediate": {"type": "boolean"}, "xray": {"type": "boolean"}, "render_unfocused": {"type": "boolean"},
+        "no_screen_share": {"type": "boolean"}, "no_vrr": {"type": "boolean"}, "no_auto_hdr": {"type": "boolean"},
+        "stay_focused": {"type": "boolean"}, "confine_pointer": {"type": "boolean"},
+        "tonemap": {"enum": ["on", "off", "clamp", "limited"]}
+      }
+    },
+    "windowRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "enabled", "match", "effects"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/nonEmptyString"},
+        "enabled": {"type": "boolean"}, "match": {"$ref": "#/$defs/windowMatch"}, "effects": {"$ref": "#/$defs/windowEffects"}
+      }
+    },
+    "layerMatch": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "required": ["namespace"], "properties": {"namespace": {"$ref": "#/$defs/regexString"}}
+    },
+    "layerEffects": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "no_anim": {"type": "boolean"}, "blur": {"type": "boolean"}, "blur_popups": {"type": "boolean"},
+        "ignore_alpha": {"type": "number", "minimum": 0, "maximum": 1}, "dim_around": {"type": "boolean"},
+        "xray": {"type": "boolean"}, "animation": {"$ref": "#/$defs/layerAnimationStyle"}, "order": {"type": "integer"},
+        "above_lock": {"type": "integer", "minimum": 0, "maximum": 2}, "no_screen_share": {"type": "boolean"}
+      }
+    },
+    "layerRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "enabled", "match", "effects"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/nonEmptyString"},
+        "enabled": {"type": "boolean"}, "match": {"$ref": "#/$defs/layerMatch"}, "effects": {"$ref": "#/$defs/layerEffects"}
+      }
+    },
+    "submap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "reset", "enabled"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "name": {"$ref": "#/$defs/nonEmptyString"},
+        "reset": {"$ref": "#/$defs/shortString"}, "enabled": {"type": "boolean"}
+      }
+    },
+    "emptyArguments": {"type": "object", "additionalProperties": false, "maxProperties": 0},
+    "toggleArguments": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"action": {"enum": ["toggle", "enable", "disable"]}}
+    },
+    "cursorCornerArguments": {
+      "type": "object", "additionalProperties": false, "required": ["corner"],
+      "properties": {"corner": {"type": "integer", "minimum": 0, "maximum": 3}}
+    },
+    "cursorMoveArguments": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y"],
+      "properties": {"x": {"$ref": "#/$defs/boundedCoordinate"}, "y": {"$ref": "#/$defs/boundedCoordinate"}}
+    },
+    "groupMoveWindowArguments": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"forward": {"type": "boolean"}}
+    },
+    "groupActiveArguments": {
+      "type": "object", "additionalProperties": false, "required": ["index"],
+      "properties": {"index": {"type": "integer", "minimum": 0, "maximum": 1000000}}
+    },
+    "submapArguments": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {"name": {"$ref": "#/$defs/nonEmptyString"}}
+    },
+    "passArguments": {
+      "type": "object", "additionalProperties": false, "required": ["window"],
+      "properties": {"window": {"$ref": "#/$defs/windowSelector"}}
+    },
+    "dpmsArguments": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"action": {"enum": ["toggle", "enable", "disable"]}},
+      "$comment": "The retained typed surface intentionally applies DPMS to all monitors. A targeted selector is excluded because the tagged wrapper silently broadens an unresolved selector to all outputs."
+    },
+    "eventArguments": {
+      "type": "object", "additionalProperties": false, "required": ["event"],
+      "properties": {"event": {"$ref": "#/$defs/nonEmptyString"}}
+    },
+    "globalArguments": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string", "minLength": 3, "maxLength": 257,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        }
+      }
+    },
+    "forceIdleArguments": {
+      "type": "object", "additionalProperties": false, "required": ["seconds"],
+      "properties": {"seconds": {"type": "number", "minimum": 0, "maximum": 31536000}}
+    },
+    "sendShortcutArguments": {
+      "type": "object", "additionalProperties": false, "required": ["mods", "key"],
+      "properties": {"mods": {"$ref": "#/$defs/actionModifiers"}, "key": {"$ref": "#/$defs/actionKey"}, "window": {"$ref": "#/$defs/windowSelector"}}
+    },
+    "sendKeyStateArguments": {
+      "type": "object", "additionalProperties": false, "required": ["mods", "key", "state"],
+      "properties": {
+        "mods": {"$ref": "#/$defs/actionModifiers"}, "key": {"$ref": "#/$defs/actionKey"},
+        "state": {"enum": ["down", "up", "repeat"]}, "window": {"$ref": "#/$defs/windowSelector"}
+      }
+    },
+    "windowSignalArguments": {
+      "type": "object", "additionalProperties": false, "required": ["signal"],
+      "properties": {"signal": {"type": "integer", "minimum": 1, "maximum": 31}}
+    },
+    "windowFullscreenArguments": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "mode": {"enum": ["fullscreen", "maximized"]}, "action": {"enum": ["toggle", "set", "unset"]},
+        "layout_aware": {"type": "boolean"}
+      }
+    },
+    "windowFullscreenStateArguments": {
+      "type": "object", "additionalProperties": false, "required": ["internal", "client"],
+      "properties": {
+        "internal": {"$ref": "#/$defs/fullscreenMode"}, "client": {"$ref": "#/$defs/fullscreenMode"},
+        "action": {"enum": ["toggle", "set", "unset"]}, "layout_aware": {"type": "boolean"}
+      }
+    },
+    "windowMoveArguments": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["direction"], "properties": {"direction": {"enum": ["left", "right", "up", "down"]}, "group_aware": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["x", "y"], "properties": {"x": {"$ref": "#/$defs/boundedCoordinate"}, "y": {"$ref": "#/$defs/boundedCoordinate"}, "relative": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["workspace"], "properties": {"workspace": {"$ref": "#/$defs/workspaceSpec"}, "follow": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["monitor"], "properties": {"monitor": {"$ref": "#/$defs/monitorSpec"}, "follow": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["into_group"], "properties": {"into_group": {"enum": ["left", "right", "up", "down"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["into_or_create_group"], "properties": {"into_or_create_group": {"enum": ["left", "right", "up", "down"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["out_of_group"], "properties": {"out_of_group": {"anyOf": [{"type": "boolean", "const": true}, {"enum": ["left", "right", "up", "down"]}]}}}
+      ]
+    },
+    "windowSwapArguments": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["direction"], "properties": {"direction": {"enum": ["left", "right", "up", "down"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["target"], "properties": {"target": {"$ref": "#/$defs/windowSelector"}}},
+        {"type": "object", "additionalProperties": false, "required": ["next"], "properties": {"next": {"const": true}}},
+        {"type": "object", "additionalProperties": false, "required": ["prev"], "properties": {"prev": {"const": true}}}
+      ]
+    },
+    "windowCycleArguments": {
+      "type": "object", "additionalProperties": false,
+      "properties": {"next": {"type": "boolean"}, "tiled": {"type": "boolean"}, "floating": {"type": "boolean"}}
+    },
+    "windowTagArguments": {
+      "type": "object", "additionalProperties": false, "required": ["tag"],
+      "properties": {
+        "tag": {"$ref": "#/$defs/windowTagToken"}
+      }
+    },
+    "windowAlterZOrderArguments": {
+      "type": "object", "additionalProperties": false, "required": ["mode"],
+      "properties": {"mode": {"enum": ["top", "bottom"]}}
+    },
+    "windowResizeArguments": {
+      "oneOf": [
+        {"$ref": "#/$defs/emptyArguments"},
+        {"type": "object", "additionalProperties": false, "required": ["x", "y"], "properties": {"x": {"$ref": "#/$defs/boundedCoordinate"}, "y": {"$ref": "#/$defs/boundedCoordinate"}, "relative": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["keep_aspect_ratio"], "properties": {"keep_aspect_ratio": {"type": "boolean"}}}
+      ]
+    },
+    "focusArguments": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["direction"], "properties": {"direction": {"enum": ["left", "right", "up", "down"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["monitor"], "properties": {"monitor": {"$ref": "#/$defs/monitorSpec"}}},
+        {"type": "object", "additionalProperties": false, "required": ["workspace"], "properties": {"workspace": {"$ref": "#/$defs/workspaceSpec"}, "on_current_monitor": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["urgent_or_last"], "properties": {"urgent_or_last": {"const": true}}},
+        {"type": "object", "additionalProperties": false, "required": ["last"], "properties": {"last": {"const": true}}}
+      ]
+    },
+    "workspaceToggleSpecialArguments": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {"name": {"$ref": "#/$defs/shortString"}}
+    },
+    "workspaceRenameArguments": {
+      "type": "object", "additionalProperties": false, "required": ["workspace"],
+      "properties": {"workspace": {"$ref": "#/$defs/existingWorkspaceSelector"}, "name": {"$ref": "#/$defs/shortString"}}
+    },
+    "workspaceChangeIdArguments": {
+      "type": "object", "additionalProperties": false, "required": ["workspace", "id"],
+      "properties": {"workspace": {"$ref": "#/$defs/existingWorkspaceSelector"}, "id": {"type": "integer", "minimum": 1, "maximum": 4294967294}}
+    },
+    "workspaceMoveArguments": {
+      "type": "object", "additionalProperties": false, "required": ["monitor"],
+      "properties": {"monitor": {"$ref": "#/$defs/monitorSpec"}, "workspace": {"$ref": "#/$defs/existingWorkspaceSelector"}}
+    },
+    "workspaceSwapMonitorsArguments": {
+      "type": "object", "additionalProperties": false, "required": ["monitor1", "monitor2"],
+      "properties": {"monitor1": {"$ref": "#/$defs/monitorSpec"}, "monitor2": {"$ref": "#/$defs/monitorSpec"}}
+    },
+    "dispatcherAction": {
+      "enum": [
+        "cursor.move_to_corner", "cursor.move", "group.toggle", "group.next", "group.prev", "group.active",
+        "group.move_window", "group.lock", "group.lock_active", "window.close", "window.kill", "window.signal",
+        "window.float", "window.fullscreen", "window.fullscreen_state", "window.pseudo", "window.move", "window.swap",
+        "window.center", "window.cycle_next", "window.tag", "window.clear_tags", "window.toggle_swallow", "window.pin",
+        "window.bring_to_top", "window.alter_zorder", "window.deny_from_group", "window.drag", "window.resize",
+        "workspace.rename", "workspace.change_id", "workspace.move", "workspace.swap_monitors", "workspace.toggle_special",
+        "exit", "submap", "pass", "send_shortcut", "send_key_state", "dpms", "event", "global",
+        "force_renderer_reload", "force_idle", "release_input_capture", "focus", "no_op"
+      ]
+    },
+    "defaultAppAction": {
+      "enum": [
+        "defaultApp.terminal", "defaultApp.browser", "defaultApp.fileManager", "defaultApp.textEditor",
+        "defaultApp.codeEditor", "defaultApp.mail", "defaultApp.calendar", "defaultApp.music", "defaultApp.video",
+        "defaultApp.imageViewer", "defaultApp.pdfViewer", "defaultApp.systemMonitor"
+      ]
+    },
+    "hyprShelldAction": {
+      "enum": [
+        "hyprshelld.launcher", "hyprshelld.settings", "hyprshelld.lock", "hyprshelld.sessionMenu",
+        "hyprshelld.shortcutGuide", "hyprshelld.screenshot.full", "hyprshelld.screenshot.region",
+        "hyprshelld.screenshot.window", "hyprshelld.media.volumeUp", "hyprshelld.media.volumeDown",
+        "hyprshelld.media.toggleMute", "hyprshelld.media.toggleMicMute", "hyprshelld.media.playPause",
+        "hyprshelld.media.next", "hyprshelld.media.previous", "hyprshelld.display.brightnessUp",
+        "hyprshelld.display.brightnessDown"
+      ]
+    },
+    "bindingDevice": {
+      "type": "object", "additionalProperties": false,
+      "required": ["inclusive", "list"],
+      "properties": {
+        "inclusive": {"type": "boolean"},
+        "list": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/nonEmptyString"}}
+      }
+    },
+    "bindingOptions": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "repeating", "locked", "release", "nonConsuming", "autoConsuming", "transparent", "ignoreMods",
+        "dontInhibit", "longPress", "submapUniversal", "click", "drag", "allowInputCapture"
+      ],
+      "properties": {
+        "repeating": {"type": "boolean"}, "locked": {"type": "boolean"}, "release": {"type": "boolean"},
+        "nonConsuming": {"type": "boolean"}, "autoConsuming": {"type": "boolean"}, "transparent": {"type": "boolean"},
+        "ignoreMods": {"type": "boolean"}, "dontInhibit": {"type": "boolean"}, "longPress": {"type": "boolean"},
+        "submapUniversal": {"type": "boolean"}, "click": {"type": "boolean"}, "drag": {"type": "boolean"},
+        "allowInputCapture": {"type": "boolean"}, "device": {"$ref": "#/$defs/bindingDevice"}
+      },
+      "allOf": [
+        {"not": {"properties": {"click": {"const": true}, "drag": {"const": true}}, "required": ["click", "drag"]}},
+        {
+          "if": {"anyOf": [{"properties": {"click": {"const": true}}}, {"properties": {"drag": {"const": true}}}]},
+          "then": {"properties": {"release": {"const": true}}}
+        },
+        {
+          "if": {"properties": {"repeating": {"const": true}}},
+          "then": {"properties": {"release": {"const": false}, "click": {"const": false}, "drag": {"const": false}, "longPress": {"const": false}}}
+        }
+      ]
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "modifiers", "key", "actionType", "action", "arguments", "description", "enabled", "submap", "options"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"}, "modifiers": {"$ref": "#/$defs/modifiers"},
+        "key": {"$ref": "#/$defs/bindingKey"},
+        "actionType": {"enum": ["dispatcher", "defaultApp", "hyprshelld"]}, "action": {"type": "string"},
+        "arguments": {"type": "object", "maxProperties": 16},
+        "description": {"type": "string", "minLength": 1, "maxLength": 512, "pattern": "^[^\\u0000]+$"},
+        "enabled": {"type": "boolean"}, "submap": {"$ref": "#/$defs/shortString"}, "options": {"$ref": "#/$defs/bindingOptions"}
+      },
+      "allOf": [
+        {"if": {"properties": {"actionType": {"const": "dispatcher"}}}, "then": {"properties": {"action": {"$ref": "#/$defs/dispatcherAction"}}}},
+        {"if": {"properties": {"actionType": {"const": "defaultApp"}}}, "then": {"properties": {"action": {"$ref": "#/$defs/defaultAppAction"}}}},
+        {"if": {"properties": {"actionType": {"const": "hyprshelld"}}}, "then": {"properties": {"action": {"$ref": "#/$defs/hyprShelldAction"}}}},
+        {"if": {"properties": {"actionType": {"enum": ["defaultApp", "hyprshelld"]}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/emptyArguments"}}}},
+        {"if": {"properties": {"action": {"enum": ["exit", "force_renderer_reload", "release_input_capture", "window.toggle_swallow", "window.bring_to_top", "window.drag", "no_op"]}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/emptyArguments"}}}},
+        {"if": {"properties": {"action": {"enum": ["group.toggle", "group.next", "group.prev", "window.close", "window.kill", "window.center", "window.clear_tags"]}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/emptyArguments"}}}},
+        {"if": {"properties": {"action": {"enum": ["group.lock", "group.lock_active", "window.deny_from_group"]}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/toggleArguments"}}}},
+        {"if": {"properties": {"action": {"enum": ["window.float", "window.pseudo", "window.pin"]}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/toggleArguments"}}}},
+        {"if": {"properties": {"action": {"const": "cursor.move_to_corner"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/cursorCornerArguments"}}}},
+        {"if": {"properties": {"action": {"const": "cursor.move"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/cursorMoveArguments"}}}},
+        {"if": {"properties": {"action": {"const": "group.move_window"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/groupMoveWindowArguments"}}}},
+        {"if": {"properties": {"action": {"const": "group.active"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/groupActiveArguments"}}}},
+        {"if": {"properties": {"action": {"const": "submap"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/submapArguments"}}}},
+        {"if": {"properties": {"action": {"const": "pass"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/passArguments"}}}},
+        {"if": {"properties": {"action": {"const": "dpms"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/dpmsArguments"}}}},
+        {"if": {"properties": {"action": {"const": "event"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/eventArguments"}}}},
+        {"if": {"properties": {"action": {"const": "global"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/globalArguments"}}}},
+        {"if": {"properties": {"action": {"const": "force_idle"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/forceIdleArguments"}}}},
+        {"if": {"properties": {"action": {"const": "send_shortcut"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/sendShortcutArguments"}}}},
+        {"if": {"properties": {"action": {"const": "send_key_state"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/sendKeyStateArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.signal"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowSignalArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.fullscreen"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowFullscreenArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.fullscreen_state"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowFullscreenStateArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.move"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowMoveArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.swap"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowSwapArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.cycle_next"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowCycleArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.tag"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowTagArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.alter_zorder"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowAlterZOrderArguments"}}}},
+        {"if": {"properties": {"action": {"const": "window.resize"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/windowResizeArguments"}}}},
+        {"if": {"properties": {"action": {"const": "focus"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/focusArguments"}}}},
+        {"if": {"properties": {"action": {"const": "workspace.toggle_special"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/workspaceToggleSpecialArguments"}}}},
+        {"if": {"properties": {"action": {"const": "workspace.rename"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/workspaceRenameArguments"}}}},
+        {"if": {"properties": {"action": {"const": "workspace.change_id"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/workspaceChangeIdArguments"}}}},
+        {"if": {"properties": {"action": {"const": "workspace.move"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/workspaceMoveArguments"}}}},
+        {"if": {"properties": {"action": {"const": "workspace.swap_monitors"}}}, "then": {"properties": {"arguments": {"$ref": "#/$defs/workspaceSwapMonitorsArguments"}}}},
+        {"if": {"properties": {"key": {"const": "catchall"}}}, "then": {"properties": {"submap": {"minLength": 1}}}}
+      ]
+    },
+    "permission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "binary", "type", "mode"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "binary": {"$ref": "#/$defs/regexString"},
+        "type": {"enum": ["screencopy", "cursorpos", "plugin", "keyboard", "input-capture"]},
+        "mode": {"enum": ["ask", "allow", "deny"]}
+      }
+    },
+    "environmentVariable": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "value", "scope"],
+      "properties": {
+        "id": {"$ref": "#/$defs/stableId"},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+        "value": {"$ref": "#/$defs/boundedString"}, "scope": {"enum": ["hyprland", "uwsm"]}
+      }
+    }
+  }
+}

@@ -31,6 +31,7 @@ find_package(
 )
 
 find_package(libzip CONFIG REQUIRED)
+find_package(double-conversion CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(Systemd REQUIRED IMPORTED_TARGET libsystemd>=257)
 

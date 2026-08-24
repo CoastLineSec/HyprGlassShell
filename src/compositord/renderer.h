@@ -1,5 +1,7 @@
 #pragma once
 
+#include "activation_requirement.h"
+
 #include "hyprland/action_catalog.h"
 #include "hyprland/catalog.h"
 #include "hyprland/desired_state.h"
@@ -17,15 +19,11 @@
 namespace HyprShelld::Compositor {
 
 inline constexpr quint32 currentRendererVersion = 1;
+inline constexpr quint32 dormantGenerationV2FormatVersion = 2;
+inline constexpr quint32 dormantGenerationV2ContractVersion = 2;
+inline constexpr quint32 dormantRendererV2Version = 2;
 inline constexpr auto managedWarningLine =
     "-- Managed by HyprShelld. Manual changes will be overwritten.";
-
-enum class ActivationRequirement {
-    None,
-    Reload,
-    Restart,
-    Session,
-};
 
 struct GeneratedFile final {
     QString path;
@@ -60,12 +58,27 @@ struct RenderResult final {
     }
 };
 
+// Dormant qualification output only. Keeping this type separate from
+// RenderedGeneration makes it ineligible for the active v1 GenerationStore.
+struct DormantRenderedGenerationV2 final {
+    QString authorityId;
+    QString generation;
+    QString snapshotDigest;
+    QString sourceManifestDigest;
+    QString activationNonce;
+    QString createdAt;
+    QString entrypoint = QStringLiteral("hyprland.lua");
+    QMap<QString, GeneratedFile> files;
+    QJsonObject manifest;
+    QByteArray manifestBytes;
+    ActivationRequirement activationRequirement =
+        ActivationRequirement::Reload;
+};
+
+using DormantRenderResultV2 =
+    Hyprland::ValidationResult<DormantRenderedGenerationV2>;
+
 [[nodiscard]] QStringList managedModulePaths();
-[[nodiscard]] QString activationRequirementName(ActivationRequirement value);
-[[nodiscard]] ActivationRequirement activationRequirementForDesiredState(
-    const Hyprland::DesiredState &state,
-    const Hyprland::Catalog &catalog
-);
 
 // All arguments that would otherwise make a manifest nondeterministic are
 // explicit. Equal validated inputs produce byte-identical Lua and manifest
@@ -74,6 +87,18 @@ struct RenderResult final {
     const Hyprland::DesiredState &state,
     const Hyprland::Catalog &catalog,
     const Hyprland::ActionCatalog &actionCatalog,
+    const QString &generationRoot,
+    const QString &userCustomPath,
+    const QString &activationNonce,
+    const QDateTime &createdAtUtc
+);
+
+// Builds a v2 authority-bound qualification artifact without selecting it for
+// publication or changing the active v1 renderer contract.
+[[nodiscard]] DormantRenderResultV2 renderDormantGenerationV2(
+    const Hyprland::DesiredStateV2 &state,
+    const Hyprland::Catalog &catalogV2,
+    const Hyprland::ActionCatalog &actionCatalogV2,
     const QString &generationRoot,
     const QString &userCustomPath,
     const QString &activationNonce,

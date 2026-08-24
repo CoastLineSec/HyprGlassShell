@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "repository": "https://github.com/hyprwm/Hyprland",
-  "reviewedOn": "2026-08-09",
+  "reviewedOn": "2026-08-20",
   "versionFiles": [
     {
       "version": "0.55.0",
@@ -439,6 +439,2689 @@
       "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
       "path": "src/output/Monitor.cpp",
       "sha256": "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927"
+    }
+  ],
+  "maximizeSources": [
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/desktop/Workspace.cpp",
+      "sha256": "413bc18a0d17b1bafc27f956a7103b301fa382088449bbb2422e123255e9fcec"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/shared/workspace/WorkspaceRuleManager.cpp",
+      "sha256": "06e8dcbaea83e51710bd372a8f264ad3d07bbe061b9720bbe456811451c02d10"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/shared/workspace/WorkspaceRule.cpp",
+      "sha256": "96e1cc448847b03e7f48dc7e1c2bc4ed6c192fcf7c11c608b33f5760f7788f96"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/layout/space/Space.cpp",
+      "sha256": "8ddcd4dd0a90bd59d4fa21f95f53444419188846a3a217284f0d6b008875d376"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/managers/fullscreen/FullscreenController.hpp",
+      "sha256": "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/managers/fullscreen/FullscreenController.cpp",
+      "sha256": "581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/managers/fullscreen/handler/FullscreenHandler.cpp",
+      "sha256": "5bfed3aa05f2e6f013e7776efaa754e3e107aa7688eb5d523bdbdfa87f51bc85"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/Workspace.cpp",
+      "sha256": "e6c8e44d9f8211a8f56b65b433b5f5e4c3e6565479ecb2d749bc02cf4e926ca9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/workspace/WorkspaceRuleManager.cpp",
+      "sha256": "06e8dcbaea83e51710bd372a8f264ad3d07bbe061b9720bbe456811451c02d10"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/workspace/WorkspaceRule.cpp",
+      "sha256": "96e1cc448847b03e7f48dc7e1c2bc4ed6c192fcf7c11c608b33f5760f7788f96"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/space/Space.cpp",
+      "sha256": "8ddcd4dd0a90bd59d4fa21f95f53444419188846a3a217284f0d6b008875d376"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/fullscreen/FullscreenController.hpp",
+      "sha256": "7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/fullscreen/FullscreenController.cpp",
+      "sha256": "581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/fullscreen/handler/FullscreenHandler.cpp",
+      "sha256": "5bfed3aa05f2e6f013e7776efaa754e3e107aa7688eb5d523bdbdfa87f51bc85"
+    }
+  ],
+  "groupBehaviorSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Group.cpp",
+      "sha256": "b0f9210c858bcaf74c8f5a44f7f40abfe03af8a096e3fb158afd2346be8b0eed"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/supplementary/DragController.cpp",
+      "sha256": "0d1ddc01f506cdbf3dcec5ea4e111c61286d2ce4359100847270f82569b3505f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprGroupBarDecoration.cpp",
+      "sha256": "3d687c43d5414fb6ad617465f06bb87cda8dc6c2e791dbb0e28de72de1cf4c68"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Group.cpp",
+      "sha256": "f34fec0891e69e0a1b67901e8d1b6b1a1ae8a47eccc92313c2b41660961cd385"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/supplementary/DragController.cpp",
+      "sha256": "02560e7a38902cd400c3fa1b229eb6ba2c9494750413116b9277f5e8a818b62c"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprGroupBarDecoration.cpp",
+      "sha256": "39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/GlobalWindowController.cpp",
+      "sha256": "669cb209f2e4efb2b248bbbc00ef8cef84a4638017a30dc085c8f85fdb2d65f8"
+    }
+  ],
+  "appearanceBehaviorSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/OpenGL.cpp",
+      "sha256": "2b1245e9207db6e33191a509fb45c1cdf1f1380146e55d61b56ea920857ea1e3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/Pass.cpp",
+      "sha256": "e78eb11477d673ade97ad7a12486ebd97366708bd5e634b5a7f6901fe649c9e1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/ShaderLoader.hpp",
+      "sha256": "8e35c2300fa597bdad275dbb1e2c14067a6440d4b4032e0881cdc4765190fb93"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Shader.cpp",
+      "sha256": "2e98805b5082cb48e88fa364c3703087f574cb781903de07d833758581684f78"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/GLRenderer.cpp",
+      "sha256": "a2f5aac8e77ec4a96a87b038d36f72e3b84af3325f27cf9cb1d8e2d6991773c3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/ElementRenderer.cpp",
+      "sha256": "5dbe22ebdb367af0d6e3e4fd566c4532b98d949007668249c957de075a28a24e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/gl/GLElementRenderer.cpp",
+      "sha256": "1c14d08921b57a051fba09fd272d0efb5b4dd10452b7e8bd675ba548214a0391"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/PreBlurElement.hpp",
+      "sha256": "50675b156230bc29e1ef11844f360cc5e01d0b514ee10ae817a4a70f3ae38528"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/PreBlurElement.cpp",
+      "sha256": "308c85d990a3cbe1458aee1990fa91ca76cc6118fde9b3a961e42d40282c77d5"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blurprepare.frag",
+      "sha256": "e870f47f282e21cc5a8534f1b62ebf6c5dc96fb7ab53e3db0582ec80b9b5d1c3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blurprepare.glsl",
+      "sha256": "219d76ec643ce3055d295850f54365412ba2eb4180015c59e1764807ba64a56d"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blurfinish.frag",
+      "sha256": "77a16587e972ced698da747f29a1c0fd91a70f79b9db75beeab3916391710748"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blurFinish.glsl",
+      "sha256": "ab3df5ec456f60c83a3af85796816b5d99351cca309eaf7023eddf0dd695c731"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blur1.frag",
+      "sha256": "ea384ff735b47417aac1873579582dca3a8e57e9bbde0b643e6f15b2ffae3c68"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/blur1.glsl",
+      "sha256": "ff0985d2b95f6d927d39a2058379283ac6118ab75b47b90a536fa4da4cc0fd4d"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/gain.glsl",
+      "sha256": "fae6204d8e51d368534b23988e5de84c5d3bd2e25a8d95c5266a9d0bbc0c4bfb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/Workspace.cpp",
+      "sha256": "5e7d585513e7d4c79c93edc5303d578ae4cbdb337a2128f37358f754bac0c5f6"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprBorderDecoration.cpp",
+      "sha256": "b03a9c649c158403f88da98fc686514e587cd4a1bf13eb8bd143f1e5edab8d74"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/DecorationPositioner.cpp",
+      "sha256": "aea200570600718a05977daf1beb2a2188058e7f0290e36a9ab5b0029b47629d"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprDropShadowDecoration.cpp",
+      "sha256": "d2bf3906c2d63633200b222e03c1f664a8bb4f90fb81f46500af3f18335d56cb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/rule/windowRule/WindowRuleApplicator.hpp",
+      "sha256": "30a8f21c37fbb2207ba9647d2432916b3f3ba1214a8788fc9a9c599a6cdd931e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.hpp",
+      "sha256": "c52d94684d4dfab1fe80df565a08b560c3fd8e8ca32571436c8fa6f569f76e42"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Renderer.hpp",
+      "sha256": "196404adaf7c2af5f9f7ad0383c95c0a89d1d5c4e560941f38ea10b960650d24"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/OpenGL.hpp",
+      "sha256": "f1d33ee262601cc3a2d5df0d694b7352de5f401d8063a487e16a092f255c5e3e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprDropShadowDecoration.hpp",
+      "sha256": "aaa43c9c130461a7558f17b78a302ebd9409137d79aebe34417f9fe7c12905e6"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/BorderPassElement.hpp",
+      "sha256": "0aafff3cbfc3290bd725a6b2ea2f4a10f7f47f5505108ce36569395e7fc53efd"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/RectPassElement.hpp",
+      "sha256": "29b59dc0f46df48ea6624a1bec7705f359ddb99390458a9d5c8914c63fcb3569"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/SurfacePassElement.hpp",
+      "sha256": "e5fe6f6213f21197c23773caef98742eb3d27377ff7342f1a75b0c020cc04717"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/TexPassElement.hpp",
+      "sha256": "d95d048fc0ec7ad06cce2cb1799b1cf46e3b08d632cae3429866f8428ad4d4e2"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/border.frag",
+      "sha256": "c477ed2719e7d4889eb1e7b40dae897da64b9c2b515892f1996303de85556ef3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/border.glsl",
+      "sha256": "e476ed34604e3e3cebbac55e8d0fb628d8f297eb643db304abd317d79869d112"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/ext.frag",
+      "sha256": "d2164a4529ecbef68ec8ce5f6d459a71762bbe6d9b5d118ddbc478d9e750a3c7"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/quad.frag",
+      "sha256": "28862349478c2ea5d1122aeef9b38e79e230ce358a2c659ec7f074b73b84afee"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/rounding.glsl",
+      "sha256": "67efb089576ed2b8ddb327369e75049cccc822564e0e5d845d9c6f325f4de9dc"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/shadow.frag",
+      "sha256": "16d1f5c7efcde9d31a4690a2c25e2db6b89a61ab97ed0f97b467a4097715ef60"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/shadow.glsl",
+      "sha256": "6f925478b303f8a467c926cb33fb5f6f197e22bfb5819665cf3cf95f785abdb1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/surface.frag",
+      "sha256": "6830e2db330843fcb4917fa4ed7118767999ca25b4840d135d4d8cea8143bb48"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprInnerGlowDecoration.cpp",
+      "sha256": "0d8fcb1608d6f355e8a8dae63b2dd715c89e7f565a0611e4794982d97d895938"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/inner_glow.frag",
+      "sha256": "d595247c788e9193926b7826224bf4bb49f34579d2fded34c708ebd39bfd27e1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/inner_glow.glsl",
+      "sha256": "3428e751180963f3c93423ca0cf29898aca481e8869be93a7f080b67d18517dd"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/protocols/OutputManagement.cpp",
+      "sha256": "619e3854259769282c2aa07496158af0a80d4cfa340e67bf937a958e097ba96f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/monitor/MonitorRuleManager.cpp",
+      "sha256": "fac5ef95c741c8fb6b46802d3711f579cba23b5e2f44d051e5e3a0ed568e8b14"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/helpers/Monitor.cpp",
+      "sha256": "c84ad7cafd85bdc8192dd30d8441f8d417f7d379d9deee4ee71ef6666ef26a0f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/GlobalWindowController.cpp",
+      "sha256": "669cb209f2e4efb2b248bbbc00ef8cef84a4638017a30dc085c8f85fdb2d65f8"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/output/Monitor.cpp",
+      "sha256": "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/LayerFadeout.cpp",
+      "sha256": "913541971166a171d5c922b63fbbda3be51afe2c25c43f54df97cb7fa5b9b254"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/WindowFadeout.cpp",
+      "sha256": "510e3f19d645585e55ced3fb090037c7e4f003e67fdba1b65dcbb5ff92ff03fe"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/OpenGL.cpp",
+      "sha256": "6b58dcffd17364f4f98719f3b3dab342dff1e2ca0b922a65cc2bfb664f81ea16"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/Pass.cpp",
+      "sha256": "529c5c9d55dd707c4bc98da38832b0006880d3948592678a31db62e876e34820"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/PopupFadeout.cpp",
+      "sha256": "d3498272769a78ef6f700f858f454c1bed056425df23a2c3003a6fb43b08879f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/ShaderLoader.hpp",
+      "sha256": "7f3c109c8ac1c044c0b48b56e98b977ad29b6138fed9f45041163a83eea23663"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Shader.cpp",
+      "sha256": "dcf574e0b64c246d12fe03bff6af4c9631b95baa18d56e481d6d37ffa7b64f64"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/GLRenderer.cpp",
+      "sha256": "2072807043b5d53a0910ebcc3936e69905abdf5905457d363f70d8c1043a4a81"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/ElementRenderer.cpp",
+      "sha256": "32f79c359a5ae6a265f7b2feee5c190d643371dd984d2bdda6a4ef203ccec828"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/gl/GLElementRenderer.cpp",
+      "sha256": "d7db3c34fbd94c3acdef3dc821d906a48583ac188704ec1943959df1c88239f8"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/PreBlurElement.hpp",
+      "sha256": "50675b156230bc29e1ef11844f360cc5e01d0b514ee10ae817a4a70f3ae38528"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/PreBlurElement.cpp",
+      "sha256": "308c85d990a3cbe1458aee1990fa91ca76cc6118fde9b3a961e42d40282c77d5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blurprepare.frag",
+      "sha256": "e870f47f282e21cc5a8534f1b62ebf6c5dc96fb7ab53e3db0582ec80b9b5d1c3"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blurprepare.glsl",
+      "sha256": "1e359628ecdae3bd769e6a2c00b13d09df9319c88442730f5d8510c78feaeb36"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blurfinish.frag",
+      "sha256": "77a16587e972ced698da747f29a1c0fd91a70f79b9db75beeab3916391710748"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blurFinish.glsl",
+      "sha256": "f3c1f38430bb362552584c8f8ad5b52ac2838b18d576eb1d87fdbbbba6258c27"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blur1.frag",
+      "sha256": "ea384ff735b47417aac1873579582dca3a8e57e9bbde0b643e6f15b2ffae3c68"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/blur1.glsl",
+      "sha256": "ff0985d2b95f6d927d39a2058379283ac6118ab75b47b90a536fa4da4cc0fd4d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/gain.glsl",
+      "sha256": "fae6204d8e51d368534b23988e5de84c5d3bd2e25a8d95c5266a9d0bbc0c4bfb"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/Workspace.cpp",
+      "sha256": "e6c8e44d9f8211a8f56b65b433b5f5e4c3e6565479ecb2d749bc02cf4e926ca9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprBorderDecoration.cpp",
+      "sha256": "23ef95cfd33ec3116dbcc0de0a521809a8752df80d83df926ae2771631f48b46"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/DecorationPositioner.cpp",
+      "sha256": "2435b97c90534fd3cf8a859f8c23d31a9ba89e4b5b7eed529e10bc82f7676b6c"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprDropShadowDecoration.cpp",
+      "sha256": "f83870a33d8d7b4d28f2c03ecdf0673d4bfef2192da189a1fe03684c9a6fce41"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/windowRule/WindowRuleApplicator.hpp",
+      "sha256": "334e1254a66e2df8ef243544e3ff99db398ed5ec6e48996d496d05ff7bf50f44"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.hpp",
+      "sha256": "1f60b8ff0bc6b5a48af5c03cb2cac1108db677efc70b4424b56ef6f1f2d1cc81"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Renderer.hpp",
+      "sha256": "0787f259d788e979094ebb5f3b40140c642118c634356a431e2aca17ecf4d5a2"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/OpenGL.hpp",
+      "sha256": "e08060838c88d6bf650fd2e2b695acbda48e10f04a317a397d35f2f1dff9c813"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprDropShadowDecoration.hpp",
+      "sha256": "013d55c2923012159989fc06cecd655ed75e51578c6f086254e5d840238c33bc"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/BorderPassElement.hpp",
+      "sha256": "0aafff3cbfc3290bd725a6b2ea2f4a10f7f47f5505108ce36569395e7fc53efd"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/RectPassElement.hpp",
+      "sha256": "29b59dc0f46df48ea6624a1bec7705f359ddb99390458a9d5c8914c63fcb3569"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/SurfacePassElement.hpp",
+      "sha256": "74bd3d56f5d6e75b43fa9d8291141869849341f4b5ec9d10f6c7ed3f5b55c2d5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/TexPassElement.hpp",
+      "sha256": "9f3a858292d9b2892df0f8b64ee605d2d4322cb57dd3bb5b3ed12e1f0638de3a"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/border.frag",
+      "sha256": "bbcd85dd46b97d995418aedc6bb42e0f7e2500a855a777452f2ecb61598d8c49"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/border.glsl",
+      "sha256": "730875c35be7bc002940f8db0b363a65cbc6659f7630a21eb0a46410d1fa619a"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/ext.frag",
+      "sha256": "d2164a4529ecbef68ec8ce5f6d459a71762bbe6d9b5d118ddbc478d9e750a3c7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/quad.frag",
+      "sha256": "28862349478c2ea5d1122aeef9b38e79e230ce358a2c659ec7f074b73b84afee"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/rounding.glsl",
+      "sha256": "67efb089576ed2b8ddb327369e75049cccc822564e0e5d845d9c6f325f4de9dc"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/shadow.frag",
+      "sha256": "2f2c44a1d3a0733fc1557c3789bae26188410ba6e177baf1648976fb824b4c14"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/shadow.glsl",
+      "sha256": "c4ca78af1d094eb0f996a06ac14bdda4c45a8d993da392b1b505ed513714e15d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/surface.frag",
+      "sha256": "26fb659bf56460aa051b28ee8b3ce9fed4ced34fcc836aede291058dd8195970"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprInnerGlowDecoration.cpp",
+      "sha256": "c857934b45dfe308c56f0a45defd25d9b7e0c1a07e05ff52255c9c9441986c69"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/inner_glow.frag",
+      "sha256": "60b5bf2771382af07a19cee5e66fe909030bbe087217f9d9baaf122bcd395e02"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/inner_glow.glsl",
+      "sha256": "7858f0226aebfabdc78e6eaae3cba524ec3173b2d59a021d5cdc0bb54a66293b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/OutputManagement.cpp",
+      "sha256": "148f12d73ced4e045bc864ebc3cc5022e3681b82bbec9936f2cd8b32d0bbd588"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/monitor/MonitorRuleManager.cpp",
+      "sha256": "8946d306e66afc42c1d3b49fbbadd5ccf931c630896bda8430e6aaf7b3a7ea65"
+    }
+  ],
+  "advancedRuntimeSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/SessionLockManager.cpp",
+      "sha256": "7bcea37c191c54401e743b718ea6475183a9dbcc33123bb6e26d88693db1227c"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/ElementRenderer.cpp",
+      "sha256": "5dbe22ebdb367af0d6e3e4fd566c4532b98d949007668249c957de075a28a24e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/TexPassElement.hpp",
+      "sha256": "d95d048fc0ec7ad06cce2cb1799b1cf46e3b08d632cae3429866f8428ad4d4e2"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/TexPassElement.cpp",
+      "sha256": "b3b482a7d4c121a0163ff3120642a6490d237d84812e7d01db82a09fbc250b71"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/gl/GLElementRenderer.cpp",
+      "sha256": "1c14d08921b57a051fba09fd272d0efb5b4dd10452b7e8bd675ba548214a0391"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/OpenGL.cpp",
+      "sha256": "2b1245e9207db6e33191a509fb45c1cdf1f1380146e55d61b56ea920857ea1e3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/SurfacePassElement.hpp",
+      "sha256": "e5fe6f6213f21197c23773caef98742eb3d27377ff7342f1a75b0c020cc04717"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/pass/SurfacePassElement.cpp",
+      "sha256": "c5e3729400ca779e73b516ea9c9367962d5358c28bb4fc396e348ad7aa4d0f46"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/shaders/glsl/surface.frag",
+      "sha256": "6830e2db330843fcb4917fa4ed7118767999ca25b4840d135d4d8cea8143bb48"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/helpers/Monitor.cpp",
+      "sha256": "c84ad7cafd85bdc8192dd30d8441f8d417f7d379d9deee4ee71ef6666ef26a0f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/screenshare/ScreenshareSession.cpp",
+      "sha256": "865998b9669353b1653b8f0f78583931d017331c53f71b0956474bb3bd3d6f10"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/helpers/cm/ColorManagement.hpp",
+      "sha256": "a3eaf1dffb8bef9d18ce0be5bc5b270b9d07f6e605f7161b6c2c7bcd91dfa434"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Framebuffer.cpp",
+      "sha256": "80ba41c93bb068a85ca94be6f95a6bd43b33f2da52618f2c7fb78c229f787648"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/helpers/MonitorResources.cpp",
+      "sha256": "18ff58ce9ed2268f361a49f22c7e5d9b951234b0cab5335accf628b6ac92bb4c"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "030d4f734e1303b5ae92c5bbfbdf8ece1bc7debecbee7abaf28f1e53f6fca966"
+    },
+    {
+      "version": "0.56.0",
+      "tag": "v0.56.0",
+      "commit": "36b2e0cfe0c6094dbc47bd42a437431315bb3087",
+      "path": "src/protocols/InputCapture.cpp",
+      "sha256": "d034a7f2dd7c5010bfb52cc4db7717119a6c1482efe2dfeeae9da2fadab1a0fb"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/InputCapture.cpp",
+      "sha256": "d034a7f2dd7c5010bfb52cc4db7717119a6c1482efe2dfeeae9da2fadab1a0fb"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/SessionLockManager.cpp",
+      "sha256": "221e45b09e75ced356bf229169c207f43b4adf8e93147288c47de0cd04e9a9c0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/ElementRenderer.cpp",
+      "sha256": "32f79c359a5ae6a265f7b2feee5c190d643371dd984d2bdda6a4ef203ccec828"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/TexPassElement.hpp",
+      "sha256": "9f3a858292d9b2892df0f8b64ee605d2d4322cb57dd3bb5b3ed12e1f0638de3a"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/TexPassElement.cpp",
+      "sha256": "60dcded5bef532e26ee1d4e57d1cd0d653abea406114d71c72d9e49ae83f526e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/gl/GLElementRenderer.cpp",
+      "sha256": "d7db3c34fbd94c3acdef3dc821d906a48583ac188704ec1943959df1c88239f8"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/OpenGL.cpp",
+      "sha256": "6b58dcffd17364f4f98719f3b3dab342dff1e2ca0b922a65cc2bfb664f81ea16"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/SurfacePassElement.hpp",
+      "sha256": "74bd3d56f5d6e75b43fa9d8291141869849341f4b5ec9d10f6c7ed3f5b55c2d5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/pass/SurfacePassElement.cpp",
+      "sha256": "ea559690633f8f2e0da7709cb3c00f12b54bc20fbe631437633744676eff24f8"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/shaders/glsl/surface.frag",
+      "sha256": "26fb659bf56460aa051b28ee8b3ce9fed4ced34fcc836aede291058dd8195970"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/output/Monitor.cpp",
+      "sha256": "9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/screenshare/ScreenshareSession.cpp",
+      "sha256": "b6b2ce5d682080131f374510e7cecae54925356bea541ef99feeff3aba394c99"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/cm/ColorManagement.hpp",
+      "sha256": "c9b4823032e12cb45907aac714a19c5de89e5565a773b4eccbecd83ddb5d4de6"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Framebuffer.cpp",
+      "sha256": "80ba41c93bb068a85ca94be6f95a6bd43b33f2da52618f2c7fb78c229f787648"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/output/MonitorResources.cpp",
+      "sha256": "90d39fd2c43852611b4f90ca14cc2d213f97c4770123021d2733cd1970488b8b"
+    }
+  ],
+  "windowBehaviorSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/ANRManager.cpp",
+      "sha256": "67276cc0d2dccf516a1075112a5eb3592871c6d88d8e7665a4503194b4ae558b"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp",
+      "sha256": "d5ec852d1b26fb55574ae184b6bfc86dd2a047f8c7d4c8c7e4748277c0e841cb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/algorithm/tiled/master/MasterAlgorithm.cpp",
+      "sha256": "7a95cbac2074f7cde31e3181e84bf146337dea586fce56900eb1fb55af5864c0"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp",
+      "sha256": "f1f95b5e53f048ef52f6a87be7ab3040da74ce6361dee17bd5d97ef583ee2f0f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/algorithm/tiled/monocle/MonocleAlgorithm.cpp",
+      "sha256": "00d5563d7c49f7df81378496e6e35a95356bac3f4369d5de7782ae7012f2990f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/state/FocusState.cpp",
+      "sha256": "677c243ada837fda14aed11c55b435de0fd877549709158dda1dfb2c8530dc43"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/rule/windowRule/WindowRuleApplicator.cpp",
+      "sha256": "35e330cba1af5e07968f9b968c2719a46aa28728537e3d0e97d13f6ab4dcb247"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/target/WindowTarget.cpp",
+      "sha256": "33f6f6dcbfb4e140f2cce04a8e06b8042c8e780617960618b023f9a9591b9a9d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/WindowQuery.cpp",
+      "sha256": "5eede566e031769aa13247830f68a10077c78f4db864fdf17dcfa58f222a9beb"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/fullscreen/FullscreenController.cpp",
+      "sha256": "581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/ANRManager.cpp",
+      "sha256": "842b795210ea83c735cb9a75c5e2f104507fa9285a460730dcd809e87892803e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp",
+      "sha256": "218c4d4ba7e7b34d1113da818347e260868451de0e5a6d699934871febc03b32"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/algorithm/tiled/master/MasterAlgorithm.cpp",
+      "sha256": "ad3494f7292fbd717c1e9ab608e0b2fbd488cc85e88763317c563162c9e978df"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp",
+      "sha256": "bfec45e79d26bb21dea2c61809ac37baffffa48b6e0202a56e7522b22a1815f3"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/algorithm/tiled/monocle/MonocleAlgorithm.cpp",
+      "sha256": "4a5735c12b4e2f1b1d29fc655b75c9bd04ff278138dea9013a3cb569566306fb"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/state/FocusState.cpp",
+      "sha256": "9b971362bba97f200f0ef786237deed6b7b863066590d243cac11787e2a56ebd"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/rule/windowRule/WindowRuleApplicator.cpp",
+      "sha256": "fec33f9a0bc279ffc94ca27a6e9843964840d6269bc28d330d566e05fed3307b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/target/WindowTarget.cpp",
+      "sha256": "8bcaf37000cf55e1d2084bf732f0589b4ab49d36c778d8d4efa98949dd14734d"
+    }
+  ],
+  "groupBarSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Group.cpp",
+      "sha256": "b0f9210c858bcaf74c8f5a44f7f40abfe03af8a096e3fb158afd2346be8b0eed"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/decorations/CHyprGroupBarDecoration.cpp",
+      "sha256": "3d687c43d5414fb6ad617465f06bb87cda8dc6c2e791dbb0e28de72de1cf4c68"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/types/LuaConfigFontWeight.cpp",
+      "sha256": "da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Group.cpp",
+      "sha256": "f34fec0891e69e0a1b67901e8d1b6b1a1ae8a47eccc92313c2b41660961cd385"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/decorations/CHyprGroupBarDecoration.cpp",
+      "sha256": "39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/types/LuaConfigFontWeight.cpp",
+      "sha256": "da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05"
+    }
+  ],
+  "workspaceBehaviorSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/history/WorkspaceHistoryTracker.cpp",
+      "sha256": "628b33ca5fcfdb20e21daed845732ef812eb77bc6e0dddfd6db55cb9f41ca989"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/history/WorkspaceHistoryTracker.hpp",
+      "sha256": "89afe0b8578d193b6636af422911922a39b7bfdf130bfb286d0708d4a489d009"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/history/WorkspaceHistoryTracker.cpp",
+      "sha256": "33a0cf8d26540870b66d6aacb6fe7eaad0c767e8b21184016c12de5135cea678"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/history/WorkspaceHistoryTracker.hpp",
+      "sha256": "89afe0b8578d193b6636af422911922a39b7bfdf130bfb286d0708d4a489d009"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/state/WorkspacePlacementController.cpp",
+      "sha256": "cea25fc71ef2d54e2a4eec3e6d04fa7abfbdd25bdafbe2d742026e37dd438420"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerController.cpp",
+      "sha256": "4aef766cf4205222ef143b1432d2598c7beab1527aee5e19aa58f17a1890d899"
+    }
+  ],
+  "bindingRuntimeSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsRegistration.cpp",
+      "sha256": "c0e0533d07bc75b48ba469df2523b3f1335bcea17922ac0dae01aed81487e5d3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "sha256": "bf1f9e9bdd94a2403ecab41ceea6ffb6feecd3083715ec4e8086e84089e9a006"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.hpp",
+      "sha256": "14b6d07d7720e45e099e469ed53ac2db1584e408705869b71a92a14876767b2c"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/KeybindManager.cpp",
+      "sha256": "2fde298fd690c5c3b72741be1c4b11cba220996649ba560e3112a81112531491"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "a88c1517da9fa2934d740dd1fd9cbca4d5d0bdd5b569a63bdba64e5e36c2d886"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsRegistration.cpp",
+      "sha256": "377e617ca0400722dea581e1ca740500a6057cff3842998c8f8dd0a218f77770"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "sha256": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.hpp",
+      "sha256": "746c6f517620eb039afbfbb9a4a0e2d5ba1c5eb117bcc8f396173f63091b7073"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/KeybindManager.cpp",
+      "sha256": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1"
+    }
+  ],
+  "miscExclusionSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp",
+      "sha256": "d5ec852d1b26fb55574ae184b6bfc86dd2a047f8c7d4c8c7e4748277c0e841cb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/layout/target/WindowTarget.cpp",
+      "sha256": "33f6f6dcbfb4e140f2cce04a8e06b8042c8e780617960618b023f9a9591b9a9d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp",
+      "sha256": "218c4d4ba7e7b34d1113da818347e260868451de0e5a6d699934871febc03b32"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/layout/target/WindowTarget.cpp",
+      "sha256": "8bcaf37000cf55e1d2084bf732f0589b4ab49d36c778d8d4efa98949dd14734d"
+    }
+  ],
+  "inputBehaviorSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/InputManager.hpp",
+      "sha256": "c4479cdf4b1dc6a5f1234d86a034fb5f1f517a140afb33dc5995c65d20ac0dbf"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/Tablets.cpp",
+      "sha256": "b875f1c65775ead92dcaae26612290e5b1728895f659f933de283086b8fdb683"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/protocols/PrimarySelection.cpp",
+      "sha256": "f4989a7770e13d351a7db362d0539e8d96d23b9f7c524d278d1e529f68e0391b"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/render/Renderer.hpp",
+      "sha256": "196404adaf7c2af5f9f7ad0383c95c0a89d1d5c4e560941f38ea10b960650d24"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/Touch.cpp",
+      "sha256": "c7cc52a8da21286035b144366ad82aafd93610d4ae5827f0b4246034acd6549c"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/Mouse.cpp",
+      "sha256": "aebdf0fd1765d25d943cc79f4e5bbdce09e0c437ae3e9cdc0985195df54a5470"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/PointerManager.hpp",
+      "sha256": "c2a0a22603230fcaaed62afade6f0dbc8a6e8381906b8a5063e65651cad43718"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/PointerManager.cpp",
+      "sha256": "3bdbb256f39b8a892f70ff6795a366068997e335c1258dc6baf3dd8dcd34fcb3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.hpp",
+      "sha256": "c52d94684d4dfab1fe80df565a08b560c3fd8e8ca32571436c8fa6f569f76e42"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.hpp",
+      "sha256": "472006be35fdf03c09566e4a371a05b8ba2e39f9a4dd13eb7313e24d2575f4f2"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/values/ConfigValues.cpp",
+      "sha256": "a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.hpp",
+      "sha256": "bb8ceaf61e274bedae10555173760055e632e0ff2ac050636e06c29dffcb188d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/Tablets.cpp",
+      "sha256": "ad276a2e23f8792ff5f2fb43944a4c3c40e7218e77f66047dd754417a6bbc90f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/PrimarySelection.cpp",
+      "sha256": "f4989a7770e13d351a7db362d0539e8d96d23b9f7c524d278d1e529f68e0391b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Renderer.cpp",
+      "sha256": "4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/render/Renderer.hpp",
+      "sha256": "0787f259d788e979094ebb5f3b40140c642118c634356a431e2aca17ecf4d5a2"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/Touch.cpp",
+      "sha256": "69a5459b254751a28d2f6df1afb03781ea9b4086a43078d8275c9b165f5e3f7e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/Mouse.cpp",
+      "sha256": "aebdf0fd1765d25d943cc79f4e5bbdce09e0c437ae3e9cdc0985195df54a5470"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerManager.hpp",
+      "sha256": "a18050d377c96b6bcee1d3d591b5573515473a507aaa464de611e29124bfbf88"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerManager.cpp",
+      "sha256": "e7fb86bc7cd0420e0a225dfc8ca43da561638416380d398f67a200849e738981"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/actions/ConfigActions.cpp",
+      "sha256": "29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.hpp",
+      "sha256": "1f60b8ff0bc6b5a48af5c03cb2cac1108db677efc70b4424b56ef6f1f2d1cc81"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerController.cpp",
+      "sha256": "4aef766cf4205222ef143b1432d2598c7beab1527aee5e19aa58f17a1890d899"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerController.hpp",
+      "sha256": "260fa1c172d0f469d420dc1b7e5311c0dfec0777fa6a6cf08af69ea854fdbb55"
+    }
+  ],
+  "inputBehaviorDependencySources": [
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/Hyprland",
+      "revision": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "flake.lock",
+      "sha256": "0978f7573968480e977764eb309a4426018afd53e60b7636752bc05e3b77956d"
+    },
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "a2dbd8a4cc51f7cbe4224732668392bb1aa79df2",
+      "path": "include/hyprutils/math/Vector2D.hpp",
+      "sha256": "26079ea62f7a4eca1e3792e7a37c2ca6d1736e3ec879dd35997d29758c9098aa"
+    },
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "a2dbd8a4cc51f7cbe4224732668392bb1aa79df2",
+      "path": "src/math/Box.cpp",
+      "sha256": "2d04de99ba977e5c3d99546606aede0d3eacc819049e16da5e0fd0d2004d083c"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/Hyprland",
+      "revision": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "flake.lock",
+      "sha256": "a44dd68728466027d72e434856186f56610c46ed0ea3826b370827a23c77b74e"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "5f03477ab3a005ff27c527486f551883535aea2f",
+      "path": "include/hyprutils/math/Vector2D.hpp",
+      "sha256": "26079ea62f7a4eca1e3792e7a37c2ca6d1736e3ec879dd35997d29758c9098aa"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "5f03477ab3a005ff27c527486f551883535aea2f",
+      "path": "src/math/Box.cpp",
+      "sha256": "2d04de99ba977e5c3d99546606aede0d3eacc819049e16da5e0fd0d2004d083c"
+    }
+  ],
+  "inputDeviceSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "a88c1517da9fa2934d740dd1fd9cbca4d5d0bdd5b569a63bdba64e5e36c2d886"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/helpers/MiscFunctions.cpp",
+      "sha256": "b11ed4a52bebcdcfd4f934b94b2a5f324bf66b2b035c5d7f119c6c027800f8aa"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/InputManager.hpp",
+      "sha256": "c4479cdf4b1dc6a5f1234d86a034fb5f1f517a140afb33dc5995c65d20ac0dbf"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/Tablets.cpp",
+      "sha256": "b875f1c65775ead92dcaae26612290e5b1728895f659f933de283086b8fdb683"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/IHID.cpp",
+      "sha256": "a58a4b44e5947e82ab29cab414d92511f953a0feb87b662516496a869f1c7ee3"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/IPointer.cpp",
+      "sha256": "ffb4ca03e3d4cdd0d7f615d27c0c01b42d360206e471bc66d50322f87ac36ccc"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/IKeyboard.cpp",
+      "sha256": "f1bccbbb227ac7808f25a941601eba327a498f3556ba12514196035eac5d55cb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/VirtualKeyboard.cpp",
+      "sha256": "bc6d984a4c9e62313501c1cdb4ace3659c16d3b77e029a3c082a77f21500ed86"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/devices/VirtualPointer.cpp",
+      "sha256": "b1425a95edb425a229ffd61b266f9c02c8882a5b3dee6cd4d3b6d0e5427b516f"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/protocols/VirtualKeyboard.cpp",
+      "sha256": "43cbf7b39bf0910df6d933cef95f029fa336d5b432b0202280e6fc40d8db2f50"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/protocols/VirtualPointer.cpp",
+      "sha256": "eb6d8ea90209d6fe1899ae075465cbd8b0b6be62d301c06c493212a801e308bb"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/Compositor.cpp",
+      "sha256": "a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/PointerManager.cpp",
+      "sha256": "3bdbb256f39b8a892f70ff6795a366068997e335c1258dc6baf3dd8dcd34fcb3"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/debug/HyprCtl.cpp",
+      "sha256": "7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/helpers/MiscFunctions.cpp",
+      "sha256": "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/supplementary/propRefresher/PropRefresher.cpp",
+      "sha256": "65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.hpp",
+      "sha256": "bb8ceaf61e274bedae10555173760055e632e0ff2ac050636e06c29dffcb188d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/InputManager.cpp",
+      "sha256": "07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/Tablets.cpp",
+      "sha256": "ad276a2e23f8792ff5f2fb43944a4c3c40e7218e77f66047dd754417a6bbc90f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/IHID.cpp",
+      "sha256": "a58a4b44e5947e82ab29cab414d92511f953a0feb87b662516496a869f1c7ee3"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/IPointer.cpp",
+      "sha256": "ffb4ca03e3d4cdd0d7f615d27c0c01b42d360206e471bc66d50322f87ac36ccc"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/IKeyboard.cpp",
+      "sha256": "8a800efe9baa7f375a3781744372eecd98a88be2c4bedaae96c90a1102a1aa3d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/VirtualKeyboard.cpp",
+      "sha256": "bc6d984a4c9e62313501c1cdb4ace3659c16d3b77e029a3c082a77f21500ed86"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/devices/VirtualPointer.cpp",
+      "sha256": "b1425a95edb425a229ffd61b266f9c02c8882a5b3dee6cd4d3b6d0e5427b516f"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/VirtualKeyboard.cpp",
+      "sha256": "43cbf7b39bf0910df6d933cef95f029fa336d5b432b0202280e6fc40d8db2f50"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/protocols/VirtualPointer.cpp",
+      "sha256": "a07b12a920fe46beab3840245b818b474a376aa736b566069014d8eb4fd82fb1"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/Compositor.cpp",
+      "sha256": "74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/pointer/PointerManager.cpp",
+      "sha256": "e7fb86bc7cd0420e0a225dfc8ca43da561638416380d398f67a200849e738981"
+    }
+  ],
+  "gestureSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/GestureTypes.hpp",
+      "sha256": "87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/TrackpadGestures.cpp",
+      "sha256": "5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/TrackpadGestures.hpp",
+      "sha256": "f0e2a20af8b5c7e41d1c7a7e3bf650b9a6ac89f883adeefca0f39ff060cdce09"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.cpp",
+      "sha256": "c2ce8e076a7bc326316d3c9ef0221e5ad7699fe87669fa9188a2fc872c1ebf5e"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.hpp",
+      "sha256": "3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/WorkspaceSwipeGesture.cpp",
+      "sha256": "fc54ad123f0406bcb9b8e42b8241c4a208b377c107ad7820f0b26ada58cd3d54"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/ResizeGesture.cpp",
+      "sha256": "97c13e3889e744b5b3617f16620033fc0d4ce43cceeb014cdfcf7f5b85e7adc1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/MoveGesture.cpp",
+      "sha256": "2fee93dc6b90c8638f00062685dd0185de07a4f3701cc3d6a78064da50fe3fe0"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/CloseGesture.cpp",
+      "sha256": "1963b7c441bab5a9ce9e7605f16c5d3289c927208cc11c1f3895aecd31116d85"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/ScrollMoveGesture.cpp",
+      "sha256": "e78caa506e078c6710338f9e2419c9af22668fbcb5ed078ac7e0256bb8906517"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp",
+      "sha256": "5a8080a4c4d2f81824bf37192f450bf48deba2de37a0fe39e80e86d8af80ef42"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.cpp",
+      "sha256": "92d3eed9c053b2da300f67aeed974ab21b59068a2dd27aeedce6a41548c1acf1"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.hpp",
+      "sha256": "dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp",
+      "sha256": "c3c20c47e1421e567bf9ad9376a37062b2863409f3bbd6046b3e55272b4e9417"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.hpp",
+      "sha256": "97121208913016b8f423a830e046b2704c473c466e8fb0a2cca6b301e32a5f6a"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp",
+      "sha256": "c8acc40765d52a0581a72536ae5489aeb43a9d275f4c7ccd8c36346e8b4f9002"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.hpp",
+      "sha256": "a070dfb875fdb80559c6278afe1ed9c6d83237c9fc58d356639c7d9c17b6d779"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/GestureTypes.hpp",
+      "sha256": "87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/TrackpadGestures.cpp",
+      "sha256": "5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/TrackpadGestures.hpp",
+      "sha256": "f0e2a20af8b5c7e41d1c7a7e3bf650b9a6ac89f883adeefca0f39ff060cdce09"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.cpp",
+      "sha256": "c2ce8e076a7bc326316d3c9ef0221e5ad7699fe87669fa9188a2fc872c1ebf5e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.hpp",
+      "sha256": "3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/WorkspaceSwipeGesture.cpp",
+      "sha256": "2f12d2b682af060e23a8d4e0aee1ee1366cd9dce9bf05f8e287b52740cb14ad0"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/ResizeGesture.cpp",
+      "sha256": "9a0b156e42f0938614395a198b382a3388056b2b211c1679658f24686d9a372a"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/MoveGesture.cpp",
+      "sha256": "617e22260d144832639fa811e24025c52b7404955b1f7879f5d0af38e44f4f9c"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/CloseGesture.cpp",
+      "sha256": "9da24b306cd803a5517cee5527ae8a1f3ee3d313b09876d43434b6be7607ef32"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/ScrollMoveGesture.cpp",
+      "sha256": "f3c1434ac10e187102a3c5c5bfff759f04d990f0cc82fd46914a8244aac500ed"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp",
+      "sha256": "10e6bdece28c998bfbf574d6f455ba53f7286b61a243d13122cb2086ab81bbae"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.cpp",
+      "sha256": "d10abdf34e7e966777c91e225ed63038da72511e5eb73f81ee3acfd93859934e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.hpp",
+      "sha256": "dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp",
+      "sha256": "b72fb2976e43899884afd9f8d9f6c6b3c6da04c9797482ef6df614e1bdc483e5"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.hpp",
+      "sha256": "576dd48493e13dc26c56b7fb028084debe2080ac02f7ef644b38675f1217889e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp",
+      "sha256": "5967e293ccdc7e99b6f6201a1d2e0aeff95b1d763ce5ad3d7fb50fabd76c6753"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.hpp",
+      "sha256": "9861e8cf3c6d26632731f164da5a4a016553d4f8ea6f71d68855cc7a682a6962"
+    }
+  ],
+  "animationSources": [
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/config/shared/animation/AnimationTree.cpp",
+      "sha256": "f264fc3fe7de93237af06122600949984064e75e240d195ce07113d526edcf06"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/animation/AnimationManager.hpp",
+      "sha256": "601532457f29435879665f6ecd92adfb86f9f8e16f7fe48abd068f041e2edb14"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/animation/AnimationManager.cpp",
+      "sha256": "92702589150c0264d109d5ae74915a778368d471eb935ae4ae7a6de0d083f596"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/managers/animation/DesktopAnimationManager.cpp",
+      "sha256": "437b5a34fa6b462e68890679abf38f7d806ebc56f9fb6ebc814bfc40e44c3ad6"
+    },
+    {
+      "version": "0.55.0",
+      "tag": "v0.55.0",
+      "commit": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/config/shared/animation/AnimationTree.cpp",
+      "sha256": "313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/animation/AnimationManager.hpp",
+      "sha256": "e7834aef3b0f3259a109e5407c27bd31d5ad8ed05b698e4726e5972bacd479fa"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/animation/AnimationManager.cpp",
+      "sha256": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/animationControllers/WindowAnimationController.cpp",
+      "sha256": "9a8c3c2961a1a55fca7b8783e1c3b808b424291e832bf4cdf88ed7a73e5bab08"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/animationControllers/LayerSurfaceAnimationController.cpp",
+      "sha256": "22b223f086b454c54f475e7f16b2d499d92cfd071f2083ea58a9f6a4412f0b1d"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/animation/WorkspaceAnimationController.cpp",
+      "sha256": "0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b"
+    },
+    {
+      "version": "0.56.1",
+      "tag": "v0.56.1",
+      "commit": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "src/desktop/view/Window.cpp",
+      "sha256": "4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f"
+    }
+  ],
+  "animationDependencySources": [
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/Hyprland",
+      "revision": "af923e30d1d24f1f4a4f5cb8308065173c1d9539",
+      "path": "flake.lock",
+      "sha256": "0978f7573968480e977764eb309a4426018afd53e60b7636752bc05e3b77956d"
+    },
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "a2dbd8a4cc51f7cbe4224732668392bb1aa79df2",
+      "path": "include/hyprutils/animation/AnimationManager.hpp",
+      "sha256": "472747d817e167041c51bb7f4853aca3895450ac2b38464fc60a42acecb9e3c4"
+    },
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "a2dbd8a4cc51f7cbe4224732668392bb1aa79df2",
+      "path": "src/animation/AnimationManager.cpp",
+      "sha256": "cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097"
+    },
+    {
+      "hyprlandVersion": "0.55.0",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "a2dbd8a4cc51f7cbe4224732668392bb1aa79df2",
+      "path": "src/animation/AnimatedVariable.cpp",
+      "sha256": "e7e6184fa21c03be8bc4248553fed06e588f6600f8969795f4dfb595f09e7622"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/Hyprland",
+      "revision": "5c9377c15f85c50648f35ca5a213754f95b93ca0",
+      "path": "flake.lock",
+      "sha256": "a44dd68728466027d72e434856186f56610c46ed0ea3826b370827a23c77b74e"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "5f03477ab3a005ff27c527486f551883535aea2f",
+      "path": "include/hyprutils/animation/AnimationManager.hpp",
+      "sha256": "472747d817e167041c51bb7f4853aca3895450ac2b38464fc60a42acecb9e3c4"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "5f03477ab3a005ff27c527486f551883535aea2f",
+      "path": "src/animation/AnimationManager.cpp",
+      "sha256": "cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097"
+    },
+    {
+      "hyprlandVersion": "0.56.1",
+      "repository": "https://github.com/hyprwm/hyprutils",
+      "revision": "5f03477ab3a005ff27c527486f551883535aea2f",
+      "path": "src/animation/AnimatedVariable.cpp",
+      "sha256": "e9aa6712d9987e9415a0644a7e9521fd3813992f32043650ffdbb7f008d7c16a"
     }
   ],
   "documentation": [

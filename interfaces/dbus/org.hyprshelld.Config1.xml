@@ -34,6 +34,24 @@
         value="true"/>
     </property>
 
+    <property name="ShellInnerSpacing" type="u" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="ShellOuterSpacing" type="u" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
+    <property name="SyncHyprlandWindowSpacing" type="b" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
     <property name="Revision" type="t" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -78,6 +96,24 @@
     </method>
 
     <method name="ResetSharedBorder">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Inner and outer spacing each accept 0 through 32 logical pixels. The
+      complete shared-spacing tuple is persisted and published atomically.
+      Errors:
+        org.hyprshelld.Config1.Error.InvalidSharedSpacing
+        org.hyprshelld.Config1.Error.PersistenceFailed
+    -->
+    <method name="SetSharedSpacing">
+      <arg name="inner" type="u" direction="in"/>
+      <arg name="outer" type="u" direction="in"/>
+      <arg name="syncHyprlandWindowSpacing" type="b" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <method name="ResetSharedSpacing">
       <arg name="revision" type="t" direction="out"/>
     </method>
   </interface>

@@ -15,11 +15,15 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <tuple>
 
 using namespace HyprShelld::Hyprland;
 
 namespace {
+
+const QString testAuthorityId =
+    QStringLiteral("0123456789abcdef0123456789abcdef");
 
 [[nodiscard]] QByteArray readBytes(const QString &path) {
   QFile file(path);
@@ -75,6 +79,28 @@ namespace {
   return parseActionCatalog(
       readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE)),
       readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE)));
+}
+
+[[nodiscard]] QString dormantV2ActionCatalogPath() {
+  return QStringLiteral(HYPRSHELLD_HYPRLAND_V2_ACTION_CATALOG_FILE);
+}
+
+[[nodiscard]] QString dormantV2ConfigSchemaPath() {
+  return QStringLiteral(HYPRSHELLD_HYPRLAND_V2_CONFIG_SCHEMA_FILE);
+}
+
+[[nodiscard]] QString dormantV2TemplatePath() {
+  return QStringLiteral(HYPRSHELLD_HYPRLAND_V2_TEMPLATE_FILE);
+}
+
+[[nodiscard]] ValidationResult<Catalog> dormantV2Catalog() {
+  return parseDormantCatalogV2(
+      readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE)));
+}
+
+[[nodiscard]] ValidationResult<ActionCatalog> dormantV2ActionCatalog() {
+  return parseDormantActionCatalogV2(readBytes(dormantV2ActionCatalogPath()),
+                                     readBytes(dormantV2ConfigSchemaPath()));
 }
 
 [[nodiscard]] QByteArray
@@ -244,6 +270,12 @@ private slots:
     QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{64}$"))
                 .match(digest)
                 .hasMatch());
+    QCOMPARE(
+        digest,
+        QStringLiteral(
+            "402c8a8c570dd3760d4d7bea8c358c7f12021a7c51457e62a4771d69a581254b"
+        )
+    );
     QCOMPARE(digest, QString::fromLatin1(reviewedCatalogDigest));
     QCOMPARE(parsed.value->digest, digest);
     QCOMPARE(digest,
@@ -386,6 +418,436 @@ private slots:
                        }));
     QVERIFY(!dispatcherIds.contains(QStringLiteral("exec_cmd")));
     QVERIFY(!dispatcherIds.contains(QStringLiteral("exec_raw")));
+  }
+
+  void dormantV2AuthorityEnvelopeIsParallelStrictAndSemanticOnly() {
+    QCOMPARE(currentCatalogContractVersion, quint32(1));
+    QCOMPARE(currentActionCatalogContractVersion, quint32(1));
+    QCOMPARE(currentDesiredStateFormatVersion, quint32(1));
+    QCOMPARE(dormantCatalogV2ContractVersion, quint32(2));
+    QCOMPARE(dormantActionCatalogV2ContractVersion, quint32(2));
+    QCOMPARE(dormantDesiredStateV2FormatVersion, quint32(2));
+    QCOMPARE(maximumUserWorkspaceRules, qsizetype(1024));
+    QCOMPARE(maximumWorkspaceRules, qsizetype(1025));
+
+    const auto v1Catalog = shippedCatalog();
+    const auto v2Catalog = dormantV2Catalog();
+    const auto v1Actions = shippedActionCatalog();
+    const auto v2Actions = dormantV2ActionCatalog();
+    QVERIFY(v1Catalog);
+    QVERIFY2(v2Catalog, qPrintable(describeErrors(v2Catalog.errors)));
+    QVERIFY(v1Actions);
+    QVERIFY2(v2Actions, qPrintable(describeErrors(v2Actions.errors)));
+
+    const auto sourceManifest = readObject(
+        QStringLiteral(HYPRSHELLD_HYPRLAND_V2_SOURCE_MANIFEST_FILE));
+    QVERIFY(!sourceManifest.isEmpty());
+    const auto sourceManifestDigest = QString::fromLatin1(
+        QCryptographicHash::hash(JsonSupport::canonicalJson(sourceManifest),
+                                 QCryptographicHash::Sha256)
+            .toHex());
+    QCOMPARE(sourceManifestDigest,
+             QString::fromLatin1(dormantReviewedSourceManifestDigest));
+
+    QCOMPARE(v2Catalog.value->contractVersion, quint32(2));
+    QCOMPARE(v2Catalog.value->digest,
+             QString::fromLatin1(dormantReviewedCatalogV2Digest));
+    QCOMPARE(v2Catalog.value->sourceManifestDigest, sourceManifestDigest);
+    QVERIFY(v2Catalog.value->hyprland.reviewedVersion ==
+            (SemanticVersion{0, 56, 2}));
+    QCOMPARE(v2Catalog.value->hyprland.reviewedTag,
+             QStringLiteral("v0.56.2"));
+    QCOMPARE(v2Catalog.value->hyprland.reviewedCommit,
+             QStringLiteral(
+                 "efb50993780079460b0cbed1363e2166a2de1d9f"));
+    QCOMPARE(v2Catalog.value->hyprland.minimumPatch, quint32(2));
+    QCOMPARE(v2Catalog.value->hyprland.maximumPatch,
+             std::optional<quint32>{2});
+    QVERIFY(v2Catalog.value->compatibility.minimumSupported ==
+            (SemanticVersion{0, 56, 2}));
+    QCOMPARE(v2Catalog.value->compatibility.fullyQualified,
+             QStringList{QStringLiteral("0.56.2")});
+
+    QCOMPARE(v2Actions.value->contractVersion, quint32(2));
+    QCOMPARE(v2Actions.value->digest,
+             QString::fromLatin1(dormantReviewedActionCatalogV2Digest));
+    QCOMPARE(v2Actions.value->sourceManifestDigest, sourceManifestDigest);
+    QVERIFY(v2Actions.value->reviewedVersion ==
+            (SemanticVersion{0, 56, 2}));
+    QCOMPARE(v2Actions.value->reviewedTag, QStringLiteral("v0.56.2"));
+    QCOMPARE(v2Actions.value->reviewedCommit,
+             QStringLiteral(
+                 "efb50993780079460b0cbed1363e2166a2de1d9f"));
+    QCOMPARE(v2Actions.value->minimumPatch, quint32(2));
+    QCOMPARE(v2Actions.value->maximumPatch, std::optional<quint32>{2});
+    QCOMPARE(v2Actions.value->source.repository,
+             QStringLiteral("https://github.com/hyprwm/Hyprland"));
+    QCOMPARE(v2Actions.value->source.tag, QStringLiteral("v0.56.2"));
+    QCOMPARE(v2Actions.value->source.commit,
+             QStringLiteral(
+                 "efb50993780079460b0cbed1363e2166a2de1d9f"));
+    QCOMPARE(v2Actions.value->source.path,
+             QStringLiteral(
+                 "src/config/lua/bindings/LuaBindingsDispatchers.cpp"));
+    QCOMPARE(v2Actions.value->source.sha256,
+             QStringLiteral(
+                 "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de"));
+    QCOMPARE(v2Actions.value->configSchemaDocument,
+             readBytes(dormantV2ConfigSchemaPath()));
+    auto v2Composite = canonicalActionCatalogJson(*v2Actions.value);
+    v2Composite.append('\n');
+    v2Composite.append(readBytes(dormantV2ConfigSchemaPath()));
+    QCOMPARE(v2Actions.value->digest,
+             QString::fromLatin1(
+                 QCryptographicHash::hash(v2Composite,
+                                          QCryptographicHash::Sha256)
+                     .toHex()));
+
+    const auto v1CatalogObject = readObject(
+        QStringLiteral(HYPRSHELLD_HYPRLAND_CATALOG_FILE));
+    const auto v2CatalogObject = readObject(
+        QStringLiteral(HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE));
+    QCOMPARE(v2CatalogObject.value(QStringLiteral("options")),
+             v1CatalogObject.value(QStringLiteral("options")));
+    QCOMPARE(v2CatalogObject.value(QStringLiteral("complexSurfaces")),
+             v1CatalogObject.value(QStringLiteral("complexSurfaces")));
+
+    auto v1ActionObject = readObject(
+        QStringLiteral(HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE));
+    auto v2ActionObject = readObject(dormantV2ActionCatalogPath());
+    for (const auto &key : {
+             QStringLiteral("dispatcherActions"),
+             QStringLiteral("semanticActions"),
+             QStringLiteral("gestureActions"),
+             QStringLiteral("excluded"),
+         }) {
+      QCOMPARE(v2ActionObject.value(key), v1ActionObject.value(key));
+    }
+
+    const auto v2CatalogWithProductionParser = parseCatalog(
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_V2_CATALOG_FILE)));
+    QVERIFY(!v2CatalogWithProductionParser);
+    QVERIFY(hasCode(v2CatalogWithProductionParser.errors,
+                    QStringLiteral("catalog.unsupported-contract-version")));
+    const auto v1CatalogWithDormantParser = parseDormantCatalogV2(
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_CATALOG_FILE)));
+    QVERIFY(!v1CatalogWithDormantParser);
+    QVERIFY(hasCode(v1CatalogWithDormantParser.errors,
+                    QStringLiteral("catalog.unsupported-contract-version")));
+
+    const auto v2WithProductionParser = parseActionCatalog(
+        readBytes(dormantV2ActionCatalogPath()),
+        readBytes(dormantV2ConfigSchemaPath()));
+    QVERIFY(!v2WithProductionParser);
+    QVERIFY(hasCode(v2WithProductionParser.errors,
+                    QStringLiteral(
+                        "action-catalog.unsupported-contract-version")));
+    const auto v1WithDormantParser = parseDormantActionCatalogV2(
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_ACTION_CATALOG_FILE)),
+        readBytes(QStringLiteral(HYPRSHELLD_HYPRLAND_CONFIG_SCHEMA_FILE)));
+    QVERIFY(!v1WithDormantParser);
+    QVERIFY(hasCode(v1WithDormantParser.errors,
+                    QStringLiteral(
+                        "action-catalog.unsupported-contract-version")));
+
+    auto unboundCatalogObject = v2CatalogObject;
+    unboundCatalogObject.insert(QStringLiteral("sourceManifestDigest"),
+                                QString(64, QLatin1Char('0')));
+    const auto unboundCatalog = parseDormantCatalogV2(
+        encode(std::move(unboundCatalogObject)));
+    QVERIFY(!unboundCatalog);
+    QVERIFY(hasCode(unboundCatalog.errors,
+                    QStringLiteral(
+                        "catalog.source-manifest-digest-mismatch")));
+
+    auto unboundActionObject = v2ActionObject;
+    unboundActionObject.insert(QStringLiteral("sourceManifestDigest"),
+                               QString(64, QLatin1Char('0')));
+    const auto unboundActions = parseDormantActionCatalogV2(
+        encode(std::move(unboundActionObject)),
+        readBytes(dormantV2ConfigSchemaPath()));
+    QVERIFY(!unboundActions);
+    QVERIFY(hasCode(unboundActions.errors,
+                    QStringLiteral(
+                        "action-catalog.source-manifest-digest-mismatch")));
+
+    QVERIFY(isCanonicalAuthorityId(testAuthorityId));
+    for (const auto &authorityId : {
+             QString(),
+             QString(32, QLatin1Char('0')),
+             QStringLiteral("0123456789ABCDEF0123456789ABCDEF"),
+             QStringLiteral("0123456789abcdef0123456789abcde"),
+             QStringLiteral("g123456789abcdef0123456789abcdef"),
+         }) {
+      QVERIFY(!isCanonicalAuthorityId(authorityId));
+      const auto invalidDefault = defaultDormantDesiredStateV2(
+          *v2Catalog.value, *v2Actions.value, authorityId);
+      QVERIFY(!invalidDefault);
+      QVERIFY(hasCode(invalidDefault.errors,
+                      QStringLiteral("state.invalid-authority-id")));
+    }
+
+    const auto defaultV2 = defaultDormantDesiredStateV2(
+        *v2Catalog.value, *v2Actions.value, testAuthorityId);
+    QVERIFY2(defaultV2, qPrintable(describeErrors(defaultV2.errors)));
+    QCOMPARE(defaultV2.value->authorityId, testAuthorityId);
+    QCOMPARE(defaultV2.value->semanticState.formatVersion, quint32(1));
+    QCOMPARE(defaultV2.value->semanticState.targetHyprland,
+             QStringLiteral("0.56.2"));
+    QCOMPARE(defaultV2.value->semanticState.catalogDigest,
+             QString::fromLatin1(dormantReviewedCatalogV2Digest));
+    QCOMPARE(defaultV2.value->semanticState.actionCatalogDigest,
+             QString::fromLatin1(dormantReviewedActionCatalogV2Digest));
+    QCOMPARE(defaultV2.value->semanticState.workspaceRules.size(),
+             qsizetype(1));
+    QCOMPARE(defaultV2.value->semanticState.workspaceRules.constFirst().id,
+             QString::fromLatin1(sharedSpacingWorkspaceRuleId));
+    QCOMPARE(
+        defaultV2.value->semanticState.workspaceRules.constFirst().selector,
+        QString::fromLatin1(sharedSpacingWorkspaceRuleSelector));
+
+    const auto encoded = serializeDormantDesiredStateV2(*defaultV2.value);
+    QVERIFY2(encoded, qPrintable(describeErrors(encoded.errors)));
+    const auto runtimeObject =
+        QJsonDocument::fromJson(*encoded.value).object();
+    QCOMPARE(runtimeObject.value(QStringLiteral("formatVersion")).toInt(), 2);
+    QCOMPARE(runtimeObject.value(QStringLiteral("authorityId")).toString(),
+             testAuthorityId);
+    auto templateProjection = runtimeObject;
+    templateProjection.remove(QStringLiteral("authorityId"));
+    QCOMPARE(templateProjection, readObject(dormantV2TemplatePath()));
+
+    const auto reparsed = parseDormantDesiredStateV2(
+        *encoded.value, *v2Catalog.value, *v2Actions.value);
+    QVERIFY2(reparsed, qPrintable(describeErrors(reparsed.errors)));
+    QCOMPARE(*reparsed.value, *defaultV2.value);
+
+    const auto formatOneBoundToV2 = serializeDesiredState(
+        defaultV2.value->semanticState);
+    const auto rejectedV2AuthoritiesInProduction = parseDesiredState(
+        formatOneBoundToV2, *v2Catalog.value, *v2Actions.value);
+    QVERIFY(!rejectedV2AuthoritiesInProduction);
+    QVERIFY(hasCode(
+        rejectedV2AuthoritiesInProduction.errors,
+        QStringLiteral("state.active-v1-catalog-authority-required")));
+    QVERIFY(hasCode(
+        rejectedV2AuthoritiesInProduction.errors,
+        QStringLiteral("state.active-v1-action-authority-required")));
+
+    const auto rejectedByV1 = parseDesiredState(
+        *encoded.value, *v1Catalog.value, *v1Actions.value);
+    QVERIFY(!rejectedByV1);
+
+    const auto v1CatalogRejectedByDormantState = parseDormantDesiredStateV2(
+        *encoded.value, *v1Catalog.value, *v2Actions.value);
+    QVERIFY(!v1CatalogRejectedByDormantState);
+    QVERIFY(hasCode(v1CatalogRejectedByDormantState.errors,
+                    QStringLiteral(
+                        "state.dormant-v2-catalog-authority-required")));
+    const auto v1ActionsRejectedByDormantState = parseDormantDesiredStateV2(
+        *encoded.value, *v2Catalog.value, *v1Actions.value);
+    QVERIFY(!v1ActionsRejectedByDormantState);
+    QVERIFY(hasCode(v1ActionsRejectedByDormantState.errors,
+                    QStringLiteral(
+                        "state.dormant-v2-action-authority-required")));
+
+    auto invalidRuntime = runtimeObject;
+    for (const auto &authorityId : {
+             QString(32, QLatin1Char('0')),
+             QStringLiteral("0123456789ABCDEF0123456789ABCDEF"),
+             QStringLiteral("0123456789abcdef0123456789abcde"),
+         }) {
+      invalidRuntime.insert(QStringLiteral("authorityId"), authorityId);
+      const auto invalid = parseDormantDesiredStateV2(
+          encode(invalidRuntime), *v2Catalog.value, *v2Actions.value);
+      QVERIFY(!invalid);
+      QVERIFY(hasCode(invalid.errors,
+                      QStringLiteral("state.invalid-authority-id")));
+    }
+
+    auto invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.formatVersion = 2;
+    const auto invalidSerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!invalidSerialization);
+    QVERIFY(hasCode(invalidSerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+
+    invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.catalogDigest =
+        QString::fromLatin1(reviewedCatalogDigest);
+    const auto wrongCatalogSerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!wrongCatalogSerialization);
+    QVERIFY(hasCode(wrongCatalogSerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+
+    invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.actionCatalogDigest =
+        QString::fromLatin1(reviewedActionCatalogDigest);
+    const auto wrongAuthoritySerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!wrongAuthoritySerialization);
+    QVERIFY(hasCode(wrongAuthoritySerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+
+    invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.targetHyprland = QStringLiteral("0.56.1");
+    const auto wrongTargetSerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!wrongTargetSerialization);
+    QVERIFY(hasCode(wrongTargetSerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+
+    invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.readOnly = true;
+    invalidEnvelope.semanticState.opaqueFutureDocument = QJsonObject{};
+    const auto readOnlySerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!readOnlySerialization);
+    QVERIFY(hasCode(readOnlySerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+
+    invalidEnvelope = *defaultV2.value;
+    invalidEnvelope.semanticState.opaqueFutureDocument = QJsonObject{};
+    const auto opaqueSerialization =
+        serializeDormantDesiredStateV2(invalidEnvelope);
+    QVERIFY(!opaqueSerialization);
+    QVERIFY(hasCode(opaqueSerialization.errors,
+                    QStringLiteral("state.invalid-v2-semantic-envelope")));
+  }
+
+  void dormantV2ProtectedWorkspaceRuleMustBeFinalWhenPresent() {
+    const auto catalog = dormantV2Catalog();
+    const auto actions = dormantV2ActionCatalog();
+    QVERIFY2(catalog, qPrintable(describeErrors(catalog.errors)));
+    QVERIFY2(actions, qPrintable(describeErrors(actions.errors)));
+    const auto initial = defaultDormantDesiredStateV2(
+        *catalog.value, *actions.value, testAuthorityId);
+    QVERIFY2(initial, qPrintable(describeErrors(initial.errors)));
+
+    auto nonFinal = *initial.value;
+    nonFinal.semanticState.workspaceRules.append(WorkspaceRule{
+        .id = QStringLiteral("user-rule-after-protected"),
+        .selector = QStringLiteral("1"),
+        .enabled = true,
+        .monitor = QString(),
+        .persistent = false,
+        .isDefault = false,
+        .layout = QString(),
+        .overrides = QJsonObject{},
+    });
+    const auto rejectedSerialization =
+        serializeDormantDesiredStateV2(nonFinal);
+    QVERIFY(!rejectedSerialization);
+    QCOMPARE(rejectedSerialization.errors.size(), qsizetype(1));
+    QCOMPARE(rejectedSerialization.errors.constFirst().path,
+             QStringLiteral("$.workspaceRules"));
+    QCOMPARE(
+        rejectedSerialization.errors.constFirst().code,
+        QStringLiteral(
+            "state.dormant-v2-protected-workspace-rule-not-final"));
+
+    auto nonFinalObject = QJsonDocument::fromJson(
+                              serializeDesiredState(nonFinal.semanticState))
+                              .object();
+    nonFinalObject.insert(QStringLiteral("formatVersion"), 2);
+    nonFinalObject.insert(QStringLiteral("authorityId"), testAuthorityId);
+    const auto rejectedParse = parseDormantDesiredStateV2(
+        encode(std::move(nonFinalObject)), *catalog.value, *actions.value);
+    QVERIFY(!rejectedParse);
+    QCOMPARE(rejectedParse.errors.size(), qsizetype(1));
+    QCOMPARE(rejectedParse.errors.constFirst().path,
+             QStringLiteral("$.workspaceRules"));
+    QCOMPARE(
+        rejectedParse.errors.constFirst().code,
+        QStringLiteral(
+            "state.dormant-v2-protected-workspace-rule-not-final"));
+
+    auto absent = *initial.value;
+    absent.semanticState.workspaceRules.clear();
+    const auto absentEncoded = serializeDormantDesiredStateV2(absent);
+    QVERIFY2(absentEncoded,
+             qPrintable(describeErrors(absentEncoded.errors)));
+    const auto absentReparsed = parseDormantDesiredStateV2(
+        *absentEncoded.value, *catalog.value, *actions.value);
+    QVERIFY2(absentReparsed,
+             qPrintable(describeErrors(absentReparsed.errors)));
+    QVERIFY(absentReparsed.value->semanticState.workspaceRules.isEmpty());
+  }
+
+  void dormantV2SerializationBoundsTheFinalAuthorityEnvelope() {
+    const auto catalog = dormantV2Catalog();
+    const auto actions = dormantV2ActionCatalog();
+    QVERIFY2(catalog, qPrintable(describeErrors(catalog.errors)));
+    QVERIFY2(actions, qPrintable(describeErrors(actions.errors)));
+    const auto initial = defaultDormantDesiredStateV2(
+        *catalog.value, *actions.value, testAuthorityId);
+    QVERIFY2(initial, qPrintable(describeErrors(initial.errors)));
+
+    auto nearCap = *initial.value;
+    const auto fillerKey = QStringLiteral("dormant-v2-size-probe");
+    nearCap.semanticState.overrides.insert(fillerKey, QString());
+    const auto baseSemanticBytes =
+        serializeDesiredState(nearCap.semanticState);
+    QVERIFY(baseSemanticBytes.size() < maximumDesiredStateBytes);
+
+    const auto fillerLength =
+        maximumDesiredStateBytes - baseSemanticBytes.size();
+    nearCap.semanticState.overrides.insert(
+        fillerKey, QString(fillerLength, QLatin1Char('x')));
+    const auto maximumSemanticBytes =
+        serializeDesiredState(nearCap.semanticState);
+    QCOMPARE(maximumSemanticBytes.size(), maximumDesiredStateBytes);
+
+    const auto rejected = serializeDormantDesiredStateV2(nearCap);
+    QVERIFY(!rejected);
+    QCOMPARE(rejected.errors.size(), qsizetype(1));
+    QCOMPARE(rejected.errors.constFirst().path, QStringLiteral("$"));
+    QCOMPARE(rejected.errors.constFirst().code,
+             QStringLiteral("json.size-limit"));
+  }
+
+  void dormantV2RevisionEndpointsRoundTripAndOverflowIsRejected() {
+    const auto catalog = dormantV2Catalog();
+    const auto actions = dormantV2ActionCatalog();
+    QVERIFY2(catalog, qPrintable(describeErrors(catalog.errors)));
+    QVERIFY2(actions, qPrintable(describeErrors(actions.errors)));
+    const auto initial = defaultDormantDesiredStateV2(
+        *catalog.value, *actions.value, testAuthorityId);
+    QVERIFY2(initial, qPrintable(describeErrors(initial.errors)));
+
+    for (const auto revision : std::array<quint64, 2>{
+             0,
+             std::numeric_limits<quint64>::max(),
+         }) {
+      auto endpoint = *initial.value;
+      endpoint.semanticState.revision = revision;
+      const auto encoded = serializeDormantDesiredStateV2(endpoint);
+      QVERIFY2(encoded, qPrintable(describeErrors(encoded.errors)));
+      const auto object = QJsonDocument::fromJson(*encoded.value).object();
+      QCOMPARE(object.value(QStringLiteral("revision")).toString(),
+               QString::number(revision));
+
+      const auto reparsed = parseDormantDesiredStateV2(
+          *encoded.value, *catalog.value, *actions.value);
+      QVERIFY2(reparsed, qPrintable(describeErrors(reparsed.errors)));
+      QCOMPARE(reparsed.value->semanticState.revision, revision);
+      const auto reencoded = serializeDormantDesiredStateV2(*reparsed.value);
+      QVERIFY2(reencoded, qPrintable(describeErrors(reencoded.errors)));
+      QCOMPARE(*reencoded.value, *encoded.value);
+    }
+
+    const auto encoded = serializeDormantDesiredStateV2(*initial.value);
+    QVERIFY2(encoded, qPrintable(describeErrors(encoded.errors)));
+    auto overflowObject = QJsonDocument::fromJson(*encoded.value).object();
+    overflowObject.insert(QStringLiteral("revision"),
+                          QStringLiteral("18446744073709551616"));
+    const auto overflow = parseDormantDesiredStateV2(
+        encode(std::move(overflowObject)), *catalog.value, *actions.value);
+    QVERIFY(!overflow);
+    QVERIFY(hasCode(overflow.errors, QStringLiteral("state.invalid-revision")));
+    QVERIFY(hasErrorAt(overflow.errors, QStringLiteral("$.revision")));
   }
 
   void actionCatalogMatchesSchemaAndTaggedProvenance() {
@@ -1258,6 +1720,1520 @@ private slots:
              QSet<QString>(expectedMonitorHashes.keyBegin(),
                            expectedMonitorHashes.keyEnd()));
 
+    const auto maximizeSources =
+        manifest.value(QStringLiteral("maximizeSources")).toArray();
+    QCOMPARE(maximizeSources.size(), 14);
+    const QMap<QString, QString> expectedMaximizeTags{
+        {QStringLiteral("0.56.0"), QStringLiteral("v0.56.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedMaximizeCommits{
+        {QStringLiteral("0.56.0"),
+         QStringLiteral("36b2e0cfe0c6094dbc47bd42a437431315bb3087")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedMaximizeHashes{
+        {QStringLiteral("0.56.0|src/desktop/Workspace.cpp"),
+         QStringLiteral("413bc18a0d17b1bafc27f956a7103b301fa382088449bbb2422e123255e9fcec")},
+        {QStringLiteral("0.56.0|src/config/shared/workspace/WorkspaceRuleManager.cpp"),
+         QStringLiteral("06e8dcbaea83e51710bd372a8f264ad3d07bbe061b9720bbe456811451c02d10")},
+        {QStringLiteral("0.56.0|src/config/shared/workspace/WorkspaceRule.cpp"),
+         QStringLiteral("96e1cc448847b03e7f48dc7e1c2bc4ed6c192fcf7c11c608b33f5760f7788f96")},
+        {QStringLiteral("0.56.0|src/layout/space/Space.cpp"),
+         QStringLiteral("8ddcd4dd0a90bd59d4fa21f95f53444419188846a3a217284f0d6b008875d376")},
+        {QStringLiteral("0.56.0|src/managers/fullscreen/FullscreenController.hpp"),
+         QStringLiteral("7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378")},
+        {QStringLiteral("0.56.0|src/managers/fullscreen/FullscreenController.cpp"),
+         QStringLiteral("581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0")},
+        {QStringLiteral("0.56.0|src/managers/fullscreen/handler/FullscreenHandler.cpp"),
+         QStringLiteral("5bfed3aa05f2e6f013e7776efaa754e3e107aa7688eb5d523bdbdfa87f51bc85")},
+        {QStringLiteral("0.56.1|src/desktop/Workspace.cpp"),
+         QStringLiteral("e6c8e44d9f8211a8f56b65b433b5f5e4c3e6565479ecb2d749bc02cf4e926ca9")},
+        {QStringLiteral("0.56.1|src/config/shared/workspace/WorkspaceRuleManager.cpp"),
+         QStringLiteral("06e8dcbaea83e51710bd372a8f264ad3d07bbe061b9720bbe456811451c02d10")},
+        {QStringLiteral("0.56.1|src/config/shared/workspace/WorkspaceRule.cpp"),
+         QStringLiteral("96e1cc448847b03e7f48dc7e1c2bc4ed6c192fcf7c11c608b33f5760f7788f96")},
+        {QStringLiteral("0.56.1|src/layout/space/Space.cpp"),
+         QStringLiteral("8ddcd4dd0a90bd59d4fa21f95f53444419188846a3a217284f0d6b008875d376")},
+        {QStringLiteral("0.56.1|src/managers/fullscreen/FullscreenController.hpp"),
+         QStringLiteral("7f3585f23e4d756f3f165670a604de39717eb3fd704114e2a230bdd6ffba2378")},
+        {QStringLiteral("0.56.1|src/managers/fullscreen/FullscreenController.cpp"),
+         QStringLiteral("581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0")},
+        {QStringLiteral("0.56.1|src/managers/fullscreen/handler/FullscreenHandler.cpp"),
+         QStringLiteral("5bfed3aa05f2e6f013e7776efaa754e3e107aa7688eb5d523bdbdfa87f51bc85")},
+    };
+    QSet<QString> maximizeSourceKeys;
+    for (const auto &value : maximizeSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedMaximizeHashes.contains(key), qPrintable(key));
+      QVERIFY2(!maximizeSourceKeys.contains(key), qPrintable(key));
+      maximizeSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedMaximizeTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedMaximizeCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedMaximizeHashes.value(key)));
+    }
+    QCOMPARE(maximizeSourceKeys,
+             QSet<QString>(expectedMaximizeHashes.keyBegin(),
+                           expectedMaximizeHashes.keyEnd()));
+
+    const auto groupBehaviorSources =
+        manifest.value(QStringLiteral("groupBehaviorSources")).toArray();
+    QCOMPARE(groupBehaviorSources.size(), 12);
+    const QMap<QString, QString> expectedGroupBehaviorTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedGroupBehaviorCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedGroupBehaviorHashes{
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.55.0|src/desktop/view/Group.cpp"),
+         QStringLiteral("b0f9210c858bcaf74c8f5a44f7f40abfe03af8a096e3fb158afd2346be8b0eed")},
+        {QStringLiteral("0.55.0|src/layout/supplementary/DragController.cpp"),
+         QStringLiteral("0d1ddc01f506cdbf3dcec5ea4e111c61286d2ce4359100847270f82569b3505f")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprGroupBarDecoration.cpp"),
+         QStringLiteral("3d687c43d5414fb6ad617465f06bb87cda8dc6c2e791dbb0e28de72de1cf4c68")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+        {QStringLiteral("0.56.1|src/desktop/view/Group.cpp"),
+         QStringLiteral("f34fec0891e69e0a1b67901e8d1b6b1a1ae8a47eccc92313c2b41660961cd385")},
+        {QStringLiteral("0.56.1|src/layout/supplementary/DragController.cpp"),
+         QStringLiteral("02560e7a38902cd400c3fa1b229eb6ba2c9494750413116b9277f5e8a818b62c")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprGroupBarDecoration.cpp"),
+         QStringLiteral("39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab")},
+        {QStringLiteral("0.56.1|src/desktop/state/GlobalWindowController.cpp"),
+         QStringLiteral("669cb209f2e4efb2b248bbbc00ef8cef84a4638017a30dc085c8f85fdb2d65f8")},
+    };
+    QSet<QString> groupBehaviorSourceKeys;
+    for (const auto &value : groupBehaviorSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedGroupBehaviorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!groupBehaviorSourceKeys.contains(key), qPrintable(key));
+      groupBehaviorSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedGroupBehaviorHashes.value(key)));
+    }
+    QCOMPARE(groupBehaviorSourceKeys,
+             QSet<QString>(expectedGroupBehaviorHashes.keyBegin(),
+                           expectedGroupBehaviorHashes.keyEnd()));
+
+    const auto appearanceBehaviorSources =
+        manifest.value(QStringLiteral("appearanceBehaviorSources")).toArray();
+    QCOMPARE(appearanceBehaviorSources.size(), 101);
+    const QMap<QString, QString> expectedAppearanceBehaviorHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+         QStringLiteral("67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7")},
+        {QStringLiteral("0.55.0|src/render/OpenGL.cpp"),
+         QStringLiteral("2b1245e9207db6e33191a509fb45c1cdf1f1380146e55d61b56ea920857ea1e3")},
+        {QStringLiteral("0.55.0|src/render/pass/Pass.cpp"),
+         QStringLiteral("e78eb11477d673ade97ad7a12486ebd97366708bd5e634b5a7f6901fe649c9e1")},
+        {QStringLiteral("0.55.0|src/render/ShaderLoader.hpp"),
+         QStringLiteral("8e35c2300fa597bdad275dbb1e2c14067a6440d4b4032e0881cdc4765190fb93")},
+        {QStringLiteral("0.55.0|src/render/Shader.cpp"),
+         QStringLiteral("2e98805b5082cb48e88fa364c3703087f574cb781903de07d833758581684f78")},
+        {QStringLiteral("0.55.0|src/render/GLRenderer.cpp"),
+         QStringLiteral("a2f5aac8e77ec4a96a87b038d36f72e3b84af3325f27cf9cb1d8e2d6991773c3")},
+        {QStringLiteral("0.55.0|src/render/ElementRenderer.cpp"),
+         QStringLiteral("5dbe22ebdb367af0d6e3e4fd566c4532b98d949007668249c957de075a28a24e")},
+        {QStringLiteral("0.55.0|src/render/gl/GLElementRenderer.cpp"),
+         QStringLiteral("1c14d08921b57a051fba09fd272d0efb5b4dd10452b7e8bd675ba548214a0391")},
+        {QStringLiteral("0.55.0|src/render/pass/PreBlurElement.hpp"),
+         QStringLiteral("50675b156230bc29e1ef11844f360cc5e01d0b514ee10ae817a4a70f3ae38528")},
+        {QStringLiteral("0.55.0|src/render/pass/PreBlurElement.cpp"),
+         QStringLiteral("308c85d990a3cbe1458aee1990fa91ca76cc6118fde9b3a961e42d40282c77d5")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blurprepare.frag"),
+         QStringLiteral("e870f47f282e21cc5a8534f1b62ebf6c5dc96fb7ab53e3db0582ec80b9b5d1c3")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blurprepare.glsl"),
+         QStringLiteral("219d76ec643ce3055d295850f54365412ba2eb4180015c59e1764807ba64a56d")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blurfinish.frag"),
+         QStringLiteral("77a16587e972ced698da747f29a1c0fd91a70f79b9db75beeab3916391710748")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blurFinish.glsl"),
+         QStringLiteral("ab3df5ec456f60c83a3af85796816b5d99351cca309eaf7023eddf0dd695c731")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blur1.frag"),
+         QStringLiteral("ea384ff735b47417aac1873579582dca3a8e57e9bbde0b643e6f15b2ffae3c68")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/blur1.glsl"),
+         QStringLiteral("ff0985d2b95f6d927d39a2058379283ac6118ab75b47b90a536fa4da4cc0fd4d")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/gain.glsl"),
+         QStringLiteral("fae6204d8e51d368534b23988e5de84c5d3bd2e25a8d95c5266a9d0bbc0c4bfb")},
+        {QStringLiteral("0.55.0|src/desktop/Workspace.cpp"),
+         QStringLiteral("5e7d585513e7d4c79c93edc5303d578ae4cbdb337a2128f37358f754bac0c5f6")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprBorderDecoration.cpp"),
+         QStringLiteral("b03a9c649c158403f88da98fc686514e587cd4a1bf13eb8bd143f1e5edab8d74")},
+        {QStringLiteral("0.55.0|src/render/decorations/DecorationPositioner.cpp"),
+         QStringLiteral("aea200570600718a05977daf1beb2a2188058e7f0290e36a9ab5b0029b47629d")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprDropShadowDecoration.cpp"),
+         QStringLiteral("d2bf3906c2d63633200b222e03c1f664a8bb4f90fb81f46500af3f18335d56cb")},
+        {QStringLiteral("0.55.0|src/desktop/rule/windowRule/WindowRuleApplicator.hpp"),
+         QStringLiteral("30a8f21c37fbb2207ba9647d2432916b3f3ba1214a8788fc9a9c599a6cdd931e")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.hpp"),
+         QStringLiteral("c52d94684d4dfab1fe80df565a08b560c3fd8e8ca32571436c8fa6f569f76e42")},
+        {QStringLiteral("0.55.0|src/render/Renderer.hpp"),
+         QStringLiteral("196404adaf7c2af5f9f7ad0383c95c0a89d1d5c4e560941f38ea10b960650d24")},
+        {QStringLiteral("0.55.0|src/render/OpenGL.hpp"),
+         QStringLiteral("f1d33ee262601cc3a2d5df0d694b7352de5f401d8063a487e16a092f255c5e3e")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprDropShadowDecoration.hpp"),
+         QStringLiteral("aaa43c9c130461a7558f17b78a302ebd9409137d79aebe34417f9fe7c12905e6")},
+        {QStringLiteral("0.55.0|src/render/pass/BorderPassElement.hpp"),
+         QStringLiteral("0aafff3cbfc3290bd725a6b2ea2f4a10f7f47f5505108ce36569395e7fc53efd")},
+        {QStringLiteral("0.55.0|src/render/pass/RectPassElement.hpp"),
+         QStringLiteral("29b59dc0f46df48ea6624a1bec7705f359ddb99390458a9d5c8914c63fcb3569")},
+        {QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.hpp"),
+         QStringLiteral("e5fe6f6213f21197c23773caef98742eb3d27377ff7342f1a75b0c020cc04717")},
+        {QStringLiteral("0.55.0|src/render/pass/TexPassElement.hpp"),
+         QStringLiteral("d95d048fc0ec7ad06cce2cb1799b1cf46e3b08d632cae3429866f8428ad4d4e2")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/border.frag"),
+         QStringLiteral("c477ed2719e7d4889eb1e7b40dae897da64b9c2b515892f1996303de85556ef3")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/border.glsl"),
+         QStringLiteral("e476ed34604e3e3cebbac55e8d0fb628d8f297eb643db304abd317d79869d112")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/ext.frag"),
+         QStringLiteral("d2164a4529ecbef68ec8ce5f6d459a71762bbe6d9b5d118ddbc478d9e750a3c7")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/quad.frag"),
+         QStringLiteral("28862349478c2ea5d1122aeef9b38e79e230ce358a2c659ec7f074b73b84afee")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/rounding.glsl"),
+         QStringLiteral("67efb089576ed2b8ddb327369e75049cccc822564e0e5d845d9c6f325f4de9dc")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/shadow.frag"),
+         QStringLiteral("16d1f5c7efcde9d31a4690a2c25e2db6b89a61ab97ed0f97b467a4097715ef60")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/shadow.glsl"),
+         QStringLiteral("6f925478b303f8a467c926cb33fb5f6f197e22bfb5819665cf3cf95f785abdb1")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/surface.frag"),
+         QStringLiteral("6830e2db330843fcb4917fa4ed7118767999ca25b4840d135d4d8cea8143bb48")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprInnerGlowDecoration.cpp"),
+         QStringLiteral("0d8fcb1608d6f355e8a8dae63b2dd715c89e7f565a0611e4794982d97d895938")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/inner_glow.frag"),
+         QStringLiteral("d595247c788e9193926b7826224bf4bb49f34579d2fded34c708ebd39bfd27e1")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/inner_glow.glsl"),
+         QStringLiteral("3428e751180963f3c93423ca0cf29898aca481e8869be93a7f080b67d18517dd")},
+        {QStringLiteral("0.55.0|src/protocols/OutputManagement.cpp"),
+         QStringLiteral("619e3854259769282c2aa07496158af0a80d4cfa340e67bf937a958e097ba96f")},
+        {QStringLiteral("0.55.0|src/config/shared/monitor/MonitorRuleManager.cpp"),
+         QStringLiteral("fac5ef95c741c8fb6b46802d3711f579cba23b5e2f44d051e5e3a0ed568e8b14")},
+        {QStringLiteral("0.55.0|src/helpers/Monitor.cpp"),
+         QStringLiteral("c84ad7cafd85bdc8192dd30d8441f8d417f7d379d9deee4ee71ef6666ef26a0f")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b")},
+        {QStringLiteral("0.56.1|src/desktop/state/GlobalWindowController.cpp"),
+         QStringLiteral("669cb209f2e4efb2b248bbbc00ef8cef84a4638017a30dc085c8f85fdb2d65f8")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+        {QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+         QStringLiteral("4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7")},
+        {QStringLiteral("0.56.1|src/output/Monitor.cpp"),
+         QStringLiteral("9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927")},
+        {QStringLiteral("0.56.1|src/desktop/state/LayerFadeout.cpp"),
+         QStringLiteral("913541971166a171d5c922b63fbbda3be51afe2c25c43f54df97cb7fa5b9b254")},
+        {QStringLiteral("0.56.1|src/desktop/state/WindowFadeout.cpp"),
+         QStringLiteral("510e3f19d645585e55ced3fb090037c7e4f003e67fdba1b65dcbb5ff92ff03fe")},
+        {QStringLiteral("0.56.1|src/render/OpenGL.cpp"),
+         QStringLiteral("6b58dcffd17364f4f98719f3b3dab342dff1e2ca0b922a65cc2bfb664f81ea16")},
+        {QStringLiteral("0.56.1|src/render/pass/Pass.cpp"),
+         QStringLiteral("529c5c9d55dd707c4bc98da38832b0006880d3948592678a31db62e876e34820")},
+        {QStringLiteral("0.56.1|src/desktop/state/PopupFadeout.cpp"),
+         QStringLiteral("d3498272769a78ef6f700f858f454c1bed056425df23a2c3003a6fb43b08879f")},
+        {QStringLiteral("0.56.1|src/render/ShaderLoader.hpp"),
+         QStringLiteral("7f3c109c8ac1c044c0b48b56e98b977ad29b6138fed9f45041163a83eea23663")},
+        {QStringLiteral("0.56.1|src/render/Shader.cpp"),
+         QStringLiteral("dcf574e0b64c246d12fe03bff6af4c9631b95baa18d56e481d6d37ffa7b64f64")},
+        {QStringLiteral("0.56.1|src/render/GLRenderer.cpp"),
+         QStringLiteral("2072807043b5d53a0910ebcc3936e69905abdf5905457d363f70d8c1043a4a81")},
+        {QStringLiteral("0.56.1|src/render/ElementRenderer.cpp"),
+         QStringLiteral("32f79c359a5ae6a265f7b2feee5c190d643371dd984d2bdda6a4ef203ccec828")},
+        {QStringLiteral("0.56.1|src/render/gl/GLElementRenderer.cpp"),
+         QStringLiteral("d7db3c34fbd94c3acdef3dc821d906a48583ac188704ec1943959df1c88239f8")},
+        {QStringLiteral("0.56.1|src/render/pass/PreBlurElement.hpp"),
+         QStringLiteral("50675b156230bc29e1ef11844f360cc5e01d0b514ee10ae817a4a70f3ae38528")},
+        {QStringLiteral("0.56.1|src/render/pass/PreBlurElement.cpp"),
+         QStringLiteral("308c85d990a3cbe1458aee1990fa91ca76cc6118fde9b3a961e42d40282c77d5")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blurprepare.frag"),
+         QStringLiteral("e870f47f282e21cc5a8534f1b62ebf6c5dc96fb7ab53e3db0582ec80b9b5d1c3")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blurprepare.glsl"),
+         QStringLiteral("1e359628ecdae3bd769e6a2c00b13d09df9319c88442730f5d8510c78feaeb36")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blurfinish.frag"),
+         QStringLiteral("77a16587e972ced698da747f29a1c0fd91a70f79b9db75beeab3916391710748")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blurFinish.glsl"),
+         QStringLiteral("f3c1f38430bb362552584c8f8ad5b52ac2838b18d576eb1d87fdbbbba6258c27")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blur1.frag"),
+         QStringLiteral("ea384ff735b47417aac1873579582dca3a8e57e9bbde0b643e6f15b2ffae3c68")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/blur1.glsl"),
+         QStringLiteral("ff0985d2b95f6d927d39a2058379283ac6118ab75b47b90a536fa4da4cc0fd4d")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/gain.glsl"),
+         QStringLiteral("fae6204d8e51d368534b23988e5de84c5d3bd2e25a8d95c5266a9d0bbc0c4bfb")},
+        {QStringLiteral("0.56.1|src/desktop/Workspace.cpp"),
+         QStringLiteral("e6c8e44d9f8211a8f56b65b433b5f5e4c3e6565479ecb2d749bc02cf4e926ca9")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprBorderDecoration.cpp"),
+         QStringLiteral("23ef95cfd33ec3116dbcc0de0a521809a8752df80d83df926ae2771631f48b46")},
+        {QStringLiteral("0.56.1|src/render/decorations/DecorationPositioner.cpp"),
+         QStringLiteral("2435b97c90534fd3cf8a859f8c23d31a9ba89e4b5b7eed529e10bc82f7676b6c")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprDropShadowDecoration.cpp"),
+         QStringLiteral("f83870a33d8d7b4d28f2c03ecdf0673d4bfef2192da189a1fe03684c9a6fce41")},
+        {QStringLiteral("0.56.1|src/desktop/rule/windowRule/WindowRuleApplicator.hpp"),
+         QStringLiteral("334e1254a66e2df8ef243544e3ff99db398ed5ec6e48996d496d05ff7bf50f44")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.hpp"),
+         QStringLiteral("1f60b8ff0bc6b5a48af5c03cb2cac1108db677efc70b4424b56ef6f1f2d1cc81")},
+        {QStringLiteral("0.56.1|src/render/Renderer.hpp"),
+         QStringLiteral("0787f259d788e979094ebb5f3b40140c642118c634356a431e2aca17ecf4d5a2")},
+        {QStringLiteral("0.56.1|src/render/OpenGL.hpp"),
+         QStringLiteral("e08060838c88d6bf650fd2e2b695acbda48e10f04a317a397d35f2f1dff9c813")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprDropShadowDecoration.hpp"),
+         QStringLiteral("013d55c2923012159989fc06cecd655ed75e51578c6f086254e5d840238c33bc")},
+        {QStringLiteral("0.56.1|src/render/pass/BorderPassElement.hpp"),
+         QStringLiteral("0aafff3cbfc3290bd725a6b2ea2f4a10f7f47f5505108ce36569395e7fc53efd")},
+        {QStringLiteral("0.56.1|src/render/pass/RectPassElement.hpp"),
+         QStringLiteral("29b59dc0f46df48ea6624a1bec7705f359ddb99390458a9d5c8914c63fcb3569")},
+        {QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.hpp"),
+         QStringLiteral("74bd3d56f5d6e75b43fa9d8291141869849341f4b5ec9d10f6c7ed3f5b55c2d5")},
+        {QStringLiteral("0.56.1|src/render/pass/TexPassElement.hpp"),
+         QStringLiteral("9f3a858292d9b2892df0f8b64ee605d2d4322cb57dd3bb5b3ed12e1f0638de3a")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/border.frag"),
+         QStringLiteral("bbcd85dd46b97d995418aedc6bb42e0f7e2500a855a777452f2ecb61598d8c49")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/border.glsl"),
+         QStringLiteral("730875c35be7bc002940f8db0b363a65cbc6659f7630a21eb0a46410d1fa619a")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/ext.frag"),
+         QStringLiteral("d2164a4529ecbef68ec8ce5f6d459a71762bbe6d9b5d118ddbc478d9e750a3c7")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/quad.frag"),
+         QStringLiteral("28862349478c2ea5d1122aeef9b38e79e230ce358a2c659ec7f074b73b84afee")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/rounding.glsl"),
+         QStringLiteral("67efb089576ed2b8ddb327369e75049cccc822564e0e5d845d9c6f325f4de9dc")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/shadow.frag"),
+         QStringLiteral("2f2c44a1d3a0733fc1557c3789bae26188410ba6e177baf1648976fb824b4c14")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/shadow.glsl"),
+         QStringLiteral("c4ca78af1d094eb0f996a06ac14bdda4c45a8d993da392b1b505ed513714e15d")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/surface.frag"),
+         QStringLiteral("26fb659bf56460aa051b28ee8b3ce9fed4ced34fcc836aede291058dd8195970")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprInnerGlowDecoration.cpp"),
+         QStringLiteral("c857934b45dfe308c56f0a45defd25d9b7e0c1a07e05ff52255c9c9441986c69")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/inner_glow.frag"),
+         QStringLiteral("60b5bf2771382af07a19cee5e66fe909030bbe087217f9d9baaf122bcd395e02")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/inner_glow.glsl"),
+         QStringLiteral("7858f0226aebfabdc78e6eaae3cba524ec3173b2d59a021d5cdc0bb54a66293b")},
+        {QStringLiteral("0.56.1|src/protocols/OutputManagement.cpp"),
+         QStringLiteral("148f12d73ced4e045bc864ebc3cc5022e3681b82bbec9936f2cd8b32d0bbd588")},
+        {QStringLiteral("0.56.1|src/config/shared/monitor/MonitorRuleManager.cpp"),
+         QStringLiteral("8946d306e66afc42c1d3b49fbbadd5ccf931c630896bda8430e6aaf7b3a7ea65")},
+    };
+    const QList<QString> expectedAppearanceBehaviorOrder{
+        QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.55.0|src/Compositor.cpp"),
+        QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+        QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+        QStringLiteral("0.55.0|src/render/OpenGL.cpp"),
+        QStringLiteral("0.55.0|src/render/pass/Pass.cpp"),
+        QStringLiteral("0.55.0|src/render/ShaderLoader.hpp"),
+        QStringLiteral("0.55.0|src/render/Shader.cpp"),
+        QStringLiteral("0.55.0|src/render/GLRenderer.cpp"),
+        QStringLiteral("0.55.0|src/render/ElementRenderer.cpp"),
+        QStringLiteral("0.55.0|src/render/gl/GLElementRenderer.cpp"),
+        QStringLiteral("0.55.0|src/render/pass/PreBlurElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/PreBlurElement.cpp"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blurprepare.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blurprepare.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blurfinish.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blurFinish.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blur1.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/blur1.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/gain.glsl"),
+        QStringLiteral("0.55.0|src/desktop/Workspace.cpp"),
+        QStringLiteral("0.55.0|src/render/decorations/CHyprBorderDecoration.cpp"),
+        QStringLiteral("0.55.0|src/render/decorations/DecorationPositioner.cpp"),
+        QStringLiteral("0.55.0|src/render/decorations/CHyprDropShadowDecoration.cpp"),
+        QStringLiteral("0.55.0|src/desktop/rule/windowRule/WindowRuleApplicator.hpp"),
+        QStringLiteral("0.55.0|src/desktop/view/Window.hpp"),
+        QStringLiteral("0.55.0|src/render/Renderer.hpp"),
+        QStringLiteral("0.55.0|src/render/OpenGL.hpp"),
+        QStringLiteral("0.55.0|src/render/decorations/CHyprDropShadowDecoration.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/BorderPassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/RectPassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/TexPassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/border.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/border.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/ext.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/quad.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/rounding.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/shadow.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/shadow.glsl"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/surface.frag"),
+        QStringLiteral("0.55.0|src/render/decorations/CHyprInnerGlowDecoration.cpp"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/inner_glow.frag"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/inner_glow.glsl"),
+        QStringLiteral("0.55.0|src/protocols/OutputManagement.cpp"),
+        QStringLiteral("0.55.0|src/config/shared/monitor/MonitorRuleManager.cpp"),
+        QStringLiteral("0.55.0|src/helpers/Monitor.cpp"),
+        QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.56.1|src/desktop/state/GlobalWindowController.cpp"),
+        QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+        QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+        QStringLiteral("0.56.1|src/output/Monitor.cpp"),
+        QStringLiteral("0.56.1|src/desktop/state/LayerFadeout.cpp"),
+        QStringLiteral("0.56.1|src/desktop/state/WindowFadeout.cpp"),
+        QStringLiteral("0.56.1|src/render/OpenGL.cpp"),
+        QStringLiteral("0.56.1|src/render/pass/Pass.cpp"),
+        QStringLiteral("0.56.1|src/desktop/state/PopupFadeout.cpp"),
+        QStringLiteral("0.56.1|src/render/ShaderLoader.hpp"),
+        QStringLiteral("0.56.1|src/render/Shader.cpp"),
+        QStringLiteral("0.56.1|src/render/GLRenderer.cpp"),
+        QStringLiteral("0.56.1|src/render/ElementRenderer.cpp"),
+        QStringLiteral("0.56.1|src/render/gl/GLElementRenderer.cpp"),
+        QStringLiteral("0.56.1|src/render/pass/PreBlurElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/PreBlurElement.cpp"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blurprepare.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blurprepare.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blurfinish.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blurFinish.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blur1.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/blur1.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/gain.glsl"),
+        QStringLiteral("0.56.1|src/desktop/Workspace.cpp"),
+        QStringLiteral("0.56.1|src/render/decorations/CHyprBorderDecoration.cpp"),
+        QStringLiteral("0.56.1|src/render/decorations/DecorationPositioner.cpp"),
+        QStringLiteral("0.56.1|src/render/decorations/CHyprDropShadowDecoration.cpp"),
+        QStringLiteral("0.56.1|src/desktop/rule/windowRule/WindowRuleApplicator.hpp"),
+        QStringLiteral("0.56.1|src/desktop/view/Window.hpp"),
+        QStringLiteral("0.56.1|src/render/Renderer.hpp"),
+        QStringLiteral("0.56.1|src/render/OpenGL.hpp"),
+        QStringLiteral("0.56.1|src/render/decorations/CHyprDropShadowDecoration.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/BorderPassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/RectPassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/TexPassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/border.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/border.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/ext.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/quad.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/rounding.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/shadow.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/shadow.glsl"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/surface.frag"),
+        QStringLiteral("0.56.1|src/render/decorations/CHyprInnerGlowDecoration.cpp"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/inner_glow.frag"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/inner_glow.glsl"),
+        QStringLiteral("0.56.1|src/protocols/OutputManagement.cpp"),
+        QStringLiteral("0.56.1|src/config/shared/monitor/MonitorRuleManager.cpp"),
+    };
+    QSet<QString> appearanceBehaviorSourceKeys;
+    QList<QString> appearanceBehaviorSourceOrder;
+    for (const auto &value : appearanceBehaviorSources) {
+      const auto source = value.toObject();
+      QCOMPARE(source.size(), 5);
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedAppearanceBehaviorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!appearanceBehaviorSourceKeys.contains(key), qPrintable(key));
+      appearanceBehaviorSourceKeys.insert(key);
+      appearanceBehaviorSourceOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedAppearanceBehaviorHashes.value(key)));
+    }
+    QCOMPARE(appearanceBehaviorSourceKeys,
+             QSet<QString>(expectedAppearanceBehaviorHashes.keyBegin(),
+                           expectedAppearanceBehaviorHashes.keyEnd()));
+    QCOMPARE(appearanceBehaviorSourceOrder, expectedAppearanceBehaviorOrder);
+
+    const auto advancedRuntimeSources =
+        manifest.value(QStringLiteral("advancedRuntimeSources")).toArray();
+    QCOMPARE(advancedRuntimeSources.size(), 42);
+    const QMap<QString, QString> expectedAdvancedRuntimeTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.0"), QStringLiteral("v0.56.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedAdvancedRuntimeCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.0"),
+         QStringLiteral("36b2e0cfe0c6094dbc47bd42a437431315bb3087")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedAdvancedRuntimeHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679")},
+        {QStringLiteral("0.55.0|src/managers/SessionLockManager.cpp"),
+         QStringLiteral("7bcea37c191c54401e743b718ea6475183a9dbcc33123bb6e26d88693db1227c")},
+        {QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+         QStringLiteral("67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7")},
+        {QStringLiteral("0.55.0|src/render/ElementRenderer.cpp"),
+         QStringLiteral("5dbe22ebdb367af0d6e3e4fd566c4532b98d949007668249c957de075a28a24e")},
+        {QStringLiteral("0.55.0|src/render/pass/TexPassElement.hpp"),
+         QStringLiteral("d95d048fc0ec7ad06cce2cb1799b1cf46e3b08d632cae3429866f8428ad4d4e2")},
+        {QStringLiteral("0.55.0|src/render/pass/TexPassElement.cpp"),
+         QStringLiteral("b3b482a7d4c121a0163ff3120642a6490d237d84812e7d01db82a09fbc250b71")},
+        {QStringLiteral("0.55.0|src/render/gl/GLElementRenderer.cpp"),
+         QStringLiteral("1c14d08921b57a051fba09fd272d0efb5b4dd10452b7e8bd675ba548214a0391")},
+        {QStringLiteral("0.55.0|src/render/OpenGL.cpp"),
+         QStringLiteral("2b1245e9207db6e33191a509fb45c1cdf1f1380146e55d61b56ea920857ea1e3")},
+        {QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.hpp"),
+         QStringLiteral("e5fe6f6213f21197c23773caef98742eb3d27377ff7342f1a75b0c020cc04717")},
+        {QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.cpp"),
+         QStringLiteral("c5e3729400ca779e73b516ea9c9367962d5358c28bb4fc396e348ad7aa4d0f46")},
+        {QStringLiteral("0.55.0|src/render/shaders/glsl/surface.frag"),
+         QStringLiteral("6830e2db330843fcb4917fa4ed7118767999ca25b4840d135d4d8cea8143bb48")},
+        {QStringLiteral("0.55.0|src/helpers/Monitor.cpp"),
+         QStringLiteral("c84ad7cafd85bdc8192dd30d8441f8d417f7d379d9deee4ee71ef6666ef26a0f")},
+        {QStringLiteral("0.55.0|src/managers/screenshare/ScreenshareSession.cpp"),
+         QStringLiteral("865998b9669353b1653b8f0f78583931d017331c53f71b0956474bb3bd3d6f10")},
+        {QStringLiteral("0.55.0|src/helpers/cm/ColorManagement.hpp"),
+         QStringLiteral("a3eaf1dffb8bef9d18ce0be5bc5b270b9d07f6e605f7161b6c2c7bcd91dfa434")},
+        {QStringLiteral("0.55.0|src/render/Framebuffer.cpp"),
+         QStringLiteral("80ba41c93bb068a85ca94be6f95a6bd43b33f2da52618f2c7fb78c229f787648")},
+        {QStringLiteral("0.55.0|src/helpers/MonitorResources.cpp"),
+         QStringLiteral("18ff58ce9ed2268f361a49f22c7e5d9b951234b0cab5335accf628b6ac92bb4c")},
+        {QStringLiteral("0.56.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("bf295818d6ad5a1f01aa708a6843a968b9cbb14228482421bbe0e4e5b26600ed")},
+        {QStringLiteral("0.56.0|src/managers/input/InputManager.cpp"),
+         QStringLiteral("030d4f734e1303b5ae92c5bbfbdf8ece1bc7debecbee7abaf28f1e53f6fca966")},
+        {QStringLiteral("0.56.0|src/protocols/InputCapture.cpp"),
+         QStringLiteral("d034a7f2dd7c5010bfb52cc4db7717119a6c1482efe2dfeeae9da2fadab1a0fb")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+         QStringLiteral("07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e")},
+        {QStringLiteral("0.56.1|src/protocols/InputCapture.cpp"),
+         QStringLiteral("d034a7f2dd7c5010bfb52cc4db7717119a6c1482efe2dfeeae9da2fadab1a0fb")},
+        {QStringLiteral("0.56.1|src/managers/SessionLockManager.cpp"),
+         QStringLiteral("221e45b09e75ced356bf229169c207f43b4adf8e93147288c47de0cd04e9a9c0")},
+        {QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+         QStringLiteral("4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7")},
+        {QStringLiteral("0.56.1|src/render/ElementRenderer.cpp"),
+         QStringLiteral("32f79c359a5ae6a265f7b2feee5c190d643371dd984d2bdda6a4ef203ccec828")},
+        {QStringLiteral("0.56.1|src/render/pass/TexPassElement.hpp"),
+         QStringLiteral("9f3a858292d9b2892df0f8b64ee605d2d4322cb57dd3bb5b3ed12e1f0638de3a")},
+        {QStringLiteral("0.56.1|src/render/pass/TexPassElement.cpp"),
+         QStringLiteral("60dcded5bef532e26ee1d4e57d1cd0d653abea406114d71c72d9e49ae83f526e")},
+        {QStringLiteral("0.56.1|src/render/gl/GLElementRenderer.cpp"),
+         QStringLiteral("d7db3c34fbd94c3acdef3dc821d906a48583ac188704ec1943959df1c88239f8")},
+        {QStringLiteral("0.56.1|src/render/OpenGL.cpp"),
+         QStringLiteral("6b58dcffd17364f4f98719f3b3dab342dff1e2ca0b922a65cc2bfb664f81ea16")},
+        {QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.hpp"),
+         QStringLiteral("74bd3d56f5d6e75b43fa9d8291141869849341f4b5ec9d10f6c7ed3f5b55c2d5")},
+        {QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.cpp"),
+         QStringLiteral("ea559690633f8f2e0da7709cb3c00f12b54bc20fbe631437633744676eff24f8")},
+        {QStringLiteral("0.56.1|src/render/shaders/glsl/surface.frag"),
+         QStringLiteral("26fb659bf56460aa051b28ee8b3ce9fed4ced34fcc836aede291058dd8195970")},
+        {QStringLiteral("0.56.1|src/output/Monitor.cpp"),
+         QStringLiteral("9cf88e154eb5dae676c79d37b5b055ca6134838857cecdbb89a3b747a6821927")},
+        {QStringLiteral("0.56.1|src/managers/screenshare/ScreenshareSession.cpp"),
+         QStringLiteral("b6b2ce5d682080131f374510e7cecae54925356bea541ef99feeff3aba394c99")},
+        {QStringLiteral("0.56.1|src/helpers/cm/ColorManagement.hpp"),
+         QStringLiteral("c9b4823032e12cb45907aac714a19c5de89e5565a773b4eccbecd83ddb5d4de6")},
+        {QStringLiteral("0.56.1|src/render/Framebuffer.cpp"),
+         QStringLiteral("80ba41c93bb068a85ca94be6f95a6bd43b33f2da52618f2c7fb78c229f787648")},
+        {QStringLiteral("0.56.1|src/output/MonitorResources.cpp"),
+         QStringLiteral("90d39fd2c43852611b4f90ca14cc2d213f97c4770123021d2733cd1970488b8b")},
+    };
+    const QList<QString> expectedAdvancedRuntimeOrder{
+        QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.55.0|src/managers/SessionLockManager.cpp"),
+        QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+        QStringLiteral("0.55.0|src/render/ElementRenderer.cpp"),
+        QStringLiteral("0.55.0|src/render/pass/TexPassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/TexPassElement.cpp"),
+        QStringLiteral("0.55.0|src/render/gl/GLElementRenderer.cpp"),
+        QStringLiteral("0.55.0|src/render/OpenGL.cpp"),
+        QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.hpp"),
+        QStringLiteral("0.55.0|src/render/pass/SurfacePassElement.cpp"),
+        QStringLiteral("0.55.0|src/render/shaders/glsl/surface.frag"),
+        QStringLiteral("0.55.0|src/helpers/Monitor.cpp"),
+        QStringLiteral("0.55.0|src/managers/screenshare/ScreenshareSession.cpp"),
+        QStringLiteral("0.55.0|src/helpers/cm/ColorManagement.hpp"),
+        QStringLiteral("0.55.0|src/render/Framebuffer.cpp"),
+        QStringLiteral("0.55.0|src/helpers/MonitorResources.cpp"),
+        QStringLiteral("0.56.0|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.56.0|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.56.0|src/managers/input/InputManager.cpp"),
+        QStringLiteral("0.56.0|src/protocols/InputCapture.cpp"),
+        QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+        QStringLiteral("0.56.1|src/protocols/InputCapture.cpp"),
+        QStringLiteral("0.56.1|src/managers/SessionLockManager.cpp"),
+        QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+        QStringLiteral("0.56.1|src/render/ElementRenderer.cpp"),
+        QStringLiteral("0.56.1|src/render/pass/TexPassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/TexPassElement.cpp"),
+        QStringLiteral("0.56.1|src/render/gl/GLElementRenderer.cpp"),
+        QStringLiteral("0.56.1|src/render/OpenGL.cpp"),
+        QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.hpp"),
+        QStringLiteral("0.56.1|src/render/pass/SurfacePassElement.cpp"),
+        QStringLiteral("0.56.1|src/render/shaders/glsl/surface.frag"),
+        QStringLiteral("0.56.1|src/output/Monitor.cpp"),
+        QStringLiteral("0.56.1|src/managers/screenshare/ScreenshareSession.cpp"),
+        QStringLiteral("0.56.1|src/helpers/cm/ColorManagement.hpp"),
+        QStringLiteral("0.56.1|src/render/Framebuffer.cpp"),
+        QStringLiteral("0.56.1|src/output/MonitorResources.cpp"),
+    };
+    QSet<QString> advancedRuntimeSourceKeys;
+    QList<QString> advancedRuntimeSourceOrder;
+    for (const auto &value : advancedRuntimeSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedAdvancedRuntimeHashes.contains(key), qPrintable(key));
+      QVERIFY2(!advancedRuntimeSourceKeys.contains(key), qPrintable(key));
+      advancedRuntimeSourceKeys.insert(key);
+      advancedRuntimeSourceOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedAdvancedRuntimeTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedAdvancedRuntimeCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedAdvancedRuntimeHashes.value(key)));
+    }
+    QCOMPARE(advancedRuntimeSourceKeys,
+             QSet<QString>(expectedAdvancedRuntimeHashes.keyBegin(),
+                           expectedAdvancedRuntimeHashes.keyEnd()));
+    QCOMPARE(advancedRuntimeSourceOrder, expectedAdvancedRuntimeOrder);
+
+    const auto windowBehaviorSources =
+        manifest.value(QStringLiteral("windowBehaviorSources")).toArray();
+    QCOMPARE(windowBehaviorSources.size(), 27);
+    const QMap<QString, QString> expectedWindowBehaviorHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.55.0|src/managers/ANRManager.cpp"),
+         QStringLiteral("67276cc0d2dccf516a1075112a5eb3592871c6d88d8e7665a4503194b4ae558b")},
+        {QStringLiteral("0.55.0|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+         QStringLiteral("d5ec852d1b26fb55574ae184b6bfc86dd2a047f8c7d4c8c7e4748277c0e841cb")},
+        {QStringLiteral("0.55.0|src/layout/algorithm/tiled/master/MasterAlgorithm.cpp"),
+         QStringLiteral("7a95cbac2074f7cde31e3181e84bf146337dea586fce56900eb1fb55af5864c0")},
+        {QStringLiteral("0.55.0|src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp"),
+         QStringLiteral("f1f95b5e53f048ef52f6a87be7ab3040da74ce6361dee17bd5d97ef583ee2f0f")},
+        {QStringLiteral("0.55.0|src/layout/algorithm/tiled/monocle/MonocleAlgorithm.cpp"),
+         QStringLiteral("00d5563d7c49f7df81378496e6e35a95356bac3f4369d5de7782ae7012f2990f")},
+        {QStringLiteral("0.55.0|src/managers/input/InputManager.cpp"),
+         QStringLiteral("410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.55.0|src/desktop/state/FocusState.cpp"),
+         QStringLiteral("677c243ada837fda14aed11c55b435de0fd877549709158dda1dfb2c8530dc43")},
+        {QStringLiteral("0.55.0|src/desktop/rule/windowRule/WindowRuleApplicator.cpp"),
+         QStringLiteral("35e330cba1af5e07968f9b968c2719a46aa28728537e3d0e97d13f6ab4dcb247")},
+        {QStringLiteral("0.55.0|src/layout/target/WindowTarget.cpp"),
+         QStringLiteral("33f6f6dcbfb4e140f2cce04a8e06b8042c8e780617960618b023f9a9591b9a9d")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab")},
+        {QStringLiteral("0.56.1|src/desktop/state/WindowQuery.cpp"),
+         QStringLiteral("5eede566e031769aa13247830f68a10077c78f4db864fdf17dcfa58f222a9beb")},
+        {QStringLiteral("0.56.1|src/managers/fullscreen/FullscreenController.cpp"),
+         QStringLiteral("581d92ef70588fce181b4b87a04e37f6de7b4777c24ad7fee34b21f941b706b0")},
+        {QStringLiteral("0.56.1|src/managers/ANRManager.cpp"),
+         QStringLiteral("842b795210ea83c735cb9a75c5e2f104507fa9285a460730dcd809e87892803e")},
+        {QStringLiteral("0.56.1|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+         QStringLiteral("218c4d4ba7e7b34d1113da818347e260868451de0e5a6d699934871febc03b32")},
+        {QStringLiteral("0.56.1|src/layout/algorithm/tiled/master/MasterAlgorithm.cpp"),
+         QStringLiteral("ad3494f7292fbd717c1e9ab608e0b2fbd488cc85e88763317c563162c9e978df")},
+        {QStringLiteral("0.56.1|src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp"),
+         QStringLiteral("bfec45e79d26bb21dea2c61809ac37baffffa48b6e0202a56e7522b22a1815f3")},
+        {QStringLiteral("0.56.1|src/layout/algorithm/tiled/monocle/MonocleAlgorithm.cpp"),
+         QStringLiteral("4a5735c12b4e2f1b1d29fc655b75c9bd04ff278138dea9013a3cb569566306fb")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+         QStringLiteral("07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+        {QStringLiteral("0.56.1|src/desktop/state/FocusState.cpp"),
+         QStringLiteral("9b971362bba97f200f0ef786237deed6b7b863066590d243cac11787e2a56ebd")},
+        {QStringLiteral("0.56.1|src/desktop/rule/windowRule/WindowRuleApplicator.cpp"),
+         QStringLiteral("fec33f9a0bc279ffc94ca27a6e9843964840d6269bc28d330d566e05fed3307b")},
+        {QStringLiteral("0.56.1|src/layout/target/WindowTarget.cpp"),
+         QStringLiteral("8bcaf37000cf55e1d2084bf732f0589b4ab49d36c778d8d4efa98949dd14734d")},
+    };
+    QSet<QString> windowBehaviorSourceKeys;
+    for (const auto &value : windowBehaviorSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedWindowBehaviorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!windowBehaviorSourceKeys.contains(key), qPrintable(key));
+      windowBehaviorSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedWindowBehaviorHashes.value(key)));
+    }
+    QCOMPARE(windowBehaviorSourceKeys,
+             QSet<QString>(expectedWindowBehaviorHashes.keyBegin(),
+                           expectedWindowBehaviorHashes.keyEnd()));
+
+    const auto groupBarSources =
+        manifest.value(QStringLiteral("groupBarSources")).toArray();
+    QCOMPARE(groupBarSources.size(), 10);
+    const QMap<QString, QString> expectedGroupBarTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedGroupBarCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedGroupBarHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/desktop/view/Group.cpp"),
+         QStringLiteral("b0f9210c858bcaf74c8f5a44f7f40abfe03af8a096e3fb158afd2346be8b0eed")},
+        {QStringLiteral("0.55.0|src/render/decorations/CHyprGroupBarDecoration.cpp"),
+         QStringLiteral("3d687c43d5414fb6ad617465f06bb87cda8dc6c2e791dbb0e28de72de1cf4c68")},
+        {QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679")},
+        {QStringLiteral("0.55.0|src/config/lua/types/LuaConfigFontWeight.cpp"),
+         QStringLiteral("da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/desktop/view/Group.cpp"),
+         QStringLiteral("f34fec0891e69e0a1b67901e8d1b6b1a1ae8a47eccc92313c2b41660961cd385")},
+        {QStringLiteral("0.56.1|src/render/decorations/CHyprGroupBarDecoration.cpp"),
+         QStringLiteral("39cb87fc2b28c81433bfd34d3900e58c2c58f4f336be728e07461a8f16c095e6")},
+        {QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b")},
+        {QStringLiteral("0.56.1|src/config/lua/types/LuaConfigFontWeight.cpp"),
+         QStringLiteral("da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05")},
+    };
+    QSet<QString> groupBarSourceKeys;
+    for (const auto &value : groupBarSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedGroupBarHashes.contains(key), qPrintable(key));
+      QVERIFY2(!groupBarSourceKeys.contains(key), qPrintable(key));
+      groupBarSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBarTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBarCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedGroupBarHashes.value(key)));
+    }
+    QCOMPARE(groupBarSourceKeys,
+             QSet<QString>(expectedGroupBarHashes.keyBegin(),
+                           expectedGroupBarHashes.keyEnd()));
+
+    const auto workspaceBehaviorSources =
+        manifest.value(QStringLiteral("workspaceBehaviorSources")).toArray();
+    QCOMPARE(workspaceBehaviorSources.size(), 13);
+    const QMap<QString, QString> expectedWorkspaceBehaviorHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07")},
+        {QStringLiteral("0.55.0|src/desktop/history/WorkspaceHistoryTracker.cpp"),
+         QStringLiteral("628b33ca5fcfdb20e21daed845732ef812eb77bc6e0dddfd6db55cb9f41ca989")},
+        {QStringLiteral("0.55.0|src/desktop/history/WorkspaceHistoryTracker.hpp"),
+         QStringLiteral("89afe0b8578d193b6636af422911922a39b7bfdf130bfb286d0708d4a489d009")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab")},
+        {QStringLiteral("0.56.1|src/desktop/history/WorkspaceHistoryTracker.cpp"),
+         QStringLiteral("33a0cf8d26540870b66d6aacb6fe7eaad0c767e8b21184016c12de5135cea678")},
+        {QStringLiteral("0.56.1|src/desktop/history/WorkspaceHistoryTracker.hpp"),
+         QStringLiteral("89afe0b8578d193b6636af422911922a39b7bfdf130bfb286d0708d4a489d009")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+        {QStringLiteral("0.56.1|src/state/WorkspacePlacementController.cpp"),
+         QStringLiteral("cea25fc71ef2d54e2a4eec3e6d04fa7abfbdd25bdafbe2d742026e37dd438420")},
+        {QStringLiteral("0.56.1|src/pointer/PointerController.cpp"),
+         QStringLiteral("4aef766cf4205222ef143b1432d2598c7beab1527aee5e19aa58f17a1890d899")},
+    };
+    QSet<QString> workspaceBehaviorSourceKeys;
+    for (const auto &value : workspaceBehaviorSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedWorkspaceBehaviorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!workspaceBehaviorSourceKeys.contains(key), qPrintable(key));
+      workspaceBehaviorSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedWorkspaceBehaviorHashes.value(key)));
+    }
+    QCOMPARE(workspaceBehaviorSourceKeys,
+             QSet<QString>(expectedWorkspaceBehaviorHashes.keyBegin(),
+                           expectedWorkspaceBehaviorHashes.keyEnd()));
+
+    const auto bindingRuntimeSources =
+        manifest.value(QStringLiteral("bindingRuntimeSources")).toArray();
+    QCOMPARE(bindingRuntimeSources.size(), 14);
+    const QMap<QString, QString> expectedBindingRuntimeHashes{
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsRegistration.cpp"),
+         QStringLiteral("c0e0533d07bc75b48ba469df2523b3f1335bcea17922ac0dae01aed81487e5d3")},
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsToplevel.cpp"),
+         QStringLiteral("bf1f9e9bdd94a2403ecab41ceea6ffb6feecd3083715ec4e8086e84089e9a006")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.hpp"),
+         QStringLiteral("14b6d07d7720e45e099e469ed53ac2db1584e408705869b71a92a14876767b2c")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07")},
+        {QStringLiteral("0.55.0|src/managers/KeybindManager.cpp"),
+         QStringLiteral("2fde298fd690c5c3b72741be1c4b11cba220996649ba560e3112a81112531491")},
+        {QStringLiteral("0.55.0|src/debug/HyprCtl.cpp"),
+         QStringLiteral("a88c1517da9fa2934d740dd1fd9cbca4d5d0bdd5b569a63bdba64e5e36c2d886")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsRegistration.cpp"),
+         QStringLiteral("377e617ca0400722dea581e1ca740500a6057cff3842998c8f8dd0a218f77770")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsToplevel.cpp"),
+         QStringLiteral("706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.hpp"),
+         QStringLiteral("746c6f517620eb039afbfbb9a4a0e2d5ba1c5eb117bcc8f396173f63091b7073")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab")},
+        {QStringLiteral("0.56.1|src/managers/KeybindManager.cpp"),
+         QStringLiteral("8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40")},
+        {QStringLiteral("0.56.1|src/debug/HyprCtl.cpp"),
+         QStringLiteral("7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1")},
+    };
+    const QList<QString> expectedBindingRuntimeOrder{
+        QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsRegistration.cpp"),
+        QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsToplevel.cpp"),
+        QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.hpp"),
+        QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+        QStringLiteral("0.55.0|src/managers/KeybindManager.cpp"),
+        QStringLiteral("0.55.0|src/debug/HyprCtl.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsRegistration.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsToplevel.cpp"),
+        QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.hpp"),
+        QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+        QStringLiteral("0.56.1|src/managers/KeybindManager.cpp"),
+        QStringLiteral("0.56.1|src/debug/HyprCtl.cpp"),
+    };
+    QSet<QString> bindingRuntimeSourceKeys;
+    QList<QString> bindingRuntimeSourceOrder;
+    for (const auto &value : bindingRuntimeSources) {
+      const auto source = value.toObject();
+      QCOMPARE(source.size(), 5);
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedBindingRuntimeHashes.contains(key), qPrintable(key));
+      QVERIFY2(!bindingRuntimeSourceKeys.contains(key), qPrintable(key));
+      bindingRuntimeSourceKeys.insert(key);
+      bindingRuntimeSourceOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedBindingRuntimeHashes.value(key)));
+    }
+    QCOMPARE(bindingRuntimeSourceKeys,
+             QSet<QString>(expectedBindingRuntimeHashes.keyBegin(),
+                           expectedBindingRuntimeHashes.keyEnd()));
+    QCOMPARE(bindingRuntimeSourceOrder, expectedBindingRuntimeOrder);
+
+    const auto miscExclusionSources =
+        manifest.value(QStringLiteral("miscExclusionSources")).toArray();
+    QCOMPARE(miscExclusionSources.size(), 6);
+    const QMap<QString, QString> expectedMiscExclusionHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+         QStringLiteral("d5ec852d1b26fb55574ae184b6bfc86dd2a047f8c7d4c8c7e4748277c0e841cb")},
+        {QStringLiteral("0.55.0|src/layout/target/WindowTarget.cpp"),
+         QStringLiteral("33f6f6dcbfb4e140f2cce04a8e06b8042c8e780617960618b023f9a9591b9a9d")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+         QStringLiteral("218c4d4ba7e7b34d1113da818347e260868451de0e5a6d699934871febc03b32")},
+        {QStringLiteral("0.56.1|src/layout/target/WindowTarget.cpp"),
+         QStringLiteral("8bcaf37000cf55e1d2084bf732f0589b4ab49d36c778d8d4efa98949dd14734d")},
+    };
+    const QList<QString> expectedMiscExclusionOrder{
+        QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.55.0|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+        QStringLiteral("0.55.0|src/layout/target/WindowTarget.cpp"),
+        QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.56.1|src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.cpp"),
+        QStringLiteral("0.56.1|src/layout/target/WindowTarget.cpp"),
+    };
+    QSet<QString> miscExclusionSourceKeys;
+    QList<QString> miscExclusionSourceOrder;
+    for (const auto &value : miscExclusionSources) {
+      const auto source = value.toObject();
+      QCOMPARE(source.size(), 5);
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedMiscExclusionHashes.contains(key), qPrintable(key));
+      QVERIFY2(!miscExclusionSourceKeys.contains(key), qPrintable(key));
+      miscExclusionSourceKeys.insert(key);
+      miscExclusionSourceOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGroupBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGroupBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedMiscExclusionHashes.value(key)));
+    }
+    QCOMPARE(miscExclusionSourceKeys,
+             QSet<QString>(expectedMiscExclusionHashes.keyBegin(),
+                           expectedMiscExclusionHashes.keyEnd()));
+    QCOMPARE(miscExclusionSourceOrder, expectedMiscExclusionOrder);
+
+    const auto inputBehaviorSources =
+        manifest.value(QStringLiteral("inputBehaviorSources")).toArray();
+    QCOMPARE(inputBehaviorSources.size(), 38);
+    const QMap<QString, QString> expectedInputBehaviorTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedInputBehaviorCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedInputBehaviorHashes{
+        {QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("290ac2deca427712edc255989010f30bf7d5c4104c05ec920042436fc07d49ce")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94")},
+        {QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679")},
+        {QStringLiteral("0.55.0|src/managers/input/InputManager.hpp"),
+         QStringLiteral("c4479cdf4b1dc6a5f1234d86a034fb5f1f517a140afb33dc5995c65d20ac0dbf")},
+        {QStringLiteral("0.55.0|src/managers/input/InputManager.cpp"),
+         QStringLiteral("410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835")},
+        {QStringLiteral("0.55.0|src/managers/input/Tablets.cpp"),
+         QStringLiteral("b875f1c65775ead92dcaae26612290e5b1728895f659f933de283086b8fdb683")},
+        {QStringLiteral("0.55.0|src/protocols/PrimarySelection.cpp"),
+         QStringLiteral("f4989a7770e13d351a7db362d0539e8d96d23b9f7c524d278d1e529f68e0391b")},
+        {QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+         QStringLiteral("67febb2393cdad2671d172dbc84f230a735f579411ef0ee4f441421ef318cbf7")},
+        {QStringLiteral("0.55.0|src/render/Renderer.hpp"),
+         QStringLiteral("196404adaf7c2af5f9f7ad0383c95c0a89d1d5c4e560941f38ea10b960650d24")},
+        {QStringLiteral("0.55.0|src/managers/input/Touch.cpp"),
+         QStringLiteral("c7cc52a8da21286035b144366ad82aafd93610d4ae5827f0b4246034acd6549c")},
+        {QStringLiteral("0.55.0|src/devices/Mouse.cpp"),
+         QStringLiteral("aebdf0fd1765d25d943cc79f4e5bbdce09e0c437ae3e9cdc0985195df54a5470")},
+        {QStringLiteral("0.55.0|src/managers/PointerManager.hpp"),
+         QStringLiteral("c2a0a22603230fcaaed62afade6f0dbc8a6e8381906b8a5063e65651cad43718")},
+        {QStringLiteral("0.55.0|src/managers/PointerManager.cpp"),
+         QStringLiteral("3bdbb256f39b8a892f70ff6795a366068997e335c1258dc6baf3dd8dcd34fcb3")},
+        {QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("2b2b09799b4cca634d544d4103f07b82ef4b6c377131c858d2707a5e0494fe07")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.hpp"),
+         QStringLiteral("c52d94684d4dfab1fe80df565a08b560c3fd8e8ca32571436c8fa6f569f76e42")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.55.0|src/Compositor.hpp"),
+         QStringLiteral("472006be35fdf03c09566e4a371a05b8ba2e39f9a4dd13eb7313e24d2575f4f2")},
+        {QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+         QStringLiteral("a76f05079454e1f6d4402144e1673cc1cb890d285fbeb947d5afdb004ad97754")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9")},
+        {QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.hpp"),
+         QStringLiteral("bb8ceaf61e274bedae10555173760055e632e0ff2ac050636e06c29dffcb188d")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+         QStringLiteral("07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e")},
+        {QStringLiteral("0.56.1|src/managers/input/Tablets.cpp"),
+         QStringLiteral("ad276a2e23f8792ff5f2fb43944a4c3c40e7218e77f66047dd754417a6bbc90f")},
+        {QStringLiteral("0.56.1|src/protocols/PrimarySelection.cpp"),
+         QStringLiteral("f4989a7770e13d351a7db362d0539e8d96d23b9f7c524d278d1e529f68e0391b")},
+        {QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+         QStringLiteral("4c3b2a4d42fbb1021a7cbb5013e826b926a9756ecde40ef5e9acdc3a9a16c4a7")},
+        {QStringLiteral("0.56.1|src/render/Renderer.hpp"),
+         QStringLiteral("0787f259d788e979094ebb5f3b40140c642118c634356a431e2aca17ecf4d5a2")},
+        {QStringLiteral("0.56.1|src/managers/input/Touch.cpp"),
+         QStringLiteral("69a5459b254751a28d2f6df1afb03781ea9b4086a43078d8275c9b165f5e3f7e")},
+        {QStringLiteral("0.56.1|src/devices/Mouse.cpp"),
+         QStringLiteral("aebdf0fd1765d25d943cc79f4e5bbdce09e0c437ae3e9cdc0985195df54a5470")},
+        {QStringLiteral("0.56.1|src/pointer/PointerManager.hpp"),
+         QStringLiteral("a18050d377c96b6bcee1d3d591b5573515473a507aaa464de611e29124bfbf88")},
+        {QStringLiteral("0.56.1|src/pointer/PointerManager.cpp"),
+         QStringLiteral("e7fb86bc7cd0420e0a225dfc8ca43da561638416380d398f67a200849e738981")},
+        {QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+         QStringLiteral("29c9339ec15943d685975eb952af207fe52820c20bb15ecb0cc0b19661ac5dab")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.hpp"),
+         QStringLiteral("1f60b8ff0bc6b5a48af5c03cb2cac1108db677efc70b4424b56ef6f1f2d1cc81")},
+        {QStringLiteral("0.56.1|src/pointer/PointerController.cpp"),
+         QStringLiteral("4aef766cf4205222ef143b1432d2598c7beab1527aee5e19aa58f17a1890d899")},
+        {QStringLiteral("0.56.1|src/pointer/PointerController.hpp"),
+         QStringLiteral("260fa1c172d0f469d420dc1b7e5311c0dfec0777fa6a6cf08af69ea854fdbb55")},
+    };
+    const QStringList expectedInputBehaviorOrder{
+        QStringLiteral("0.55.0|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral(
+            "0.55.0|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+        QStringLiteral(
+            "0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.55.0|src/managers/input/InputManager.hpp"),
+        QStringLiteral("0.55.0|src/managers/input/InputManager.cpp"),
+        QStringLiteral("0.55.0|src/managers/input/Tablets.cpp"),
+        QStringLiteral("0.55.0|src/protocols/PrimarySelection.cpp"),
+        QStringLiteral("0.55.0|src/render/Renderer.cpp"),
+        QStringLiteral("0.55.0|src/render/Renderer.hpp"),
+        QStringLiteral("0.55.0|src/managers/input/Touch.cpp"),
+        QStringLiteral("0.55.0|src/devices/Mouse.cpp"),
+        QStringLiteral("0.55.0|src/managers/PointerManager.hpp"),
+        QStringLiteral("0.55.0|src/managers/PointerManager.cpp"),
+        QStringLiteral("0.55.0|src/config/shared/actions/ConfigActions.cpp"),
+        QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+        QStringLiteral("0.55.0|src/desktop/view/Window.hpp"),
+        QStringLiteral("0.55.0|src/Compositor.cpp"),
+        QStringLiteral("0.55.0|src/Compositor.hpp"),
+        QStringLiteral("0.56.1|src/config/values/ConfigValues.cpp"),
+        QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+        QStringLiteral(
+            "0.56.1|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+        QStringLiteral(
+            "0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+        QStringLiteral("0.56.1|src/managers/input/InputManager.hpp"),
+        QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+        QStringLiteral("0.56.1|src/managers/input/Tablets.cpp"),
+        QStringLiteral("0.56.1|src/protocols/PrimarySelection.cpp"),
+        QStringLiteral("0.56.1|src/render/Renderer.cpp"),
+        QStringLiteral("0.56.1|src/render/Renderer.hpp"),
+        QStringLiteral("0.56.1|src/managers/input/Touch.cpp"),
+        QStringLiteral("0.56.1|src/devices/Mouse.cpp"),
+        QStringLiteral("0.56.1|src/pointer/PointerManager.hpp"),
+        QStringLiteral("0.56.1|src/pointer/PointerManager.cpp"),
+        QStringLiteral("0.56.1|src/config/shared/actions/ConfigActions.cpp"),
+        QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+        QStringLiteral("0.56.1|src/desktop/view/Window.hpp"),
+        QStringLiteral("0.56.1|src/pointer/PointerController.cpp"),
+        QStringLiteral("0.56.1|src/pointer/PointerController.hpp"),
+    };
+    QSet<QString> inputBehaviorSourceKeys;
+    QStringList inputBehaviorSourceOrder;
+    for (const auto &value : inputBehaviorSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedInputBehaviorHashes.contains(key), qPrintable(key));
+      QVERIFY2(!inputBehaviorSourceKeys.contains(key), qPrintable(key));
+      inputBehaviorSourceKeys.insert(key);
+      inputBehaviorSourceOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedInputBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedInputBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedInputBehaviorHashes.value(key)));
+    }
+    QCOMPARE(inputBehaviorSourceKeys,
+             QSet<QString>(expectedInputBehaviorHashes.keyBegin(),
+                           expectedInputBehaviorHashes.keyEnd()));
+    QCOMPARE(inputBehaviorSourceOrder, expectedInputBehaviorOrder);
+
+    const auto inputBehaviorDependencySources =
+        manifest.value(QStringLiteral("inputBehaviorDependencySources"))
+            .toArray();
+    QCOMPARE(inputBehaviorDependencySources.size(), 6);
+    const QString hyprlandRepository =
+        QStringLiteral("https://github.com/hyprwm/Hyprland");
+    const QString hyprutilsRepository =
+        QStringLiteral("https://github.com/hyprwm/hyprutils");
+    const QStringList expectedInputBehaviorDependencyOrder{
+        QStringLiteral("0.55.0|") + hyprlandRepository +
+            QStringLiteral("|flake.lock"),
+        QStringLiteral("0.55.0|") + hyprutilsRepository +
+            QStringLiteral("|include/hyprutils/math/Vector2D.hpp"),
+        QStringLiteral("0.55.0|") + hyprutilsRepository +
+            QStringLiteral("|src/math/Box.cpp"),
+        QStringLiteral("0.56.1|") + hyprlandRepository +
+            QStringLiteral("|flake.lock"),
+        QStringLiteral("0.56.1|") + hyprutilsRepository +
+            QStringLiteral("|include/hyprutils/math/Vector2D.hpp"),
+        QStringLiteral("0.56.1|") + hyprutilsRepository +
+            QStringLiteral("|src/math/Box.cpp"),
+    };
+    const QMap<QString, QString> expectedInputBehaviorDependencyRevisions{
+        {expectedInputBehaviorDependencyOrder.at(0),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {expectedInputBehaviorDependencyOrder.at(1),
+         QStringLiteral("a2dbd8a4cc51f7cbe4224732668392bb1aa79df2")},
+        {expectedInputBehaviorDependencyOrder.at(2),
+         QStringLiteral("a2dbd8a4cc51f7cbe4224732668392bb1aa79df2")},
+        {expectedInputBehaviorDependencyOrder.at(3),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+        {expectedInputBehaviorDependencyOrder.at(4),
+         QStringLiteral("5f03477ab3a005ff27c527486f551883535aea2f")},
+        {expectedInputBehaviorDependencyOrder.at(5),
+         QStringLiteral("5f03477ab3a005ff27c527486f551883535aea2f")},
+    };
+    const QMap<QString, QString> expectedInputBehaviorDependencyHashes{
+        {expectedInputBehaviorDependencyOrder.at(0),
+         QStringLiteral("0978f7573968480e977764eb309a4426018afd53e60b7636752bc05e3b77956d")},
+        {expectedInputBehaviorDependencyOrder.at(1),
+         QStringLiteral("26079ea62f7a4eca1e3792e7a37c2ca6d1736e3ec879dd35997d29758c9098aa")},
+        {expectedInputBehaviorDependencyOrder.at(2),
+         QStringLiteral("2d04de99ba977e5c3d99546606aede0d3eacc819049e16da5e0fd0d2004d083c")},
+        {expectedInputBehaviorDependencyOrder.at(3),
+         QStringLiteral("a44dd68728466027d72e434856186f56610c46ed0ea3826b370827a23c77b74e")},
+        {expectedInputBehaviorDependencyOrder.at(4),
+         QStringLiteral("26079ea62f7a4eca1e3792e7a37c2ca6d1736e3ec879dd35997d29758c9098aa")},
+        {expectedInputBehaviorDependencyOrder.at(5),
+         QStringLiteral("2d04de99ba977e5c3d99546606aede0d3eacc819049e16da5e0fd0d2004d083c")},
+    };
+    QSet<QString> inputBehaviorDependencyKeys;
+    QStringList inputBehaviorDependencyOrder;
+    for (const auto &value : inputBehaviorDependencySources) {
+      const auto source = value.toObject();
+      const auto key =
+          source.value(QStringLiteral("hyprlandVersion")).toString() +
+          QLatin1Char('|') +
+          source.value(QStringLiteral("repository")).toString() +
+          QLatin1Char('|') + source.value(QStringLiteral("path")).toString();
+      QVERIFY2(expectedInputBehaviorDependencyHashes.contains(key),
+               qPrintable(key));
+      QVERIFY2(!inputBehaviorDependencyKeys.contains(key), qPrintable(key));
+      inputBehaviorDependencyKeys.insert(key);
+      inputBehaviorDependencyOrder.append(key);
+      QCOMPARE(source.value(QStringLiteral("revision")),
+               QJsonValue(expectedInputBehaviorDependencyRevisions.value(key)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedInputBehaviorDependencyHashes.value(key)));
+    }
+    QCOMPARE(inputBehaviorDependencyKeys,
+             QSet<QString>(expectedInputBehaviorDependencyHashes.keyBegin(),
+                           expectedInputBehaviorDependencyHashes.keyEnd()));
+    QCOMPARE(inputBehaviorDependencyOrder,
+             expectedInputBehaviorDependencyOrder);
+
+    const auto inputDeviceSources =
+        manifest.value(QStringLiteral("inputDeviceSources")).toArray();
+    QCOMPARE(inputDeviceSources.size(), 34);
+    const QMap<QString, QString> expectedInputDeviceHashes{
+        {QStringLiteral("0.55.0|src/debug/HyprCtl.cpp"),
+         QStringLiteral("a88c1517da9fa2934d740dd1fd9cbca4d5d0bdd5b569a63bdba64e5e36c2d886")},
+        {QStringLiteral("0.55.0|src/helpers/MiscFunctions.cpp"),
+         QStringLiteral("b11ed4a52bebcdcfd4f934b94b2a5f324bf66b2b035c5d7f119c6c027800f8aa")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94")},
+        {QStringLiteral("0.55.0|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("6ee949391fa74f713d00b718e0e498fbbc1cc58e2931e1737c4c865fe8f6c679")},
+        {QStringLiteral("0.55.0|src/managers/input/InputManager.hpp"),
+         QStringLiteral("c4479cdf4b1dc6a5f1234d86a034fb5f1f517a140afb33dc5995c65d20ac0dbf")},
+        {QStringLiteral("0.55.0|src/managers/input/InputManager.cpp"),
+         QStringLiteral("410836e5695062779cf525ed35b53900d199490f0db5eeba85f12fb894053835")},
+        {QStringLiteral("0.55.0|src/managers/input/Tablets.cpp"),
+         QStringLiteral("b875f1c65775ead92dcaae26612290e5b1728895f659f933de283086b8fdb683")},
+        {QStringLiteral("0.55.0|src/devices/IHID.cpp"),
+         QStringLiteral("a58a4b44e5947e82ab29cab414d92511f953a0feb87b662516496a869f1c7ee3")},
+        {QStringLiteral("0.55.0|src/devices/IPointer.cpp"),
+         QStringLiteral("ffb4ca03e3d4cdd0d7f615d27c0c01b42d360206e471bc66d50322f87ac36ccc")},
+        {QStringLiteral("0.55.0|src/devices/IKeyboard.cpp"),
+         QStringLiteral("f1bccbbb227ac7808f25a941601eba327a498f3556ba12514196035eac5d55cb")},
+        {QStringLiteral("0.55.0|src/devices/VirtualKeyboard.cpp"),
+         QStringLiteral("bc6d984a4c9e62313501c1cdb4ace3659c16d3b77e029a3c082a77f21500ed86")},
+        {QStringLiteral("0.55.0|src/devices/VirtualPointer.cpp"),
+         QStringLiteral("b1425a95edb425a229ffd61b266f9c02c8882a5b3dee6cd4d3b6d0e5427b516f")},
+        {QStringLiteral("0.55.0|src/protocols/VirtualKeyboard.cpp"),
+         QStringLiteral("43cbf7b39bf0910df6d933cef95f029fa336d5b432b0202280e6fc40d8db2f50")},
+        {QStringLiteral("0.55.0|src/protocols/VirtualPointer.cpp"),
+         QStringLiteral("eb6d8ea90209d6fe1899ae075465cbd8b0b6be62d301c06c493212a801e308bb")},
+        {QStringLiteral("0.55.0|src/Compositor.cpp"),
+         QStringLiteral("a639c01f628e50d765856001c567aa8f344e6a620f69fca994e4436b3a090125")},
+        {QStringLiteral("0.55.0|src/managers/PointerManager.cpp"),
+         QStringLiteral("3bdbb256f39b8a892f70ff6795a366068997e335c1258dc6baf3dd8dcd34fcb3")},
+        {QStringLiteral("0.56.1|src/debug/HyprCtl.cpp"),
+         QStringLiteral("7b96515a4cf13333ca71549053e76fcdd9cf815b18e4ae530dfff169af3ff1d1")},
+        {QStringLiteral("0.56.1|src/helpers/MiscFunctions.cpp"),
+         QStringLiteral("065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9")},
+        {QStringLiteral("0.56.1|src/config/supplementary/propRefresher/PropRefresher.cpp"),
+         QStringLiteral("65f01a1a50ef05ecb1630f8fd30bbbac91029b29f6b4b6bc3f353d0bb4b2817b")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.hpp"),
+         QStringLiteral("bb8ceaf61e274bedae10555173760055e632e0ff2ac050636e06c29dffcb188d")},
+        {QStringLiteral("0.56.1|src/managers/input/InputManager.cpp"),
+         QStringLiteral("07de27ef0f4c9a5c3bf14f42c07af29574d428a7b02412f785f90db30b03125e")},
+        {QStringLiteral("0.56.1|src/managers/input/Tablets.cpp"),
+         QStringLiteral("ad276a2e23f8792ff5f2fb43944a4c3c40e7218e77f66047dd754417a6bbc90f")},
+        {QStringLiteral("0.56.1|src/devices/IHID.cpp"),
+         QStringLiteral("a58a4b44e5947e82ab29cab414d92511f953a0feb87b662516496a869f1c7ee3")},
+        {QStringLiteral("0.56.1|src/devices/IPointer.cpp"),
+         QStringLiteral("ffb4ca03e3d4cdd0d7f615d27c0c01b42d360206e471bc66d50322f87ac36ccc")},
+        {QStringLiteral("0.56.1|src/devices/IKeyboard.cpp"),
+         QStringLiteral("8a800efe9baa7f375a3781744372eecd98a88be2c4bedaae96c90a1102a1aa3d")},
+        {QStringLiteral("0.56.1|src/devices/VirtualKeyboard.cpp"),
+         QStringLiteral("bc6d984a4c9e62313501c1cdb4ace3659c16d3b77e029a3c082a77f21500ed86")},
+        {QStringLiteral("0.56.1|src/devices/VirtualPointer.cpp"),
+         QStringLiteral("b1425a95edb425a229ffd61b266f9c02c8882a5b3dee6cd4d3b6d0e5427b516f")},
+        {QStringLiteral("0.56.1|src/protocols/VirtualKeyboard.cpp"),
+         QStringLiteral("43cbf7b39bf0910df6d933cef95f029fa336d5b432b0202280e6fc40d8db2f50")},
+        {QStringLiteral("0.56.1|src/protocols/VirtualPointer.cpp"),
+         QStringLiteral("a07b12a920fe46beab3840245b818b474a376aa736b566069014d8eb4fd82fb1")},
+        {QStringLiteral("0.56.1|src/Compositor.cpp"),
+         QStringLiteral("74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0")},
+        {QStringLiteral("0.56.1|src/pointer/PointerManager.cpp"),
+         QStringLiteral("e7fb86bc7cd0420e0a225dfc8ca43da561638416380d398f67a200849e738981")},
+    };
+    QSet<QString> inputDeviceSourceKeys;
+    for (const auto &value : inputDeviceSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedInputDeviceHashes.contains(key), qPrintable(key));
+      QVERIFY2(!inputDeviceSourceKeys.contains(key), qPrintable(key));
+      inputDeviceSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedInputBehaviorTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedInputBehaviorCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedInputDeviceHashes.value(key)));
+    }
+    QCOMPARE(inputDeviceSourceKeys,
+             QSet<QString>(expectedInputDeviceHashes.keyBegin(),
+                           expectedInputDeviceHashes.keyEnd()));
+
+    const auto gestureSources =
+        manifest.value(QStringLiteral("gestureSources")).toArray();
+    QCOMPARE(gestureSources.size(), 38);
+    const QMap<QString, QString> expectedGestureTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedGestureCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedGestureHashes{
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/GestureTypes.hpp"),
+         QStringLiteral("87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/TrackpadGestures.cpp"),
+         QStringLiteral("5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/TrackpadGestures.hpp"),
+         QStringLiteral("f0e2a20af8b5c7e41d1c7a7e3bf650b9a6ac89f883adeefca0f39ff060cdce09")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/ITrackpadGesture.cpp"),
+         QStringLiteral("c2ce8e076a7bc326316d3c9ef0221e5ad7699fe87669fa9188a2fc872c1ebf5e")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/ITrackpadGesture.hpp"),
+         QStringLiteral("3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/WorkspaceSwipeGesture.cpp"),
+         QStringLiteral("fc54ad123f0406bcb9b8e42b8241c4a208b377c107ad7820f0b26ada58cd3d54")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/ResizeGesture.cpp"),
+         QStringLiteral("97c13e3889e744b5b3617f16620033fc0d4ce43cceeb014cdfcf7f5b85e7adc1")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/MoveGesture.cpp"),
+         QStringLiteral("2fee93dc6b90c8638f00062685dd0185de07a4f3701cc3d6a78064da50fe3fe0")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/CloseGesture.cpp"),
+         QStringLiteral("1963b7c441bab5a9ce9e7605f16c5d3289c927208cc11c1f3895aecd31116d85")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/ScrollMoveGesture.cpp"),
+         QStringLiteral("e78caa506e078c6710338f9e2419c9af22668fbcb5ed078ac7e0256bb8906517")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp"),
+         QStringLiteral("5a8080a4c4d2f81824bf37192f450bf48deba2de37a0fe39e80e86d8af80ef42")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/FloatGesture.cpp"),
+         QStringLiteral("92d3eed9c053b2da300f67aeed974ab21b59068a2dd27aeedce6a41548c1acf1")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/FloatGesture.hpp"),
+         QStringLiteral("dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/FullscreenGesture.cpp"),
+         QStringLiteral("c3c20c47e1421e567bf9ad9376a37062b2863409f3bbd6046b3e55272b4e9417")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/FullscreenGesture.hpp"),
+         QStringLiteral("97121208913016b8f423a830e046b2704c473c466e8fb0a2cca6b301e32a5f6a")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/CursorZoomGesture.cpp"),
+         QStringLiteral("c8acc40765d52a0581a72536ae5489aeb43a9d275f4c7ccd8c36346e8b4f9002")},
+        {QStringLiteral("0.55.0|src/managers/input/trackpad/gestures/CursorZoomGesture.hpp"),
+         QStringLiteral("a070dfb875fdb80559c6278afe1ed9c6d83237c9fc58d356639c7d9c17b6d779")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/GestureTypes.hpp"),
+         QStringLiteral("87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/TrackpadGestures.cpp"),
+         QStringLiteral("5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/TrackpadGestures.hpp"),
+         QStringLiteral("f0e2a20af8b5c7e41d1c7a7e3bf650b9a6ac89f883adeefca0f39ff060cdce09")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/ITrackpadGesture.cpp"),
+         QStringLiteral("c2ce8e076a7bc326316d3c9ef0221e5ad7699fe87669fa9188a2fc872c1ebf5e")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/ITrackpadGesture.hpp"),
+         QStringLiteral("3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/WorkspaceSwipeGesture.cpp"),
+         QStringLiteral("2f12d2b682af060e23a8d4e0aee1ee1366cd9dce9bf05f8e287b52740cb14ad0")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/ResizeGesture.cpp"),
+         QStringLiteral("9a0b156e42f0938614395a198b382a3388056b2b211c1679658f24686d9a372a")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/MoveGesture.cpp"),
+         QStringLiteral("617e22260d144832639fa811e24025c52b7404955b1f7879f5d0af38e44f4f9c")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/CloseGesture.cpp"),
+         QStringLiteral("9da24b306cd803a5517cee5527ae8a1f3ee3d313b09876d43434b6be7607ef32")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/ScrollMoveGesture.cpp"),
+         QStringLiteral("f3c1434ac10e187102a3c5c5bfff759f04d990f0cc82fd46914a8244aac500ed")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/SpecialWorkspaceGesture.cpp"),
+         QStringLiteral("10e6bdece28c998bfbf574d6f455ba53f7286b61a243d13122cb2086ab81bbae")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/FloatGesture.cpp"),
+         QStringLiteral("d10abdf34e7e966777c91e225ed63038da72511e5eb73f81ee3acfd93859934e")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/FloatGesture.hpp"),
+         QStringLiteral("dfc7559d79b9109ed36f202483d4bcd64d1f08b4e2daef182fd44d5433b0e307")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/FullscreenGesture.cpp"),
+         QStringLiteral("b72fb2976e43899884afd9f8d9f6c6b3c6da04c9797482ef6df614e1bdc483e5")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/FullscreenGesture.hpp"),
+         QStringLiteral("576dd48493e13dc26c56b7fb028084debe2080ac02f7ef644b38675f1217889e")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/CursorZoomGesture.cpp"),
+         QStringLiteral("5967e293ccdc7e99b6f6201a1d2e0aeff95b1d763ce5ad3d7fb50fabd76c6753")},
+        {QStringLiteral("0.56.1|src/managers/input/trackpad/gestures/CursorZoomGesture.hpp"),
+         QStringLiteral("9861e8cf3c6d26632731f164da5a4a016553d4f8ea6f71d68855cc7a682a6962")},
+    };
+    QSet<QString> gestureSourceKeys;
+    for (const auto &value : gestureSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedGestureHashes.contains(key), qPrintable(key));
+      QVERIFY2(!gestureSourceKeys.contains(key), qPrintable(key));
+      gestureSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedGestureTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedGestureCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedGestureHashes.value(key)));
+    }
+    QCOMPARE(gestureSourceKeys,
+             QSet<QString>(expectedGestureHashes.keyBegin(),
+                           expectedGestureHashes.keyEnd()));
+
+    const auto animationSources =
+        manifest.value(QStringLiteral("animationSources")).toArray();
+    QCOMPARE(animationSources.size(), 16);
+    const QMap<QString, QString> expectedAnimationTags{
+        {QStringLiteral("0.55.0"), QStringLiteral("v0.55.0")},
+        {QStringLiteral("0.56.1"), QStringLiteral("v0.56.1")},
+    };
+    const QMap<QString, QString> expectedAnimationCommits{
+        {QStringLiteral("0.55.0"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.56.1"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+    };
+    const QMap<QString, QString> expectedAnimationHashes{
+        {QStringLiteral("0.55.0|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("2693dd89945b35c650b0bcc91d8da3441e690ca2a4f20705cc9be713e9314c94")},
+        {QStringLiteral("0.55.0|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("204bd335c3dde44eb5d528859f8e480159988ef691b166d0ff21c7c184aec642")},
+        {QStringLiteral("0.55.0|src/config/shared/animation/AnimationTree.cpp"),
+         QStringLiteral("f264fc3fe7de93237af06122600949984064e75e240d195ce07113d526edcf06")},
+        {QStringLiteral("0.55.0|src/managers/animation/AnimationManager.hpp"),
+         QStringLiteral("601532457f29435879665f6ecd92adfb86f9f8e16f7fe48abd068f041e2edb14")},
+        {QStringLiteral("0.55.0|src/managers/animation/AnimationManager.cpp"),
+         QStringLiteral("92702589150c0264d109d5ae74915a778368d471eb935ae4ae7a6de0d083f596")},
+        {QStringLiteral("0.55.0|src/managers/animation/DesktopAnimationManager.cpp"),
+         QStringLiteral("437b5a34fa6b462e68890679abf38f7d806ebc56f9fb6ebc814bfc40e44c3ad6")},
+        {QStringLiteral("0.55.0|src/desktop/view/Window.cpp"),
+         QStringLiteral("ec00fc5ca125163eadaa267eac73032de28d9d7f32a4b03ae4498a89427b2a7e")},
+        {QStringLiteral("0.56.1|src/config/lua/bindings/LuaBindingsConfigRules.cpp"),
+         QStringLiteral("157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9")},
+        {QStringLiteral("0.56.1|src/config/lua/ConfigManager.cpp"),
+         QStringLiteral("94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502")},
+        {QStringLiteral("0.56.1|src/config/shared/animation/AnimationTree.cpp"),
+         QStringLiteral("313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae")},
+        {QStringLiteral("0.56.1|src/animation/AnimationManager.hpp"),
+         QStringLiteral("e7834aef3b0f3259a109e5407c27bd31d5ad8ed05b698e4726e5972bacd479fa")},
+        {QStringLiteral("0.56.1|src/animation/AnimationManager.cpp"),
+         QStringLiteral("8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985")},
+        {QStringLiteral("0.56.1|src/desktop/view/animationControllers/WindowAnimationController.cpp"),
+         QStringLiteral("9a8c3c2961a1a55fca7b8783e1c3b808b424291e832bf4cdf88ed7a73e5bab08")},
+        {QStringLiteral("0.56.1|src/desktop/view/animationControllers/LayerSurfaceAnimationController.cpp"),
+         QStringLiteral("22b223f086b454c54f475e7f16b2d499d92cfd071f2083ea58a9f6a4412f0b1d")},
+        {QStringLiteral("0.56.1|src/animation/WorkspaceAnimationController.cpp"),
+         QStringLiteral("0698720a19698186197a0f1c98893b839502ad454d751d3e590f2eb0ae2b5e5b")},
+        {QStringLiteral("0.56.1|src/desktop/view/Window.cpp"),
+         QStringLiteral("4d9219c87cfba1105a30c2b742b0728808f2339c813d08b6959d00c2ce29d54f")},
+    };
+    QSet<QString> animationSourceKeys;
+    for (const auto &value : animationSources) {
+      const auto source = value.toObject();
+      const auto version = source.value(QStringLiteral("version")).toString();
+      const auto path = source.value(QStringLiteral("path")).toString();
+      const auto key = version + QLatin1Char('|') + path;
+      QVERIFY2(expectedAnimationHashes.contains(key), qPrintable(key));
+      QVERIFY2(!animationSourceKeys.contains(key), qPrintable(key));
+      animationSourceKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("tag")),
+               QJsonValue(expectedAnimationTags.value(version)));
+      QCOMPARE(source.value(QStringLiteral("commit")),
+               QJsonValue(expectedAnimationCommits.value(version)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedAnimationHashes.value(key)));
+    }
+    QCOMPARE(animationSourceKeys,
+             QSet<QString>(expectedAnimationHashes.keyBegin(),
+                           expectedAnimationHashes.keyEnd()));
+
+    const auto animationDependencySources =
+        manifest.value(QStringLiteral("animationDependencySources")).toArray();
+    QCOMPARE(animationDependencySources.size(), 8);
+    const QMap<QString, QString> expectedAnimationDependencyRepositories{
+        {QStringLiteral("0.55.0|flake.lock"),
+         QStringLiteral("https://github.com/hyprwm/Hyprland")},
+        {QStringLiteral("0.55.0|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+        {QStringLiteral("0.55.0|src/animation/AnimationManager.cpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+        {QStringLiteral("0.55.0|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+        {QStringLiteral("0.56.1|flake.lock"),
+         QStringLiteral("https://github.com/hyprwm/Hyprland")},
+        {QStringLiteral("0.56.1|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+        {QStringLiteral("0.56.1|src/animation/AnimationManager.cpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+        {QStringLiteral("0.56.1|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("https://github.com/hyprwm/hyprutils")},
+    };
+    const QMap<QString, QString> expectedAnimationDependencyRevisions{
+        {QStringLiteral("0.55.0|flake.lock"),
+         QStringLiteral("af923e30d1d24f1f4a4f5cb8308065173c1d9539")},
+        {QStringLiteral("0.55.0|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("a2dbd8a4cc51f7cbe4224732668392bb1aa79df2")},
+        {QStringLiteral("0.55.0|src/animation/AnimationManager.cpp"),
+         QStringLiteral("a2dbd8a4cc51f7cbe4224732668392bb1aa79df2")},
+        {QStringLiteral("0.55.0|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("a2dbd8a4cc51f7cbe4224732668392bb1aa79df2")},
+        {QStringLiteral("0.56.1|flake.lock"),
+         QStringLiteral("5c9377c15f85c50648f35ca5a213754f95b93ca0")},
+        {QStringLiteral("0.56.1|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("5f03477ab3a005ff27c527486f551883535aea2f")},
+        {QStringLiteral("0.56.1|src/animation/AnimationManager.cpp"),
+         QStringLiteral("5f03477ab3a005ff27c527486f551883535aea2f")},
+        {QStringLiteral("0.56.1|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("5f03477ab3a005ff27c527486f551883535aea2f")},
+    };
+    const QMap<QString, QString> expectedAnimationDependencyHashes{
+        {QStringLiteral("0.55.0|flake.lock"),
+         QStringLiteral("0978f7573968480e977764eb309a4426018afd53e60b7636752bc05e3b77956d")},
+        {QStringLiteral("0.55.0|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("472747d817e167041c51bb7f4853aca3895450ac2b38464fc60a42acecb9e3c4")},
+        {QStringLiteral("0.55.0|src/animation/AnimationManager.cpp"),
+         QStringLiteral("cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097")},
+        {QStringLiteral("0.55.0|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("e7e6184fa21c03be8bc4248553fed06e588f6600f8969795f4dfb595f09e7622")},
+        {QStringLiteral("0.56.1|flake.lock"),
+         QStringLiteral("a44dd68728466027d72e434856186f56610c46ed0ea3826b370827a23c77b74e")},
+        {QStringLiteral("0.56.1|include/hyprutils/animation/AnimationManager.hpp"),
+         QStringLiteral("472747d817e167041c51bb7f4853aca3895450ac2b38464fc60a42acecb9e3c4")},
+        {QStringLiteral("0.56.1|src/animation/AnimationManager.cpp"),
+         QStringLiteral("cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097")},
+        {QStringLiteral("0.56.1|src/animation/AnimatedVariable.cpp"),
+         QStringLiteral("e9aa6712d9987e9415a0644a7e9521fd3813992f32043650ffdbb7f008d7c16a")},
+    };
+    QSet<QString> animationDependencyKeys;
+    for (const auto &value : animationDependencySources) {
+      const auto source = value.toObject();
+      const auto key =
+          source.value(QStringLiteral("hyprlandVersion")).toString()
+          + QLatin1Char('|')
+          + source.value(QStringLiteral("path")).toString();
+      QVERIFY2(expectedAnimationDependencyHashes.contains(key), qPrintable(key));
+      QVERIFY2(!animationDependencyKeys.contains(key), qPrintable(key));
+      animationDependencyKeys.insert(key);
+      QCOMPARE(source.value(QStringLiteral("repository")),
+               QJsonValue(expectedAnimationDependencyRepositories.value(key)));
+      QCOMPARE(source.value(QStringLiteral("revision")),
+               QJsonValue(expectedAnimationDependencyRevisions.value(key)));
+      QCOMPARE(source.value(QStringLiteral("sha256")),
+               QJsonValue(expectedAnimationDependencyHashes.value(key)));
+    }
+    QCOMPARE(animationDependencyKeys,
+             QSet<QString>(expectedAnimationDependencyHashes.keyBegin(),
+                           expectedAnimationDependencyHashes.keyEnd()));
+
     const auto complexSources =
         manifest.value(QStringLiteral("complexSources")).toArray();
     QCOMPARE(complexSources.size(), 48);
@@ -1565,16 +3541,61 @@ private slots:
       if (recordSchema.contains(QStringLiteral("oneOf"))) {
         const auto alternatives =
             recordSchema.value(QStringLiteral("oneOf")).toArray();
-        QVERIFY(!alternatives.isEmpty());
-        for (const auto &alternative : alternatives) {
-          const auto reference =
-              alternative.toObject().value(QStringLiteral("$ref")).toString();
-          const auto prefix = QStringLiteral("#/$defs/");
-          QVERIFY2(reference.startsWith(prefix), qPrintable(reference));
-          const auto resolved =
-              definitions.value(reference.sliced(prefix.size())).toObject();
-          QCOMPARE(resolved.value(QStringLiteral("additionalProperties")),
+        if (surface.kind == QStringLiteral("workspaceRule")) {
+          QCOMPARE(alternatives.size(), 2);
+          const auto ordinary = alternatives.at(0).toObject();
+          const auto protectedRule = alternatives.at(1).toObject();
+          QCOMPARE(ordinary.value(QStringLiteral("type")).toString(),
+                   QStringLiteral("object"));
+          QCOMPARE(ordinary.value(QStringLiteral("additionalProperties")),
                    QJsonValue(false));
+          QCOMPARE(protectedRule.value(QStringLiteral("type")).toString(),
+                   QStringLiteral("object"));
+          QCOMPARE(protectedRule.value(QStringLiteral("additionalProperties")),
+                   QJsonValue(false));
+          const auto ordinaryProperties =
+              ordinary.value(QStringLiteral("properties")).toObject();
+          QCOMPARE(ordinaryProperties.value(QStringLiteral("id")).toObject()
+                       .value(QStringLiteral("$ref")).toString(),
+                   QStringLiteral("#/$defs/userWorkspaceRuleId"));
+          QCOMPARE(ordinaryProperties.value(QStringLiteral("selector")).toObject()
+                       .value(QStringLiteral("$ref")).toString(),
+                   QStringLiteral("#/$defs/workspaceSelector"));
+          QCOMPARE(ordinaryProperties.value(QStringLiteral("overrides")).toObject()
+                       .value(QStringLiteral("$ref")).toString(),
+                   QStringLiteral("#/$defs/workspaceOverrides"));
+          const auto protectedProperties =
+              protectedRule.value(QStringLiteral("properties")).toObject();
+          QCOMPARE(protectedProperties.value(QStringLiteral("id")).toObject()
+                       .value(QStringLiteral("const")).toString(),
+                   QStringLiteral(
+                       "hyprshelld.internal.shared-spacing.maximized"
+                   ));
+          QCOMPARE(protectedProperties.value(QStringLiteral("selector")).toObject()
+                       .value(QStringLiteral("const")).toString(),
+                   QStringLiteral("f[1]"));
+          QCOMPARE(protectedProperties.value(QStringLiteral("enabled")).toObject()
+                       .value(QStringLiteral("const")),
+                   QJsonValue(true));
+          const QJsonObject exactProtectedOverrides{{
+              QStringLiteral("gaps_out"), QJsonArray{0, 0, 0, 0}
+          }};
+          QCOMPARE(protectedProperties.value(QStringLiteral("overrides")).toObject()
+                       .value(QStringLiteral("const")).toObject(),
+                   exactProtectedOverrides);
+        } else {
+          QVERIFY(!alternatives.isEmpty());
+          for (const auto &alternative : alternatives) {
+            const auto reference = alternative.toObject()
+                                       .value(QStringLiteral("$ref")).toString();
+            const auto prefix = QStringLiteral("#/$defs/");
+            QVERIFY2(reference.startsWith(prefix), qPrintable(reference));
+            const auto resolved = definitions.value(
+                reference.sliced(prefix.size())
+            ).toObject();
+            QCOMPARE(resolved.value(QStringLiteral("additionalProperties")),
+                     QJsonValue(false));
+          }
         }
       } else {
         QCOMPARE(recordSchema.value(QStringLiteral("additionalProperties")),
@@ -1595,6 +3616,62 @@ private slots:
                           QStringLiteral("windowRules"),
                           QStringLiteral("workspaceRules"),
                       }));
+
+    const auto deviceSurface = std::ranges::find_if(
+        parsed.value->complexSurfaces,
+        [](const ComplexSurfaceDefinition &surface) {
+          return surface.id == QStringLiteral("devices");
+        }
+    );
+    QVERIFY(deviceSurface != parsed.value->complexSurfaces.cend());
+    QVERIFY(deviceSurface->applyMode == ApplyMode::Restart);
+    QVERIFY(deviceSurface->risk == RiskLevel::Caution);
+    QCOMPARE(
+        deviceSurface->description,
+        QStringLiteral(
+            "Compatibility-preserved per-device input overrides selected by "
+            "a session-assigned Hyprland name; generic changes require "
+            "restart until a dedicated transaction can prove them."
+        )
+    );
+
+    const auto bindingSurface = std::ranges::find_if(
+        parsed.value->complexSurfaces,
+        [](const ComplexSurfaceDefinition &surface) {
+          return surface.id == QStringLiteral("bindings");
+        }
+    );
+    QVERIFY(bindingSurface != parsed.value->complexSurfaces.cend());
+    QVERIFY(bindingSurface->applyMode == ApplyMode::Restart);
+    QVERIFY(bindingSurface->risk == RiskLevel::Caution);
+    QCOMPARE(
+        bindingSurface->description,
+        QStringLiteral(
+            "Compatibility-preserved normalized key chords mapped to closed "
+            "semantic actions; duplicate chords are rejected, and generic "
+            "changes require restart until a dedicated receipt-bound shortcut "
+            "transaction can prove them."
+        )
+    );
+
+    const auto submapSurface = std::ranges::find_if(
+        parsed.value->complexSurfaces,
+        [](const ComplexSurfaceDefinition &surface) {
+          return surface.id == QStringLiteral("submaps");
+        }
+    );
+    QVERIFY(submapSurface != parsed.value->complexSurfaces.cend());
+    QVERIFY(submapSurface->applyMode == ApplyMode::Restart);
+    QVERIFY(submapSurface->risk == RiskLevel::Caution);
+    QCOMPARE(
+        submapSurface->description,
+        QStringLiteral(
+            "Compatibility-preserved named binding submaps with an explicit "
+            "reset target; bindings reference the submap name, and generic "
+            "changes require restart until a dedicated receipt-bound shortcut "
+            "transaction can prove them."
+        )
+    );
   }
 
   void classifiesRuntimeVersionsFailClosed() {
@@ -2044,6 +4121,82 @@ private slots:
     QVERIFY(!supportedMinor.value->readOnly);
   }
 
+  void managedGlowActivationSafetyIsCrossFieldAndStructurallyPermissive() {
+    const auto catalogResult = shippedCatalog();
+    const auto actionCatalogResult = shippedActionCatalog();
+    QVERIFY(catalogResult);
+    QVERIFY(actionCatalogResult);
+
+    const auto base = defaultDesiredState(
+        *catalogResult.value, *actionCatalogResult.value
+    );
+    QVERIFY(validateManagedActivationSafety(
+                base, *catalogResult.value
+            ).isEmpty());
+
+    const auto stateWith = [&base](
+        const bool enabled,
+        const std::optional<int> range
+    ) {
+      auto state = base;
+      state.overrides.insert(
+          QStringLiteral("hyprland.decoration.glow.enabled"), enabled
+      );
+      if (range.has_value()) {
+        state.overrides.insert(
+            QStringLiteral("hyprland.decoration.glow.range"), *range
+        );
+      }
+      return state;
+    };
+
+    for (const auto range : {0, 9}) {
+      QVERIFY(validateManagedActivationSafety(
+                  stateWith(false, range), *catalogResult.value
+              ).isEmpty());
+    }
+    QVERIFY(validateManagedActivationSafety(
+                stateWith(true, std::nullopt), *catalogResult.value
+            ).isEmpty());
+    for (const auto range : {10, 100}) {
+      QVERIFY(validateManagedActivationSafety(
+                  stateWith(true, range), *catalogResult.value
+              ).isEmpty());
+    }
+
+    for (const auto range : {0, 1, 9}) {
+      const auto unsafe = stateWith(true, range);
+      const auto errors = validateManagedActivationSafety(
+          unsafe, *catalogResult.value
+      );
+      QCOMPARE(errors.size(), qsizetype(1));
+      QCOMPARE(
+          errors.constFirst().path,
+          QStringLiteral("$.overrides.hyprland.decoration.glow.range")
+      );
+      QCOMPARE(
+          errors.constFirst().code,
+          QStringLiteral("state.unsafe-glow-range")
+      );
+      QCOMPARE(
+          errors.constFirst().message,
+          QStringLiteral(
+              "Inner glow can be enabled only when its range is at least 10; "
+              "disable glow or raise the range."
+          )
+      );
+
+      const auto bytes = serializeDesiredState(unsafe);
+      const auto parsed = parseDesiredState(
+          QByteArrayView(bytes), *catalogResult.value,
+          *actionCatalogResult.value
+      );
+      QVERIFY2(parsed, qPrintable(describeErrors(parsed.errors)));
+      QCOMPARE(serializeDesiredState(*parsed.value), bytes);
+      QCOMPARE(parsed.value->overrides, unsafe.overrides);
+    }
+  }
+
   void desiredStateRejectsUnknownAndDuplicateRootFields() {
     const auto catalogResult = shippedCatalog();
     QVERIFY(catalogResult);
@@ -2232,32 +4385,48 @@ private slots:
 
     const auto *swallowRegex = findOption(
         catalog, QStringLiteral("hyprland.misc.swallow_regex"));
+    const auto *swallowExceptionRegex = findOption(
+        catalog,
+        QStringLiteral("hyprland.misc.swallow_exception_regex"));
     const auto *defaultMonitor = findOption(
         catalog, QStringLiteral("hyprland.cursor.default_monitor"));
     const auto *layout = findOption(
         catalog, QStringLiteral("hyprland.general.layout"));
     QVERIFY(swallowRegex != nullptr);
+    QVERIFY(swallowExceptionRegex != nullptr);
     QVERIFY(defaultMonitor != nullptr);
     QVERIFY(layout != nullptr);
+
+    for (const auto *swallowPattern :
+         {swallowRegex, swallowExceptionRegex}) {
+      auto semanticObject = defaultStateObject();
+      semanticObject.insert(
+          QStringLiteral("overrides"),
+          QJsonObject{{swallowPattern->id, QStringLiteral("^foo$")}});
+      const auto semanticAccepted = parseState(semanticObject, catalog);
+      QVERIFY2(semanticAccepted,
+               qPrintable(describeErrors(semanticAccepted.errors)));
+
+      for (const auto &regex : {QString(), QStringLiteral("[")}) {
+        semanticObject = defaultStateObject();
+        semanticObject.insert(
+            QStringLiteral("overrides"),
+            QJsonObject{{swallowPattern->id, regex}});
+        const auto invalid = parseState(semanticObject, catalog);
+        QVERIFY(!invalid);
+        QVERIFY(hasCode(invalid.errors,
+                        QStringLiteral("state.invalid-regex")));
+      }
+    }
 
     auto semanticObject = defaultStateObject();
     semanticObject.insert(
         QStringLiteral("overrides"),
-        QJsonObject{{swallowRegex->id, QStringLiteral("^foo$")},
-                    {defaultMonitor->id, QStringLiteral("DP-1")}});
-    const auto semanticAccepted = parseState(semanticObject, catalog);
-    QVERIFY2(semanticAccepted,
-             qPrintable(describeErrors(semanticAccepted.errors)));
+        QJsonObject{{defaultMonitor->id, QStringLiteral("DP-1")}});
+    const auto staticDefaultMonitor = parseState(semanticObject, catalog);
+    QVERIFY2(staticDefaultMonitor,
+             qPrintable(describeErrors(staticDefaultMonitor.errors)));
 
-    for (const auto &regex : {QString(), QStringLiteral("[")}) {
-      semanticObject = defaultStateObject();
-      semanticObject.insert(
-          QStringLiteral("overrides"),
-          QJsonObject{{swallowRegex->id, regex}});
-      const auto invalid = parseState(semanticObject, catalog);
-      QVERIFY(!invalid);
-      QVERIFY(hasCode(invalid.errors, QStringLiteral("state.invalid-regex")));
-    }
     semanticObject = defaultStateObject();
     semanticObject.insert(
         QStringLiteral("overrides"),
@@ -2679,7 +4848,6 @@ private slots:
                               QStringLiteral("state.invalid-string")),
                qPrintable(selector));
     }
-
     auto targetedSignal = signal;
     targetedSignal.insert(
         QStringLiteral("arguments"),
@@ -3626,6 +5794,128 @@ private slots:
                     QStringLiteral("state.invalid-animation-style")));
   }
 
+  void workspaceRulesCoverEveryManagedOverrideAndFailClosed() {
+    const auto catalogResult = shippedCatalog();
+    QVERIFY(catalogResult);
+    constexpr auto safeInteger = 9007199254740991.0;
+    const QJsonObject overrides{
+        {QStringLiteral("gaps_in"),
+         QJsonArray{-safeInteger, 0, 1, safeInteger}},
+        {QStringLiteral("gaps_out"), QJsonArray{1, 2, 3, 4}},
+        {QStringLiteral("float_gaps"), QJsonArray{4, 3, 2, 1}},
+        {QStringLiteral("border_size"), safeInteger},
+        {QStringLiteral("no_border"), true},
+        {QStringLiteral("no_rounding"), false},
+        {QStringLiteral("decorate"), true},
+        {QStringLiteral("no_shadow"), false},
+        {QStringLiteral("default_name"), QString(256, QLatin1Char('n'))},
+        {QStringLiteral("animation"),
+         QStringLiteral("slidefadevert left 37%")},
+        {QStringLiteral("layout_opts"),
+         QJsonObject{
+             {QStringLiteral("orientation"), QStringLiteral("center")},
+             {QStringLiteral("direction"), QStringLiteral("up")},
+         }},
+    };
+    const QJsonObject workspace{
+        {QStringLiteral("id"), QStringLiteral("workspace-complete")},
+        {QStringLiteral("selector"), QStringLiteral("special:music")},
+        {QStringLiteral("enabled"), false},
+        {QStringLiteral("monitor"), QStringLiteral("desc:Studio Display")},
+        {QStringLiteral("persistent"), true},
+        {QStringLiteral("isDefault"), true},
+        {QStringLiteral("layout"), QStringLiteral("scrolling")},
+        {QStringLiteral("overrides"), overrides},
+    };
+    auto object = defaultStateObject();
+    object.insert(QStringLiteral("workspaceRules"), QJsonArray{workspace});
+    const auto accepted = parseState(object, *catalogResult.value);
+    QVERIFY2(accepted, qPrintable(describeErrors(accepted.errors)));
+    const auto reparsed = parseStateBytes(
+        serializeDesiredState(*accepted.value), *catalogResult.value
+    );
+    QVERIFY2(reparsed, qPrintable(describeErrors(reparsed.errors)));
+    QCOMPARE(*reparsed.value, *accepted.value);
+
+    for (const auto &layout : {
+             QString{}, QStringLiteral("dwindle"),
+             QStringLiteral("master"), QStringLiteral("scrolling"),
+             QStringLiteral("monocle"),
+         }) {
+      auto candidate = workspace;
+      candidate.insert(QStringLiteral("layout"), layout);
+      object.insert(QStringLiteral("workspaceRules"), QJsonArray{candidate});
+      QVERIFY2(parseState(object, *catalogResult.value), qPrintable(layout));
+    }
+    for (const auto &animation : {
+             QString{}, QStringLiteral("fade"), QStringLiteral("slide"),
+             QStringLiteral("slide 0%"), QStringLiteral("slide right 100%"),
+             QStringLiteral("slidevert top"),
+             QStringLiteral("slidefade 7%"),
+             QStringLiteral("slidefadevert left 37%"),
+         }) {
+      auto candidate = workspace;
+      auto nextOverrides = overrides;
+      nextOverrides.insert(QStringLiteral("animation"), animation);
+      candidate.insert(QStringLiteral("overrides"), nextOverrides);
+      object.insert(QStringLiteral("workspaceRules"), QJsonArray{candidate});
+      QVERIFY2(
+          parseState(object, *catalogResult.value), qPrintable(animation)
+      );
+    }
+
+    const auto rejectedOverride = [&](const QString &key,
+                                      const QJsonValue &value) {
+      auto candidate = workspace;
+      auto nextOverrides = overrides;
+      nextOverrides.insert(key, value);
+      candidate.insert(QStringLiteral("overrides"), nextOverrides);
+      object.insert(QStringLiteral("workspaceRules"), QJsonArray{candidate});
+      return !parseState(object, *catalogResult.value);
+    };
+    QVERIFY(rejectedOverride(
+        QStringLiteral("gaps_in"), QJsonArray{1, 2, 3}
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("gaps_out"), QJsonArray{1, 2, 3, 4, 5}
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("float_gaps"), QJsonArray{1, 2.5, 3, 4}
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("border_size"), safeInteger + 1.0
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("no_border"), QStringLiteral("true")
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("default_name"), QString(257, QLatin1Char('n'))
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("animation"), QStringLiteral("slide 00%")
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("animation"), QStringLiteral("slide 101%")
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("layout_opts"),
+        QJsonObject{{QStringLiteral("orientation"),
+                     QStringLiteral("diagonal")}}
+    ));
+    QVERIFY(rejectedOverride(
+        QStringLiteral("on_created_empty"), QStringLiteral("exec evil")
+    ));
+
+    auto missing = workspace;
+    missing.remove(QStringLiteral("selector"));
+    object.insert(QStringLiteral("workspaceRules"), QJsonArray{missing});
+    QVERIFY(!parseState(object, *catalogResult.value));
+    auto extra = workspace;
+    extra.insert(QStringLiteral("name"), QStringLiteral("invented"));
+    object.insert(QStringLiteral("workspaceRules"), QJsonArray{extra});
+    QVERIFY(!parseState(object, *catalogResult.value));
+  }
+
   void selectorsRegexesAndNaturalIdentitiesFailClosed() {
     const auto catalogResult = shippedCatalog();
     QVERIFY(catalogResult);
@@ -3667,6 +5957,27 @@ private slots:
                        QStringLiteral("state.invalid-workspace-selector")),
                qPrintable(selector));
     }
+    const auto maximumDescription = QString(256, QLatin1Char('D'));
+    auto describedWorkspace = workspace;
+    describedWorkspace.insert(
+        QStringLiteral("monitor"),
+        QStringLiteral("desc:") + maximumDescription
+    );
+    auto workspaceObject = defaultStateObject();
+    workspaceObject.insert(
+        QStringLiteral("workspaceRules"), QJsonArray{describedWorkspace}
+    );
+    QVERIFY(parseState(workspaceObject, *catalogResult.value));
+    describedWorkspace.insert(
+        QStringLiteral("monitor"),
+        QStringLiteral("desc:") + maximumDescription + QLatin1Char('x')
+    );
+    workspaceObject.insert(
+        QStringLiteral("workspaceRules"), QJsonArray{describedWorkspace}
+    );
+    const auto excessiveWorkspaceMonitor =
+        parseState(workspaceObject, *catalogResult.value);
+    QVERIFY(!excessiveWorkspaceMonitor);
 
     const QJsonObject permission{
         {QStringLiteral("id"), QStringLiteral("permission-one")},
@@ -3740,6 +6051,20 @@ private slots:
     object = defaultStateObject();
     object.insert(QStringLiteral("monitors"), QJsonArray{describedMonitor});
     QVERIFY(parseState(object, *catalogResult.value));
+    describedMonitor.insert(
+        QStringLiteral("selector"),
+        QStringLiteral("desc:") + maximumDescription
+    );
+    object.insert(QStringLiteral("monitors"), QJsonArray{describedMonitor});
+    QVERIFY(parseState(object, *catalogResult.value));
+    describedMonitor.insert(
+        QStringLiteral("selector"),
+        QStringLiteral("desc:") + maximumDescription + QLatin1Char('x')
+    );
+    object.insert(QStringLiteral("monitors"), QJsonArray{describedMonitor});
+    const auto excessiveMonitorDescription =
+        parseState(object, *catalogResult.value);
+    QVERIFY(!excessiveMonitorDescription);
     for (const auto &selector : {QStringLiteral("current"),
                                  QStringLiteral("+1"), QStringLiteral("0"),
                                  QStringLiteral("desc:")}) {
@@ -3761,6 +6086,33 @@ private slots:
     QVERIFY(hasCode(
         dynamicMirror.errors,
         QStringLiteral("state.invalid-static-monitor-selector")));
+
+    auto mirrorSource = monitor;
+    mirrorSource.insert(
+        QStringLiteral("mirror"),
+        QStringLiteral("desc:") + maximumDescription
+    );
+    auto mirrorTarget = monitor;
+    mirrorTarget.insert(QStringLiteral("id"), QStringLiteral("monitor-desc"));
+    mirrorTarget.insert(
+        QStringLiteral("selector"),
+        QStringLiteral("desc:") + maximumDescription
+    );
+    mirrorTarget.insert(QStringLiteral("enabled"), false);
+    object.insert(
+        QStringLiteral("monitors"), QJsonArray{mirrorSource, mirrorTarget}
+    );
+    QVERIFY(parseState(object, *catalogResult.value));
+    mirrorSource.insert(
+        QStringLiteral("mirror"),
+        QStringLiteral("desc:") + maximumDescription + QLatin1Char('x')
+    );
+    object.insert(
+        QStringLiteral("monitors"), QJsonArray{mirrorSource, mirrorTarget}
+    );
+    const auto excessiveMirrorDescription =
+        parseState(object, *catalogResult.value);
+    QVERIFY(!excessiveMirrorDescription);
 
     auto selfMirror = monitor;
     selfMirror.insert(QStringLiteral("mirror"), QStringLiteral("DP-1"));

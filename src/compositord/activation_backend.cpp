@@ -826,6 +826,37 @@ ConnectedDisplaysResult LiveActivationBackend::connectedDisplays(
         : runtime_->connectedDisplays(maximumWaitMilliseconds);
 }
 
+ConnectedInputDevicesResult LiveActivationBackend::connectedInputDevices(
+    const QByteArrayView serviceEpoch
+)
+{
+    return connectedInputDevices(serviceEpoch, -1);
+}
+
+ConnectedInputDevicesResult LiveActivationBackend::connectedInputDevices(
+    const QByteArrayView serviceEpoch,
+    const int maximumWaitMilliseconds
+)
+{
+    // Read-only inventory authenticates the live session directly. It does
+    // not depend on desired-state availability, managed filesystem ownership,
+    // or the outcome of an activation-finalization attempt.
+    if (!versionPolicyConfigured_) {
+        return {
+            .success = false,
+            .errorCode = QStringLiteral("RuntimeUnavailable"),
+            .errorMessage = QStringLiteral(
+                "The live runtime version policy is unavailable"
+            ),
+        };
+    }
+    return maximumWaitMilliseconds < 0
+        ? runtime_->connectedInputDevices(serviceEpoch)
+        : runtime_->connectedInputDevices(
+            serviceEpoch, maximumWaitMilliseconds
+        );
+}
+
 BackendResult LiveActivationBackend::verifyPendingTarget(
     const ActivationReceipt &receipt,
     const QStringView generation

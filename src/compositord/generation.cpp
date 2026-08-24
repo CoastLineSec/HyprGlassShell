@@ -12,6 +12,7 @@
 
 #include <array>
 #include <cerrno>
+#include <cmath>
 #include <cstring>
 
 #include <dirent.h>
@@ -361,6 +362,69 @@ struct ReadFileResult final {
     return converted;
 }
 
+void addDormantV2Error(
+    Hyprland::ValidationErrors &errors,
+    QString path,
+    QString code,
+    QString message
+)
+{
+    errors.append({
+        .path = std::move(path),
+        .code = std::move(code),
+        .message = std::move(message),
+    });
+}
+
+[[nodiscard]] bool hasExactKeys(
+    const QJsonObject &object,
+    const QSet<QString> &expected
+)
+{
+    QSet<QString> actual;
+    for (auto iterator = object.constBegin(); iterator != object.constEnd();
+         ++iterator) {
+        actual.insert(iterator.key());
+    }
+    return actual == expected;
+}
+
+[[nodiscard]] bool exactInteger(
+    const QJsonValue &value,
+    const qint64 expected
+)
+{
+    return value.isDouble()
+        && std::floor(value.toDouble()) == value.toDouble()
+        && value.toDouble() == static_cast<double>(expected);
+}
+
+[[nodiscard]] bool validDormantV2CreatedAt(const QString &value)
+{
+    static const QRegularExpression expression(
+        QStringLiteral(
+            "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$"
+        )
+    );
+    if (value.size() > 32 || !expression.match(value).hasMatch()) {
+        return false;
+    }
+    return QDateTime::fromString(
+        value.first(19), QStringLiteral("yyyy-MM-dd'T'HH:mm:ss")
+    ).isValid();
+}
+
+[[nodiscard]] bool validDormantV2RelativePath(const QString &path)
+{
+    static const QRegularExpression expression(
+        QStringLiteral(
+            "^[A-Za-z0-9][A-Za-z0-9._-]*(?:/[A-Za-z0-9][A-Za-z0-9._-]*)*$"
+        )
+    );
+    return !path.isEmpty() && path.size() <= 255
+        && expression.match(path).hasMatch();
+}
+
 [[nodiscard]] QSet<QString> expectedFileSet()
 {
     QSet<QString> result{QStringLiteral("hyprland.lua")};
@@ -369,6 +433,477 @@ struct ReadFileResult final {
 }
 
 } // namespace
+
+Hyprland::ValidationErrors validateDormantGenerationV2(
+    const DormantRenderedGenerationV2 &rendered,
+    const Hyprland::DesiredStateV2 &state,
+    const Hyprland::Catalog &catalogV2,
+    const Hyprland::ActionCatalog &actionCatalogV2
+)
+{
+    Hyprland::ValidationErrors errors;
+    const auto fail = [&errors](
+                          QString path,
+                          QString code,
+                          QString message
+                      ) {
+        addDormantV2Error(
+            errors, std::move(path), std::move(code), std::move(message)
+        );
+    };
+
+    if (rendered.manifestBytes.isEmpty()
+        || rendered.manifestBytes.size() > maximumManifestBytes) {
+        fail(
+            QStringLiteral("$"),
+            QStringLiteral("generation-v2.invalid-manifest-size"),
+            QStringLiteral("The dormant v2 manifest has an invalid size.")
+        );
+        return errors;
+    }
+    const auto parsed = Hyprland::JsonSupport::parseStrictObject(
+        QByteArrayView(rendered.manifestBytes), maximumManifestBytes, 32
+    );
+    if (!parsed) {
+        errors.append(parsed.errors);
+        return errors;
+    }
+    const auto manifest = *parsed.value;
+    auto canonicalManifest = Hyprland::JsonSupport::canonicalJson(manifest);
+    canonicalManifest.append('\n');
+    if (canonicalManifest != rendered.manifestBytes) {
+        fail(
+            QStringLiteral("$"),
+            QStringLiteral("generation-v2.noncanonical-manifest"),
+            QStringLiteral(
+                "The dormant v2 manifest must be compact canonical JSON followed by one newline."
+            )
+        );
+    }
+    if (manifest != rendered.manifest) {
+        fail(
+            QStringLiteral("$"),
+            QStringLiteral("generation-v2.manifest-object-mismatch"),
+            QStringLiteral(
+                "The parsed dormant v2 manifest does not match the rendered manifest object."
+            )
+        );
+    }
+
+    const QSet<QString> requiredKeys{
+        QStringLiteral("formatVersion"),
+        QStringLiteral("contractVersion"),
+        QStringLiteral("authorityId"),
+        QStringLiteral("generation"),
+        QStringLiteral("snapshotDigest"),
+        QStringLiteral("sourceManifestDigest"),
+        QStringLiteral("catalogDigest"),
+        QStringLiteral("actionCatalogDigest"),
+        QStringLiteral("revision"),
+        QStringLiteral("targetHyprland"),
+        QStringLiteral("compatibleHyprland"),
+        QStringLiteral("rendererVersion"),
+        QStringLiteral("activationNonce"),
+        QStringLiteral("createdAt"),
+        QStringLiteral("entrypoint"),
+        QStringLiteral("files"),
+    };
+    if (!hasExactKeys(manifest, requiredKeys)) {
+        fail(
+            QStringLiteral("$"),
+            QStringLiteral("generation-v2.invalid-root-fields"),
+            QStringLiteral(
+                "The dormant v2 manifest must have exactly its 16 contract fields."
+            )
+        );
+    }
+    if (!exactInteger(
+            manifest.value(QStringLiteral("formatVersion")),
+            dormantGenerationV2FormatVersion
+        )
+        || !exactInteger(
+            manifest.value(QStringLiteral("contractVersion")),
+            dormantGenerationV2ContractVersion
+        )
+        || !exactInteger(
+            manifest.value(QStringLiteral("rendererVersion")),
+            dormantRendererV2Version
+        )) {
+        fail(
+            QStringLiteral("$.formatVersion"),
+            QStringLiteral("generation-v2.invalid-version"),
+            QStringLiteral(
+                "Generation format, contract, and renderer versions must all be exactly 2."
+            )
+        );
+    }
+
+    const auto authorityId =
+        manifest.value(QStringLiteral("authorityId")).toString();
+    const auto generation =
+        manifest.value(QStringLiteral("generation")).toString();
+    const auto snapshotDigest =
+        manifest.value(QStringLiteral("snapshotDigest")).toString();
+    const auto sourceManifestDigest =
+        manifest.value(QStringLiteral("sourceManifestDigest")).toString();
+    const auto catalogDigest =
+        manifest.value(QStringLiteral("catalogDigest")).toString();
+    const auto actionCatalogDigest =
+        manifest.value(QStringLiteral("actionCatalogDigest")).toString();
+    const auto activationNonce =
+        manifest.value(QStringLiteral("activationNonce")).toString();
+    const auto createdAt =
+        manifest.value(QStringLiteral("createdAt")).toString();
+    const auto entrypoint =
+        manifest.value(QStringLiteral("entrypoint")).toString();
+
+    if (!Hyprland::isCanonicalAuthorityId(authorityId)) {
+        fail(
+            QStringLiteral("$.authorityId"),
+            QStringLiteral("generation-v2.invalid-authority-id"),
+            QStringLiteral(
+                "Authority ID must be a nonzero 32-character lowercase hexadecimal value."
+            )
+        );
+    }
+    if (!Hyprland::isCanonicalAuthorityId(activationNonce)) {
+        fail(
+            QStringLiteral("$.activationNonce"),
+            QStringLiteral("generation-v2.invalid-nonce"),
+            QStringLiteral(
+                "Activation nonce must be a nonzero 32-character lowercase hexadecimal value."
+            )
+        );
+    }
+    for (const auto &[path, digest] : std::array{
+             std::pair{QStringLiteral("$.generation"), generation},
+             std::pair{QStringLiteral("$.snapshotDigest"), snapshotDigest},
+             std::pair{
+                 QStringLiteral("$.sourceManifestDigest"),
+                 sourceManifestDigest,
+             },
+             std::pair{QStringLiteral("$.catalogDigest"), catalogDigest},
+             std::pair{
+                 QStringLiteral("$.actionCatalogDigest"),
+                 actionCatalogDigest,
+             },
+         }) {
+        if (!validSha256(digest)) {
+            fail(
+                path,
+                QStringLiteral("generation-v2.invalid-sha256"),
+                QStringLiteral("A lowercase SHA-256 digest is required.")
+            );
+        }
+    }
+    if (!validDormantV2CreatedAt(createdAt)) {
+        fail(
+            QStringLiteral("$.createdAt"),
+            QStringLiteral("generation-v2.invalid-created-at"),
+            QStringLiteral("A UTC RFC 3339 creation instant is required.")
+        );
+    }
+    if (!validDormantV2RelativePath(entrypoint)) {
+        fail(
+            QStringLiteral("$.entrypoint"),
+            QStringLiteral("generation-v2.invalid-entrypoint"),
+            QStringLiteral("A safe relative entrypoint path is required.")
+        );
+    }
+
+    quint64 revision = 0;
+    const auto revisionText =
+        manifest.value(QStringLiteral("revision")).toString();
+    if (!parseRevision(revisionText, revision)) {
+        fail(
+            QStringLiteral("$.revision"),
+            QStringLiteral("generation-v2.invalid-revision"),
+            QStringLiteral("A canonical unsigned 64-bit revision is required.")
+        );
+    }
+    if (manifest.value(QStringLiteral("targetHyprland")).toString()
+        != QStringLiteral("0.56.2")) {
+        fail(
+            QStringLiteral("$.targetHyprland"),
+            QStringLiteral("generation-v2.invalid-target"),
+            QStringLiteral("The dormant v2 target must be exactly 0.56.2.")
+        );
+    }
+
+    const auto compatibleValue =
+        manifest.value(QStringLiteral("compatibleHyprland"));
+    const auto compatible = compatibleValue.toObject();
+    const QSet<QString> compatibleKeys{
+        QStringLiteral("major"),
+        QStringLiteral("minor"),
+        QStringLiteral("reviewedVersion"),
+        QStringLiteral("minimumPatch"),
+        QStringLiteral("maximumPatch"),
+    };
+    if (!compatibleValue.isObject()
+        || !hasExactKeys(compatible, compatibleKeys)
+        || !exactInteger(compatible.value(QStringLiteral("major")), 0)
+        || !exactInteger(compatible.value(QStringLiteral("minor")), 56)
+        || compatible.value(QStringLiteral("reviewedVersion")).toString()
+            != QStringLiteral("0.56.2")
+        || !exactInteger(
+            compatible.value(QStringLiteral("minimumPatch")), 2
+        )
+        || !exactInteger(
+            compatible.value(QStringLiteral("maximumPatch")), 2
+        )) {
+        fail(
+            QStringLiteral("$.compatibleHyprland"),
+            QStringLiteral("generation-v2.invalid-compatibility"),
+            QStringLiteral(
+                "The dormant v2 compatibility range must be exact patch range [2,2]."
+            )
+        );
+    }
+
+    const auto expectedSource =
+        QLatin1String(Hyprland::dormantReviewedSourceManifestDigest);
+    const auto expectedCatalog =
+        QLatin1String(Hyprland::dormantReviewedCatalogV2Digest);
+    const auto expectedActions =
+        QLatin1String(Hyprland::dormantReviewedActionCatalogV2Digest);
+    if (sourceManifestDigest != expectedSource
+        || catalogV2.sourceManifestDigest != expectedSource
+        || actionCatalogV2.sourceManifestDigest != expectedSource
+        || catalogV2.sourceManifestDigest
+            != actionCatalogV2.sourceManifestDigest) {
+        fail(
+            QStringLiteral("$.sourceManifestDigest"),
+            QStringLiteral("generation-v2.source-authority-mismatch"),
+            QStringLiteral(
+                "Manifest, scalar catalog, and action catalog must bind the same exact source manifest."
+            )
+        );
+    }
+    if (catalogDigest != expectedCatalog
+        || catalogV2.digest != expectedCatalog
+        || state.semanticState.catalogDigest != expectedCatalog) {
+        fail(
+            QStringLiteral("$.catalogDigest"),
+            QStringLiteral("generation-v2.catalog-authority-mismatch"),
+            QStringLiteral(
+                "Manifest and desired state must bind the exact dormant v2 scalar catalog."
+            )
+        );
+    }
+    if (actionCatalogDigest != expectedActions
+        || actionCatalogV2.digest != expectedActions
+        || state.semanticState.actionCatalogDigest != expectedActions) {
+        fail(
+            QStringLiteral("$.actionCatalogDigest"),
+            QStringLiteral("generation-v2.action-authority-mismatch"),
+            QStringLiteral(
+                "Manifest and desired state must bind the exact dormant v2 action catalog."
+            )
+        );
+    }
+    if (actionCatalogV2.source.repository
+            != QStringLiteral("https://github.com/hyprwm/Hyprland")
+        || actionCatalogV2.source.tag != QStringLiteral("v0.56.2")
+        || actionCatalogV2.source.commit
+            != QStringLiteral(
+                "efb50993780079460b0cbed1363e2166a2de1d9f"
+            )
+        || actionCatalogV2.source.path
+            != QStringLiteral(
+                "src/config/lua/bindings/LuaBindingsDispatchers.cpp"
+            )
+        || actionCatalogV2.source.sha256
+            != QStringLiteral(
+                "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de"
+            )) {
+        fail(
+            QStringLiteral("$.actionCatalogDigest"),
+            QStringLiteral("generation-v2.dispatcher-source-mismatch"),
+            QStringLiteral(
+                "The dormant v2 action authority has the wrong dispatcher source record."
+            )
+        );
+    }
+
+    const auto canonicalStateResult =
+        Hyprland::serializeDormantDesiredStateV2(state);
+    if (!canonicalStateResult) {
+        errors.append(canonicalStateResult.errors);
+    } else {
+        const auto reparsedState = Hyprland::parseDormantDesiredStateV2(
+            QByteArrayView(*canonicalStateResult.value),
+            catalogV2,
+            actionCatalogV2
+        );
+        if (!reparsedState) {
+            errors.append(reparsedState.errors);
+        } else if (*reparsedState.value != state) {
+            fail(
+                QStringLiteral("$"),
+                QStringLiteral("generation-v2.unvalidated-state"),
+                QStringLiteral(
+                    "The supplied desired state is not the exact dormant v2 parser product."
+                )
+            );
+        }
+        auto canonicalState = *canonicalStateResult.value;
+        if (!canonicalState.endsWith('\n')) {
+            fail(
+                QStringLiteral("$.snapshotDigest"),
+                QStringLiteral("generation-v2.invalid-canonical-state"),
+                QStringLiteral(
+                    "The dormant v2 desired serializer must terminate with one newline."
+                )
+            );
+        } else {
+            canonicalState.chop(1);
+            if (snapshotDigest != hashBytes(canonicalState)) {
+                fail(
+                    QStringLiteral("$.snapshotDigest"),
+                    QStringLiteral("generation-v2.snapshot-mismatch"),
+                    QStringLiteral(
+                        "Snapshot digest does not bind canonical dormant v2 Desired JSON."
+                    )
+                );
+            }
+        }
+    }
+    if (authorityId != state.authorityId
+        || rendered.authorityId != authorityId) {
+        fail(
+            QStringLiteral("$.authorityId"),
+            QStringLiteral("generation-v2.authority-mismatch"),
+            QStringLiteral(
+                "Generation manifest, rendered output, and desired state must share one authority ID."
+            )
+        );
+    }
+    if (revision != state.semanticState.revision
+        || revisionText != QString::number(state.semanticState.revision)) {
+        fail(
+            QStringLiteral("$.revision"),
+            QStringLiteral("generation-v2.revision-mismatch"),
+            QStringLiteral("Generation revision does not match Desired.")
+        );
+    }
+    if (manifest.value(QStringLiteral("targetHyprland")).toString()
+        != state.semanticState.targetHyprland) {
+        fail(
+            QStringLiteral("$.targetHyprland"),
+            QStringLiteral("generation-v2.target-mismatch"),
+            QStringLiteral("Generation target does not match Desired.")
+        );
+    }
+
+    const auto filesValue = manifest.value(QStringLiteral("files"));
+    const auto fileMap = filesValue.toObject();
+    if (!filesValue.isObject() || fileMap.isEmpty() || fileMap.size() > 64
+        || rendered.files.size() != fileMap.size()) {
+        fail(
+            QStringLiteral("$.files"),
+            QStringLiteral("generation-v2.invalid-files"),
+            QStringLiteral(
+                "The manifest must bind exactly one through 64 rendered files."
+            )
+        );
+    }
+    for (auto iterator = fileMap.constBegin(); iterator != fileMap.constEnd();
+         ++iterator) {
+        const auto path = QStringLiteral("$.files.") + iterator.key();
+        if (!validDormantV2RelativePath(iterator.key())
+            || !iterator.value().isObject()) {
+            fail(
+                path,
+                QStringLiteral("generation-v2.invalid-file-record"),
+                QStringLiteral(
+                    "Each generated file requires a safe path and metadata object."
+                )
+            );
+            continue;
+        }
+        const auto metadata = iterator.value().toObject();
+        const QSet<QString> metadataKeys{
+            QStringLiteral("sha256"), QStringLiteral("size"),
+        };
+        const auto metadataDigest =
+            metadata.value(QStringLiteral("sha256")).toString();
+        const auto metadataSizeValue = metadata.value(QStringLiteral("size"));
+        const auto metadataSize = metadataSizeValue.toInteger(-1);
+        if (!hasExactKeys(metadata, metadataKeys)
+            || !validSha256(metadataDigest)
+            || !metadataSizeValue.isDouble()
+            || std::floor(metadataSizeValue.toDouble())
+                != metadataSizeValue.toDouble()
+            || metadataSize < 0
+            || metadataSize > maximumGeneratedFileBytes) {
+            fail(
+                path,
+                QStringLiteral("generation-v2.invalid-file-metadata"),
+                QStringLiteral(
+                    "Each file requires exact bounded size and lowercase SHA-256 metadata."
+                )
+            );
+            continue;
+        }
+        const auto renderedFile = rendered.files.constFind(iterator.key());
+        if (renderedFile == rendered.files.constEnd()
+            || renderedFile->path != iterator.key()
+            || renderedFile->contents.size() > maximumGeneratedFileBytes
+            || renderedFile->size
+                != static_cast<quint64>(renderedFile->contents.size())
+            || renderedFile->sha256 != hashBytes(renderedFile->contents)
+            || metadataSize
+                != static_cast<qint64>(renderedFile->contents.size())
+            || metadataDigest != renderedFile->sha256) {
+            fail(
+                path,
+                QStringLiteral("generation-v2.file-digest-mismatch"),
+                QStringLiteral(
+                    "Rendered file bytes, size, SHA-256, and manifest metadata do not agree."
+                )
+            );
+        }
+    }
+    if (rendered.entrypoint != entrypoint
+        || !fileMap.contains(entrypoint)
+        || !rendered.files.contains(entrypoint)) {
+        fail(
+            QStringLiteral("$.entrypoint"),
+            QStringLiteral("generation-v2.entrypoint-mismatch"),
+            QStringLiteral(
+                "The declared entrypoint must be an exact rendered file key."
+            )
+        );
+    }
+
+    if (rendered.generation != generation
+        || rendered.snapshotDigest != snapshotDigest
+        || rendered.sourceManifestDigest != sourceManifestDigest
+        || rendered.activationNonce != activationNonce
+        || rendered.createdAt != createdAt) {
+        fail(
+            QStringLiteral("$"),
+            QStringLiteral("generation-v2.rendered-field-mismatch"),
+            QStringLiteral(
+                "Rendered v2 scalar fields do not match their manifest values."
+            )
+        );
+    }
+    auto generationInput = manifest;
+    generationInput.remove(QStringLiteral("generation"));
+    if (generation
+        != hashBytes(Hyprland::JsonSupport::canonicalJson(generationInput))) {
+        fail(
+            QStringLiteral("$.generation"),
+            QStringLiteral("generation-v2.generation-mismatch"),
+            QStringLiteral(
+                "Generation digest does not bind the canonical manifest with generation omitted."
+            )
+        );
+    }
+    return errors;
+}
 
 GenerationStore::GenerationStore(PersistentStore &store)
     : store_(store)

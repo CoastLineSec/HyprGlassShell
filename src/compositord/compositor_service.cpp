@@ -1,5 +1,6 @@
 #include "compositor_service.h"
 
+#include "hyprland/action_catalog.h"
 #include "hyprland/catalog.h"
 
 #include <QCryptographicHash>
@@ -53,17 +54,19 @@ QString activationNonce() {
   return value;
 }
 
-QString displayConfirmationToken() {
+QByteArray randomOpaqueBytes() {
   std::array<quint32, 4> randomWords{};
   QRandomGenerator::system()->fillRange(
       randomWords.data(), randomWords.size()
   );
-  return QString::fromLatin1(
-      QByteArray(
-          reinterpret_cast<const char *>(randomWords.data()),
-          static_cast<qsizetype>(sizeof(randomWords))
-      ).toHex()
+  return QByteArray(
+      reinterpret_cast<const char *>(randomWords.data()),
+      static_cast<qsizetype>(sizeof(randomWords))
   );
+}
+
+QString displayConfirmationToken() {
+  return QString::fromLatin1(randomOpaqueBytes().toHex());
 }
 
 ManagementStatus authorityBoundManagement(
@@ -106,15 +109,19 @@ CompositorService::CompositorService(
     QDBusConnection connection, QObject *parent,
     DisplayDeadlineRemaining displayDeadlineRemaining,
     DisplayOwnerPresent displayOwnerPresent,
-    std::unique_ptr<SharedBorderSource> sharedBorderSource)
+    std::unique_ptr<SharedVisualSource> sharedVisualSource,
+    QByteArray inputDeviceInventoryEpoch)
     : QObject(parent), activationBackend_(std::move(activationBackend)),
-      sharedBorderSource_(std::move(sharedBorderSource)),
+      sharedVisualSource_(std::move(sharedVisualSource)),
       connection_(std::move(connection)),
       displayDeadlineRemaining_(std::move(displayDeadlineRemaining)),
       displayOwnerPresent_(std::move(displayOwnerPresent)) {
   Q_ASSERT(activationBackend_);
-  if (!sharedBorderSource_) {
-    sharedBorderSource_ = std::make_unique<DbusSharedBorderSource>(connection_);
+  inputDeviceInventoryEpoch_ = inputDeviceInventoryEpoch.isEmpty()
+      ? randomOpaqueBytes()
+      : std::move(inputDeviceInventoryEpoch);
+  if (!sharedVisualSource_) {
+    sharedVisualSource_ = std::make_unique<DbusSharedVisualSource>(connection_);
   }
   if (!displayDeadlineRemaining_) {
     displayDeadlineRemaining_ = [](const QDeadlineTimer &deadline) {
@@ -136,8 +143,8 @@ CompositorService::CompositorService(
       &CompositorService::handleDisplayConfirmationTimeout
   );
   connect(
-      sharedBorderSource_.get(), &SharedBorderSource::changed, this,
-      &CompositorService::sharedBorderSourceChanged
+      sharedVisualSource_.get(), &SharedVisualSource::changed, this,
+      &CompositorService::sharedVisualSourceChanged
   );
 }
 
@@ -210,8 +217,8 @@ bool CompositorService::initializeAuthority(
     acceptState(initialized.snapshot, startup.status);
   }
   configureManagementMonitoring();
-  sharedBorderSource_->start();
-  scheduleSharedBorderReconcile();
+  sharedVisualSource_->start();
+  scheduleSharedVisualReconcile();
   return true;
 }
 
@@ -291,6 +298,18 @@ QString CompositorService::sharedBorderSyncError() const {
   return sharedBorderSyncError_;
 }
 
+QString CompositorService::sharedSpacingSyncState() const {
+  return sharedSpacingSyncState_;
+}
+
+qulonglong CompositorService::sharedSpacingSourceRevision() const {
+  return sharedSpacingSourceRevision_;
+}
+
+QString CompositorService::sharedSpacingSyncError() const {
+  return sharedSpacingSyncError_;
+}
+
 QByteArray
 CompositorService::GetSnapshot(qulonglong &snapshotRevision,
                                QString &snapshotCatalogDigest,
@@ -339,59 +358,127 @@ QByteArray CompositorService::GetOptionCatalog(
   return catalog;
 }
 
+QByteArray CompositorService::GetActionCatalog(
+    QString &actionCatalogDigest,
+    QByteArray &configSchema,
+    QString &configSchemaDigest
+) const {
+  actionCatalogDigest.clear();
+  configSchema.clear();
+  configSchemaDigest.clear();
+  if (!snapshot_.available || !authority_) {
+    reportError(QStringLiteral("Unavailable"),
+                QStringLiteral("Compositor configuration is unavailable"));
+    return {};
+  }
+
+  const auto catalog = authority_->actionCatalog();
+  const auto retainedSchema = authority_->configSchema();
+  if (catalog.isEmpty()
+      || catalog.size() > Hyprland::maximumActionCatalogBytes
+      || retainedSchema.isEmpty()
+      || retainedSchema.size() > Hyprland::maximumActionSchemaBytes) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral("The compositor action authority is unavailable"));
+    return {};
+  }
+
+  const auto parsed = Hyprland::parseActionCatalog(catalog, retainedSchema);
+  const auto retainedSchemaDigest = QString::fromLatin1(
+      QCryptographicHash::hash(
+          retainedSchema, QCryptographicHash::Sha256
+      ).toHex()
+  );
+  if (!parsed
+      || Hyprland::canonicalActionCatalogJson(*parsed.value) != catalog
+      || parsed.value->digest != snapshot_.actionCatalogDigest
+      || parsed.value->configSchemaDigest != retainedSchemaDigest
+      || parsed.value->configSchemaDocument != retainedSchema) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral("The compositor action authority is unavailable"));
+    return {};
+  }
+
+  actionCatalogDigest = snapshot_.actionCatalogDigest;
+  configSchema = retainedSchema;
+  configSchemaDigest = retainedSchemaDigest;
+  return catalog;
+}
+
 qulonglong
 CompositorService::ReplaceSnapshot(const qulonglong expectedRevision,
                                    const QString &expectedCatalogDigest,
                                    const QString &expectedActionCatalogDigest,
                                    const QByteArray &candidateSnapshot) {
-  if (!checkNoDisplayConfirmation()) return revision();
   // The current token and the immediately preceding token are delegated for
   // Replace. The authority distinguishes an exact lost-response retry from a
   // conflicting candidate. Other mutating methods require only the current
   // revision at this D-Bus boundary.
-  if (!checkMutationCatalogAuthority(expectedCatalogDigest,
-                                     expectedActionCatalogDigest)) {
-    return revision();
-  }
   const auto immediatelyPrecedesCurrent =
       snapshot_.revision > 0 && expectedRevision == snapshot_.revision - 1;
-  if (expectedRevision != snapshot_.revision && !immediatelyPrecedesCurrent) {
+  const auto finishReplace = [this](AuthorityResult result) {
+    if (!result.success) {
+      // Most rejected candidates leave the current authority tuple intact.
+      // A post-publication durability failure instead marks that authority
+      // unavailable; publish the fail-closed tuple before returning so a
+      // client cannot continue from the stale writable revision.
+      if (result.snapshot.available ||
+          result.snapshot.applyState == QStringLiteral("failed")) {
+        acceptState(result.snapshot, activationBackend_->status());
+      }
+      reportError(
+          boundedErrorCode(result.errorCode,
+                           QStringLiteral("PersistenceFailed")),
+          result.errorMessage);
+      return revision();
+    }
+    acceptState(result.snapshot, activationBackend_->status());
+    return revision();
+  };
+
+  // An immediately preceding token cannot mutate authority state. Delegate it
+  // before policy and display-preview gates so a later policy projection or an
+  // active confirmation cannot retroactively invalidate an exact committed
+  // lost-response retry. The transaction returns StaleRevision for any other
+  // candidate at that token.
+  if (immediatelyPrecedesCurrent) {
+    if (!checkMutationCatalogAuthority(
+            expectedCatalogDigest, expectedActionCatalogDigest, false
+        )) {
+      return revision();
+    }
+    return finishReplace(
+        authority_->replaceSnapshot(expectedRevision, candidateSnapshot));
+  }
+
+  if (!checkNoDisplayConfirmation()) return revision();
+  if (!checkMutationCatalogAuthority(
+          expectedCatalogDigest, expectedActionCatalogDigest, true
+      )) {
+    return revision();
+  }
+  if (expectedRevision != snapshot_.revision) {
     reportError(
         QStringLiteral("StaleRevision"),
         QStringLiteral("Compositor configuration changed; read it again"));
     return revision();
   }
   QString controlledError;
-  if (!sharedBorderReplacementAllowed(candidateSnapshot, controlledError)) {
+  if (!sharedVisualReplacementAllowed(candidateSnapshot, controlledError)) {
     reportError(
         QStringLiteral("ControlledByHyprShelld"),
         controlledError.isEmpty()
             ? QStringLiteral(
-                  "Window border geometry is controlled by shared visual settings"
+                  "Shared window geometry is controlled by shared visual settings"
               )
             : controlledError
     );
     return revision();
   }
-
-  auto result =
-      authority_->replaceSnapshot(expectedRevision, candidateSnapshot);
-  if (!result.success) {
-    // Most rejected candidates leave the current authority tuple intact.
-    // A post-publication durability failure instead marks that authority
-    // unavailable; publish the fail-closed tuple before returning so a
-    // client cannot continue from the stale writable revision.
-    if (result.snapshot.available ||
-        result.snapshot.applyState == QStringLiteral("failed")) {
-      acceptState(result.snapshot, activationBackend_->status());
-    }
-    reportError(
-        boundedErrorCode(result.errorCode, QStringLiteral("PersistenceFailed")),
-        result.errorMessage);
-    return revision();
-  }
-  acceptState(result.snapshot, activationBackend_->status());
-  return revision();
+  return finishReplace(
+      authority_->replaceSnapshot(expectedRevision, candidateSnapshot));
 }
 
 qulonglong CompositorService::Apply(const qulonglong expectedRevision,
@@ -405,13 +492,13 @@ qulonglong CompositorService::Apply(const qulonglong expectedRevision,
     return appliedRevision();
   }
   QString controlledError;
-  if (!sharedBorderActivationAllowed(snapshot_.desiredState,
+  if (!sharedVisualActivationAllowed(snapshot_.desiredState,
                                      controlledError)) {
     reportError(
         QStringLiteral("ControlledByHyprShelld"),
         controlledError.isEmpty()
             ? QStringLiteral(
-                  "Window border geometry is controlled by shared visual settings"
+                  "Shared window geometry is controlled by shared visual settings"
               )
             : controlledError
     );
@@ -437,6 +524,15 @@ qulonglong CompositorService::Apply(const qulonglong expectedRevision,
       *snapshot_.requiredActivation == ActivationRequirement::None) {
     if (snapshot_.applyState == QStringLiteral("current") &&
         !snapshot_.generationDigest.isEmpty()) {
+      const auto safetyErrors =
+          authority_->currentActivationSafetyErrors();
+      if (!safetyErrors.isEmpty()) {
+        reportError(
+            QStringLiteral("VerificationFailed"),
+            safetyErrors.constFirst().message
+        );
+        return appliedRevision();
+      }
       return appliedRevision();
     }
     reportError(QStringLiteral("VerificationFailed"),
@@ -530,13 +626,13 @@ qulonglong CompositorService::AdoptManagedConfiguration(
     return appliedRevision();
   }
   QString controlledError;
-  if (!sharedBorderActivationAllowed(snapshot_.desiredState,
+  if (!sharedVisualActivationAllowed(snapshot_.desiredState,
                                      controlledError)) {
     reportError(
         QStringLiteral("ControlledByHyprShelld"),
         controlledError.isEmpty()
             ? QStringLiteral(
-                  "Window border geometry is controlled by shared visual settings"
+                  "Shared window geometry is controlled by shared visual settings"
               )
             : controlledError
     );
@@ -619,6 +715,39 @@ QByteArray CompositorService::GetConnectedDisplays(
       QDateTime::currentMSecsSinceEpoch()
   );
   return connected.topology->document;
+}
+
+QByteArray CompositorService::GetConnectedInputDevices(
+    qulonglong &observedAtMs
+) {
+  observedAtMs = 0;
+  if (displayConfirmation_
+      || displayConfirmationState_ == QStringLiteral("committing")) {
+    reportError(
+        QStringLiteral("Unavailable"),
+        QStringLiteral(
+            "Input-device discovery is unavailable during display reconciliation"
+        )
+    );
+    return {};
+  }
+
+  const auto connected = activationBackend_->connectedInputDevices(
+      inputDeviceInventoryEpoch_
+  );
+  if (!connected.success || !connected.inventory) {
+    reportError(
+        boundedErrorCode(connected.errorCode,
+                         QStringLiteral("RuntimeUnavailable")),
+        connected.errorMessage
+    );
+    return {};
+  }
+
+  observedAtMs = static_cast<qulonglong>(
+      QDateTime::currentMSecsSinceEpoch()
+  );
+  return connected.inventory->document;
 }
 
 qulonglong CompositorService::PreviewDisplayConfiguration(
@@ -1229,17 +1358,32 @@ qulonglong CompositorService::RevertDisplayConfiguration(
 }
 
 void CompositorService::RetrySharedBorderSync() {
-  clearFailedSharedBorderAttempt();
   forceSharedBorderRetry_ = true;
-  if (sharedBorderSource_) sharedBorderSource_->requestRefresh();
-  scheduleSharedBorderReconcile();
+  if (failedGroupsShareOperation_) {
+    clearFailedSharedSpacingAttempt();
+    forceSharedSpacingRetry_ = true;
+  }
+  clearFailedSharedBorderAttempt();
+  if (sharedVisualSource_) sharedVisualSource_->requestRefresh();
+  scheduleSharedVisualReconcile();
+}
+
+void CompositorService::RetrySharedSpacingSync() {
+  forceSharedSpacingRetry_ = true;
+  if (failedGroupsShareOperation_) {
+    clearFailedSharedBorderAttempt();
+    forceSharedBorderRetry_ = true;
+  }
+  clearFailedSharedSpacingAttempt();
+  if (sharedVisualSource_) sharedVisualSource_->requestRefresh();
+  scheduleSharedVisualReconcile();
 }
 
 bool CompositorService::checkMutationAuthority(
     const qulonglong expectedRevision, const QString &expectedCatalogDigest,
     const QString &expectedActionCatalogDigest) const {
   if (!checkMutationCatalogAuthority(expectedCatalogDigest,
-                                     expectedActionCatalogDigest)) {
+                                     expectedActionCatalogDigest, true)) {
     return false;
   }
   if (expectedRevision != snapshot_.revision) {
@@ -1253,13 +1397,14 @@ bool CompositorService::checkMutationAuthority(
 
 bool CompositorService::checkMutationCatalogAuthority(
     const QString &expectedCatalogDigest,
-    const QString &expectedActionCatalogDigest) const {
+    const QString &expectedActionCatalogDigest,
+    const bool requireWritable) const {
   if (!snapshot_.available || !authority_) {
     reportError(QStringLiteral("Unavailable"),
                 QStringLiteral("Compositor configuration is unavailable"));
     return false;
   }
-  if (!snapshot_.writable) {
+  if (requireWritable && !snapshot_.writable) {
     reportError(QStringLiteral("ReadOnly"),
                 QStringLiteral("Compositor configuration is read-only"));
     return false;
@@ -1509,34 +1654,45 @@ void CompositorService::publishDisplayProperties() {
   QVariantMap changed;
   appendDisplayProperties(changed);
   publishProperties(changed);
-  scheduleSharedBorderReconcile();
+  scheduleSharedVisualReconcile();
 }
 
-void CompositorService::scheduleSharedBorderReconcile() {
-  if (sharedBorderReconcileScheduled_) return;
-  sharedBorderReconcileScheduled_ = true;
-  QTimer::singleShot(0, this, &CompositorService::reconcileSharedBorder);
+void CompositorService::scheduleSharedVisualReconcile() {
+  if (sharedVisualReconcileScheduled_) return;
+  sharedVisualReconcileScheduled_ = true;
+  QTimer::singleShot(0, this, &CompositorService::reconcileSharedVisual);
 }
 
-void CompositorService::sharedBorderSourceChanged() {
-  if (sharedBorderSource_->available()) {
-    const auto next = sharedBorderSource_->projection();
-    const auto effectivePolicyChanged =
-        !lastSharedBorderProjection_
-        || lastSharedBorderProjection_->syncWindowBorders
+void CompositorService::sharedVisualSourceChanged() {
+  if (sharedVisualSource_->available()) {
+    const auto next = sharedVisualSource_->projection();
+    const auto borderPolicyChanged =
+        !lastSharedVisualProjection_
+        || lastSharedVisualProjection_->syncWindowBorders
             != next.syncWindowBorders
-        || sharedBorderReconciler_.valuesFor(*lastSharedBorderProjection_)
-            != sharedBorderReconciler_.valuesFor(next);
-    if (effectivePolicyChanged) {
+        || sharedBorderReconciler_.valuesFor(*lastSharedVisualProjection_)
+            != sharedBorderReconciler_.valuesFor(next)
+        ;
+    const auto spacingPolicyChanged =
+        !lastSharedVisualProjection_
+        || lastSharedVisualProjection_->syncWindowSpacing
+            != next.syncWindowSpacing
+        || sharedSpacingReconciler_.valuesFor(*lastSharedVisualProjection_)
+            != sharedSpacingReconciler_.valuesFor(next);
+    if (borderPolicyChanged) {
       clearFailedSharedBorderAttempt();
-      pendingSharedBorderApplyRevision_.reset();
+      pendingSharedBorderApply_ = false;
     }
-    if (!next.syncWindowBorders) {
-      pendingSharedBorderApplyRevision_.reset();
+    if (spacingPolicyChanged) {
+      clearFailedSharedSpacingAttempt();
+      pendingSharedSpacingApply_ = false;
     }
-    lastSharedBorderProjection_ = next;
+    if (!pendingSharedBorderApply_ && !pendingSharedSpacingApply_) {
+      pendingSharedVisualApplyRevision_.reset();
+    }
+    lastSharedVisualProjection_ = next;
   }
-  scheduleSharedBorderReconcile();
+  scheduleSharedVisualReconcile();
 }
 
 void CompositorService::setSharedBorderStatus(
@@ -1546,28 +1702,54 @@ void CompositorService::setSharedBorderStatus(
 ) {
   auto boundedError = error;
   if (boundedError.size() > 1024) boundedError.truncate(1024);
-  QVariantMap changed;
-  if (state != sharedBorderSyncState_) {
-    sharedBorderSyncState_ = state;
-    changed.insert(QStringLiteral("SharedBorderSyncState"), state);
+  if (state == sharedBorderSyncState_
+      && sourceRevision == sharedBorderSourceRevision_
+      && boundedError == sharedBorderSyncError_) {
+    return;
   }
-  if (sourceRevision != sharedBorderSourceRevision_) {
-    sharedBorderSourceRevision_ = sourceRevision;
-    changed.insert(
-        QStringLiteral("SharedBorderSourceRevision"),
-        QVariant::fromValue<qulonglong>(sourceRevision)
-    );
+  sharedBorderSyncState_ = state;
+  sharedBorderSourceRevision_ = sourceRevision;
+  sharedBorderSyncError_ = boundedError;
+  const QVariantMap changed{
+      {QStringLiteral("SharedBorderSyncState"), state},
+      {
+          QStringLiteral("SharedBorderSourceRevision"),
+          QVariant::fromValue<qulonglong>(sourceRevision),
+      },
+      {QStringLiteral("SharedBorderSyncError"), boundedError},
+  };
+  publishProperties(changed);
+}
+
+void CompositorService::setSharedSpacingStatus(
+    const QString &state,
+    const qulonglong sourceRevision,
+    const QString &error
+) {
+  auto boundedError = error;
+  if (boundedError.size() > 1024) boundedError.truncate(1024);
+  if (state == sharedSpacingSyncState_
+      && sourceRevision == sharedSpacingSourceRevision_
+      && boundedError == sharedSpacingSyncError_) {
+    return;
   }
-  if (boundedError != sharedBorderSyncError_) {
-    sharedBorderSyncError_ = boundedError;
-    changed.insert(QStringLiteral("SharedBorderSyncError"), boundedError);
-  }
+  sharedSpacingSyncState_ = state;
+  sharedSpacingSourceRevision_ = sourceRevision;
+  sharedSpacingSyncError_ = boundedError;
+  const QVariantMap changed{
+      {QStringLiteral("SharedSpacingSyncState"), state},
+      {
+          QStringLiteral("SharedSpacingSourceRevision"),
+          QVariant::fromValue<qulonglong>(sourceRevision),
+      },
+      {QStringLiteral("SharedSpacingSyncError"), boundedError},
+  };
   publishProperties(changed);
 }
 
 QString CompositorService::sharedBorderAttemptKey() const {
   QStringList fields{
-      sharedBorderSource_ && sharedBorderSource_->available()
+      sharedVisualSource_ && sharedVisualSource_->available()
           ? QStringLiteral("source") : QStringLiteral("no-source"),
       QString::number(snapshot_.available),
       QString::number(snapshot_.writable),
@@ -1580,14 +1762,40 @@ QString CompositorService::sharedBorderAttemptKey() const {
       managementStateName(management_.state),
       management_.managedGeneration,
       displayConfirmationState_,
-      QString::number(sharedBorderAuthorityGeneration_),
+      QString::number(sharedVisualAuthorityGeneration_),
   };
-  if (sharedBorderSource_ && sharedBorderSource_->available()) {
-    const auto &projection = sharedBorderSource_->projection();
+  if (sharedVisualSource_ && sharedVisualSource_->available()) {
+    const auto &projection = sharedVisualSource_->projection();
     fields.append(QString::number(projection.borderEnabled));
     fields.append(QString::number(projection.borderWidth));
     fields.append(QString::number(projection.borderRadius));
     fields.append(QString::number(projection.syncWindowBorders));
+  }
+  return fields.join(QLatin1Char('|'));
+}
+
+QString CompositorService::sharedSpacingAttemptKey() const {
+  QStringList fields{
+      sharedVisualSource_ && sharedVisualSource_->available()
+          ? QStringLiteral("source") : QStringLiteral("no-source"),
+      QString::number(snapshot_.available),
+      QString::number(snapshot_.writable),
+      QString::number(snapshot_.revision),
+      QString::number(snapshot_.appliedRevision),
+      snapshot_.catalogDigest,
+      snapshot_.applyState,
+      requiredActivationName(snapshot_.requiredActivation),
+      snapshot_.generationDigest,
+      managementStateName(management_.state),
+      management_.managedGeneration,
+      displayConfirmationState_,
+      QString::number(sharedVisualAuthorityGeneration_),
+  };
+  if (sharedVisualSource_ && sharedVisualSource_->available()) {
+    const auto &projection = sharedVisualSource_->projection();
+    fields.append(QString::number(projection.innerSpacing));
+    fields.append(QString::number(projection.outerSpacing));
+    fields.append(QString::number(projection.syncWindowSpacing));
   }
   return fields.join(QLatin1Char('|'));
 }
@@ -1606,69 +1814,139 @@ bool CompositorService::ensureSharedBorderCatalog(QString &error) {
   );
 }
 
-bool CompositorService::sharedBorderReplacementAllowed(
+bool CompositorService::ensureSharedSpacingCatalog(QString &error) {
+  if (sharedSpacingReconciler_.configuredFor(snapshot_.catalogDigest)) {
+    error.clear();
+    return true;
+  }
+  if (!authority_ || snapshot_.catalogDigest.isEmpty()) {
+    error = QStringLiteral("The compositor option catalog is unavailable");
+    return false;
+  }
+  return sharedSpacingReconciler_.configure(
+      authority_->optionCatalog(), snapshot_.catalogDigest, error
+  );
+}
+
+bool CompositorService::sharedVisualReplacementAllowed(
     const QByteArray &candidate,
     QString &error
 ) {
   error.clear();
-  std::optional<SharedBorderProjection> policy;
-  if (sharedBorderSource_ && sharedBorderSource_->available()) {
-    policy = sharedBorderSource_->projection();
-  } else if (lastSharedBorderProjection_) {
-    policy = *lastSharedBorderProjection_;
-  }
-  if (policy && !policy->syncWindowBorders) {
-    return true;
+  std::optional<SharedVisualProjection> policy;
+  if (sharedVisualSource_ && sharedVisualSource_->available()) {
+    policy = sharedVisualSource_->projection();
+  } else if (lastSharedVisualProjection_) {
+    policy = *lastSharedVisualProjection_;
   }
 
-  QString catalogError;
-  if (!ensureSharedBorderCatalog(catalogError)) {
-    error = catalogError;
-    return false;
-  }
+  if (!policy || policy->syncWindowBorders) {
+    QString catalogError;
+    if (!ensureSharedBorderCatalog(catalogError)) {
+      error = catalogError;
+      return false;
+    }
 
-  std::optional<SharedBorderValues> controlledValues;
-  if (policy) {
-    controlledValues = sharedBorderReconciler_.valuesFor(*policy);
-  } else {
-    controlledValues = sharedBorderReconciler_.resolvedValues(
-        snapshot_.desiredState, error
-    );
-    if (!controlledValues) {
+    std::optional<SharedBorderValues> controlledValues;
+    if (policy) {
+      controlledValues = sharedBorderReconciler_.valuesFor(*policy);
+    } else {
+      controlledValues = sharedBorderReconciler_.resolvedValues(
+          snapshot_.desiredState, error
+      );
+      if (!controlledValues) {
+        error = QStringLiteral(
+            "Window border geometry cannot be safely replaced while shared visual policy is unavailable"
+        );
+        return false;
+      }
+    }
+
+    if (!sharedBorderReconciler_.replacementPreserves(
+            candidate, *controlledValues, error
+        )) {
       error = QStringLiteral(
-          "Window border geometry cannot be safely replaced while shared visual policy is unavailable"
+          "Window border geometry is controlled by shared visual settings"
       );
       return false;
     }
   }
 
-  if (!sharedBorderReconciler_.replacementPreserves(
-          candidate, *controlledValues, error
+  if (!policy || policy->syncWindowSpacing) {
+    QString catalogError;
+    if (!ensureSharedSpacingCatalog(catalogError)) {
+      error = catalogError;
+      return false;
+    }
+    std::optional<SharedSpacingValues> controlledValues;
+    if (policy) {
+      controlledValues = sharedSpacingReconciler_.valuesFor(*policy);
+    } else {
+      controlledValues = sharedSpacingReconciler_.resolvedValues(
+          snapshot_.desiredState, error
+      );
+      if (!controlledValues) {
+        error = QStringLiteral(
+            "Window spacing cannot be safely replaced while shared visual policy is unavailable"
+        );
+        return false;
+      }
+    }
+    if (!sharedSpacingReconciler_.replacementPreservesSpacing(
+            candidate, *controlledValues, error
+        )) {
+      error = QStringLiteral(
+          "Window spacing is controlled by shared visual settings"
+      );
+      return false;
+    }
+  }
+
+  if (!sharedSpacingReconciler_.hasExactFinalProtectedRule(
+          candidate, error
       )) {
     error = QStringLiteral(
-        "Window border geometry is controlled by shared visual settings"
+        "The protected maximized-window spacing rule must be unique and final"
     );
     return false;
   }
   return true;
 }
 
-bool CompositorService::sharedBorderActivationAllowed(
+bool CompositorService::sharedVisualActivationAllowed(
     const QByteArray &candidate,
     QString &error
 ) {
-  if (!sharedBorderSource_ || !sharedBorderSource_->available()) {
+  if (!sharedVisualSource_ || !sharedVisualSource_->available()) {
     error = QStringLiteral(
         "Shared visual settings are unavailable or have not been verified"
     );
     return false;
   }
-  return sharedBorderReplacementAllowed(candidate, error);
+  if (!sharedVisualReplacementAllowed(candidate, error)) {
+    return false;
+  }
+  if (!sharedSpacingReconciler_.hasExactFinalProtectedRule(
+          candidate, error
+      )) {
+    error = QStringLiteral(
+        "The protected maximized-window spacing rule is unavailable"
+    );
+    return false;
+  }
+  return true;
 }
 
 void CompositorService::clearFailedSharedBorderAttempt() {
   failedSharedBorderAttempt_.clear();
   failedSharedBorderError_.clear();
+  failedGroupsShareOperation_ = false;
+}
+
+void CompositorService::clearFailedSharedSpacingAttempt() {
+  failedSharedSpacingAttempt_.clear();
+  failedSharedSpacingError_.clear();
+  failedGroupsShareOperation_ = false;
 }
 
 void CompositorService::failSharedBorder(const QString &error) {
@@ -1681,46 +1959,81 @@ void CompositorService::failSharedBorder(const QString &error) {
   }
   setSharedBorderStatus(
       QStringLiteral("failed"),
-      sharedBorderSource_ && sharedBorderSource_->available()
-          ? sharedBorderSource_->projection().revision : 0,
+      sharedVisualSource_ && sharedVisualSource_->available()
+          ? sharedVisualSource_->projection().revision : 0,
       failedSharedBorderError_
   );
 }
 
-void CompositorService::reconcileSharedBorder() {
-  sharedBorderReconcileScheduled_ = false;
-  if (sharedBorderReconcileRunning_) {
-    scheduleSharedBorderReconcile();
+void CompositorService::failSharedSpacing(const QString &error) {
+  failedSharedSpacingAttempt_ = sharedSpacingAttemptKey();
+  failedSharedSpacingError_ = error.isEmpty()
+      ? QStringLiteral("Shared window spacing synchronization failed")
+      : error;
+  if (failedSharedSpacingError_.size() > 1024) {
+    failedSharedSpacingError_.truncate(1024);
+  }
+  setSharedSpacingStatus(
+      QStringLiteral("failed"),
+      sharedVisualSource_ && sharedVisualSource_->available()
+          ? sharedVisualSource_->projection().revision : 0,
+      failedSharedSpacingError_
+  );
+}
+
+void CompositorService::failSharedGroups(
+    const bool borderChanged,
+    const bool spacingChanged,
+    const QString &error
+) {
+  if (borderChanged) failSharedBorder(error);
+  if (spacingChanged) failSharedSpacing(error);
+  failedGroupsShareOperation_ = borderChanged && spacingChanged;
+}
+
+void CompositorService::reconcileSharedVisual() {
+  sharedVisualReconcileScheduled_ = false;
+  if (sharedVisualReconcileRunning_) {
+    scheduleSharedVisualReconcile();
     return;
   }
-  sharedBorderReconcileRunning_ = true;
+  sharedVisualReconcileRunning_ = true;
   struct ResetRunning final {
     bool &value;
     ~ResetRunning() { value = false; }
-  } resetRunning{sharedBorderReconcileRunning_};
+  } resetRunning{sharedVisualReconcileRunning_};
 
-  const auto force = std::exchange(forceSharedBorderRetry_, false);
-  if (!sharedBorderSource_ || !sharedBorderSource_->available()) {
+  const auto forceBorder = std::exchange(forceSharedBorderRetry_, false);
+  const auto forceSpacing = std::exchange(forceSharedSpacingRetry_, false);
+  if (!sharedVisualSource_ || !sharedVisualSource_->available()) {
+    const auto sourceError = sharedVisualSource_
+        ? sharedVisualSource_->error()
+        : QStringLiteral("Shared visual settings are unavailable");
     setSharedBorderStatus(
-        QStringLiteral("unavailable"), 0,
-        sharedBorderSource_
-            ? sharedBorderSource_->error()
-            : QStringLiteral("Shared visual settings are unavailable")
+        QStringLiteral("unavailable"), 0, sourceError
+    );
+    setSharedSpacingStatus(
+        QStringLiteral("unavailable"), 0, sourceError
     );
     return;
   }
-  const auto projection = sharedBorderSource_->projection();
-  lastSharedBorderProjection_ = projection;
-  if (!projection.syncWindowBorders) {
-    pendingSharedBorderApplyRevision_.reset();
-    clearFailedSharedBorderAttempt();
-    setSharedBorderStatus(
-        QStringLiteral("override"), projection.revision
-    );
-    return;
-  }
+  const auto projection = sharedVisualSource_->projection();
+  lastSharedVisualProjection_ = projection;
+  const auto borderWasCurrent =
+      sharedBorderSyncState_ == QStringLiteral("current");
+  const auto spacingWasCurrent =
+      sharedSpacingSyncState_ == QStringLiteral("current");
+
   if (!authority_ || !snapshot_.available) {
     setSharedBorderStatus(
+        projection.syncWindowBorders
+            ? QStringLiteral("unavailable") : QStringLiteral("override"),
+        projection.revision,
+        projection.syncWindowBorders
+            ? QStringLiteral("Compositor configuration is unavailable")
+            : QString()
+    );
+    setSharedSpacingStatus(
         QStringLiteral("unavailable"), projection.revision,
         QStringLiteral("Compositor configuration is unavailable")
     );
@@ -1728,8 +2041,11 @@ void CompositorService::reconcileSharedBorder() {
   }
   if (displayConfirmationState_ != QStringLiteral("idle")) {
     setSharedBorderStatus(
-        QStringLiteral("pending"), projection.revision
+        projection.syncWindowBorders
+            ? QStringLiteral("pending") : QStringLiteral("override"),
+        projection.revision
     );
+    setSharedSpacingStatus(QStringLiteral("pending"), projection.revision);
     return;
   }
 
@@ -1747,66 +2063,261 @@ void CompositorService::reconcileSharedBorder() {
       && !snapshot_.generationDigest.isEmpty()
       && management_.managedGeneration == snapshot_.generationDigest;
 
-  const auto attemptKey = sharedBorderAttemptKey();
-  if (!force && !failedSharedBorderAttempt_.isEmpty()
-      && failedSharedBorderAttempt_ == attemptKey) {
+  const auto borderAttemptKey = sharedBorderAttemptKey();
+  if (forceBorder || failedSharedBorderAttempt_ != borderAttemptKey) {
+    clearFailedSharedBorderAttempt();
+  }
+  const auto spacingAttemptKey = sharedSpacingAttemptKey();
+  if (forceSpacing || failedSharedSpacingAttempt_ != spacingAttemptKey) {
+    clearFailedSharedSpacingAttempt();
+  }
+  const auto borderSuppressed = !forceBorder
+      && !failedSharedBorderAttempt_.isEmpty()
+      && failedSharedBorderAttempt_ == borderAttemptKey;
+  const auto spacingSuppressed = !forceSpacing
+      && !failedSharedSpacingAttempt_.isEmpty()
+      && failedSharedSpacingAttempt_ == spacingAttemptKey;
+
+  const auto pendingRevisionOwned = pendingSharedVisualApplyRevision_
+      && *pendingSharedVisualApplyRevision_ == snapshot_.revision;
+  auto pendingBorder = pendingRevisionOwned && pendingSharedBorderApply_;
+  auto pendingSpacing = pendingRevisionOwned && pendingSharedSpacingApply_;
+
+  bool borderFailed = false;
+  bool spacingFailed = false;
+  bool borderNeedsChange = false;
+  bool spacingNeedsChange = false;
+  QString error;
+
+  if (projection.syncWindowBorders) {
+    if (!ensureSharedBorderCatalog(error)) {
+      failSharedBorder(error);
+      borderFailed = true;
+    } else {
+      const auto resolved = sharedBorderReconciler_.resolvedValues(
+          snapshot_.desiredState, error
+      );
+      if (!resolved) {
+        failSharedBorder(error);
+        borderFailed = true;
+      } else {
+        borderNeedsChange =
+            *resolved != sharedBorderReconciler_.valuesFor(projection);
+      }
+    }
+  } else {
+    clearFailedSharedBorderAttempt();
+    pendingSharedBorderApply_ = false;
+    pendingBorder = false;
+  }
+
+  bool protectedRuleExact = sharedSpacingReconciler_
+      .hasExactFinalProtectedRule(snapshot_.desiredState, error);
+  if (projection.syncWindowSpacing) {
+    if (!ensureSharedSpacingCatalog(error)) {
+      failSharedSpacing(error);
+      spacingFailed = true;
+    } else {
+      const auto resolved = sharedSpacingReconciler_.resolvedValues(
+          snapshot_.desiredState, error
+      );
+      if (!resolved) {
+        failSharedSpacing(error);
+        spacingFailed = true;
+      } else {
+        spacingNeedsChange =
+            *resolved != sharedSpacingReconciler_.valuesFor(projection);
+      }
+    }
+  }
+  spacingNeedsChange = spacingNeedsChange || !protectedRuleExact;
+
+  if (borderSuppressed && (borderNeedsChange || pendingBorder)) {
     setSharedBorderStatus(
-        QStringLiteral("failed"),
-        projection.revision,
+        QStringLiteral("failed"), projection.revision,
         failedSharedBorderError_
     );
-    return;
+    borderFailed = true;
   }
-  clearFailedSharedBorderAttempt();
-  if (!snapshot_.writable) {
-    failSharedBorder(QStringLiteral("Compositor configuration is read-only"));
-    return;
+  if (spacingSuppressed && (spacingNeedsChange || pendingSpacing)) {
+    setSharedSpacingStatus(
+        QStringLiteral("failed"), projection.revision,
+        failedSharedSpacingError_
+    );
+    spacingFailed = true;
   }
-  setSharedBorderStatus(QStringLiteral("pending"), projection.revision);
 
-  QString error;
-  if (!ensureSharedBorderCatalog(error)) {
-    failSharedBorder(error);
-    return;
+  auto candidate = snapshot_.desiredState;
+  bool borderChanged = false;
+  bool spacingChanged = false;
+  if (borderNeedsChange && !borderFailed) {
+    const auto edit = sharedBorderReconciler_.edit(
+        candidate,
+        snapshot_.revision,
+        snapshot_.catalogDigest,
+        projection,
+        error
+    );
+    if (!edit || !edit->changed) {
+      failSharedBorder(
+          error.isEmpty()
+              ? QStringLiteral("Shared window border reconciliation did not produce the required change")
+              : error
+      );
+      borderFailed = true;
+    } else {
+      candidate = edit->candidate;
+      borderChanged = true;
+    }
   }
-  const auto edit = sharedBorderReconciler_.edit(
-      snapshot_.desiredState,
-      snapshot_.revision,
-      snapshot_.catalogDigest,
-      projection,
-      error
-  );
-  if (!edit) {
-    failSharedBorder(error);
-    return;
+  if (spacingNeedsChange && !spacingFailed) {
+    const auto edit = sharedSpacingReconciler_.edit(
+        candidate,
+        snapshot_.revision,
+        snapshot_.catalogDigest,
+        projection,
+        error
+    );
+    if (!edit || !edit->changed) {
+      failSharedSpacing(
+          error.isEmpty()
+              ? QStringLiteral("Shared window spacing reconciliation did not produce the required change")
+              : error
+      );
+      spacingFailed = true;
+    } else {
+      candidate = edit->candidate;
+      spacingChanged = true;
+    }
   }
-  if (edit->changed) {
+
+  if ((borderChanged || spacingChanged) && !snapshot_.writable) {
+    failSharedGroups(
+        borderChanged, spacingChanged,
+        QStringLiteral("Compositor configuration is read-only")
+    );
+    borderFailed = borderFailed || borderChanged;
+    spacingFailed = spacingFailed || spacingChanged;
+    borderChanged = false;
+    spacingChanged = false;
+  }
+
+  if (borderChanged || spacingChanged) {
+    if (borderChanged) {
+      setSharedBorderStatus(QStringLiteral("pending"), projection.revision);
+    }
+    if (spacingChanged) {
+      setSharedSpacingStatus(QStringLiteral("pending"), projection.revision);
+    }
     const auto replaced = authority_->replaceSnapshot(
-        snapshot_.revision, edit->candidate
+        snapshot_.revision, candidate
     );
     if (!replaced.success) {
       if (replaced.snapshot.available
           || replaced.snapshot.applyState == QStringLiteral("failed")) {
         acceptState(replaced.snapshot, activationBackend_->status());
       }
-      failSharedBorder(replaced.errorMessage);
-      return;
-    }
-    acceptState(replaced.snapshot, activationBackend_->status());
-    if (baseWasExactCurrent) {
-      pendingSharedBorderApplyRevision_ = replaced.snapshot.revision;
+      if (!snapshot_.available) {
+        const auto unavailableError = replaced.errorMessage.isEmpty()
+            ? QStringLiteral("Compositor configuration is unavailable")
+            : replaced.errorMessage;
+        setSharedBorderStatus(
+            projection.syncWindowBorders
+                ? QStringLiteral("unavailable") : QStringLiteral("override"),
+            projection.revision,
+            projection.syncWindowBorders ? unavailableError : QString()
+        );
+        setSharedSpacingStatus(
+            QStringLiteral("unavailable"), projection.revision,
+            unavailableError
+        );
+        return;
+      }
+      failSharedGroups(
+          borderChanged, spacingChanged, replaced.errorMessage
+      );
+      borderFailed = borderFailed || borderChanged;
+      spacingFailed = spacingFailed || spacingChanged;
+      borderChanged = false;
+      spacingChanged = false;
     } else {
-      pendingSharedBorderApplyRevision_.reset();
+      acceptState(replaced.snapshot, activationBackend_->status());
+      if (baseWasExactCurrent) {
+        pendingSharedVisualApplyRevision_ = replaced.snapshot.revision;
+        pendingSharedBorderApply_ = borderChanged;
+        pendingSharedSpacingApply_ = spacingChanged;
+        pendingBorder = borderChanged;
+        pendingSpacing = spacingChanged;
+      } else {
+        pendingSharedVisualApplyRevision_.reset();
+        pendingSharedBorderApply_ = false;
+        pendingSharedSpacingApply_ = false;
+        pendingBorder = false;
+        pendingSpacing = false;
+      }
     }
   }
 
-  const auto resolved = sharedBorderReconciler_.resolvedValues(
+  bool borderVerified = !projection.syncWindowBorders;
+  bool borderPresentInAppliedState = false;
+  if (projection.syncWindowBorders && !borderFailed
+      && ensureSharedBorderCatalog(error)) {
+    const auto resolved = sharedBorderReconciler_.resolvedValues(
+        snapshot_.desiredState, error
+    );
+    borderVerified = resolved
+        && *resolved == sharedBorderReconciler_.valuesFor(projection);
+    if (!borderVerified) {
+      failSharedBorder(
+          error.isEmpty()
+              ? QStringLiteral("Shared window border reconciliation could not be verified")
+              : error
+      );
+      borderFailed = true;
+    }
+    if (borderVerified && !snapshot_.appliedDesiredState.isEmpty()) {
+      QString appliedBorderError;
+      const auto applied = sharedBorderReconciler_.resolvedValues(
+          snapshot_.appliedDesiredState, appliedBorderError
+      );
+      borderPresentInAppliedState = applied
+          && *applied == sharedBorderReconciler_.valuesFor(projection);
+    }
+  }
+
+  protectedRuleExact = sharedSpacingReconciler_.hasExactFinalProtectedRule(
       snapshot_.desiredState, error
   );
-  if (!resolved
-      || *resolved != sharedBorderReconciler_.valuesFor(projection)) {
-    failSharedBorder(error);
-    return;
+  QString appliedSpacingError;
+  const auto protectedRulePresentInAppliedState =
+      !snapshot_.appliedDesiredState.isEmpty()
+      && sharedSpacingReconciler_.hasExactFinalProtectedRule(
+          snapshot_.appliedDesiredState, appliedSpacingError
+      );
+  bool spacingVerified = protectedRuleExact;
+  bool spacingPresentInAppliedState = false;
+  if (projection.syncWindowSpacing && !spacingFailed
+      && ensureSharedSpacingCatalog(error)) {
+    const auto resolved = sharedSpacingReconciler_.resolvedValues(
+        snapshot_.desiredState, error
+    );
+    spacingVerified = spacingVerified && resolved
+        && *resolved == sharedSpacingReconciler_.valuesFor(projection);
+    if (spacingVerified && protectedRulePresentInAppliedState) {
+      const auto applied = sharedSpacingReconciler_.resolvedValues(
+          snapshot_.appliedDesiredState, appliedSpacingError
+      );
+      spacingPresentInAppliedState = applied
+          && *applied == sharedSpacingReconciler_.valuesFor(projection);
+    }
+  }
+  if (!spacingVerified && !spacingFailed) {
+    failSharedSpacing(
+        error.isEmpty()
+            ? QStringLiteral("Shared window spacing reconciliation could not be verified")
+            : error
+    );
+    spacingFailed = true;
   }
 
   const auto liveManagement = authorityBoundManagement(
@@ -1815,6 +2326,16 @@ void CompositorService::reconcileSharedBorder() {
   if (liveManagement != management_) {
     acceptState(snapshot_, liveManagement);
   }
+  const auto appliedGenerationLive =
+      management_.state == ManagementState::Managed
+      && !snapshot_.generationDigest.isEmpty()
+      && management_.managedGeneration == snapshot_.generationDigest;
+  const auto protectedRuleApplied = protectedRulePresentInAppliedState
+      && appliedGenerationLive;
+  const auto borderApplied = borderPresentInAppliedState
+      && appliedGenerationLive;
+  const auto spacingApplied = spacingPresentInAppliedState
+      && protectedRuleApplied;
   const auto exactCurrent = management_.state == ManagementState::Managed
       && snapshot_.applyState == QStringLiteral("current")
       && snapshot_.appliedRevision == snapshot_.revision
@@ -1822,26 +2343,83 @@ void CompositorService::reconcileSharedBorder() {
       && !snapshot_.generationDigest.isEmpty()
       && management_.managedGeneration == snapshot_.generationDigest;
   if (exactCurrent) {
-    pendingSharedBorderApplyRevision_.reset();
-    setSharedBorderStatus(
-        QStringLiteral("current"), projection.revision
-    );
+    pendingSharedVisualApplyRevision_.reset();
+    pendingSharedBorderApply_ = false;
+    pendingSharedSpacingApply_ = false;
+    pendingBorder = false;
+    pendingSpacing = false;
+    if (!borderFailed) {
+      clearFailedSharedBorderAttempt();
+      setSharedBorderStatus(
+          projection.syncWindowBorders
+              ? QStringLiteral("current") : QStringLiteral("override"),
+          projection.revision
+      );
+    }
+    if (!spacingFailed) {
+      clearFailedSharedSpacingAttempt();
+      setSharedSpacingStatus(
+          projection.syncWindowSpacing
+              ? QStringLiteral("current") : QStringLiteral("override"),
+          projection.revision
+      );
+    }
     return;
   }
 
-  const auto ownsPendingRevision = pendingSharedBorderApplyRevision_
-      && *pendingSharedBorderApplyRevision_ == snapshot_.revision;
-  if (!ownsPendingRevision
+  const auto stableBorderState = [&] {
+    if (!projection.syncWindowBorders) return QStringLiteral("override");
+    if (borderWasCurrent && borderVerified && borderApplied && !pendingBorder) {
+      return QStringLiteral("current");
+    }
+    return QStringLiteral("saved");
+  };
+  const auto stableSpacingState = [&] {
+    if (!projection.syncWindowSpacing && spacingVerified && !pendingSpacing) {
+      return protectedRuleApplied
+          ? QStringLiteral("override") : QStringLiteral("saved");
+    }
+    if (spacingWasCurrent && spacingVerified && spacingApplied
+        && !pendingSpacing) {
+      return projection.syncWindowSpacing
+          ? QStringLiteral("current") : QStringLiteral("override");
+    }
+    return QStringLiteral("saved");
+  };
+
+  if (!borderFailed && !pendingBorder) {
+    clearFailedSharedBorderAttempt();
+    setSharedBorderStatus(stableBorderState(), projection.revision);
+  }
+  if (!spacingFailed && !pendingSpacing) {
+    clearFailedSharedSpacingAttempt();
+    setSharedSpacingStatus(stableSpacingState(), projection.revision);
+  }
+
+  if ((!pendingBorder && !pendingSpacing)
+      || !borderVerified || !spacingVerified
       || management_.state != ManagementState::Managed
       || !snapshot_.requiredActivation.has_value()
       || *snapshot_.requiredActivation != ActivationRequirement::Reload
-      || !activationBackend_->canSatisfy(
-          *snapshot_.requiredActivation
-      )) {
-    setSharedBorderStatus(
-        QStringLiteral("saved"), projection.revision
-    );
+      || !activationBackend_->canSatisfy(*snapshot_.requiredActivation)) {
+    if (!borderFailed && pendingBorder) {
+      setSharedBorderStatus(QStringLiteral("saved"), projection.revision);
+    }
+    if (!spacingFailed && pendingSpacing) {
+      setSharedSpacingStatus(QStringLiteral("saved"), projection.revision);
+    }
     return;
+  }
+
+  if ((pendingBorder && borderSuppressed && !forceBorder)
+      || (pendingSpacing && spacingSuppressed && !forceSpacing)) {
+    return;
+  }
+  if (pendingBorder && !borderFailed) {
+    setSharedBorderStatus(QStringLiteral("pending"), projection.revision);
+  }
+  if (pendingSpacing && !spacingFailed) {
+    setSharedSpacingStatus(QStringLiteral("pending"), projection.revision);
   }
 
   auto completion = completePrepared(
@@ -1859,14 +2437,31 @@ void CompositorService::reconcileSharedBorder() {
         || completion.snapshot.applyState == QStringLiteral("failed")) {
       acceptState(completion.snapshot, completion.management);
     }
-    failSharedBorder(completion.errorMessage);
+    failSharedGroups(
+        pendingBorder, pendingSpacing, completion.errorMessage
+    );
     return;
   }
   acceptState(completion.snapshot, completion.management);
-  pendingSharedBorderApplyRevision_.reset();
-  setSharedBorderStatus(
-      QStringLiteral("current"), projection.revision
-  );
+  pendingSharedVisualApplyRevision_.reset();
+  pendingSharedBorderApply_ = false;
+  pendingSharedSpacingApply_ = false;
+  if (pendingBorder) {
+    clearFailedSharedBorderAttempt();
+    setSharedBorderStatus(
+        projection.syncWindowBorders
+            ? QStringLiteral("current") : QStringLiteral("override"),
+        projection.revision
+    );
+  }
+  if (pendingSpacing) {
+    clearFailedSharedSpacingAttempt();
+    setSharedSpacingStatus(
+        projection.syncWindowSpacing
+            ? QStringLiteral("current") : QStringLiteral("override"),
+        projection.revision
+    );
+  }
 }
 
 CompositorService::Completion CompositorService::completePrepared(
@@ -2192,16 +2787,18 @@ void CompositorService::acceptState(const AuthoritySnapshot &next,
   if (includeDisplayProperties) appendDisplayProperties(changed);
 
   if (next != snapshot_ || boundManagement != management_) {
-    ++sharedBorderAuthorityGeneration_;
+    ++sharedVisualAuthorityGeneration_;
   }
-  if (pendingSharedBorderApplyRevision_
-      && next.revision != *pendingSharedBorderApplyRevision_) {
-    pendingSharedBorderApplyRevision_.reset();
+  if (pendingSharedVisualApplyRevision_
+      && next.revision != *pendingSharedVisualApplyRevision_) {
+    pendingSharedVisualApplyRevision_.reset();
+    pendingSharedBorderApply_ = false;
+    pendingSharedSpacingApply_ = false;
   }
   snapshot_ = next;
   management_ = boundManagement;
   publishProperties(changed);
-  scheduleSharedBorderReconcile();
+  scheduleSharedVisualReconcile();
 }
 
 void CompositorService::configureManagementMonitoring() {

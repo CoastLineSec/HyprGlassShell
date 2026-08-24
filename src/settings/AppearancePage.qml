@@ -11,10 +11,14 @@ Page {
     property bool writable: false
     property bool catalogAvailable: false
     property bool appearanceAvailable: false
+    property bool appearanceProjectionAvailable: false
+    property bool appearanceAnimationProjectionAvailable: false
     property bool busy: false
     property string busyOperation: ""
     property var appearanceOptions: []
     property var appearanceValues: ({})
+    property var appearanceCurves: []
+    property var appearanceAnimations: []
     property bool sharedBorderAvailable: false
     property bool sharedBorderBusy: false
     property bool windowBorderSynced: true
@@ -23,6 +27,14 @@ Page {
     property string sharedBorderClientError: ""
     property string sharedBorderConfigRevisionToken: ""
     property string sharedBorderVerifiedRevisionToken: ""
+    property bool sharedSpacingAvailable: false
+    property bool sharedSpacingBusy: false
+    property bool windowSpacingSynced: true
+    property string sharedSpacingSyncState: "unavailable"
+    property string sharedSpacingSyncError: ""
+    property string sharedSpacingClientError: ""
+    property string sharedSpacingConfigRevisionToken: ""
+    property string sharedSpacingVerifiedRevisionToken: ""
     property string revisionToken: "0"
     property double appliedRevision: 0
     property string loadState: "unavailable"
@@ -30,8 +42,8 @@ Page {
     property string applyState: "unavailable"
     property string requiredActivation: "none"
     property string confirmationState: "idle"
-    property string catalogErrorName: ""
-    property string catalogErrorMessage: ""
+    property string appearanceErrorName: ""
+    property string appearanceErrorMessage: ""
     property string errorName: ""
     property string errorMessage: ""
     property bool retryApplyAvailable: false
@@ -41,11 +53,20 @@ Page {
     property var draftValues: ({})
     property var synchronizedValues: ({})
     property var submittedValues: ({})
+    property var draftCurves: []
+    property var synchronizedCurves: []
+    property var submittedCurves: []
+    property var draftAnimations: []
+    property var synchronizedAnimations: []
+    property var submittedAnimations: []
     property string synchronizedRevisionToken: ""
     property string submittedRevisionToken: ""
     property bool projectionInitialized: false
     property bool externalChangeWhileEditing: false
     property bool saveSubmitted: false
+    property int appearanceTabIndex: 0
+    property string editingCurveId: ""
+    property string editingAnimationId: ""
     property bool synchronizedWindowBorderSynced: windowBorderSynced
     property bool sharedBorderProjectionPending: false
     property string sharedBorderSourceActionError: ""
@@ -53,48 +74,206 @@ Page {
     property bool sharedBorderSourceRequestSawBusy: false
     property bool sharedBorderSourceRequestErrorCleared: false
     property bool sharedBorderSourceExpectedSync: windowBorderSynced
+    property bool synchronizedWindowSpacingSynced: windowSpacingSynced
+    property bool sharedSpacingProjectionPending: false
+    property string sharedSpacingSourceActionError: ""
+    property bool sharedSpacingSourceRequestPending: false
+    property bool sharedSpacingSourceRequestSawBusy: false
+    property bool sharedSpacingSourceRequestErrorCleared: false
+    property bool sharedSpacingSourceExpectedSync: windowSpacingSynced
 
     signal refreshRequested()
     signal openDisplaysRequested()
-    signal saveRequested(var values)
+    signal saveRequested(var values, var curves, var animations)
     signal retryApplyRequested()
     signal recoveryRequested()
     signal windowBorderSyncRequested(bool sync)
     signal retrySharedBorderSyncRequested()
+    signal windowSpacingSyncRequested(bool sync)
+    signal retrySharedSpacingSyncRequested()
 
     readonly property string borderSizeId: "hyprland.general.border_size"
     readonly property string roundingId: "hyprland.decoration.rounding"
+    readonly property string roundingPowerId:
+        "hyprland.decoration.rounding_power"
     readonly property string blurId: "hyprland.decoration.blur.enabled"
     readonly property string shadowId: "hyprland.decoration.shadow.enabled"
+    readonly property string shadowRangeId:
+        "hyprland.decoration.shadow.range"
+    readonly property string shadowRenderPowerId:
+        "hyprland.decoration.shadow.render_power"
+    readonly property string shadowSharpId:
+        "hyprland.decoration.shadow.sharp"
+    readonly property string shadowOffsetId:
+        "hyprland.decoration.shadow.offset"
+    readonly property string shadowScaleId:
+        "hyprland.decoration.shadow.scale"
+    readonly property string glowEnabledId:
+        "hyprland.decoration.glow.enabled"
+    readonly property string glowRangeId:
+        "hyprland.decoration.glow.range"
+    readonly property string glowRenderPowerId:
+        "hyprland.decoration.glow.render_power"
+    readonly property string borderPartOfWindowId:
+        "hyprland.decoration.border_part_of_window"
     readonly property string animationsId: "hyprland.animations.enabled"
-    readonly property string layoutId: "hyprland.general.layout"
-    readonly property string resizeId: "hyprland.general.resize_on_border"
-    readonly property string snapId: "hyprland.general.snap.enabled"
+    readonly property string dimInactiveId:
+        "hyprland.decoration.dim_inactive"
+    readonly property string dimStrengthId:
+        "hyprland.decoration.dim_strength"
+    readonly property string activeOpacityId:
+        "hyprland.decoration.active_opacity"
+    readonly property string inactiveOpacityId:
+        "hyprland.decoration.inactive_opacity"
+    readonly property string fullscreenOpacityId:
+        "hyprland.decoration.fullscreen_opacity"
+    readonly property string dimModalId:
+        "hyprland.decoration.dim_modal"
+    readonly property string dimSpecialId:
+        "hyprland.decoration.dim_special"
+    readonly property string dimAroundId:
+        "hyprland.decoration.dim_around"
+    readonly property string blurSizeId:
+        "hyprland.decoration.blur.size"
+    readonly property string blurPassesId:
+        "hyprland.decoration.blur.passes"
+    readonly property string blurIgnoreOpacityId:
+        "hyprland.decoration.blur.ignore_opacity"
+    readonly property string blurOptimizationsId:
+        "hyprland.decoration.blur.new_optimizations"
+    readonly property string blurXrayId:
+        "hyprland.decoration.blur.xray"
+    readonly property string blurSpecialId:
+        "hyprland.decoration.blur.special"
+    readonly property string blurPopupsId:
+        "hyprland.decoration.blur.popups"
+    readonly property string blurPopupsIgnoreAlphaId:
+        "hyprland.decoration.blur.popups_ignorealpha"
+    readonly property string blurInputMethodsId:
+        "hyprland.decoration.blur.input_methods"
+    readonly property string blurInputMethodsIgnoreAlphaId:
+        "hyprland.decoration.blur.input_methods_ignorealpha"
+    readonly property string blurBrightnessId:
+        "hyprland.decoration.blur.brightness"
+    readonly property string blurContrastId:
+        "hyprland.decoration.blur.contrast"
+    readonly property string blurNoiseId:
+        "hyprland.decoration.blur.noise"
+    readonly property string blurVibrancyId:
+        "hyprland.decoration.blur.vibrancy"
+    readonly property string blurVibrancyDarknessId:
+        "hyprland.decoration.blur.vibrancy_darkness"
+    readonly property string gapsInId: "hyprland.general.gaps_in"
+    readonly property string gapsOutId: "hyprland.general.gaps_out"
     readonly property real minimumTargetSize: 44
-    readonly property int maximumSharedBorderSourceErrorLength: 1024
+    readonly property int maximumSharedSourceErrorLength: 1024
+    readonly property int maximumSharedBorderSourceErrorLength:
+        maximumSharedSourceErrorLength
     readonly property bool compactPreview:
         root.width < 560 || root.height < 640
     readonly property var expectedOptionIds: [
         root.borderSizeId,
         root.roundingId,
+        root.gapsInId,
+        root.gapsOutId,
         root.blurId,
         root.shadowId,
         root.animationsId,
-        root.layoutId,
-        root.resizeId,
-        root.snapId
+        root.dimInactiveId,
+        root.dimStrengthId,
+        root.activeOpacityId,
+        root.inactiveOpacityId,
+        root.fullscreenOpacityId,
+        root.dimModalId,
+        root.dimSpecialId,
+        root.dimAroundId,
+        root.blurSizeId,
+        root.blurPassesId,
+        root.blurIgnoreOpacityId,
+        root.blurOptimizationsId,
+        root.blurXrayId,
+        root.blurSpecialId,
+        root.blurPopupsId,
+        root.blurPopupsIgnoreAlphaId,
+        root.blurInputMethodsId,
+        root.blurInputMethodsIgnoreAlphaId,
+        root.blurBrightnessId,
+        root.blurContrastId,
+        root.blurNoiseId,
+        root.blurVibrancyId,
+        root.blurVibrancyDarknessId,
+        root.borderPartOfWindowId,
+        root.roundingPowerId,
+        root.shadowRangeId,
+        root.shadowRenderPowerId,
+        root.shadowSharpId,
+        root.shadowOffsetId,
+        root.shadowScaleId,
+        root.glowEnabledId,
+        root.glowRangeId,
+        root.glowRenderPowerId
+    ]
+    readonly property var exactDecimalOptionIds: [
+        root.blurBrightnessId,
+        root.blurContrastId,
+        root.blurNoiseId,
+        root.blurVibrancyId,
+        root.blurVibrancyDarknessId,
+        root.roundingPowerId,
+        root.shadowScaleId
+    ]
+    readonly property var exactVectorOptionIds: [
+        root.shadowOffsetId
+    ]
+    readonly property var animationLeaves: [
+        "global", "windows", "layers", "fade", "border", "borderangle",
+        "shadowangle", "glowangle", "workspaces", "zoomFactor",
+        "monitorAdded", "layersIn", "layersOut", "windowsIn",
+        "windowsOut", "windowsMove", "fadeIn", "fadeOut", "fadeSwitch",
+        "fadeShadow", "fadeGlow", "fadeDim", "fadeLayers",
+        "fadeLayersIn", "fadeLayersOut", "fadePopups", "fadePopupsIn",
+        "fadePopupsOut", "fadeDpms", "workspacesIn", "workspacesOut",
+        "specialWorkspace", "specialWorkspaceIn", "specialWorkspaceOut"
     ]
     readonly property bool trustedDefinitionsValid: root.validateOptions()
     readonly property bool trustedValuesValid:
-        root.trustedDefinitionsValid
+        root.appearanceProjectionAvailable
+        && root.trustedDefinitionsValid
         && root.validateValues(root.appearanceValues)
+    readonly property bool authoritativeGlowSafe:
+        root.trustedValuesValid
+        && root.glowCombinationSafe(root.appearanceValues)
+    readonly property bool trustedAnimationProjectionValid:
+        root.appearanceAnimationProjectionAvailable
+        && root.validateCurveCollection(root.appearanceCurves, false)
+        && root.validateAnimationCollection(
+            root.appearanceAnimations, root.appearanceCurves
+        )
     readonly property bool revisionTokenValid:
         /^(0|[1-9][0-9]*)$/.test(root.revisionToken)
-    readonly property bool draftValid:
+    readonly property bool synchronizedRevisionTokenValid:
+        /^(0|[1-9][0-9]*)$/.test(root.synchronizedRevisionToken)
+    readonly property bool draftValuesValid:
         root.trustedDefinitionsValid && root.validateValues(root.draftValues)
+    readonly property bool draftAnimationCollectionsValid:
+        root.validateCurveCollection(root.draftCurves, false)
+        && root.validateAnimationCollection(
+            root.draftAnimations, root.draftCurves
+        )
+    readonly property bool glowDraftSafe:
+        root.glowCombinationSafe(root.draftValues)
+    readonly property bool glowSafetyViolation:
+        root.draftValuesValid && !root.glowDraftSafe
+    readonly property bool draftValid:
+        root.draftValuesValid && root.glowDraftSafe
+        && root.draftAnimationCollectionsValid
     readonly property bool draftDirty:
         root.projectionInitialized
-        && !root.valuesEqual(root.draftValues, root.synchronizedValues)
+        && (!root.valuesEqual(root.draftValues, root.synchronizedValues)
+            || !root.valueEqual(root.draftCurves, root.synchronizedCurves)
+            || !root.valueEqual(
+                root.draftAnimations, root.synchronizedAnimations
+            ))
     readonly property bool displayTestActive:
         root.confirmationState !== "idle"
         || root.managementState === "preview"
@@ -130,8 +309,51 @@ Page {
         root.sharedBorderRevisionVerified
         && root.sharedBorderApplyStateSettled
     readonly property bool sharedBorderApplySafe:
-        !root.sharedBorderTransitionBusy
+        root.sharedBorderAvailable
+        && !root.sharedBorderTransitionBusy
         && root.sharedBorderApplyVerified
+    readonly property bool sharedSpacingTransitionBusy:
+        root.sharedSpacingBusy
+        || root.sharedSpacingSyncState === "pending"
+        || root.sharedSpacingProjectionPending
+        || root.sharedSpacingSourceRequestPending
+    readonly property bool sharedSpacingRevisionVerified:
+        /^(0|[1-9][0-9]*)$/.test(root.sharedSpacingConfigRevisionToken)
+        && /^(0|[1-9][0-9]*)$/.test(
+            root.sharedSpacingVerifiedRevisionToken
+        )
+        && root.sharedSpacingConfigRevisionToken
+            === root.sharedSpacingVerifiedRevisionToken
+    readonly property bool sharedSpacingProjectionVerified:
+        root.sharedSpacingRevisionVerified
+        && (root.sharedSpacingSyncState === "saved"
+            || (!root.windowSpacingSynced
+                && root.sharedSpacingSyncState === "override")
+            || (root.windowSpacingSynced
+                && (root.sharedSpacingSyncState === "current"
+                    || root.sharedSpacingSyncState === "failed"
+                    || (root.sharedSpacingSyncState === "unavailable"
+                        && root.sharedSpacingConfigRevisionToken !== "0"))))
+    readonly property bool sharedSpacingApplyStateSettled:
+        root.sharedSpacingSyncState === "saved"
+        || (!root.windowSpacingSynced
+            && root.sharedSpacingSyncState === "override")
+        || (root.windowSpacingSynced
+            && root.sharedSpacingSyncState === "current")
+    readonly property bool sharedSpacingApplyVerified:
+        root.sharedSpacingRevisionVerified
+        && root.sharedSpacingApplyStateSettled
+    readonly property bool sharedSpacingApplySafe:
+        root.sharedSpacingAvailable
+        && !root.sharedSpacingTransitionBusy
+        && root.sharedSpacingApplyVerified
+    readonly property bool sharedVisualTransitionBusy:
+        root.sharedBorderTransitionBusy
+        || root.sharedSpacingTransitionBusy
+    readonly property bool sharedVisualApplySafe:
+        root.serviceAvailable
+        && root.sharedBorderApplySafe
+        && root.sharedSpacingApplySafe
     readonly property bool controlsEnabled:
         root.serviceAvailable
         && root.writable
@@ -140,13 +362,53 @@ Page {
         && root.revisionTokenValid
         && root.trustedDefinitionsValid
         && root.trustedValuesValid
+        && root.trustedAnimationProjectionValid
         && !root.busy
-        && !root.sharedBorderTransitionBusy
+        && !root.saveSubmitted
+        && !root.sharedVisualTransitionBusy
         && !root.externalChangeWhileEditing
         && !root.displayTestActive
     readonly property bool saveEnabled:
         root.controlsEnabled && root.draftDirty && root.draftValid
-        && !root.saveSubmitted && root.sharedBorderApplySafe
+        && !root.saveSubmitted && root.sharedVisualApplySafe
+    readonly property bool animationControlsEnabled:
+        root.controlsEnabled && root.draftValue(root.animationsId) === true
+    readonly property bool shadowOffsetControlsEnabled:
+        root.controlsEnabled && root.draftValue(root.shadowId) === true
+    readonly property bool shadowScaleControlEnabled:
+        root.controlsEnabled && root.draftValue(root.shadowId) === true
+    readonly property bool glowEnabledControlEnabled:
+        root.controlsEnabled
+        && (root.draftValue(root.glowEnabledId) === true
+            || Number(root.draftValue(root.glowRangeId)) >= 10)
+    readonly property bool glowFalloffControlEnabled:
+        root.controlsEnabled
+        && root.draftValue(root.glowEnabledId) === true
+    readonly property bool blurDetailsEnabled:
+        root.controlsEnabled && root.draftValue(root.blurId) === true
+    readonly property bool blurXrayEnabled:
+        root.blurDetailsEnabled
+        && root.draftValue(root.blurOptimizationsId) === true
+    readonly property bool blurPopupThresholdEnabled:
+        root.blurDetailsEnabled
+        && root.draftValue(root.blurPopupsId) === true
+    readonly property bool blurInputMethodThresholdEnabled:
+        root.blurDetailsEnabled
+        && root.draftValue(root.blurInputMethodsId) === true
+    readonly property var editingCurve: root.curveById(root.editingCurveId)
+    readonly property var editingAnimation:
+        root.animationById(root.editingAnimationId)
+    readonly property bool animationDetailActive:
+        root.editingCurve !== null || root.editingAnimation !== null
+    readonly property bool resetTargetDiffers: {
+        const target = root.resetTargetValues();
+        return target !== null
+            && (!root.valuesEqual(root.draftValues, target)
+                || !root.valueEqual(
+                    root.draftCurves, root.synchronizedCurves
+                )
+                || root.draftAnimations.length > 0);
+    }
     readonly property bool sharedBorderSourceActionEnabled:
         root.sharedBorderAvailable && !root.sharedBorderBusy
         && root.sharedBorderSyncState !== "pending"
@@ -154,12 +416,27 @@ Page {
         && !root.busy && !root.displayTestActive
         && !root.draftDirty && !root.externalChangeWhileEditing
         && !root.saveSubmitted
+        && !root.sharedSpacingTransitionBusy
     readonly property bool sharedBorderRetryAvailable:
         root.windowBorderSynced
         && root.sharedBorderAvailable
         && root.serviceAvailable
         && (root.sharedBorderSyncState === "failed"
             || root.sharedBorderSyncState === "unavailable")
+    readonly property bool sharedSpacingSourceActionEnabled:
+        root.sharedSpacingAvailable && !root.sharedSpacingBusy
+        && root.sharedSpacingSyncState !== "pending"
+        && !root.sharedSpacingSourceRequestPending
+        && !root.busy && !root.displayTestActive
+        && !root.draftDirty && !root.externalChangeWhileEditing
+        && !root.saveSubmitted
+        && !root.sharedBorderTransitionBusy
+    readonly property bool sharedSpacingRetryAvailable:
+        root.windowSpacingSynced
+        && root.sharedSpacingAvailable
+        && root.serviceAvailable
+        && (root.sharedSpacingSyncState === "failed"
+            || root.sharedSpacingSyncState === "unavailable")
     readonly property string windowBorderAuthorityMessage: {
         if (!root.windowBorderSynced)
             return qsTr("Window borders use an explicit Hyprland override. Sync them to make HyprShelld's shared border shape authoritative again.");
@@ -175,6 +452,25 @@ Page {
             return qsTr("Controlled by HyprShelld. Synchronization is temporarily unavailable, so the last applied window border is preserved.");
         return qsTr("Controlled by HyprShelld. Window border thickness and corner radius follow the shared border configured on the Bar page.");
     }
+    readonly property string windowSpacingAuthorityMessage: {
+        if (!root.windowSpacingSynced
+                && root.sharedSpacingSyncState === "saved") {
+            return qsTr("Window gaps use an explicit Hyprland override. The protected maximize rule is saved but not active yet; apply the exact pending compositor revision before relying on gapless maximized windows.");
+        }
+        if (!root.windowSpacingSynced)
+            return qsTr("Window gaps use an explicit Hyprland override. Sync them to make HyprShelld's shared spacing authoritative again.");
+        if (!root.sharedSpacingAvailable)
+            return qsTr("Controlled by HyprShelld. The shared spacing service is unavailable, so these resolved values remain read-only.");
+        if (root.sharedSpacingSyncState === "failed")
+            return qsTr("Controlled by HyprShelld, but the current shared spacing could not be applied to Hyprland. %1").arg(root.sharedSpacingSyncError);
+        if (root.sharedSpacingSyncState === "pending")
+            return qsTr("Controlled by HyprShelld. Shared spacing is waiting for the current compositor operation to finish.");
+        if (root.sharedSpacingSyncState === "saved")
+            return qsTr("Controlled by HyprShelld. Matching window gaps are saved and will become active after explicit compositor takeover or apply recovery.");
+        if (root.sharedSpacingSyncState === "unavailable")
+            return qsTr("Controlled by HyprShelld. Synchronization is temporarily unavailable, so the last applied window gaps are preserved.");
+        return qsTr("Controlled by HyprShelld. Normal window gaps follow the inner and outer spacing configured on the Bar page.");
+    }
     readonly property bool statusVisible:
         !root.serviceAvailable
         || !root.writable
@@ -183,6 +479,8 @@ Page {
         || !root.revisionTokenValid
         || !root.trustedDefinitionsValid
         || !root.trustedValuesValid
+        || !root.appearanceAnimationProjectionAvailable
+        || !root.trustedAnimationProjectionValid
         || root.loadState === "recovered"
         || root.loadState === "defaulted"
         || root.loadState === "unsupported"
@@ -191,6 +489,7 @@ Page {
         || root.requiredActivation !== "none"
         || root.displayTestActive
         || root.externalChangeWhileEditing
+        || root.appearanceErrorMessage.length > 0
         || root.errorMessage.length > 0
         || root.busy
     readonly property bool statusIsDanger:
@@ -198,11 +497,16 @@ Page {
         || root.applyState === "failed"
         || root.loadState === "unsupported"
         || (root.catalogAvailable && !root.trustedDefinitionsValid)
+        || (root.appearanceProjectionAvailable
+            && !root.appearanceAvailable
+            && root.appearanceErrorMessage.length > 0)
+        || (root.appearanceAnimationProjectionAvailable
+            && !root.trustedAnimationProjectionValid)
     readonly property string statusMessage: {
         const detail = root.errorMessage.length > 0
             ? " " + root.errorMessage : "";
-        const catalogDetail = root.catalogErrorMessage.length > 0
-            ? " " + root.catalogErrorMessage : "";
+        const appearanceDetail = root.appearanceErrorMessage.length > 0
+            ? " " + root.appearanceErrorMessage : "";
         if (!root.serviceAvailable)
             return qsTr("Appearance settings are unavailable. The compositor settings service may be restarting.%1").arg(detail);
         if (root.displayTestActive)
@@ -214,9 +518,13 @@ Page {
         if (!root.writable)
             return qsTr("This compositor configuration is read-only and has been preserved.");
         if (!root.catalogAvailable)
-            return qsTr("The trusted Hyprland option catalog is unavailable or does not match the compositor authority. Appearance changes are disabled.%1").arg(catalogDetail);
+            return qsTr("The trusted Hyprland option catalog is unavailable or does not match the compositor authority. Appearance changes are disabled.%1").arg(appearanceDetail);
         if (!root.trustedDefinitionsValid || !root.trustedValuesValid)
-            return qsTr("The trusted Appearance contract does not match this Settings build. No compositor values will be written.%1").arg(catalogDetail);
+            return qsTr("The trusted Appearance contract does not match this Settings build. No compositor values will be written.%1").arg(appearanceDetail);
+        if (!root.appearanceAnimationProjectionAvailable)
+            return qsTr("Curves and animations are waiting for a current, authenticated full compositor projection. Existing visual values remain readable, but the combined Appearance draft cannot be changed yet.%1").arg(appearanceDetail);
+        if (!root.trustedAnimationProjectionValid)
+            return qsTr("The current curves and animations do not match the strict managed Appearance contract. No compositor values will be written.%1").arg(appearanceDetail);
         if (!root.revisionTokenValid)
             return qsTr("The exact compositor revision token is unavailable. Appearance changes are disabled to prevent overwriting another revision.");
         if (root.externalChangeWhileEditing)
@@ -224,7 +532,8 @@ Page {
         if (root.busy) {
             if (root.busyOperation === "appearance-save")
                 return qsTr("Saving the validated Appearance draft…");
-            if (root.busyOperation === "appearance-apply")
+            if (root.busyOperation === "compositor-apply"
+                    || root.busyOperation === "appearance-apply")
                 return qsTr("Applying and verifying the saved compositor revision…");
             if (root.busyOperation === "recover")
                 return qsTr("Restoring and verifying the last working compositor configuration…");
@@ -239,9 +548,9 @@ Page {
                     : qsTr("The desired compositor settings are saved but not active. Wait for the compositor service to make retry or recovery available.%1").arg(detail);
             }
             if (root.requiredActivation === "restart")
-                return qsTr("The saved compositor settings require a compositor restart. HyprShelld will not perform that transition automatically.%1").arg(detail);
+                return qsTr("The saved desired state requires a verified compositor-restart workflow that HyprShelld does not have yet, so this revision cannot be activated from Settings. Restore the last working compositor configuration to continue.%1").arg(detail);
             if (root.requiredActivation === "session")
-                return qsTr("The saved compositor settings require a new desktop session. HyprShelld will not perform that transition automatically.%1").arg(detail);
+                return qsTr("The saved desired state requires a verified new-session workflow that HyprShelld does not have yet, so this revision cannot be activated from Settings. Restore the last working compositor configuration to continue.%1").arg(detail);
             return qsTr("The desired compositor state is not the active state. Review recovery options before making another change.%1").arg(detail);
         }
         if (root.loadState === "recovered")
@@ -250,6 +559,13 @@ Page {
             return qsTr("Compositor settings could not be recovered, so safe desired-state defaults are in use. Review them before continuing.");
         if (root.loadState === "unsupported")
             return qsTr("The compositor settings use a newer format. They were preserved and remain read-only.");
+        if (root.appearanceProjectionAvailable
+                && !root.appearanceAvailable
+                && root.appearanceErrorMessage.length > 0) {
+            return qsTr("Appearance authority verification failed. Current visual values remain readable, but changes are disabled until the managed action, schema, and full-state contract is authenticated.%1").arg(appearanceDetail);
+        }
+        if (root.appearanceErrorMessage.length > 0)
+            return qsTr("The Appearance operation failed.%1").arg(appearanceDetail);
         if (root.errorMessage.length > 0)
             return qsTr("The compositor operation failed.%1").arg(detail);
         if (!root.appearanceAvailable)
@@ -272,11 +588,518 @@ Page {
             return false;
         }
         for (const id of root.expectedOptionIds) {
-            if (left[id] !== right[id])
+            if (!root.valueEqual(left[id], right[id]))
                 return false;
         }
         return Object.keys(left).length === root.expectedOptionIds.length
             && Object.keys(right).length === root.expectedOptionIds.length;
+    }
+
+    function valueEqual(left, right) {
+        if (Array.isArray(left) || Array.isArray(right)) {
+            if (!Array.isArray(left) || !Array.isArray(right)
+                    || left.length !== right.length) {
+                return false;
+            }
+            for (let index = 0; index < left.length; ++index) {
+                if (!root.valueEqual(left[index], right[index]))
+                    return false;
+            }
+            return true;
+        }
+        if ((left && typeof left === "object")
+                || (right && typeof right === "object")) {
+            if (!left || !right || typeof left !== "object"
+                    || typeof right !== "object"
+                    || Array.isArray(left) || Array.isArray(right)) {
+                return false;
+            }
+            const leftKeys = Object.keys(left).sort();
+            const rightKeys = Object.keys(right).sort();
+            if (!root.valueEqual(leftKeys, rightKeys))
+                return false;
+            for (const key of leftKeys) {
+                if (!root.valueEqual(left[key], right[key]))
+                    return false;
+            }
+            return true;
+        }
+        return left === right;
+    }
+
+    function isUnicodeFormatCharacter(codePoint) {
+        return codePoint === 0x00AD
+            || (codePoint >= 0x0600 && codePoint <= 0x0605)
+            || codePoint === 0x061C || codePoint === 0x06DD
+            || codePoint === 0x070F
+            || (codePoint >= 0x0890 && codePoint <= 0x0891)
+            || codePoint === 0x08E2 || codePoint === 0x180E
+            || (codePoint >= 0x200B && codePoint <= 0x200F)
+            || (codePoint >= 0x202A && codePoint <= 0x202E)
+            || (codePoint >= 0x2060 && codePoint <= 0x2064)
+            || (codePoint >= 0x2066 && codePoint <= 0x206F)
+            || codePoint === 0xFEFF
+            || (codePoint >= 0xFFF9 && codePoint <= 0xFFFB)
+            || codePoint === 0x110BD || codePoint === 0x110CD
+            || (codePoint >= 0x13430 && codePoint <= 0x1343F)
+            || (codePoint >= 0x1BCA0 && codePoint <= 0x1BCA3)
+            || (codePoint >= 0x1D173 && codePoint <= 0x1D17A)
+            || codePoint === 0xE0001
+            || (codePoint >= 0xE0020 && codePoint <= 0xE007F);
+    }
+
+    function hasDisallowedCharacter(value) {
+        if (typeof value !== "string")
+            return true;
+        for (let index = 0; index < value.length;) {
+            const codePoint = value.codePointAt(index);
+            index += codePoint > 0xFFFF ? 2 : 1;
+            if (codePoint <= 0x1F
+                    || (codePoint >= 0x7F && codePoint <= 0x9F)
+                    || root.isUnicodeFormatCharacter(codePoint)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function isSchemaString(value, maximumLength, allowEmpty) {
+        return typeof value === "string"
+            && value.length <= maximumLength
+            && (allowEmpty || value.length > 0)
+            && value === value.normalize("NFC")
+            && !root.hasDisallowedCharacter(value);
+    }
+
+    function isStableRecordId(value) {
+        return typeof value === "string" && value.length >= 1
+            && value.length <= 128
+            && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value);
+    }
+
+    function isFiniteRange(value, minimum, maximum) {
+        return typeof value === "number" && Number.isFinite(value)
+            && value >= minimum && value <= maximum;
+    }
+
+    function isValidSpringValue(value) {
+        return typeof value === "number" && Number.isFinite(value)
+            && value > 0.5 && value <= 1000000;
+    }
+
+    function validateCurveRecord(record, allowIncomplete) {
+        if (!record || typeof record !== "object" || Array.isArray(record)
+                || !root.isStableRecordId(record.id)
+                || !root.isSchemaString(record.name, 256, allowIncomplete)
+                || !["bezier", "spring"].includes(record.type)) {
+            return false;
+        }
+        if (record.type === "bezier") {
+            if (!root.valueEqual(
+                    Object.keys(record).sort(),
+                    ["id", "name", "points", "type"].sort()
+                ) || !Array.isArray(record.points)
+                    || record.points.length !== 2) {
+                return false;
+            }
+            for (const point of record.points) {
+                if (!Array.isArray(point) || point.length !== 2)
+                    return false;
+                for (const coordinate of point) {
+                    if (!root.isFiniteRange(coordinate, -1, 2)
+                            && !(allowIncomplete
+                                && typeof coordinate === "string")) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        if (!root.valueEqual(
+                Object.keys(record).sort(),
+                ["dampening", "id", "mass", "name", "stiffness", "type"]
+                    .sort()
+            )) {
+            return false;
+        }
+        for (const key of ["stiffness", "dampening", "mass"]) {
+            if (!root.isValidSpringValue(record[key])
+                    && !(allowIncomplete && typeof record[key] === "string")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function validateCurveCollection(curves, allowIncomplete) {
+        if (!Array.isArray(curves) || curves.length > 256)
+            return false;
+        const ids = new Set();
+        const names = new Set();
+        for (const curve of curves) {
+            if (!root.validateCurveRecord(curve, allowIncomplete)
+                    || ids.has(curve.id)) {
+                return false;
+            }
+            if (!allowIncomplete || root.isSchemaString(curve.name, 256, false)) {
+                if (names.has(curve.name))
+                    return false;
+                names.add(curve.name);
+            }
+            ids.add(curve.id);
+        }
+        return true;
+    }
+
+    function animationStyleValid(leaf, style) {
+        if (typeof style !== "string" || style.length > 128)
+            return false;
+        if (style === "")
+            return true;
+        if (["windows", "windowsIn", "windowsOut", "windowsMove"]
+                .includes(leaf)) {
+            return /^(?:slide(?: (?:top|bottom|left|right))?|gnome|gnomed|popin(?: (?:0|[1-9][0-9]?|100)%)?)$/.test(style);
+        }
+        if (["workspaces", "workspacesIn", "workspacesOut",
+                "specialWorkspace", "specialWorkspaceIn",
+                "specialWorkspaceOut"].includes(leaf)) {
+            return /^(?:fade|(?:slide|slidevert|slidefade|slidefadevert)(?: (?:top|bottom|left|right))?(?: (?:0|[1-9][0-9]?|100)%)?)$/.test(style);
+        }
+        if (["borderangle", "shadowangle", "glowangle"].includes(leaf))
+            return style === "loop" || style === "once";
+        if (["layers", "layersIn", "layersOut"].includes(leaf)) {
+            return /^(?:fade|slide(?: (?:top|bottom|left|right))?|popin(?: (?:0|[1-9][0-9]?|100)%)?)$/.test(style);
+        }
+        return false;
+    }
+
+    function validateAnimationRecord(record, curves, allowIncomplete) {
+        if (!record || typeof record !== "object" || Array.isArray(record)
+                || !root.valueEqual(
+                    Object.keys(record).sort(),
+                    ["curve", "enabled", "id", "name", "speed", "style"]
+                        .sort()
+                ) || !root.isStableRecordId(record.id)
+                || (!root.animationLeaves.includes(record.name)
+                    && !(allowIncomplete && record.name === ""))
+                || typeof record.enabled !== "boolean"
+                || (!root.isFiniteRange(record.speed, Number.MIN_VALUE, 100)
+                    && !(allowIncomplete && typeof record.speed === "string"))
+                || !root.isSchemaString(record.curve, 256, allowIncomplete)
+                || !root.animationStyleValid(record.name, record.style)) {
+            return false;
+        }
+        if (allowIncomplete && record.curve === "")
+            return true;
+        const available = new Set(["default", "linear"]);
+        for (const curve of curves) {
+            if (curve && typeof curve.name === "string"
+                    && curve.name.length > 0) {
+                available.add(curve.name);
+            }
+        }
+        return available.has(record.curve);
+    }
+
+    function validateAnimationCollection(animations, curves, allowIncomplete) {
+        const incomplete = allowIncomplete === true;
+        if (!Array.isArray(animations) || animations.length > 256
+                || !Array.isArray(curves)) {
+            return false;
+        }
+        const ids = new Set();
+        const leaves = new Set();
+        for (const animation of animations) {
+            if (!root.validateAnimationRecord(animation, curves, incomplete)
+                    || ids.has(animation.id)) {
+                return false;
+            }
+            if (!incomplete || root.animationLeaves.includes(animation.name)) {
+                if (leaves.has(animation.name))
+                    return false;
+                leaves.add(animation.name);
+            }
+            ids.add(animation.id);
+        }
+        return true;
+    }
+
+    function curveIndex(id) {
+        for (let index = 0; index < root.draftCurves.length; ++index) {
+            if (root.draftCurves[index]
+                    && root.draftCurves[index].id === id) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    function curveById(id) {
+        const index = root.curveIndex(id);
+        return index >= 0 ? root.draftCurves[index] : null;
+    }
+
+    function animationIndex(id) {
+        for (let index = 0; index < root.draftAnimations.length; ++index) {
+            if (root.draftAnimations[index]
+                    && root.draftAnimations[index].id === id) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    function animationById(id) {
+        const index = root.animationIndex(id);
+        return index >= 0 ? root.draftAnimations[index] : null;
+    }
+
+    function curveReferenceCount(name) {
+        if (typeof name !== "string" || name.length === 0)
+            return 0;
+        let count = 0;
+        for (const animation of root.draftAnimations) {
+            if (animation && animation.curve === name)
+                ++count;
+        }
+        return count;
+    }
+
+    function nextRecordIdentity(prefix, records) {
+        const ids = new Set(records.map(record => record.id));
+        let suffix = 1;
+        while (ids.has(prefix + suffix))
+            ++suffix;
+        return prefix + suffix;
+    }
+
+    function replaceCurve(id, record) {
+        if (!root.animationControlsEnabled)
+            return;
+        const curves = root.clone(root.draftCurves);
+        const index = root.curveIndex(id);
+        if (!curves || index < 0 || !record)
+            return;
+        curves[index] = record;
+        root.draftCurves = curves;
+    }
+
+    function setCurveProperty(id, propertyName, value) {
+        if (!root.animationControlsEnabled)
+            return;
+        if (!["stiffness", "dampening", "mass"].includes(propertyName))
+            return;
+        const record = root.clone(root.curveById(id));
+        if (!record)
+            return;
+        record[propertyName] = value;
+        root.replaceCurve(id, record);
+    }
+
+    function setCurvePoint(id, pointIndex, coordinateIndex, value) {
+        if (!root.animationControlsEnabled)
+            return;
+        const record = root.clone(root.curveById(id));
+        if (!record || record.type !== "bezier"
+                || !Array.isArray(record.points)
+                || pointIndex < 0 || pointIndex > 1
+                || coordinateIndex < 0 || coordinateIndex > 1) {
+            return;
+        }
+        record.points[pointIndex][coordinateIndex] = value;
+        root.replaceCurve(id, record);
+    }
+
+    function moveCurve(id, offset) {
+        if (!root.animationControlsEnabled || (offset !== -1 && offset !== 1))
+            return;
+        const curves = root.clone(root.draftCurves);
+        const index = root.curveIndex(id);
+        const target = index + offset;
+        if (!curves || index < 0 || target < 0 || target >= curves.length)
+            return;
+        const record = curves[index];
+        curves[index] = curves[target];
+        curves[target] = record;
+        root.draftCurves = curves;
+    }
+
+    function openCurve(id) {
+        if (root.curveIndex(id) < 0)
+            return;
+        root.appearanceTabIndex = 1;
+        root.editingAnimationId = "";
+        root.editingCurveId = id;
+    }
+
+    function replaceAnimation(id, record) {
+        if (!root.animationControlsEnabled)
+            return;
+        const animations = root.clone(root.draftAnimations);
+        const index = root.animationIndex(id);
+        if (!animations || index < 0 || !record)
+            return;
+        animations[index] = record;
+        root.draftAnimations = animations;
+    }
+
+    function setAnimationProperty(id, propertyName, value) {
+        if (!root.animationControlsEnabled)
+            return;
+        const record = root.clone(root.animationById(id));
+        if (!record)
+            return;
+        record[propertyName] = value;
+        if (propertyName === "name"
+                && !root.animationStyleValid(record.name, record.style)) {
+            record.style = "";
+        }
+        root.replaceAnimation(id, record);
+    }
+
+    function firstUnusedAnimationLeaf() {
+        const names = new Set(root.draftAnimations.map(item => item.name));
+        for (const leaf of root.animationLeaves) {
+            if (!names.has(leaf))
+                return leaf;
+        }
+        return "";
+    }
+
+    function addAnimation() {
+        if (!root.animationControlsEnabled
+                || root.draftAnimations.length >= 256) {
+            return;
+        }
+        const leaf = root.firstUnusedAnimationLeaf();
+        if (leaf.length === 0)
+            return;
+        const animations = root.clone(root.draftAnimations);
+        const id = root.nextRecordIdentity("animation-", animations);
+        animations.push({
+            id,
+            name: leaf,
+            enabled: true,
+            speed: 8,
+            curve: "default",
+            style: ""
+        });
+        root.draftAnimations = animations;
+        root.editingCurveId = "";
+        root.editingAnimationId = id;
+    }
+
+    function removeAnimation(id) {
+        if (!root.animationControlsEnabled)
+            return;
+        const animations = root.clone(root.draftAnimations);
+        const index = root.animationIndex(id);
+        if (!animations || index < 0)
+            return;
+        animations.splice(index, 1);
+        root.draftAnimations = animations;
+        if (root.editingAnimationId === id)
+            root.editingAnimationId = "";
+    }
+
+    function moveAnimation(id, offset) {
+        if (!root.animationControlsEnabled || (offset !== -1 && offset !== 1))
+            return;
+        const animations = root.clone(root.draftAnimations);
+        const index = root.animationIndex(id);
+        const target = index + offset;
+        if (!animations || index < 0 || target < 0
+                || target >= animations.length) {
+            return;
+        }
+        const record = animations[index];
+        animations[index] = animations[target];
+        animations[target] = record;
+        root.draftAnimations = animations;
+    }
+
+    function openAnimation(id) {
+        if (root.animationIndex(id) < 0)
+            return;
+        root.appearanceTabIndex = 1;
+        root.editingCurveId = "";
+        root.editingAnimationId = id;
+    }
+
+    function closeAnimationDetail() {
+        root.editingCurveId = "";
+        root.editingAnimationId = "";
+    }
+
+    function curveChoices() {
+        const custom = new Map();
+        for (const curve of root.draftCurves) {
+            if (curve && typeof curve.name === "string"
+                    && curve.name.length > 0 && !custom.has(curve.name)) {
+                custom.set(curve.name, curve);
+            }
+        }
+        const result = [];
+        for (const builtin of ["default", "linear"]) {
+            result.push({
+                value: builtin,
+                label: custom.has(builtin)
+                    ? qsTr("%1 — custom override").arg(builtin)
+                    : qsTr("%1 — built in").arg(builtin)
+            });
+            custom.delete(builtin);
+        }
+        for (const curve of root.draftCurves) {
+            if (curve && custom.has(curve.name)) {
+                result.push({
+                    value: curve.name,
+                    label: qsTr("%1 — custom").arg(curve.name)
+                });
+                custom.delete(curve.name);
+            }
+        }
+        return result;
+    }
+
+    function animationLeafChoices(id) {
+        const used = new Set();
+        for (const animation of root.draftAnimations) {
+            if (animation && animation.id !== id)
+                used.add(animation.name);
+        }
+        return root.animationLeaves.filter(leaf => !used.has(leaf));
+    }
+
+    function curveIssue(record) {
+        if (!record)
+            return "";
+        if (!root.isSchemaString(record.name, 256, false))
+            return qsTr("Enter a curve name of 1–256 canonical characters without control or format characters.");
+        if (root.draftCurves.some(curve => curve.id !== record.id
+                && curve.name === record.name)) {
+            return qsTr("Each custom curve name must be unique.");
+        }
+        if (!root.validateCurveRecord(record, false))
+            return record.type === "bezier"
+                ? qsTr("Finish all four Bezier coordinates from −1 through 2.")
+                : qsTr("Finish all three spring values above 0.5 and no greater than 1,000,000.");
+        return "";
+    }
+
+    function animationIssue(record) {
+        if (!record)
+            return "";
+        if (!root.animationLeaves.includes(record.name))
+            return qsTr("Choose one supported animation leaf.");
+        if (root.draftAnimations.some(animation => animation.id !== record.id
+                && animation.name === record.name)) {
+            return qsTr("Each animation leaf can appear only once.");
+        }
+        if (!root.isFiniteRange(record.speed, Number.MIN_VALUE, 100))
+            return qsTr("Enter a speed greater than 0 and no greater than 100.");
+        if (!root.validateAnimationRecord(record, root.draftCurves, false))
+            return qsTr("Choose an available curve and a style supported by this animation leaf.");
+        return "";
     }
 
     function isWindowBorderOption(id) {
@@ -290,8 +1113,29 @@ Page {
             return false;
         }
         for (const id of root.expectedOptionIds) {
-            if (!root.isWindowBorderOption(id) && left[id] !== right[id])
+            if (!root.isWindowBorderOption(id)
+                    && !root.valueEqual(left[id], right[id]))
                 return false;
+        }
+        return true;
+    }
+
+    function isWindowSpacingOption(id) {
+        return id === root.gapsInId || id === root.gapsOutId;
+    }
+
+    function valuesEqualExceptSharedVisual(left, right) {
+        if (!left || !right || typeof left !== "object"
+                || typeof right !== "object"
+                || Array.isArray(left) || Array.isArray(right)) {
+            return false;
+        }
+        for (const id of root.expectedOptionIds) {
+            if (!root.isWindowBorderOption(id)
+                    && !root.isWindowSpacingOption(id)
+                    && !root.valueEqual(left[id], right[id])) {
+                return false;
+            }
         }
         return true;
     }
@@ -334,13 +1178,62 @@ Page {
                     && option.choices.length === 0));
     }
 
-    function validateIntegerOption(option, id, defaultValue) {
+    function validateIntegerOption(
+        option, id, defaultValue, minimum, maximum
+    ) {
         return option && option.id === id
             && option.type === "integer"
             && option.control === "spinBox"
             && option.defaultValue === defaultValue
-            && option.min === 0
-            && option.max === 20;
+            && option.min === minimum
+            && option.max === maximum
+            && option.step === undefined
+            && (option.choices === undefined
+                || (Array.isArray(option.choices)
+                    && option.choices.length === 0));
+    }
+
+    function validateNumberOption(
+        option, id, defaultValue, minimum, maximum
+    ) {
+        return option && option.id === id
+            && option.type === "number"
+            && option.control === "slider"
+            && option.defaultValue === defaultValue
+            && option.min === minimum
+            && option.max === maximum
+            && option.step === undefined
+            && (option.choices === undefined
+                || (Array.isArray(option.choices)
+                    && option.choices.length === 0));
+    }
+
+    function validateVector2Option(
+        option, id, defaultValue, minimum, maximum
+    ) {
+        return option && option.id === id
+            && option.type === "vector2"
+            && option.control === "vector2"
+            && root.valueEqual(option.defaultValue, defaultValue)
+            && root.valueEqual(option.min, minimum)
+            && root.valueEqual(option.max, maximum)
+            && option.step === undefined
+            && (option.choices === undefined
+                || (Array.isArray(option.choices)
+                    && option.choices.length === 0));
+    }
+
+    function validateCssGapOption(option, id, defaultValue) {
+        return option && option.id === id
+            && option.type === "cssGap"
+            && option.control === "text"
+            && root.valueEqual(option.defaultValue, defaultValue)
+            && option.min === undefined
+            && option.max === undefined
+            && option.step === undefined
+            && (option.choices === undefined
+                || (Array.isArray(option.choices)
+                    && option.choices.length === 0));
     }
 
     function validateOptions() {
@@ -350,19 +1243,28 @@ Page {
             return false;
         }
         const seen = Object.create(null);
-        for (const option of root.appearanceOptions) {
+        for (let index = 0;
+                index < root.appearanceOptions.length; ++index) {
+            const option = root.appearanceOptions[index];
             if (!option || typeof option !== "object"
-                    || typeof option.id !== "string" || seen[option.id]) {
+                    || typeof option.id !== "string" || seen[option.id]
+                    || option.id !== root.expectedOptionIds[index]) {
                 return false;
             }
             seen[option.id] = true;
         }
-        const layout = root.optionById(root.layoutId);
-        const layoutChoices = root.choiceValues(layout);
         return root.validateIntegerOption(
-                root.optionById(root.borderSizeId), root.borderSizeId, 1)
+                root.optionById(root.borderSizeId), root.borderSizeId,
+                1, 0, 20)
             && root.validateIntegerOption(
-                root.optionById(root.roundingId), root.roundingId, 0)
+                root.optionById(root.roundingId), root.roundingId,
+                0, 0, 20)
+            && root.validateCssGapOption(
+                root.optionById(root.gapsInId), root.gapsInId,
+                [5, 5, 5, 5])
+            && root.validateCssGapOption(
+                root.optionById(root.gapsOutId), root.gapsOutId,
+                [20, 20, 20, 20])
             && root.validateBooleanOption(
                 root.optionById(root.blurId), root.blurId, true)
             && root.validateBooleanOption(
@@ -370,16 +1272,102 @@ Page {
             && root.validateBooleanOption(
                 root.optionById(root.animationsId), root.animationsId, true)
             && root.validateBooleanOption(
-                root.optionById(root.resizeId), root.resizeId, false)
+                root.optionById(root.dimInactiveId),
+                root.dimInactiveId, false)
+            && root.validateNumberOption(
+                root.optionById(root.dimStrengthId),
+                root.dimStrengthId, 0.5, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.activeOpacityId),
+                root.activeOpacityId, 1, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.inactiveOpacityId),
+                root.inactiveOpacityId, 1, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.fullscreenOpacityId),
+                root.fullscreenOpacityId, 1, 0, 1)
             && root.validateBooleanOption(
-                root.optionById(root.snapId), root.snapId, false)
-            && layout && layout.id === root.layoutId
-            && layout.type === "enum" && layout.control === "select"
-            && layout.defaultValue === "dwindle"
-            && JSON.stringify(layoutChoices)
-                === JSON.stringify([
-                    "dwindle", "master", "scrolling", "monocle"
-                ]);
+                root.optionById(root.dimModalId), root.dimModalId, true)
+            && root.validateNumberOption(
+                root.optionById(root.dimSpecialId),
+                root.dimSpecialId, 0.2, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.dimAroundId),
+                root.dimAroundId, 0.4, 0, 1)
+            && root.validateIntegerOption(
+                root.optionById(root.blurSizeId), root.blurSizeId,
+                8, 0, 100)
+            && root.validateIntegerOption(
+                root.optionById(root.blurPassesId), root.blurPassesId,
+                1, 0, 10)
+            && root.validateBooleanOption(
+                root.optionById(root.blurIgnoreOpacityId),
+                root.blurIgnoreOpacityId, true)
+            && root.validateBooleanOption(
+                root.optionById(root.blurOptimizationsId),
+                root.blurOptimizationsId, true)
+            && root.validateBooleanOption(
+                root.optionById(root.blurXrayId), root.blurXrayId, false)
+            && root.validateBooleanOption(
+                root.optionById(root.blurSpecialId),
+                root.blurSpecialId, false)
+            && root.validateBooleanOption(
+                root.optionById(root.blurPopupsId),
+                root.blurPopupsId, false)
+            && root.validateNumberOption(
+                root.optionById(root.blurPopupsIgnoreAlphaId),
+                root.blurPopupsIgnoreAlphaId, 0.2, 0, 1)
+            && root.validateBooleanOption(
+                root.optionById(root.blurInputMethodsId),
+                root.blurInputMethodsId, false)
+            && root.validateNumberOption(
+                root.optionById(root.blurInputMethodsIgnoreAlphaId),
+                root.blurInputMethodsIgnoreAlphaId, 0.2, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.blurBrightnessId),
+                root.blurBrightnessId, 1, 0, 2)
+            && root.validateNumberOption(
+                root.optionById(root.blurContrastId),
+                root.blurContrastId, 0.8916, 0, 2)
+            && root.validateNumberOption(
+                root.optionById(root.blurNoiseId),
+                root.blurNoiseId, 0.0117, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.blurVibrancyId),
+                root.blurVibrancyId, 0.1696, 0, 1)
+            && root.validateNumberOption(
+                root.optionById(root.blurVibrancyDarknessId),
+                root.blurVibrancyDarknessId, 0, 0, 1)
+            && root.validateBooleanOption(
+                root.optionById(root.borderPartOfWindowId),
+                root.borderPartOfWindowId, true)
+            && root.validateNumberOption(
+                root.optionById(root.roundingPowerId),
+                root.roundingPowerId, 2, 2, 10)
+            && root.validateIntegerOption(
+                root.optionById(root.shadowRangeId),
+                root.shadowRangeId, 4, 0, 100)
+            && root.validateIntegerOption(
+                root.optionById(root.shadowRenderPowerId),
+                root.shadowRenderPowerId, 3, 1, 4)
+            && root.validateBooleanOption(
+                root.optionById(root.shadowSharpId),
+                root.shadowSharpId, false)
+            && root.validateVector2Option(
+                root.optionById(root.shadowOffsetId),
+                root.shadowOffsetId, [0, 0], [-250, -250], [250, 250])
+            && root.validateNumberOption(
+                root.optionById(root.shadowScaleId),
+                root.shadowScaleId, 1, 0, 1)
+            && root.validateBooleanOption(
+                root.optionById(root.glowEnabledId),
+                root.glowEnabledId, false)
+            && root.validateIntegerOption(
+                root.optionById(root.glowRangeId),
+                root.glowRangeId, 10, 0, 100)
+            && root.validateIntegerOption(
+                root.optionById(root.glowRenderPowerId),
+                root.glowRenderPowerId, 3, 1, 4);
     }
 
     function validateValues(values) {
@@ -403,6 +1391,34 @@ Page {
                         || value < option.min || value > option.max) {
                     return false;
                 }
+            } else if (option.type === "number") {
+                if (typeof value !== "number" || !Number.isFinite(value)
+                        || value < option.min || value > option.max) {
+                    return false;
+                }
+            } else if (option.type === "vector2") {
+                if (!Array.isArray(value) || value.length !== 2
+                        || !Array.isArray(option.min)
+                        || option.min.length !== 2
+                        || !Array.isArray(option.max)
+                        || option.max.length !== 2) {
+                    return false;
+                }
+                for (let index = 0; index < 2; ++index) {
+                    if (typeof value[index] !== "number"
+                            || !Number.isFinite(value[index])
+                            || value[index] < option.min[index]
+                            || value[index] > option.max[index]) {
+                        return false;
+                    }
+                }
+            } else if (option.type === "cssGap") {
+                if (!Array.isArray(value) || value.length !== 4
+                        || !value.every(part =>
+                            typeof part === "number"
+                            && Number.isSafeInteger(part))) {
+                    return false;
+                }
             } else if (option.type === "enum") {
                 if (typeof value !== "string"
                         || !root.choiceValues(option).includes(value)) {
@@ -415,14 +1431,51 @@ Page {
         return true;
     }
 
+    function glowCombinationSafe(values) {
+        if (!values || typeof values !== "object" || Array.isArray(values)
+                || !Object.prototype.hasOwnProperty.call(
+                    values, root.glowEnabledId
+                )
+                || !Object.prototype.hasOwnProperty.call(
+                    values, root.glowRangeId
+                )) {
+            return false;
+        }
+        return values[root.glowEnabledId] !== true
+            || (Number.isInteger(values[root.glowRangeId])
+                && values[root.glowRangeId] >= 10);
+    }
+
     function optionMinimum(id) {
         const option = root.optionById(id);
-        return option && Number.isInteger(option.min) ? option.min : 0;
+        return option && typeof option.min === "number"
+                && Number.isFinite(option.min)
+            ? option.min : 0;
     }
 
     function optionMaximum(id) {
         const option = root.optionById(id);
-        return option && Number.isInteger(option.max) ? option.max : 0;
+        return option && typeof option.max === "number"
+                && Number.isFinite(option.max)
+            ? option.max : 0;
+    }
+
+    function optionComponentMinimum(id, index) {
+        const option = root.optionById(id);
+        return option && Array.isArray(option.min)
+                && index >= 0 && index < option.min.length
+                && typeof option.min[index] === "number"
+                && Number.isFinite(option.min[index])
+            ? option.min[index] : 0;
+    }
+
+    function optionComponentMaximum(id, index) {
+        const option = root.optionById(id);
+        return option && Array.isArray(option.max)
+                && index >= 0 && index < option.max.length
+                && typeof option.max[index] === "number"
+                && Number.isFinite(option.max[index])
+            ? option.max[index] : 0;
     }
 
     function optionDefault(id) {
@@ -431,9 +1484,48 @@ Page {
     }
 
     function draftValue(id) {
-        return root.draftValues
-            && Object.prototype.hasOwnProperty.call(root.draftValues, id)
-            ? root.draftValues[id] : root.optionDefault(id);
+        if (root.draftValues
+                && Object.prototype.hasOwnProperty.call(root.draftValues, id)) {
+            return root.draftValues[id];
+        }
+        if (root.trustedValuesValid && root.appearanceValues
+                && Object.prototype.hasOwnProperty.call(
+                    root.appearanceValues, id
+                )) {
+            return root.appearanceValues[id];
+        }
+        return root.optionDefault(id);
+    }
+
+    function gapComponent(id, index) {
+        const value = root.draftValue(id);
+        return Array.isArray(value) && index >= 0 && index < value.length
+            ? value[index] : 0;
+    }
+
+    function vectorDraftComponent(id, index) {
+        const value = root.draftValue(id);
+        return Array.isArray(value) && value.length === 2
+                && index >= 0 && index < 2
+            ? value[index] : 0;
+    }
+
+    function setGapComponent(id, index, text) {
+        if (!root.controlsEnabled || root.windowSpacingSynced
+                || !root.isWindowSpacingOption(id)
+                || index < 0 || index > 3
+                || !/^(0|-?[1-9][0-9]*)$/.test(String(text))) {
+            return false;
+        }
+        const value = Number(text);
+        if (!Number.isSafeInteger(value))
+            return false;
+        const next = root.clone(root.draftValue(id));
+        if (!Array.isArray(next) || next.length !== 4)
+            return false;
+        next[index] = value;
+        root.setDraftValue(id, next);
+        return root.valueEqual(root.draftValue(id), next);
     }
 
     function resetTargetValues() {
@@ -441,9 +1533,13 @@ Page {
             return null;
         const defaults = {};
         for (const id of root.expectedOptionIds) {
-            defaults[id] = root.windowBorderSynced
-                    && root.isWindowBorderOption(id)
-                ? root.draftValue(id) : root.optionDefault(id);
+            const sharedBorderValue = root.windowBorderSynced
+                && root.isWindowBorderOption(id);
+            const sharedSpacingValue = root.windowSpacingSynced
+                && root.isWindowSpacingOption(id);
+            defaults[id] = sharedBorderValue || sharedSpacingValue
+                ? root.clone(root.draftValue(id))
+                : root.clone(root.optionDefault(id));
         }
         return root.validateValues(defaults) ? defaults : null;
     }
@@ -471,7 +1567,7 @@ Page {
         if (root.sharedBorderSourceRequestErrorCleared
                 && root.sharedBorderClientError.length > 0) {
             root.sharedBorderSourceActionError = root.sharedBorderClientError
-                .slice(0, root.maximumSharedBorderSourceErrorLength);
+                .slice(0, root.maximumSharedSourceErrorLength);
             root.finishSharedBorderSourceRequest();
         }
     }
@@ -494,6 +1590,55 @@ Page {
         root.sharedBorderSourceExpectedSync = sync;
         root.windowBorderSyncRequested(sync);
         root.scheduleSharedBorderSourceRequestReview();
+    }
+
+    function finishSharedSpacingSourceRequest() {
+        root.sharedSpacingSourceRequestPending = false;
+        root.sharedSpacingSourceRequestSawBusy = false;
+        root.sharedSpacingSourceRequestErrorCleared = false;
+    }
+
+    function reviewSharedSpacingSourceRequest() {
+        if (!root.sharedSpacingSourceRequestPending)
+            return;
+        if (root.windowSpacingSynced
+                === root.sharedSpacingSourceExpectedSync) {
+            root.sharedSpacingSourceActionError = "";
+            root.finishSharedSpacingSourceRequest();
+            return;
+        }
+        if (root.sharedSpacingBusy) {
+            root.sharedSpacingSourceRequestSawBusy = true;
+            return;
+        }
+        if (!root.sharedSpacingSourceRequestSawBusy)
+            return;
+        if (root.sharedSpacingSourceRequestErrorCleared
+                && root.sharedSpacingClientError.length > 0) {
+            root.sharedSpacingSourceActionError = root.sharedSpacingClientError
+                .slice(0, root.maximumSharedSourceErrorLength);
+            root.finishSharedSpacingSourceRequest();
+        }
+    }
+
+    function scheduleSharedSpacingSourceRequestReview() {
+        Qt.callLater(root.reviewSharedSpacingSourceRequest);
+    }
+
+    function requestWindowSpacingSync(sync) {
+        if (!root.sharedSpacingSourceActionEnabled
+                || typeof sync !== "boolean"
+                || sync === root.windowSpacingSynced) {
+            return;
+        }
+        root.sharedSpacingSourceActionError = "";
+        root.sharedSpacingSourceRequestPending = true;
+        root.sharedSpacingSourceRequestSawBusy = root.sharedSpacingBusy;
+        root.sharedSpacingSourceRequestErrorCleared =
+            root.sharedSpacingClientError.length === 0;
+        root.sharedSpacingSourceExpectedSync = sync;
+        root.windowSpacingSyncRequested(sync);
+        root.scheduleSharedSpacingSourceRequestReview();
     }
 
     function reconcileWindowBorderProjection() {
@@ -541,28 +1686,51 @@ Page {
         root.sharedBorderProjectionPending = false;
     }
 
-    function layoutChoices() {
-        return root.choiceValues(root.optionById(root.layoutId));
-    }
-
-    function layoutLabels() {
-        const labels = [];
-        for (const value of root.layoutChoices()) {
-            if (value === "master")
-                labels.push(qsTr("Master"));
-            else if (value === "scrolling")
-                labels.push(qsTr("Scrolling"));
-            else if (value === "monocle")
-                labels.push(qsTr("Monocle"));
-            else
-                labels.push(qsTr("Dwindle"));
+    function reconcileWindowSpacingProjection() {
+        if (!root.serviceAvailable
+                || !root.projectionInitialized || !root.trustedValuesValid
+                || root.sharedSpacingBusy
+                || root.sharedSpacingSyncState === "pending") {
+            return false;
         }
-        return labels;
+        const modeChanged = root.windowSpacingSynced
+            !== root.synchronizedWindowSpacingSynced;
+        const pairChanged = !root.valueEqual(
+                root.appearanceValues[root.gapsInId],
+                root.synchronizedValues[root.gapsInId])
+            || !root.valueEqual(
+                root.appearanceValues[root.gapsOutId],
+                root.synchronizedValues[root.gapsOutId]);
+        if (!modeChanged && (!root.windowSpacingSynced || !pairChanged))
+            return false;
+
+        const nextDraft = root.clone(root.draftValues);
+        const nextSynchronized = root.clone(root.synchronizedValues);
+        if (!nextDraft || !nextSynchronized)
+            return false;
+        for (const id of [root.gapsInId, root.gapsOutId]) {
+            nextDraft[id] = root.clone(root.appearanceValues[id]);
+            nextSynchronized[id] = root.clone(root.appearanceValues[id]);
+        }
+        if (!root.validateValues(nextDraft)
+                || !root.validateValues(nextSynchronized)) {
+            return false;
+        }
+        root.draftValues = nextDraft;
+        root.synchronizedValues = nextSynchronized;
+        root.synchronizedWindowSpacingSynced = root.windowSpacingSynced;
+        root.sharedSpacingProjectionPending = true;
+        return true;
     }
 
-    function layoutIndex(value) {
-        const index = root.layoutChoices().indexOf(value);
-        return index >= 0 ? index : 0;
+    function settleSharedSpacingProjection() {
+        if (!root.serviceAvailable
+                || !root.sharedSpacingProjectionPending
+                || root.sharedSpacingBusy
+                || !root.sharedSpacingProjectionVerified) {
+            return;
+        }
+        root.sharedSpacingProjectionPending = false;
     }
 
     function setDraftValue(id, value) {
@@ -572,55 +1740,175 @@ Page {
                 && (id === root.borderSizeId || id === root.roundingId)) {
             return;
         }
+        if (root.windowSpacingSynced && root.isWindowSpacingOption(id))
+            return;
         const next = root.clone(root.draftValues);
         if (!next)
             return;
-        next[id] = value;
+        next[id] = root.clone(value);
+        if (next[id] === null && value !== null)
+            return;
         if (!root.validateValues(next))
             return;
         root.draftValues = next;
     }
 
+    function setExactDecimalDraftValue(id, value) {
+        if (!root.controlsEnabled || !root.trustedDefinitionsValid
+                || !root.exactDecimalOptionIds.includes(id)
+                || (id === root.shadowScaleId
+                    && !root.shadowScaleControlEnabled)
+                || (typeof value !== "string"
+                    && (typeof value !== "number"
+                        || !Number.isFinite(value)))) {
+            return;
+        }
+        const option = root.optionById(id);
+        if (!option)
+            return;
+        if (typeof value === "number"
+                && (value < option.min || value > option.max)) {
+            return;
+        }
+        const next = root.clone(root.draftValues);
+        if (!next)
+            return;
+        next[id] = typeof value === "number" && Object.is(value, -0)
+            ? 0 : value;
+        root.draftValues = next;
+    }
+
+    function setExactVectorComponentDraftValue(id, index, value) {
+        if (!root.shadowOffsetControlsEnabled
+                || !root.trustedDefinitionsValid
+                || !root.exactVectorOptionIds.includes(id)
+                || !Number.isInteger(index) || index < 0 || index > 1
+                || (typeof value !== "string"
+                    && (typeof value !== "number"
+                        || !Number.isFinite(value)))) {
+            return;
+        }
+        const option = root.optionById(id);
+        if (!option || !Array.isArray(option.min)
+                || !Array.isArray(option.max)) {
+            return;
+        }
+        if (typeof value === "number"
+                && (value < option.min[index]
+                    || value > option.max[index])) {
+            return;
+        }
+        const next = root.clone(root.draftValues);
+        if (!next || !Array.isArray(next[id]) || next[id].length !== 2)
+            return;
+        next[id][index] = typeof value === "number" && Object.is(value, -0)
+            ? 0 : value;
+        root.draftValues = next;
+    }
+
+    function exactPreviewValue(id) {
+        const value = root.draftValue(id);
+        return typeof value === "number" && Number.isFinite(value)
+            ? value : Number.NaN;
+    }
+
+    function exactVectorPreviewComponent(id, index) {
+        const value = root.vectorDraftComponent(id, index);
+        return typeof value === "number" && Number.isFinite(value)
+            ? value : Number.NaN;
+    }
+
+    function setUnitSliderValue(id, value) {
+        if (![root.dimStrengthId, root.activeOpacityId,
+                root.inactiveOpacityId, root.fullscreenOpacityId,
+                root.dimSpecialId, root.dimAroundId,
+                root.blurPopupsIgnoreAlphaId,
+                root.blurInputMethodsIgnoreAlphaId].includes(id)
+                || typeof value !== "number" || !Number.isFinite(value)) {
+            return;
+        }
+        let canonical = Number(
+            (Math.round(value / 0.05) * 0.05).toFixed(2)
+        );
+        if (Object.is(canonical, -0))
+            canonical = 0;
+        root.setDraftValue(id, canonical);
+    }
+
+    function setDimStrength(value) {
+        root.setUnitSliderValue(root.dimStrengthId, value);
+    }
+
     function synchronizeDraft() {
-        if (!root.serviceAvailable
-                || !root.trustedValuesValid || root.sharedBorderBusy
+        if (!root.serviceAvailable || !root.appearanceProjectionAvailable
+                || !root.appearanceAnimationProjectionAvailable
+                || !root.revisionTokenValid
+                || !root.trustedValuesValid
+                || !root.trustedAnimationProjectionValid
+                || root.sharedBorderBusy
                 || root.sharedBorderSyncState === "pending"
-                || root.sharedBorderProjectionPending) {
+                || root.sharedBorderProjectionPending
+                || root.sharedSpacingBusy
+                || root.sharedSpacingSyncState === "pending"
+                || root.sharedSpacingProjectionPending) {
             return;
         }
         const next = root.clone(root.appearanceValues);
-        if (!next)
+        const curves = root.clone(root.appearanceCurves);
+        const animations = root.clone(root.appearanceAnimations);
+        if (!next || !curves || !animations)
             return;
         root.synchronizedValues = root.clone(next);
         root.draftValues = next;
+        root.synchronizedCurves = root.clone(curves);
+        root.draftCurves = curves;
+        root.synchronizedAnimations = root.clone(animations);
+        root.draftAnimations = animations;
         root.synchronizedRevisionToken = root.revisionToken;
         root.synchronizedWindowBorderSynced = root.windowBorderSynced;
+        root.synchronizedWindowSpacingSynced = root.windowSpacingSynced;
         root.projectionInitialized = true;
         root.externalChangeWhileEditing = false;
         root.saveSubmitted = false;
         root.submittedValues = ({});
+        root.submittedCurves = [];
+        root.submittedAnimations = [];
         root.submittedRevisionToken = "";
         root.sharedBorderProjectionPending = false;
+        root.sharedSpacingProjectionPending = false;
     }
 
     function resetDraftToDefaults() {
         if (!root.controlsEnabled || !root.trustedDefinitionsValid)
             return;
         const target = root.resetTargetValues();
-        if (target)
-            root.draftValues = target;
+        const curves = root.clone(root.synchronizedCurves);
+        if (!target || !curves)
+            return;
+        root.draftValues = target;
+        root.draftCurves = curves;
+        root.draftAnimations = [];
     }
 
     function submitDraft() {
         if (!root.saveEnabled)
             return;
         const candidate = root.clone(root.draftValues);
-        if (!candidate || !root.validateValues(candidate))
+        const curves = root.clone(root.draftCurves);
+        const animations = root.clone(root.draftAnimations);
+        if (!candidate || !curves || !animations
+                || !root.validateValues(candidate)
+                || !root.glowCombinationSafe(candidate)
+                || !root.validateCurveCollection(curves, false)
+                || !root.validateAnimationCollection(animations, curves)) {
             return;
+        }
         root.saveSubmitted = true;
         root.submittedValues = root.clone(candidate);
+        root.submittedCurves = root.clone(curves);
+        root.submittedAnimations = root.clone(animations);
         root.submittedRevisionToken = root.revisionToken;
-        root.saveRequested(candidate);
+        root.saveRequested(candidate, curves, animations);
         // Main forwards this signal synchronously. If the client rejects the
         // request at the authorization boundary without entering busy state,
         // release the submission guard while preserving the draft.
@@ -628,10 +1916,22 @@ Page {
     }
 
     function reviewProjection() {
-        if (!root.serviceAvailable || !root.trustedValuesValid)
+        if (!root.serviceAvailable || !root.trustedValuesValid
+                || !root.trustedAnimationProjectionValid) {
+            if (root.serviceAvailable && !root.saveSubmitted
+                    && root.projectionInitialized && root.draftDirty
+                    && root.revisionTokenValid
+                    && root.synchronizedRevisionTokenValid
+                    && root.revisionToken
+                        !== root.synchronizedRevisionToken) {
+                root.externalChangeWhileEditing = true;
+            }
             return;
+        }
         if (root.sharedBorderBusy
-                || root.sharedBorderSyncState === "pending") {
+                || root.sharedBorderSyncState === "pending"
+                || root.sharedSpacingBusy
+                || root.sharedSpacingSyncState === "pending") {
             return;
         }
         if (!root.projectionInitialized) {
@@ -639,18 +1939,26 @@ Page {
             return;
         }
         root.reconcileWindowBorderProjection();
-        if (root.sharedBorderProjectionPending
-                && root.valuesEqualExceptWindowBorder(
+        root.reconcileWindowSpacingProjection();
+        if ((root.sharedBorderProjectionPending
+                || root.sharedSpacingProjectionPending)
+                && root.valuesEqualExceptSharedVisual(
                     root.appearanceValues, root.synchronizedValues
                 )) {
             root.synchronizedRevisionToken = root.revisionToken;
         }
         root.settleSharedBorderProjection();
+        root.settleSharedSpacingProjection();
         if (root.saveSubmitted) {
-            if (root.busy || root.sharedBorderTransitionBusy)
+            if (root.busy || root.sharedVisualTransitionBusy)
                 return;
             if (root.valuesEqual(
-                    root.appearanceValues, root.submittedValues)) {
+                    root.appearanceValues, root.submittedValues)
+                    && root.valueEqual(
+                        root.appearanceCurves, root.submittedCurves)
+                    && root.valueEqual(
+                        root.appearanceAnimations,
+                        root.submittedAnimations)) {
                 root.synchronizeDraft();
                 return;
             }
@@ -658,6 +1966,8 @@ Page {
                 // Replace did not commit. Preserve the draft for retry.
                 root.saveSubmitted = false;
                 root.submittedValues = ({});
+                root.submittedCurves = [];
+                root.submittedAnimations = [];
                 root.submittedRevisionToken = "";
                 return;
             }
@@ -669,6 +1979,10 @@ Page {
                 !== root.synchronizedRevisionToken
             || !root.valuesEqual(
                 root.appearanceValues, root.synchronizedValues
+            ) || !root.valueEqual(
+                root.appearanceCurves, root.synchronizedCurves
+            ) || !root.valueEqual(
+                root.appearanceAnimations, root.synchronizedAnimations
             );
         if (!projectionChanged)
             return;
@@ -685,6 +1999,10 @@ Page {
 
     onAppearanceOptionsChanged: root.scheduleProjectionReview()
     onAppearanceValuesChanged: root.scheduleProjectionReview()
+    onAppearanceCurvesChanged: root.scheduleProjectionReview()
+    onAppearanceAnimationsChanged: root.scheduleProjectionReview()
+    onAppearanceAnimationProjectionAvailableChanged:
+        root.scheduleProjectionReview()
     onRevisionTokenChanged: root.scheduleProjectionReview()
     onServiceAvailableChanged: root.scheduleProjectionReview()
     onSharedBorderConfigRevisionTokenChanged:
@@ -726,6 +2044,48 @@ Page {
         if (root.projectionInitialized
                 && root.sharedBorderSyncState === "pending")
             root.sharedBorderProjectionPending = true;
+        root.scheduleProjectionReview();
+    }
+    onSharedSpacingConfigRevisionTokenChanged:
+        root.scheduleProjectionReview()
+    onSharedSpacingVerifiedRevisionTokenChanged:
+        root.scheduleProjectionReview()
+    onWindowSpacingSyncedChanged: {
+        if (root.projectionInitialized)
+            root.sharedSpacingProjectionPending = true;
+        root.scheduleProjectionReview();
+        root.scheduleSharedSpacingSourceRequestReview();
+    }
+    onSharedSpacingAvailableChanged: {
+        if (root.sharedSpacingAvailable)
+            root.sharedSpacingSourceActionError = "";
+        root.scheduleSharedSpacingSourceRequestReview();
+    }
+    onSharedSpacingBusyChanged: {
+        if (root.sharedSpacingBusy) {
+            if (root.sharedSpacingSourceRequestPending)
+                root.sharedSpacingSourceRequestSawBusy = true;
+            else
+                root.sharedSpacingSourceActionError = "";
+        }
+        root.scheduleProjectionReview();
+        root.scheduleSharedSpacingSourceRequestReview();
+    }
+    onSharedSpacingClientErrorChanged: {
+        if (root.sharedSpacingClientError.length === 0) {
+            if (root.sharedSpacingSourceRequestPending) {
+                root.sharedSpacingSourceRequestErrorCleared = true;
+            } else {
+                root.sharedSpacingSourceActionError = "";
+            }
+        }
+        root.scheduleSharedSpacingSourceRequestReview();
+    }
+    onSharedSpacingSyncStateChanged: {
+        if (root.projectionInitialized
+                && root.sharedSpacingSyncState === "pending") {
+            root.sharedSpacingProjectionPending = true;
+        }
         root.scheduleProjectionReview();
     }
     onBusyChanged: {
@@ -811,18 +2171,124 @@ Page {
                         rounding: Number(
                             root.draftValue(root.roundingId)
                         ) || 0
+                        roundingPower:
+                            root.exactPreviewValue(root.roundingPowerId)
                         blurEnabled: root.draftValue(root.blurId) === true
                         shadowEnabled:
                             root.draftValue(root.shadowId) === true
+                        shadowRange: Number(
+                            root.draftValue(root.shadowRangeId)
+                        ) || 0
+                        shadowRenderPower: Number(
+                            root.draftValue(root.shadowRenderPowerId)
+                        ) || 0
+                        shadowSharp:
+                            root.draftValue(root.shadowSharpId) === true
+                        shadowOffsetX: root.exactVectorPreviewComponent(
+                            root.shadowOffsetId, 0
+                        )
+                        shadowOffsetY: root.exactVectorPreviewComponent(
+                            root.shadowOffsetId, 1
+                        )
+                        shadowScale: root.exactPreviewValue(
+                            root.shadowScaleId
+                        )
+                        glowEnabled:
+                            root.draftValue(root.glowEnabledId) === true
+                        glowRange: Number(
+                            root.draftValue(root.glowRangeId)
+                        ) || 0
+                        glowRenderPower: Number(
+                            root.draftValue(root.glowRenderPowerId)
+                        ) || 0
+                        borderPartOfWindow: root.draftValue(
+                            root.borderPartOfWindowId
+                        ) === true
+                        dimInactive:
+                            root.draftValue(root.dimInactiveId) === true
+                        dimStrength: Number(
+                            root.draftValue(root.dimStrengthId)
+                        ) || 0
+                        activeOpacity: Number(
+                            root.draftValue(root.activeOpacityId)
+                        ) || 0
+                        inactiveOpacity: Number(
+                            root.draftValue(root.inactiveOpacityId)
+                        ) || 0
+                        fullscreenOpacity: Number(
+                            root.draftValue(root.fullscreenOpacityId)
+                        ) || 0
+                        dimModal:
+                            root.draftValue(root.dimModalId) === true
+                        dimSpecial: Number(
+                            root.draftValue(root.dimSpecialId)
+                        ) || 0
+                        dimAround: Number(
+                            root.draftValue(root.dimAroundId)
+                        ) || 0
+                        blurSize: Number(
+                            root.draftValue(root.blurSizeId)
+                        ) || 0
+                        blurPasses: Number(
+                            root.draftValue(root.blurPassesId)
+                        ) || 0
+                        blurIgnoreOpacity:
+                            root.draftValue(
+                                root.blurIgnoreOpacityId
+                            ) === true
+                        blurOptimizations:
+                            root.draftValue(
+                                root.blurOptimizationsId
+                            ) === true
+                        blurXray:
+                            root.draftValue(root.blurXrayId) === true
+                        blurBrightness:
+                            root.exactPreviewValue(root.blurBrightnessId)
+                        blurContrast:
+                            root.exactPreviewValue(root.blurContrastId)
+                        blurNoise:
+                            root.exactPreviewValue(root.blurNoiseId)
+                        blurVibrancy:
+                            root.exactPreviewValue(root.blurVibrancyId)
+                        blurVibrancyDarkness: root.exactPreviewValue(
+                            root.blurVibrancyDarknessId
+                        )
+                        blurSpecial:
+                            root.draftValue(root.blurSpecialId) === true
+                        blurPopups:
+                            root.draftValue(root.blurPopupsId) === true
+                        blurPopupsIgnoreAlpha: Number(
+                            root.draftValue(
+                                root.blurPopupsIgnoreAlphaId
+                            )
+                        ) || 0
+                        blurInputMethods:
+                            root.draftValue(
+                                root.blurInputMethodsId
+                            ) === true
+                        blurInputMethodsIgnoreAlpha: Number(
+                            root.draftValue(
+                                root.blurInputMethodsIgnoreAlphaId
+                            )
+                        ) || 0
                         animationsEnabled:
                             root.draftValue(root.animationsId) === true
-                        layoutMode: String(
-                            root.draftValue(root.layoutId) || "dwindle"
-                        )
-                        resizeOnBorder:
-                            root.draftValue(root.resizeId) === true
-                        snapEnabled:
-                            root.draftValue(root.snapId) === true
+                        layoutMode: "dwindle"
+                        resizeOnBorder: false
+                        snapEnabled: false
+                    }
+
+                    Label {
+                        objectName: "appearanceAnimationPreviewDisclaimer"
+                        Layout.fillWidth: true
+                        text: root.compactPreview
+                            ? qsTr("Inner glow size, falloff, color, opacity, blur, and motion are not simulated. Shadow rendering, window corner power, border-inclusive bounds, blur details, fullscreen/contextual dimming, and animation details are summary-only; blur is on/off only.")
+                            : qsTr("Window corner power, true fullscreen, modal-dialog parent, special-workspace dimming, Dim around Rule, border-inclusive shadow bounds, custom curve shapes, animation speeds, styles, and rule order are not simulated. Shadow range, falloff, sharp edges, shadow offset, and shadow scale are not simulated. Inner glow size, falloff, color, opacity, blur, and motion are not simulated. Blur is illustrated only as on or off; Kawase renderer tuning, brightness, contrast, noise, vibrancy, dark-area vibrancy, opacity handling, optimized and X-ray rendering, special-workspace blur, popup blur, and input-method blur are not simulated.")
+                        color: root.palette.placeholderText
+                        font.pixelSize: 11
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
+                        Accessible.name: text
                     }
                 }
             }
@@ -856,7 +2322,7 @@ Page {
 
                         Label {
                             Layout.fillWidth: true
-                            text: qsTr("Appearance & Behavior")
+                            text: qsTr("Appearance")
                             color: root.palette.text
                             font.pixelSize: 28
                             font.weight: Font.DemiBold
@@ -867,7 +2333,7 @@ Page {
 
                         Label {
                             Layout.fillWidth: true
-                            text: qsTr("Shape common window visuals and interactions through the managed compositor configuration.")
+                            text: qsTr("Shape common window visuals through the managed compositor configuration.")
                             color: root.palette.placeholderText
                             font.pixelSize: 13
                             wrapMode: Text.Wrap
@@ -950,8 +2416,12 @@ Page {
                                 visible: root.externalChangeWhileEditing
                                 text: qsTr("Load current settings")
                                 enabled: !root.busy
-                                    && !root.sharedBorderTransitionBusy
+                                    && !root.saveSubmitted
+                                    && !root.sharedVisualTransitionBusy
+                                    && root.appearanceProjectionAvailable
                                     && root.trustedValuesValid
+                                    && root.appearanceAnimationProjectionAvailable
+                                    && root.trustedAnimationProjectionValid
                                 Accessible.name: qsTr("Discard this draft and load the current compositor settings")
 
                                 onClicked: root.synchronizeDraft()
@@ -965,11 +2435,13 @@ Page {
                                     implicitContentHeight + topPadding + bottomPadding
                                 )
                                 visible: root.retryApplyAvailable
-                                text: root.busyOperation === "appearance-apply"
+                                text: root.busyOperation === "compositor-apply"
+                                    || root.busyOperation === "appearance-apply"
                                     ? qsTr("Retrying apply…")
                                     : qsTr("Retry apply")
                                 enabled: root.retryApplyAvailable && !root.busy
-                                    && root.sharedBorderApplySafe
+                                    && root.sharedVisualApplySafe
+                                    && root.authoritativeGlowSafe
                                 Accessible.name: qsTr("Retry applying the exact saved compositor revision")
 
                                 onClicked: root.retryApplyRequested()
@@ -993,8 +2465,314 @@ Page {
                     }
                 }
 
+                TabBar {
+                    id: appearanceTabBar
+
+                    objectName: "appearanceTabBar"
+                    Layout.fillWidth: true
+                    currentIndex: root.appearanceTabIndex
+
+                    onCurrentIndexChanged:
+                        root.appearanceTabIndex = currentIndex
+
+                    TabButton {
+                        objectName: "appearanceVisualsTab"
+                        implicitHeight: Math.max(
+                            root.minimumTargetSize,
+                            implicitBackgroundHeight,
+                            implicitContentHeight + topPadding + bottomPadding
+                        )
+                        text: qsTr("Visuals")
+                        Accessible.name: qsTr("Window visual settings")
+                    }
+
+                    TabButton {
+                        objectName: "appearanceAnimationsTab"
+                        implicitHeight: Math.max(
+                            root.minimumTargetSize,
+                            implicitBackgroundHeight,
+                            implicitContentHeight + topPadding + bottomPadding
+                        )
+                        text: qsTr("Animations")
+                        Accessible.name: qsTr("Curve and animation settings")
+                    }
+                }
+
+                Frame {
+                    objectName: "windowSpacingSettingsCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            text: qsTr("Window spacing")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        Frame {
+                            Layout.fillWidth: true
+                            padding: 14
+
+                            background: Rectangle {
+                                color: root.windowSpacingSynced
+                                    ? Qt.rgba(
+                                        root.palette.highlight.r,
+                                        root.palette.highlight.g,
+                                        root.palette.highlight.b,
+                                        0.09
+                                    )
+                                    : root.palette.window
+                                radius: 12
+                                border.color: root.windowSpacingSynced
+                                    ? Qt.rgba(
+                                        root.palette.highlight.r,
+                                        root.palette.highlight.g,
+                                        root.palette.highlight.b,
+                                        0.34
+                                    )
+                                    : root.palette.mid
+                            }
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                spacing: 10
+
+                                Label {
+                                    objectName: "windowSpacingAuthorityMessage"
+                                    Layout.fillWidth: true
+                                    text: root.windowSpacingAuthorityMessage
+                                    color: root.palette.text
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+
+                                Label {
+                                    objectName: "sharedSpacingMutationErrorMessage"
+                                    Layout.fillWidth: true
+                                    visible:
+                                        root.sharedSpacingSourceActionError.length
+                                            > 0
+                                    text: qsTr("The shared spacing source could not be changed. %1").arg(
+                                        root.sharedSpacingSourceActionError
+                                    )
+                                    color: "#ffb8c3"
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                    Accessible.role: Accessible.AlertMessage
+                                    Accessible.name: text
+                                }
+
+                                Flow {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+
+                                    Button {
+                                        objectName: "windowSpacingSourceButton"
+                                        implicitHeight: Math.max(
+                                            root.minimumTargetSize,
+                                            implicitBackgroundHeight,
+                                            implicitContentHeight
+                                                + topPadding + bottomPadding
+                                        )
+                                        text: root.windowSpacingSynced
+                                            ? qsTr("Override window spacing")
+                                            : qsTr("Sync with HyprShelld")
+                                        enabled:
+                                            root.sharedSpacingSourceActionEnabled
+                                        Accessible.name: text
+
+                                        onClicked: root.requestWindowSpacingSync(
+                                            !root.windowSpacingSynced
+                                        )
+                                    }
+
+                                    Button {
+                                        objectName: "retrySharedSpacingSyncButton"
+                                        implicitHeight: Math.max(
+                                            root.minimumTargetSize,
+                                            implicitBackgroundHeight,
+                                            implicitContentHeight
+                                                + topPadding + bottomPadding
+                                        )
+                                        visible:
+                                            root.sharedSpacingRetryAvailable
+                                        enabled: visible
+                                            && !root.sharedSpacingBusy
+                                            && !root.sharedSpacingSourceRequestPending
+                                            && !root.sharedBorderTransitionBusy
+                                            && !root.busy
+                                            && !root.displayTestActive
+                                        text: qsTr("Retry synchronization")
+                                        Accessible.name: text
+
+                                        onClicked:
+                                            root.retrySharedSpacingSyncRequested()
+                                    }
+                                }
+                            }
+                        }
+
+                        Repeater {
+                            model: [
+                                {
+                                    id: root.gapsInId,
+                                    title: qsTr("Inner window gaps"),
+                                    description: qsTr("Set the gap on each side between neighboring windows."),
+                                    prefix: "appearanceGapsIn"
+                                },
+                                {
+                                    id: root.gapsOutId,
+                                    title: qsTr("Outer window gaps"),
+                                    description: qsTr("Set the gap on each side between windows and monitor edges. While synced, the top is zero because the Bar reservation already supplies that spacing."),
+                                    prefix: "appearanceGapsOut"
+                                }
+                            ]
+
+                            ColumnLayout {
+                                id: gapGroup
+
+                                required property var modelData
+                                readonly property string gapId:
+                                    modelData.id
+
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: gapGroup.modelData.title
+                                    color: root.palette.text
+                                    font.pixelSize: 14
+                                    font.weight: Font.Medium
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: gapGroup.modelData.description
+                                    color: root.palette.placeholderText
+                                    font.pixelSize: 12
+                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                }
+
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: root.width < 640 ? 2 : 4
+                                    columnSpacing: 12
+                                    rowSpacing: 8
+
+                                    Repeater {
+                                        model: [
+                                            { label: qsTr("Top"), suffix: "Top" },
+                                            { label: qsTr("Right"), suffix: "Right" },
+                                            { label: qsTr("Bottom"), suffix: "Bottom" },
+                                            { label: qsTr("Left"), suffix: "Left" }
+                                        ]
+
+                                        ColumnLayout {
+                                            id: gapPart
+
+                                            required property int index
+                                            required property var modelData
+                                            property string projectedText:
+                                                String(root.gapComponent(
+                                                    gapGroup.gapId, index
+                                                ))
+
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            spacing: 4
+
+                                            Label {
+                                                Layout.fillWidth: true
+                                                text: gapPart.modelData.label
+                                                color:
+                                                    root.palette.placeholderText
+                                                font.pixelSize: 12
+                                                textFormat: Text.PlainText
+                                            }
+
+                                            TextField {
+                                                id: gapField
+
+                                                objectName:
+                                                    gapGroup.modelData.prefix
+                                                    + gapPart.modelData.suffix
+                                                Layout.fillWidth: true
+                                                implicitHeight:
+                                                    root.minimumTargetSize
+                                                enabled: root.controlsEnabled
+                                                    && !root.windowSpacingSynced
+                                                inputMethodHints:
+                                                    Qt.ImhFormattedNumbersOnly
+                                                Accessible.name: qsTr("%1 %2 edge gap").arg(
+                                                    gapGroup.modelData.title
+                                                ).arg(gapPart.modelData.label)
+                                                validator:
+                                                    RegularExpressionValidator {
+                                                        regularExpression:
+                                                            /^(0|-?[1-9][0-9]*)$/
+                                                    }
+
+                                                Component.onCompleted:
+                                                    text = gapPart.projectedText
+                                                onActiveFocusChanged: {
+                                                    if (!activeFocus) {
+                                                        text =
+                                                            gapPart.projectedText;
+                                                    }
+                                                }
+                                                onEditingFinished: {
+                                                    if (!root.setGapComponent(
+                                                            gapGroup.gapId,
+                                                            gapPart.index,
+                                                            text)) {
+                                                        text =
+                                                            gapPart.projectedText;
+                                                    }
+                                                }
+                                            }
+
+                                            onProjectedTextChanged: {
+                                                if (!gapField.activeFocus)
+                                                    gapField.text = projectedText;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("The Bar still attaches to a covering maximized window. Once the protected maximize rule has been safely applied, it keeps that window gapless even when normal spacing is overridden.")
+                            color: root.palette.placeholderText
+                            font.pixelSize: 12
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                        }
+                    }
+                }
+
                 Frame {
                     Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
                     padding: 18
 
                     background: Rectangle {
@@ -1106,6 +2884,7 @@ Page {
                                         enabled: visible
                                             && !root.sharedBorderBusy
                                             && !root.sharedBorderSourceRequestPending
+                                            && !root.sharedSpacingTransitionBusy
                                             && !root.busy
                                             && !root.displayTestActive
                                         text: qsTr("Retry synchronization")
@@ -1118,100 +2897,72 @@ Page {
                             }
                         }
 
-                        RowLayout {
+                        SettingsSpinBoxRow {
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Border thickness")
+                            description: qsTr("Set the managed border width around windows in layout pixels.")
+                            from: root.optionMinimum(root.borderSizeId)
+                            to: root.optionMaximum(root.borderSizeId)
+                            value: Number(root.draftValue(root.borderSizeId)) || 0
+                            enabled: root.controlsEnabled
+                                && !root.windowBorderSynced
+                            controlObjectName: "appearanceBorderSize"
+                            accessibleName: qsTr("Window border thickness")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-
-                                Label {
-                                    text: qsTr("Border thickness")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Set the managed border width around windows in layout pixels.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            SpinBox {
-                                objectName: "appearanceBorderSize"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                from: root.optionMinimum(root.borderSizeId)
-                                to: root.optionMaximum(root.borderSizeId)
-                                value: Number(root.draftValue(root.borderSizeId)) || 0
-                                editable: false
-                                enabled: root.controlsEnabled
-                                    && !root.windowBorderSynced
-                                Accessible.name: qsTr("Window border thickness")
-
-                                onValueModified: root.setDraftValue(
-                                    root.borderSizeId, value
-                                )
-                            }
+                            onValueModified: value => root.setDraftValue(
+                                root.borderSizeId, value
+                            )
                         }
 
-                        RowLayout {
+                        SettingsSpinBoxRow {
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Corner radius")
+                            description: qsTr("Round window corners by this many layout pixels.")
+                            from: root.optionMinimum(root.roundingId)
+                            to: root.optionMaximum(root.roundingId)
+                            value: Number(root.draftValue(root.roundingId)) || 0
+                            enabled: root.controlsEnabled
+                                && !root.windowBorderSynced
+                            controlObjectName: "appearanceRounding"
+                            accessibleName: qsTr("Window corner radius")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
+                            onValueModified: value => root.setDraftValue(
+                                root.roundingId, value
+                            )
+                        }
 
-                                Label {
-                                    text: qsTr("Corner radius")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
+                        SettingsDecimalRow {
+                            objectName: "appearanceRoundingPowerRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Window corner power")
+                            description: qsTr("Set the corner power from 2 through 10. The default 2 is circular; higher values make corners squarer, and Hyprland adjusts the effective corner radius with the power. This direct compositor choice stays editable while shared borders are synced or the global radius is zero because a Window Rule may still use it.")
+                            value: root.draftValue(root.roundingPowerId)
+                            minimumValue:
+                                root.optionMinimum(root.roundingPowerId)
+                            maximumValue:
+                                root.optionMaximum(root.roundingPowerId)
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceRoundingPower"
+                            validationObjectName:
+                                "appearanceRoundingPowerValidation"
+                            validationExample: "2.5"
+                            accessibleName: qsTr("Window corner power")
+                            minimumTargetSize: root.minimumTargetSize
 
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Round window corners by this many layout pixels.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            SpinBox {
-                                objectName: "appearanceRounding"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.roundingPowerId, value
                                 )
-                                from: root.optionMinimum(root.roundingId)
-                                to: root.optionMaximum(root.roundingId)
-                                value: Number(root.draftValue(root.roundingId)) || 0
-                                editable: false
-                                enabled: root.controlsEnabled
-                                    && !root.windowBorderSynced
-                                Accessible.name: qsTr("Window corner radius")
-
-                                onValueModified: root.setDraftValue(
-                                    root.roundingId, value
-                                )
-                            }
                         }
                     }
                 }
 
                 Frame {
                     Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
                     padding: 18
 
                     background: Rectangle {
@@ -1233,121 +2984,123 @@ Page {
                             Accessible.name: text
                         }
 
-                        RowLayout {
+                        SettingsToggleRow {
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Blur backgrounds")
+                            description: qsTr("Allow Hyprland to blur content behind translucent windows.")
+                            checked: root.draftValue(root.blurId) === true
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceBlurEnabled"
+                            accessibleName: qsTr("Blur window backgrounds")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Blur backgrounds")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Allow Hyprland to blur content behind translucent windows.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            Switch {
-                                objectName: "appearanceBlurEnabled"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                checked: root.draftValue(root.blurId) === true
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Blur window backgrounds")
-                                onClicked: root.setDraftValue(root.blurId, checked)
-                            }
+                            onValueModified: value =>
+                                root.setDraftValue(root.blurId, value)
                         }
 
-                        RowLayout {
+                        SettingsToggleRow {
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Window shadows")
+                            description: qsTr("Draw managed drop shadows behind windows.")
+                            checked: root.draftValue(root.shadowId) === true
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceShadowEnabled"
+                            accessibleName: qsTr("Window shadows")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Window shadows")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Draw managed drop shadows behind windows.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            Switch {
-                                objectName: "appearanceShadowEnabled"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                checked: root.draftValue(root.shadowId) === true
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Window shadows")
-                                onClicked: root.setDraftValue(root.shadowId, checked)
-                            }
+                            onValueModified: value =>
+                                root.setDraftValue(root.shadowId, value)
                         }
 
-                        RowLayout {
+                        SettingsToggleRow {
+                            objectName: "appearanceGlowEnabledRow"
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Inner window glow")
+                            description: qsTr("Draw a glow just inside each window edge. Set Glow range to at least 10 before turning it on. Glow colors are not edited on this page.")
+                            checked: root.draftValue(
+                                root.glowEnabledId
+                            ) === true
+                            enabled: root.glowEnabledControlEnabled
+                            controlObjectName: "appearanceGlowEnabled"
+                            accessibleName: qsTr("Inner window glow")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Animations")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Enable Hyprland's configured window and workspace animations.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            Switch {
-                                objectName: "appearanceAnimationsEnabled"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                checked:
-                                    root.draftValue(root.animationsId) === true
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Hyprland animations")
-                                onClicked: root.setDraftValue(
-                                    root.animationsId, checked
-                                )
-                            }
+                            onValueModified: value => root.setDraftValue(
+                                root.glowEnabledId, value
+                            )
                         }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBorderPartOfWindowRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Include borders in window shadows")
+                            description: qsTr("Size each window shadow from the outside edge of its visible border. The saved choice is retained while window shadows are off.")
+                            checked: root.draftValue(
+                                root.borderPartOfWindowId
+                            ) === true
+                            enabled: root.controlsEnabled
+                                && root.draftValue(root.shadowId) === true
+                            controlObjectName:
+                                "appearanceBorderPartOfWindow"
+                            accessibleName:
+                                qsTr("Include borders in window shadows")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.borderPartOfWindowId, value
+                            )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceDimInactiveRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Dim inactive windows")
+                            description: qsTr("Darken windows that do not have focus. A matching Window Rule can keep a window undimmed.")
+                            checked: root.draftValue(
+                                root.dimInactiveId
+                            ) === true
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceDimInactive"
+                            accessibleName: qsTr("Dim inactive windows")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.dimInactiveId, value
+                            )
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceDimStrengthRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Inactive-window dimming strength")
+                            description: qsTr("Choose how strongly inactive windows are darkened. The saved strength is retained while inactive-window dimming is off.")
+                            from: root.optionMinimum(root.dimStrengthId)
+                            to: root.optionMaximum(root.dimStrengthId)
+                            value: Number(root.draftValue(
+                                root.dimStrengthId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                                && root.draftValue(root.dimInactiveId) === true
+                            controlObjectName: "appearanceDimStrength"
+                            valueObjectName: "appearanceDimStrengthValue"
+                            accessibleName:
+                                qsTr("Inactive-window dimming strength")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setDimStrength(value)
+                        }
+
                     }
                 }
 
                 Frame {
+                    objectName: "appearanceShadowRenderingCard"
                     Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
                     padding: 18
 
                     background: Rectangle {
@@ -1361,135 +3114,1044 @@ Page {
                         spacing: 18
 
                         Label {
-                            text: qsTr("Window behavior")
+                            text: qsTr("Window shadow rendering")
                             color: root.palette.text
                             font.pixelSize: 17
                             font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
                             Accessible.role: Accessible.Heading
                             Accessible.name: text
                         }
 
-                        RowLayout {
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceShadowRangeRow"
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Shadow range")
+                            description: qsTr("Set how far each window shadow extends beyond its window in layout pixels. This value is retained while window shadows are off and still controls the extent of sharp shadows.")
+                            from: root.optionMinimum(root.shadowRangeId)
+                            to: root.optionMaximum(root.shadowRangeId)
+                            value: Number(
+                                root.draftValue(root.shadowRangeId)
+                            ) || 0
+                            enabled: root.controlsEnabled
+                                && root.draftValue(root.shadowId) === true
+                            controlObjectName: "appearanceShadowRange"
+                            accessibleName: qsTr("Shadow range")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Default layout")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Choose the layout used when a workspace has no more specific rule.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            ComboBox {
-                                objectName: "appearanceLayout"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                Layout.preferredWidth: 140
-                                model: root.layoutLabels()
-                                currentIndex: root.layoutIndex(
-                                    root.draftValue(root.layoutId)
-                                )
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Default window layout")
-
-                                onActivated: index => {
-                                    const choices = root.layoutChoices();
-                                    if (index >= 0 && index < choices.length)
-                                        root.setDraftValue(
-                                            root.layoutId, choices[index]
-                                        );
-                                }
-                            }
+                            onValueModified: value => root.setDraftValue(
+                                root.shadowRangeId, value
+                            )
                         }
 
-                        RowLayout {
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceShadowRenderPowerRow"
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Soft-shadow falloff")
+                            description: qsTr("Choose the soft-shadow falloff power from 1 through 4. Higher values fade more quickly. This value is retained while window shadows are off or sharp edges are enabled.")
+                            from: root.optionMinimum(
+                                root.shadowRenderPowerId
+                            )
+                            to: root.optionMaximum(
+                                root.shadowRenderPowerId
+                            )
+                            value: Number(root.draftValue(
+                                root.shadowRenderPowerId
+                            )) || 0
+                            enabled: root.controlsEnabled
+                                && root.draftValue(root.shadowId) === true
+                                && root.draftValue(
+                                    root.shadowSharpId
+                                ) !== true
+                            controlObjectName:
+                                "appearanceShadowRenderPower"
+                            accessibleName: qsTr("Soft-shadow falloff")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Resize from borders and gaps")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Let pointer drags on window borders and surrounding gaps resize windows.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-
-                            Switch {
-                                objectName: "appearanceResizeOnBorder"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
-                                )
-                                checked: root.draftValue(root.resizeId) === true
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Resize windows from borders and gaps")
-                                onClicked: root.setDraftValue(
-                                    root.resizeId, checked
-                                )
-                            }
+                            onValueModified: value => root.setDraftValue(
+                                root.shadowRenderPowerId, value
+                            )
                         }
 
-                        RowLayout {
+                        SettingsToggleRow {
+                            objectName: "appearanceShadowSharpRow"
                             Layout.fillWidth: true
-                            spacing: 16
+                            title: qsTr("Sharp shadow edges")
+                            description: qsTr("Draw a solid-edged shadow instead of a soft falloff. Shadow range still controls its extent; the saved soft falloff returns when this is off.")
+                            checked: root.draftValue(
+                                root.shadowSharpId
+                            ) === true
+                            enabled: root.controlsEnabled
+                                && root.draftValue(root.shadowId) === true
+                            controlObjectName: "appearanceShadowSharp"
+                            accessibleName: qsTr("Sharp shadow edges")
+                            minimumTargetSize: root.minimumTargetSize
 
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-                                Label {
-                                    text: qsTr("Snap floating windows")
-                                    color: root.palette.text
-                                    font.pixelSize: 14
-                                    font.weight: Font.Medium
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: qsTr("Enable Hyprland's managed snapping for floating windows.")
-                                    color: root.palette.placeholderText
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
+                            onValueModified: value => root.setDraftValue(
+                                root.shadowSharpId, value
+                            )
+                        }
 
-                            Switch {
-                                objectName: "appearanceSnapEnabled"
-                                implicitHeight: Math.max(
-                                    root.minimumTargetSize,
-                                    implicitBackgroundHeight,
-                                    implicitContentHeight + topPadding + bottomPadding
+                        SettingsDecimalRow {
+                            objectName: "appearanceShadowScaleRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Shadow scale")
+                            description: qsTr("Scale each window shadow around its center from 0 through 1. The default 1 keeps its full size; lower exact values shrink it, and 0 makes it invisible. The saved value is retained while window shadows are off and applies to both soft and sharp shadows.")
+                            value: root.draftValue(root.shadowScaleId)
+                            minimumValue: root.optionMinimum(
+                                root.shadowScaleId
+                            )
+                            maximumValue: root.optionMaximum(
+                                root.shadowScaleId
+                            )
+                            controlWidth: root.compactPreview ? 160 : 190
+                            controlObjectName: "appearanceShadowScale"
+                            validationObjectName:
+                                "appearanceShadowScaleValidation"
+                            validationExample: "0.75"
+                            accessibleName: qsTr("Shadow scale")
+                            minimumTargetSize: root.minimumTargetSize
+                            enabled: root.shadowScaleControlEnabled
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.shadowScaleId, value
                                 )
-                                checked: root.draftValue(root.snapId) === true
-                                enabled: root.controlsEnabled
-                                Accessible.name: qsTr("Snap floating windows")
-                                onClicked: root.setDraftValue(root.snapId, checked)
-                            }
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceShadowOffsetXRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Horizontal shadow offset")
+                            description: qsTr("Move every window shadow horizontally in layout pixels. Positive values move right and negative values move left. The exact saved value is retained while window shadows are off.")
+                            value: root.vectorDraftComponent(
+                                root.shadowOffsetId, 0
+                            )
+                            minimumValue: root.optionComponentMinimum(
+                                root.shadowOffsetId, 0
+                            )
+                            maximumValue: root.optionComponentMaximum(
+                                root.shadowOffsetId, 0
+                            )
+                            controlWidth: root.compactPreview ? 160 : 190
+                            controlObjectName: "appearanceShadowOffsetX"
+                            validationObjectName:
+                                "appearanceShadowOffsetXValidation"
+                            validationExample: "-12.5"
+                            accessibleName: qsTr("Horizontal shadow offset")
+                            minimumTargetSize: root.minimumTargetSize
+                            enabled: root.shadowOffsetControlsEnabled
+
+                            onValueModified: value =>
+                                root.setExactVectorComponentDraftValue(
+                                    root.shadowOffsetId, 0, value
+                                )
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceShadowOffsetYRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Vertical shadow offset")
+                            description: qsTr("Move every window shadow vertically in layout pixels. Positive values move down and negative values move up. The exact saved value is retained while window shadows are off.")
+                            value: root.vectorDraftComponent(
+                                root.shadowOffsetId, 1
+                            )
+                            minimumValue: root.optionComponentMinimum(
+                                root.shadowOffsetId, 1
+                            )
+                            maximumValue: root.optionComponentMaximum(
+                                root.shadowOffsetId, 1
+                            )
+                            controlWidth: root.compactPreview ? 160 : 190
+                            controlObjectName: "appearanceShadowOffsetY"
+                            validationObjectName:
+                                "appearanceShadowOffsetYValidation"
+                            validationExample: "8.25"
+                            accessibleName: qsTr("Vertical shadow offset")
+                            minimumTargetSize: root.minimumTargetSize
+                            enabled: root.shadowOffsetControlsEnabled
+
+                            onValueModified: value =>
+                                root.setExactVectorComponentDraftValue(
+                                    root.shadowOffsetId, 1, value
+                                )
+                        }
+
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceGlowRenderingCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            text: qsTr("Window inner glow")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        Label {
+                            objectName: "appearanceGlowSafetyMessage"
+                            Layout.fillWidth: true
+                            visible: root.glowSafetyViolation
+                            text: qsTr("Inner window glow is on with a range below 10. Turn it off or set Glow range to at least 10 before saving or applying.")
+                            color: "#ffb8c3"
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.AlertMessage
+                            Accessible.name: text
+                        }
+
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceGlowRangeRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Glow range")
+                            description: qsTr("Set the glow size from 0 through 100 layout pixels. Values below 10 are retained only while Inner window glow is off.")
+                            from: root.optionMinimum(root.glowRangeId)
+                            to: root.optionMaximum(root.glowRangeId)
+                            value: Number(
+                                root.draftValue(root.glowRangeId)
+                            ) || 0
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceGlowRange"
+                            accessibleName: qsTr("Glow range")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.glowRangeId, value
+                            )
+                        }
+
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceGlowRenderPowerRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Glow falloff")
+                            description: qsTr("Choose falloff power from 1 through 4. Higher values fade more quickly. The saved value is retained while Inner window glow is off.")
+                            from: root.optionMinimum(
+                                root.glowRenderPowerId
+                            )
+                            to: root.optionMaximum(
+                                root.glowRenderPowerId
+                            )
+                            value: Number(root.draftValue(
+                                root.glowRenderPowerId
+                            )) || 0
+                            enabled: root.glowFalloffControlEnabled
+                            controlObjectName: "appearanceGlowRenderPower"
+                            accessibleName: qsTr("Glow falloff")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.glowRenderPowerId, value
+                            )
                         }
                     }
+                }
+
+                Frame {
+                    objectName: "appearanceBlurRenderingCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            objectName: "appearanceBlurRenderingHeading"
+                            text: qsTr("Blur rendering")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("These values tune Hyprland's Kawase blur. They remain saved while Blur backgrounds is off.")
+                            color: root.palette.placeholderText
+                            font.pixelSize: 12
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.name: text
+                        }
+
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceBlurSizeRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur size")
+                            description: qsTr("Choose the blur distance from 0 to 100. Hyprland stores and uses this full range; larger values increase the blur distance and GPU work.")
+                            from: root.optionMinimum(root.blurSizeId)
+                            to: root.optionMaximum(root.blurSizeId)
+                            value: Number(
+                                root.draftValue(root.blurSizeId)
+                            ) || 0
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurSize"
+                            accessibleName: qsTr("Blur size")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurSizeId, value
+                            )
+                        }
+
+                        SettingsSpinBoxRow {
+                            objectName: "appearanceBlurPassesRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur passes")
+                            description: qsTr("Choose the saved pass count from 0 to 10. Hyprland's renderer clamps the effective count to 1–8; within that effective range, additional passes cost more GPU work.")
+                            from: root.optionMinimum(root.blurPassesId)
+                            to: root.optionMaximum(root.blurPassesId)
+                            value: Number(
+                                root.draftValue(root.blurPassesId)
+                            ) || 0
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurPasses"
+                            accessibleName: qsTr("Blur passes")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurPassesId, value
+                            )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurIgnoreOpacityRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Ignore window opacity")
+                            description: qsTr("Make the blur layer ignore window opacity. The saved setting is retained while blur is off.")
+                            checked: root.draftValue(
+                                root.blurIgnoreOpacityId
+                            ) === true
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName:
+                                "appearanceBlurIgnoreOpacity"
+                            accessibleName: qsTr("Ignore window opacity")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurIgnoreOpacityId, value
+                            )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurOptimizationsRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Optimized blur path")
+                            description: qsTr("Use Hyprland's optimized blur path. Turning it off preserves the X-ray setting, but X-ray is inactive until this path is enabled again.")
+                            checked: root.draftValue(
+                                root.blurOptimizationsId
+                            ) === true
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName:
+                                "appearanceBlurOptimizations"
+                            accessibleName: qsTr("Optimized blur path")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurOptimizationsId, value
+                            )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurXrayRow"
+                            Layout.fillWidth: true
+                            title: qsTr("X-ray blur")
+                            description: qsTr("Make floating-window blur ignore tiled windows. This requires the optimized blur path. Window Rules can override individual windows; Layer Rules control layer-surface X-ray separately.")
+                            checked:
+                                root.draftValue(root.blurXrayId) === true
+                            enabled: root.blurXrayEnabled
+                            controlObjectName: "appearanceBlurXray"
+                            accessibleName: qsTr("X-ray blur")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurXrayId, value
+                            )
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceBlurModulationCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            objectName: "appearanceBlurModulationHeading"
+                            text: qsTr("Blur color modulation")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Tune the color processing applied by Hyprland's blur. Exact decimal values remain saved while Blur backgrounds is off.")
+                            color: root.palette.placeholderText
+                            font.pixelSize: 12
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.name: text
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceBlurBrightnessRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur brightness")
+                            description: qsTr("Set brightness modulation from 0 through 2. The Hyprland default is 1.")
+                            value: root.draftValue(root.blurBrightnessId)
+                            minimumValue:
+                                root.optionMinimum(root.blurBrightnessId)
+                            maximumValue:
+                                root.optionMaximum(root.blurBrightnessId)
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurBrightness"
+                            validationObjectName:
+                                "appearanceBlurBrightnessValidation"
+                            accessibleName: qsTr("Blur brightness")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.blurBrightnessId, value
+                                )
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceBlurContrastRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur contrast")
+                            description: qsTr("Set contrast modulation from 0 through 2. The Hyprland default is 0.8916.")
+                            value: root.draftValue(root.blurContrastId)
+                            minimumValue:
+                                root.optionMinimum(root.blurContrastId)
+                            maximumValue:
+                                root.optionMaximum(root.blurContrastId)
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurContrast"
+                            validationObjectName:
+                                "appearanceBlurContrastValidation"
+                            accessibleName: qsTr("Blur contrast")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.blurContrastId, value
+                                )
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceBlurNoiseRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur noise")
+                            description: qsTr("Set how much noise Hyprland applies to blur, from 0 through 1. The Hyprland default is 0.0117.")
+                            value: root.draftValue(root.blurNoiseId)
+                            minimumValue:
+                                root.optionMinimum(root.blurNoiseId)
+                            maximumValue:
+                                root.optionMaximum(root.blurNoiseId)
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurNoise"
+                            validationObjectName:
+                                "appearanceBlurNoiseValidation"
+                            accessibleName: qsTr("Blur noise")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.blurNoiseId, value
+                                )
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceBlurVibrancyRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Blur vibrancy")
+                            description: qsTr("Increase the saturation of blurred colors from 0 through 1. The Hyprland default is 0.1696.")
+                            value: root.draftValue(root.blurVibrancyId)
+                            minimumValue:
+                                root.optionMinimum(root.blurVibrancyId)
+                            maximumValue:
+                                root.optionMaximum(root.blurVibrancyId)
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurVibrancy"
+                            validationObjectName:
+                                "appearanceBlurVibrancyValidation"
+                            accessibleName: qsTr("Blur vibrancy")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.blurVibrancyId, value
+                                )
+                        }
+
+                        SettingsDecimalRow {
+                            objectName: "appearanceBlurVibrancyDarknessRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Dark-area vibrancy")
+                            description: qsTr("Set how strongly vibrancy affects dark areas from 0 through 1. The Hyprland default is 0.")
+                            value: root.draftValue(
+                                root.blurVibrancyDarknessId
+                            )
+                            minimumValue: root.optionMinimum(
+                                root.blurVibrancyDarknessId
+                            )
+                            maximumValue: root.optionMaximum(
+                                root.blurVibrancyDarknessId
+                            )
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName:
+                                "appearanceBlurVibrancyDarkness"
+                            validationObjectName:
+                                "appearanceBlurVibrancyDarknessValidation"
+                            accessibleName: qsTr("Dark-area vibrancy")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setExactDecimalDraftValue(
+                                    root.blurVibrancyDarknessId, value
+                                )
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceBlurContextsCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            objectName: "appearanceBlurContextsHeading"
+                            text: qsTr("Blur contexts")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Enable blur for additional compositor surfaces. Every context value remains saved while Blur backgrounds is off.")
+                            color: root.palette.placeholderText
+                            font.pixelSize: 12
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.name: text
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurSpecialRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Special-workspace blur")
+                            description: qsTr("Blur behind the special workspace. This is expensive. In Hyprland 0.56.1, changing it while a special workspace is already open takes effect after that workspace is closed and reopened.")
+                            checked: root.draftValue(
+                                root.blurSpecialId
+                            ) === true
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurSpecial"
+                            accessibleName: qsTr("Special-workspace blur")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurSpecialId, value
+                            )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurPopupsRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Popup blur")
+                            description: qsTr("Blur popups such as right-click menus. The opacity threshold below is retained while popup blur is off.")
+                            checked:
+                                root.draftValue(root.blurPopupsId) === true
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName: "appearanceBlurPopups"
+                            accessibleName: qsTr("Popup blur")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurPopupsId, value
+                            )
+                        }
+
+                        SettingsSliderRow {
+                            objectName:
+                                "appearanceBlurPopupsIgnoreAlphaRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Popup ignore-alpha threshold")
+                            description: qsTr("Do not blur popup pixels whose opacity is below this saved value. Live mapped popups use the saved 0.00–1.00 value directly. Only popup snapshot or fadeout capture applies a 0.01 minimum; on that capture path, a layer owner's Rule ignore-alpha value can replace this global threshold. The saved threshold is retained while popup blur is off.")
+                            from: root.optionMinimum(
+                                root.blurPopupsIgnoreAlphaId
+                            )
+                            to: root.optionMaximum(
+                                root.blurPopupsIgnoreAlphaId
+                            )
+                            value: Number(root.draftValue(
+                                root.blurPopupsIgnoreAlphaId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.blurPopupThresholdEnabled
+                            controlObjectName:
+                                "appearanceBlurPopupsIgnoreAlpha"
+                            valueObjectName:
+                                "appearanceBlurPopupsIgnoreAlphaValue"
+                            accessibleName:
+                                qsTr("Popup ignore-alpha threshold")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.blurPopupsIgnoreAlphaId, value
+                                )
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceBlurInputMethodsRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Input-method blur")
+                            description: qsTr("Blur input-method surfaces such as fcitx5. The opacity threshold below is retained while input-method blur is off.")
+                            checked: root.draftValue(
+                                root.blurInputMethodsId
+                            ) === true
+                            enabled: root.blurDetailsEnabled
+                            controlObjectName:
+                                "appearanceBlurInputMethods"
+                            accessibleName: qsTr("Input-method blur")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.blurInputMethodsId, value
+                            )
+                        }
+
+                        SettingsSliderRow {
+                            objectName:
+                                "appearanceBlurInputMethodsIgnoreAlphaRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Input-method ignore-alpha threshold")
+                            description: qsTr("Do not blur input-method pixels whose opacity is below this saved value. Live input-method rendering uses the saved 0.00–1.00 value directly and does not apply a 0.01 minimum. The saved threshold is retained while input-method blur is off.")
+                            from: root.optionMinimum(
+                                root.blurInputMethodsIgnoreAlphaId
+                            )
+                            to: root.optionMaximum(
+                                root.blurInputMethodsIgnoreAlphaId
+                            )
+                            value: Number(root.draftValue(
+                                root.blurInputMethodsIgnoreAlphaId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled:
+                                root.blurInputMethodThresholdEnabled
+                            controlObjectName:
+                                "appearanceBlurInputMethodsIgnoreAlpha"
+                            valueObjectName:
+                                "appearanceBlurInputMethodsIgnoreAlphaValue"
+                            accessibleName:
+                                qsTr("Input-method ignore-alpha threshold")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.blurInputMethodsIgnoreAlphaId,
+                                    value
+                                )
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceWindowOpacityCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            objectName: "appearanceWindowOpacityHeading"
+                            text: qsTr("Window opacity")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceActiveOpacityRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Active-window opacity")
+                            description: qsTr("Set the opacity of focused windows. A matching Window Rule can change the resulting per-window opacity.")
+                            from: root.optionMinimum(root.activeOpacityId)
+                            to: root.optionMaximum(root.activeOpacityId)
+                            value: Number(root.draftValue(
+                                root.activeOpacityId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceActiveOpacity"
+                            valueObjectName: "appearanceActiveOpacityValue"
+                            accessibleName: qsTr("Active-window opacity")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.activeOpacityId, value
+                                )
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceInactiveOpacityRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Inactive-window opacity")
+                            description: qsTr("Set the opacity of windows without focus. A matching Window Rule can change the resulting per-window opacity; inactive-window dimming remains separate.")
+                            from: root.optionMinimum(root.inactiveOpacityId)
+                            to: root.optionMaximum(root.inactiveOpacityId)
+                            value: Number(root.draftValue(
+                                root.inactiveOpacityId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceInactiveOpacity"
+                            valueObjectName: "appearanceInactiveOpacityValue"
+                            accessibleName: qsTr("Inactive-window opacity")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.inactiveOpacityId, value
+                                )
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceFullscreenOpacityRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Fullscreen-window opacity")
+                            description: qsTr("Set the opacity of true fullscreen windows. Maximized windows use the focused or unfocused value; a matching Window Rule can change the resulting per-window opacity.")
+                            from: root.optionMinimum(root.fullscreenOpacityId)
+                            to: root.optionMaximum(root.fullscreenOpacityId)
+                            value: Number(root.draftValue(
+                                root.fullscreenOpacityId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceFullscreenOpacity"
+                            valueObjectName:
+                                "appearanceFullscreenOpacityValue"
+                            accessibleName: qsTr("Fullscreen-window opacity")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.fullscreenOpacityId, value
+                                )
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceContextualDimmingCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 0
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 18
+
+                        Label {
+                            objectName: "appearanceContextualDimmingHeading"
+                            text: qsTr("Contextual dimming")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        SettingsToggleRow {
+                            objectName: "appearanceDimModalRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Dim parents of modal dialogs")
+                            description: qsTr("Darken a parent window while one of its modal dialogs is open. This is applied separately and can combine with inactive-window dimming.")
+                            checked:
+                                root.draftValue(root.dimModalId) === true
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceDimModal"
+                            accessibleName:
+                                qsTr("Dim parents of modal dialogs")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.dimModalId, value
+                            )
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceDimSpecialRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Special-workspace dimming")
+                            description: qsTr("Choose how strongly the ordinary workspace is darkened behind an open special workspace. In Hyprland 0.56.1, changing this while a special workspace is already open takes effect after it is closed and reopened.")
+                            from: root.optionMinimum(root.dimSpecialId)
+                            to: root.optionMaximum(root.dimSpecialId)
+                            value: Number(root.draftValue(
+                                root.dimSpecialId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceDimSpecial"
+                            valueObjectName: "appearanceDimSpecialValue"
+                            accessibleName:
+                                qsTr("Special-workspace dimming")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.dimSpecialId, value
+                                )
+                        }
+
+                        SettingsSliderRow {
+                            objectName: "appearanceDimAroundRow"
+                            Layout.fillWidth: true
+                            title: qsTr("Dim-around strength")
+                            description: qsTr("Choose how strongly the rest of the screen is darkened when a Window or Layer Rule enables Dim around. The darkening follows the matched window or layer through its fade-out.")
+                            from: root.optionMinimum(root.dimAroundId)
+                            to: root.optionMaximum(root.dimAroundId)
+                            value: Number(root.draftValue(
+                                root.dimAroundId
+                            )) || 0
+                            stepSize: 0.05
+                            decimals: 2
+                            controlWidth: root.compactPreview ? 160 : 190
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceDimAround"
+                            valueObjectName: "appearanceDimAroundValue"
+                            accessibleName: qsTr("Dim-around strength")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value =>
+                                root.setUnitSliderValue(
+                                    root.dimAroundId, value
+                                )
+                        }
+                    }
+                }
+
+                Frame {
+                    objectName: "appearanceAnimationsOverviewCard"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 1
+                    padding: 18
+
+                    background: Rectangle {
+                        color: root.palette.base
+                        radius: 16
+                        border.color: root.palette.mid
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 14
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Curves and animation rules")
+                            color: root.palette.text
+                            font.pixelSize: 17
+                            font.weight: Font.DemiBold
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.Heading
+                            Accessible.name: text
+                        }
+
+                        SettingsToggleRow {
+                            Layout.fillWidth: true
+                            title: qsTr("Animations")
+                            description: qsTr("Enable the saved curves and animation rules. Turning this off preserves every detailed value.")
+                            checked:
+                                root.draftValue(root.animationsId) === true
+                            enabled: root.controlsEnabled
+                            controlObjectName: "appearanceAnimationsEnabled"
+                            accessibleName: qsTr("Hyprland animations")
+                            minimumTargetSize: root.minimumTargetSize
+
+                            onValueModified: value => root.setDraftValue(
+                                root.animationsId, value
+                            )
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("%1 custom curves · %2 animation rules").arg(
+                                root.draftCurves.length
+                            ).arg(root.draftAnimations.length)
+                            color: root.palette.placeholderText
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                        }
+                    }
+                }
+
+                AnimationCollectionsSummary {
+                    objectName: "appearanceAnimationCollectionsSummary"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 1
+                        && !root.animationDetailActive
+                    curves: root.draftCurves
+                    animations: root.draftAnimations
+                    animationsEnabled:
+                        root.draftValue(root.animationsId) === true
+                    controlsEnabled: root.animationControlsEnabled
+                    inspectionEnabled: root.controlsEnabled
+                    draftDirty: root.draftDirty
+                    draftValid: root.draftAnimationCollectionsValid
+                    minimumTargetSize: root.minimumTargetSize
+
+                    onEditCurveRequested: id => root.openCurve(id)
+                    onMoveCurveRequested: (id, offset) =>
+                        root.moveCurve(id, offset)
+                    onAddAnimationRequested: root.addAnimation()
+                    onEditAnimationRequested: id => root.openAnimation(id)
+                    onEnabledAnimationRequested: (id, enabled) =>
+                        root.setAnimationProperty(id, "enabled", enabled)
+                    onMoveAnimationRequested: (id, offset) =>
+                        root.moveAnimation(id, offset)
+                    onRemoveAnimationRequested: id =>
+                        root.removeAnimation(id)
+                }
+
+                AnimationCurveEditor {
+                    objectName: "appearanceAnimationCurveEditor"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 1
+                        && root.editingCurve !== null
+                    curve: root.editingCurve
+                    controlsEnabled: root.animationControlsEnabled
+                    referenceCount: root.editingCurve
+                        ? root.curveReferenceCount(root.editingCurve.name) : 0
+                    curveIssue: root.curveIssue(root.editingCurve)
+                    minimumTargetSize: root.minimumTargetSize
+
+                    onCloseRequested: root.closeAnimationDetail()
+                    onPropertyModified: (id, propertyName, value) =>
+                        root.setCurveProperty(id, propertyName, value)
+                    onPointModified: (
+                        id, pointIndex, coordinateIndex, value
+                    ) => root.setCurvePoint(
+                        id, pointIndex, coordinateIndex, value
+                    )
+                }
+
+                AnimationRuleEditor {
+                    objectName: "appearanceAnimationRuleEditor"
+                    Layout.fillWidth: true
+                    visible: root.appearanceTabIndex === 1
+                        && root.editingAnimation !== null
+                    animation: root.editingAnimation
+                    leafChoices: root.editingAnimation
+                        ? root.animationLeafChoices(
+                            root.editingAnimation.id
+                        ) : []
+                    curveChoices: root.curveChoices()
+                    controlsEnabled: root.animationControlsEnabled
+                    animationIssue:
+                        root.animationIssue(root.editingAnimation)
+                    minimumTargetSize: root.minimumTargetSize
+
+                    onCloseRequested: root.closeAnimationDetail()
+                    onRemoveRequested: id => root.removeAnimation(id)
+                    onPropertyModified: (id, propertyName, value) =>
+                        root.setAnimationProperty(id, propertyName, value)
                 }
 
                 Frame {
@@ -1535,6 +4197,22 @@ Page {
                             }
                         }
 
+                        Label {
+                            objectName: "appearanceDraftValidationMessage"
+                            Layout.fillWidth: true
+                            visible: root.draftDirty && !root.draftValid
+                            text: !root.draftValuesValid
+                                ? qsTr("Return to Visuals and correct every highlighted value before the combined Appearance draft can be saved.")
+                                : !root.glowDraftSafe
+                                    ? qsTr("Turn Inner window glow off or set Glow range to at least 10 before the combined Appearance draft can be saved.")
+                                    : qsTr("Finish every curve and animation rule before the combined Appearance draft can be saved.")
+                            color: "#ffb8c3"
+                            wrapMode: Text.Wrap
+                            textFormat: Text.PlainText
+                            Accessible.role: Accessible.AlertMessage
+                            Accessible.name: text
+                        }
+
                         Flow {
                             Layout.fillWidth: true
                             Layout.preferredHeight: childrenRect.height
@@ -1550,9 +4228,15 @@ Page {
                                 text: qsTr("Discard draft")
                                 visible: root.draftDirty
                                     && !root.externalChangeWhileEditing
-                                enabled: !root.busy
-                                    && !root.sharedBorderTransitionBusy
+                                enabled: root.serviceAvailable
+                                    && root.appearanceProjectionAvailable
+                                    && root.appearanceAnimationProjectionAvailable
+                                    && root.revisionTokenValid
                                     && root.trustedValuesValid
+                                    && root.trustedAnimationProjectionValid
+                                    && !root.busy
+                                    && !root.saveSubmitted
+                                    && !root.sharedVisualTransitionBusy
                                 Accessible.name: qsTr("Discard Appearance draft")
 
                                 onClicked: root.synchronizeDraft()
@@ -1566,15 +4250,9 @@ Page {
                                     implicitContentHeight + topPadding + bottomPadding
                                 )
                                 text: qsTr("Reset to defaults")
-                                enabled: {
-                                    const target = root.resetTargetValues();
-                                    return root.controlsEnabled
-                                        && target !== null
-                                        && !root.valuesEqual(
-                                            root.draftValues, target
-                                        );
-                                }
-                                Accessible.name: qsTr("Reset Appearance draft to trusted catalog defaults")
+                                enabled: root.controlsEnabled
+                                    && root.resetTargetDiffers
+                                Accessible.name: qsTr("Reset Appearance values, restore saved curves, and clear animation rules")
 
                                 onClicked: root.resetDraftToDefaults()
                             }
@@ -1589,7 +4267,9 @@ Page {
                                 text: {
                                     if (root.busyOperation === "appearance-save")
                                         return qsTr("Saving…");
-                                    if (root.busyOperation === "appearance-apply")
+                                    if (root.busyOperation === "compositor-apply"
+                                            || root.busyOperation
+                                                === "appearance-apply")
                                         return qsTr("Applying…");
                                     return qsTr("Save & apply");
                                 }
@@ -1608,136 +4288,19 @@ Page {
         }
     }
 
-    Dialog {
+    CompositorRecoveryDialog {
         id: appearanceRecoveryDialog
 
-        property bool requestSubmitted: false
-
         objectName: "appearanceRecoveryDialog"
-        title: qsTr("Restore the last working compositor configuration?")
-        modal: true
-        width: Math.min(
-            620,
-            Math.max(280, parent ? parent.width - 48 : 620)
-        )
-        height: Math.min(
-            500,
-            Math.max(300, parent ? parent.height - 48 : 500)
-        )
-        closePolicy: Popup.CloseOnEscape
+        recoveryAvailable: root.recoveryAvailable
+        operationBusy: root.busy
+        busyOperation: root.busyOperation
+        settingsAreaName: qsTr("Appearance")
+        warningObjectName: "appearanceRecoveryWarning"
+        cancelObjectName: "cancelAppearanceRecoveryButton"
+        confirmObjectName: "confirmAppearanceRecoveryButton"
+        minimumTargetSize: root.minimumTargetSize
 
-        onOpened: {
-            requestSubmitted = false;
-            Qt.callLater(function() {
-                if (appearanceRecoveryDialog.opened)
-                    cancelAppearanceRecoveryButton.forceActiveFocus();
-            });
-        }
-
-        onVisibleChanged: {
-            if (opened && (!root.recoveryAvailable || root.busy))
-                close();
-        }
-
-        contentItem: ScrollView {
-            clip: true
-            contentWidth: availableWidth
-
-            ColumnLayout {
-                width: parent.width
-                spacing: 16
-
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("This recovery affects the whole compositor")
-                    color: root.palette.text
-                    font.pixelSize: 20
-                    font.weight: Font.DemiBold
-                    wrapMode: Text.Wrap
-                    Accessible.role: Accessible.Heading
-                    Accessible.name: text
-                }
-
-                Frame {
-                    Layout.fillWidth: true
-                    padding: 14
-
-                    background: Rectangle {
-                        color: "#382125"
-                        radius: 10
-                        border.color: "#8bfb7185"
-                    }
-
-                    Label {
-                        objectName: "appearanceRecoveryWarning"
-                        anchors.fill: parent
-                        text: qsTr("Recovery is not limited to Appearance. It replaces every pending compositor setting, including display and future settings, with the last verified working snapshot.")
-                        color: "#ffb8c3"
-                        font.weight: Font.DemiBold
-                        wrapMode: Text.Wrap
-                        textFormat: Text.PlainText
-                        Accessible.role: Accessible.AlertMessage
-                        Accessible.name: text
-                    }
-                }
-
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("HyprShelld creates a new monotonic desired-state revision from the last working snapshot, reloads Hyprland, and verifies that revision. Canceling leaves desired files and the running compositor unchanged.")
-                    color: root.palette.placeholderText
-                    wrapMode: Text.Wrap
-                    textFormat: Text.PlainText
-                    Accessible.name: text
-                }
-            }
-        }
-
-        footer: DialogButtonBox {
-            Button {
-                id: cancelAppearanceRecoveryButton
-
-                objectName: "cancelAppearanceRecoveryButton"
-                implicitHeight: Math.max(
-                    root.minimumTargetSize,
-                    implicitBackgroundHeight,
-                    implicitContentHeight + topPadding + bottomPadding
-                )
-                text: qsTr("Cancel")
-                enabled: !root.busy
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                Accessible.name: qsTr("Cancel without changing compositor settings")
-
-                onClicked: appearanceRecoveryDialog.reject()
-            }
-
-            Button {
-                objectName: "confirmAppearanceRecoveryButton"
-                implicitHeight: Math.max(
-                    root.minimumTargetSize,
-                    implicitBackgroundHeight,
-                    implicitContentHeight + topPadding + bottomPadding
-                )
-                text: root.busyOperation === "recover"
-                    ? qsTr("Restoring…")
-                    : qsTr("Restore whole configuration")
-                enabled: appearanceRecoveryDialog.opened
-                    && root.recoveryAvailable && !root.busy
-                    && !appearanceRecoveryDialog.requestSubmitted
-                highlighted: true
-                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                Accessible.name: qsTr("Restore the last working whole-compositor configuration")
-
-                onClicked: {
-                    if (!appearanceRecoveryDialog.opened
-                            || !root.recoveryAvailable || root.busy
-                            || appearanceRecoveryDialog.requestSubmitted) {
-                        return;
-                    }
-                    appearanceRecoveryDialog.requestSubmitted = true;
-                    root.recoveryRequested();
-                    appearanceRecoveryDialog.close();
-                }
-            }
-        }
+        onRecoveryRequested: root.recoveryRequested()
     }
 }

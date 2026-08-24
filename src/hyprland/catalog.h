@@ -17,7 +17,14 @@ namespace HyprShelld::Hyprland {
 
 inline constexpr quint32 currentCatalogContractVersion = 1;
 inline constexpr char reviewedCatalogDigest[] =
-    "0232f9b036849e2b9423d5960dd32f22001c79b5b6b6696330f481d1d0c657e0";
+    "402c8a8c570dd3760d4d7bea8c358c7f12021a7c51457e62a4771d69a581254b";
+// Packaged qualification authority only. Production callers continue to use
+// parseCatalog(), which accepts contract v1 exclusively.
+inline constexpr quint32 dormantCatalogV2ContractVersion = 2;
+inline constexpr char dormantReviewedCatalogV2Digest[] =
+    "3158d318945aeb03728426412933d737b5cf9cbd1dc384e296c11a9628ff6b88";
+inline constexpr char dormantReviewedSourceManifestDigest[] =
+    "f67f9214c47770268e66dd43d94b3af68dcbcac701312edcd52eedffb157f60d";
 inline constexpr qsizetype maximumCatalogBytes = 4 * 1024 * 1024;
 inline constexpr qsizetype maximumCatalogOptions = 1024;
 inline constexpr qsizetype maximumComplexSurfaces = 12;
@@ -183,6 +190,7 @@ struct CompatibilityPolicy final {
 
 struct Catalog final {
     quint32 contractVersion = currentCatalogContractVersion;
+    QString sourceManifestDigest;
     HyprlandReleaseRange hyprland;
     QVector<OptionDefinition> options;
     QVector<ComplexSurfaceDefinition> complexSurfaces;
@@ -215,6 +223,10 @@ enum class CompatibilityDecision {
 );
 
 [[nodiscard]] ValidationResult<Catalog> parseCatalog(QByteArrayView bytes);
+
+[[nodiscard]] ValidationResult<Catalog> parseDormantCatalogV2(
+    QByteArrayView bytes
+);
 
 [[nodiscard]] QByteArray canonicalCatalogJson(const Catalog &catalog);
 [[nodiscard]] QString catalogDigest(const Catalog &catalog);

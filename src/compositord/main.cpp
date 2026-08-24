@@ -1,7 +1,7 @@
 #include "compositor1_adaptor.h"
 #include "activation_backend.h"
 #include "compositor_service.h"
-#include "shared_border_source.h"
+#include "shared_visual_source.h"
 #include "transaction.h"
 
 #include <QCoreApplication>
@@ -106,8 +106,8 @@ int main(int argc, char *argv[])
         HyprShelld::Compositor::LiveActivationBackend
     >(std::move(publisher), std::move(runtime));
     auto *liveActivationBackend = activationBackend.get();
-    auto sharedBorderSource = std::make_unique<
-        HyprShelld::Compositor::DbusSharedBorderSource
+    auto sharedVisualSource = std::make_unique<
+        HyprShelld::Compositor::DbusSharedVisualSource
     >(connection);
     HyprShelld::Compositor::CompositorService service(
         std::move(activationBackend),
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
         nullptr,
         {},
         {},
-        std::move(sharedBorderSource)
+        std::move(sharedVisualSource)
     );
     const Compositor1Adaptor adaptor(&service);
 

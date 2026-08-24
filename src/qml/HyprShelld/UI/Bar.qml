@@ -14,6 +14,7 @@ Item {
     property Component centerComponent
     property Component endComponent
     property bool animationsEnabled: true
+    property bool attachedToTopEdge: false
     property bool shellDegraded: false
     property string healthSummary: ""
     property bool failureNoticeVisible: false
@@ -22,12 +23,20 @@ Item {
     readonly property int renderedBorderWidth: shellBorderEnabled
         ? Math.max(0, Math.min(20, shellBorderWidth))
         : 0
-    readonly property real renderedCornerRadius: Math.min(
+    readonly property int renderedCornerRadius: Math.floor(Math.min(
         Math.max(0, Math.min(20, shellBorderRadius)),
         width / 2,
         height / 2
-    )
-    readonly property real cornerRadius: renderedCornerRadius
+    ))
+    readonly property int cornerRadius: renderedCornerRadius
+    readonly property int renderedTopLeftCornerRadius:
+        attachedToTopEdge ? 0 : renderedCornerRadius
+    readonly property int renderedTopRightCornerRadius:
+        attachedToTopEdge ? 0 : renderedCornerRadius
+    readonly property int renderedBottomLeftCornerRadius:
+        renderedCornerRadius
+    readonly property int renderedBottomRightCornerRadius:
+        renderedCornerRadius
     readonly property string accessibleHealthSummary: healthSummary.length > 0
         ? healthSummary
         : qsTr("A HyprShelld component needs attention.")
@@ -40,6 +49,10 @@ Item {
         anchors.fill: parent
         color: "#ed171b22"
         radius: root.renderedCornerRadius
+        topLeftRadius: root.renderedTopLeftCornerRadius
+        topRightRadius: root.renderedTopRightCornerRadius
+        bottomLeftRadius: root.renderedBottomLeftCornerRadius
+        bottomRightRadius: root.renderedBottomRightCornerRadius
         border.color: "#33ffffff"
         border.width: root.renderedBorderWidth
 

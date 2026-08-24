@@ -58,6 +58,14 @@ private slots:
         QCOMPARE(client.maximumShellBorderRadius(), 20U);
         QCOMPARE(client.defaultShellBorderRadius(), 15U);
         QCOMPARE(client.defaultSyncHyprlandWindowBorders(), true);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(client.minimumShellSpacing(), 0U);
+        QCOMPARE(client.maximumShellSpacing(), 32U);
+        QCOMPARE(client.defaultShellInnerSpacing(), 8U);
+        QCOMPARE(client.defaultShellOuterSpacing(), 12U);
+        QCOMPARE(client.defaultSyncHyprlandWindowSpacing(), true);
 
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
@@ -118,6 +126,33 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 7U);
         QCOMPARE(client.revision(), 3ULL);
 
+        QSignalSpy sharedSpacingChanged(
+            &client,
+            &HyprShelld::ConfigClient::sharedSpacingChanged
+        );
+        client.setSharedSpacing(0U, 32U, false);
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(sharedSpacingChanged.count(), 1, 3000);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+        QCOMPARE(client.revision(), 4ULL);
+        QVERIFY(client.lastErrorName().isEmpty());
+
+        client.setSharedSpacing(0U, 33U, false);
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral("org.hyprshelld.Config1.Error.InvalidSharedSpacing")
+        );
+        QVERIFY(!client.lastErrorMessage().isEmpty());
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+        QCOMPARE(client.revision(), 4ULL);
+
         stopService();
         QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
         QCOMPARE(client.barHeight(), 40U);
@@ -125,7 +160,10 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 7U);
         QCOMPARE(client.shellBorderRadius(), 12U);
         QCOMPARE(client.syncHyprlandWindowBorders(), false);
-        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+        QCOMPARE(client.revision(), 4ULL);
 
         client.setBarHeight(64);
         QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
@@ -138,7 +176,10 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 7U);
         QCOMPARE(client.shellBorderRadius(), 12U);
         QCOMPARE(client.syncHyprlandWindowBorders(), false);
-        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+        QCOMPARE(client.revision(), 4ULL);
         QVERIFY(client.lastErrorName().isEmpty());
         QVERIFY(client.lastErrorMessage().isEmpty());
 
@@ -149,9 +190,9 @@ private slots:
         );
         changed.waitForFinished();
         QVERIFY2(!changed.isError(), qPrintable(changed.error().message()));
-        QCOMPARE(changed.value(), 4ULL);
+        QCOMPARE(changed.value(), 5ULL);
         QTRY_COMPARE_WITH_TIMEOUT(client.barHeight(), 72U, 3000);
-        QCOMPARE(client.revision(), 4ULL);
+        QCOMPARE(client.revision(), 5ULL);
 
         client.resetSharedBorder();
         QVERIFY(client.busy());
@@ -161,7 +202,16 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 1U);
         QCOMPARE(client.shellBorderRadius(), 15U);
         QCOMPARE(client.syncHyprlandWindowBorders(), true);
-        QCOMPARE(client.revision(), 5ULL);
+        QCOMPARE(client.revision(), 6ULL);
+
+        client.resetSharedSpacing();
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(sharedSpacingChanged.count(), 2, 3000);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(client.revision(), 7ULL);
 
         QSignalSpy barHeightChanged(
             &client,
@@ -191,7 +241,7 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 1U);
         QCOMPARE(client.shellBorderRadius(), 15U);
         QCOMPARE(client.syncHyprlandWindowBorders(), true);
-        QCOMPARE(client.revision(), 5ULL);
+        QCOMPARE(client.revision(), 7ULL);
         QCOMPARE(sharedBorderChanged.count(), 2);
         QCOMPARE(revisionChanged.count(), 0);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
@@ -209,7 +259,7 @@ private slots:
         ));
         QCOMPARE(client.available(), false);
         QCOMPARE(client.barHeight(), 72U);
-        QCOMPARE(client.revision(), 5ULL);
+        QCOMPARE(client.revision(), 7ULL);
         QCOMPARE(barHeightChanged.count(), 0);
         QCOMPARE(revisionChanged.count(), 0);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
@@ -219,7 +269,7 @@ private slots:
             {QStringLiteral("ShellBorderWidth"), QStringLiteral("7")},
             {QStringLiteral("ShellBorderRadius"), 12U},
             {QStringLiteral("SyncHyprlandWindowBorders"), false},
-            {QStringLiteral("Revision"), qulonglong(6)},
+            {QStringLiteral("Revision"), qulonglong(8)},
         };
         QVERIFY(QMetaObject::invokeMethod(
             &client,
@@ -234,7 +284,7 @@ private slots:
         QCOMPARE(client.shellBorderWidth(), 1U);
         QCOMPARE(client.shellBorderRadius(), 15U);
         QCOMPARE(client.syncHyprlandWindowBorders(), true);
-        QCOMPARE(client.revision(), 5ULL);
+        QCOMPARE(client.revision(), 7ULL);
         QCOMPARE(sharedBorderChanged.count(), 2);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
 
@@ -250,9 +300,200 @@ private slots:
         ));
         QCOMPARE(client.available(), false);
         QCOMPARE(client.shellBorderWidth(), 1U);
-        QCOMPARE(client.revision(), 5ULL);
+        QCOMPARE(client.revision(), 7ULL);
         QCOMPARE(sharedBorderChanged.count(), 2);
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        const QVariantMap spacingWithoutRevision{
+            {QStringLiteral("ShellInnerSpacing"), 0U},
+            {QStringLiteral("ShellOuterSpacing"), 32U},
+            {QStringLiteral("SyncHyprlandWindowSpacing"), false},
+        };
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, spacingWithoutRevision),
+            Q_ARG(QStringList, noInvalidatedProperties)
+        ));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        const QVariantMap partialSpacing{
+            {QStringLiteral("ShellInnerSpacing"), 0U},
+            {QStringLiteral("Revision"), qulonglong(8)},
+        };
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, partialSpacing),
+            Q_ARG(QStringList, noInvalidatedProperties)
+        ));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        const QVariantMap malformedSpacing{
+            {QStringLiteral("ShellInnerSpacing"), 0U},
+            {QStringLiteral("ShellOuterSpacing"), QStringLiteral("32")},
+            {QStringLiteral("SyncHyprlandWindowSpacing"), false},
+            {QStringLiteral("Revision"), qulonglong(8)},
+        };
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, malformedSpacing),
+            Q_ARG(QStringList, noInvalidatedProperties)
+        ));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        auto outOfRangeSpacing = malformedSpacing;
+        outOfRangeSpacing.insert(QStringLiteral("ShellOuterSpacing"), 33U);
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, outOfRangeSpacing),
+            Q_ARG(QStringList, noInvalidatedProperties)
+        ));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        const auto invokeSpacingRevision = [
+            &client,
+            &noInvalidatedProperties
+        ](const qulonglong revision) {
+            return QMetaObject::invokeMethod(
+                &client,
+                "propertiesChanged",
+                Qt::DirectConnection,
+                Q_ARG(QString, interfaceName),
+                Q_ARG(QVariantMap, (QVariantMap{
+                    {QStringLiteral("ShellInnerSpacing"), 0U},
+                    {QStringLiteral("ShellOuterSpacing"), 32U},
+                    {QStringLiteral("SyncHyprlandWindowSpacing"), false},
+                    {QStringLiteral("Revision"), revision},
+                })),
+                Q_ARG(QStringList, noInvalidatedProperties)
+            );
+        };
+        QVERIFY(invokeSpacingRevision(6));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        QVERIFY(invokeSpacingRevision(7));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellInnerSpacing(), 8U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        const QStringList invalidatedSpacing{
+            QStringLiteral("ShellOuterSpacing"),
+        };
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, QVariantMap()),
+            Q_ARG(QStringList, invalidatedSpacing)
+        ));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.shellOuterSpacing(), 12U);
+        QCOMPARE(client.revision(), 7ULL);
+        QCOMPARE(sharedSpacingChanged.count(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+    }
+
+    void ownerReplacementGetAllCannotRollBackEstablishedRevision()
+    {
+        QTemporaryDir establishedRoot;
+        QTemporaryDir lowerRoot;
+        QVERIFY(establishedRoot.isValid());
+        QVERIFY(lowerRoot.isValid());
+
+        HyprShelld::ConfigClient client(bus_, nullptr);
+        QVERIFY2(
+            startService(establishedRoot.path()),
+            qPrintable(processError_)
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        client.setBarHeight(60U);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 1ULL, 3000);
+        client.setSharedBorder(false, 7U, 12U, false);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 2ULL, 3000);
+        client.setSharedSpacing(0U, 32U, false);
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(client.revision(), 3ULL, 3000);
+        QCOMPARE(client.barHeight(), 60U);
+        QCOMPARE(client.shellBorderEnabled(), false);
+        QCOMPARE(client.shellBorderWidth(), 7U);
+        QCOMPARE(client.shellBorderRadius(), 12U);
+        QCOMPARE(client.syncHyprlandWindowBorders(), false);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+
+        stopService();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QVERIFY2(startService(lowerRoot.path()), qPrintable(processError_));
+        // The fresh owner publishes a complete, internally valid revision-0
+        // GetAll. It must not rewind the retained revision-3 ConfigState.
+        QTest::qWait(250);
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(client.barHeight(), 60U);
+        QCOMPARE(client.shellBorderEnabled(), false);
+        QCOMPARE(client.shellBorderWidth(), 7U);
+        QCOMPARE(client.shellBorderRadius(), 12U);
+        QCOMPARE(client.syncHyprlandWindowBorders(), false);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+
+        stopService();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.available(), 3000);
+        QVERIFY2(
+            startService(establishedRoot.path()),
+            qPrintable(processError_)
+        );
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(client.barHeight(), 60U);
+        QCOMPARE(client.shellBorderEnabled(), false);
+        QCOMPARE(client.shellBorderWidth(), 7U);
+        QCOMPARE(client.shellBorderRadius(), 12U);
+        QCOMPARE(client.syncHyprlandWindowBorders(), false);
+        QCOMPARE(client.shellInnerSpacing(), 0U);
+        QCOMPARE(client.shellOuterSpacing(), 32U);
+        QCOMPARE(client.syncHyprlandWindowSpacing(), false);
     }
 
     void exposesAnExactRevisionTokenBeyondQmlIntegerPrecision()

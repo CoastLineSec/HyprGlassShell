@@ -13,7 +13,8 @@ different types, field counts, or ordering.
 | Configuration | `org.hyprshelld.Config1` | `/org/hyprshelld/Config1` | `org.hyprshelld.Config1` |
 | Component configuration | `org.hyprshelld.Config1` | `/org/hyprshelld/Config1/Components` | `org.hyprshelld.ComponentConfig1` |
 | Component manager | `org.hyprshelld.ComponentManager1` | `/org/hyprshelld/ComponentManager1` | `org.hyprshelld.ComponentManager1` |
-| Compositor configuration | `org.hyprshelld.Compositor1` | `/org/hyprshelld/Compositor1` | `org.hyprshelld.Compositor1` |
+| Compositor configuration | `org.hyprshelld.Compositor1` | `/org/hyprshelld/Compositor2` | `org.hyprshelld.Compositor2` |
+| Legacy compositor compatibility | `org.hyprshelld.Compositor1` | `/org/hyprshelld/Compositor1` | `org.hyprshelld.Compositor1` |
 
 All services use the session bus. Configuration, compositor configuration, and
 the component manager may be D-Bus activated so Settings can remain independent
@@ -59,12 +60,19 @@ and each accepts values from 0 through 20. New state defaults to an enabled
 before one combined property notification and revision increment; an
 idempotent request performs neither.
 
-The current snapshot format is version 2. A valid version-1 snapshot is
-migrated during loading without incrementing its revision. The migration keeps
-`BarHeight`, enables the shell border at width 1, derives its radius as the
-smaller of 16 and three eighths of the bar height rounded down, and leaves
-Hyprland window-border synchronization disabled. Both active and recovery
-snapshots are rewritten before the service exposes the migrated state.
+The shared spacing tuple contains `ShellInnerSpacing`, `ShellOuterSpacing`, and
+`SyncHyprlandWindowSpacing`. Inner and outer spacing are logical pixels from 0
+through 32. New and reset state uses inner 8, outer 12, and synchronization
+enabled. `SetSharedSpacing` changes the complete tuple atomically and
+`ResetSharedSpacing` restores those defaults, with the same persistence,
+revision, and combined-notification semantics as the border tuple.
+
+The current snapshot format is version 3. Valid version-1 and version-2
+snapshots migrate during loading without incrementing their revision. Version
+1 receives the established border migration; version 2 retains its complete
+border tuple. Both receive inner 8, outer 12, and spacing synchronization
+disabled so an upgrade does not replace existing managed gaps. The recovery
+snapshot is rewritten before the active snapshot and before publication.
 
 The active snapshot follows the XDG base directories at
 `$XDG_CONFIG_HOME/hyprshelld/settings.json`, normally
@@ -87,36 +95,101 @@ Configuration errors have these meanings:
 - `org.hyprshelld.Config1.Error.InvalidBarHeight`: the requested height is
   outside the accepted range;
 - `org.hyprshelld.Config1.Error.InvalidSharedBorder`: the requested border
-  width or radius is outside the accepted range; and
+  width or radius is outside the accepted range;
+- `org.hyprshelld.Config1.Error.InvalidSharedSpacing`: the requested inner or
+  outer spacing is outside the accepted range; and
 - `org.hyprshelld.Config1.Error.PersistenceFailed`: the new state could not be
   persisted atomically, so the active value and revision remain unchanged.
 
 ## Compositor configuration
 
-Compositor1 is the sole desired-state and generated-Lua authority. Its bus name
-is acquired before it opens the persistent store, takes its exclusive lease, or
-performs recovery. Until that reconciliation finishes, `Available` and
-`Writable` are false and every method fails `Unavailable`. Losing the D-Bus
-name race therefore cannot repair or mutate another instance's store.
+Compositor2 is the authority-epoch contract for the sole desired-state and
+generated-Lua authority. It is served by the existing
+`org.hyprshelld.Compositor1` destination at `/org/hyprshelld/Compositor2`
+with interface `org.hyprshelld.Compositor2`. This is one activation name, one
+compositord process, one store lease, and one writer; the numeric interface
+version does not introduce another daemon.
+
+The `AuthorityId` is a random durable 128-bit authority epoch encoded as
+exactly 32 lowercase hexadecimal characters. `GetSnapshot` returns it with
+the canonical desired bytes, revision, and both catalog digests. Every ordinary
+mutation and explicit shared-visual retry accepts
+`expectedAuthorityId` and `expectedRevision`; each display terminal action
+accepts `expectedAuthorityId` and `expectedPreviewRevision`. After
+availability and writability, the authority ID is compared before catalog
+digests and revision.
+The candidate passed to `ReplaceSnapshot` must embed the exact expected
+authority ID and revision. A revision, digest, retry, draft, or private display
+token from another authority is never accepted even when its numeric values
+happen to match.
+
+The legacy `/org/hyprshelld/Compositor1` object is a compatibility sentinel.
+From the first public instant its `Available` and `Writable` properties
+remain permanently false, so no legacy desired-state property tuple is
+authoritative. Its exact readable-method allowlist is
+`GetConnectedDisplays` and `GetConnectedInputDevices`. Every other method,
+including all desired-state reads, catalog reads, confirmation-capability
+reads, and every mutation, permanently returns
+`org.hyprshelld.Compositor1.Error.UpgradeRequired`. New clients use
+Compositor2 and must not fall back to Compositor1 after `UpgradeRequired`.
+
+The Compositor2 XML and tests are dormant contract material in this source
+slice: no runtime adaptor or registered Compositor2 object is inferred by their
+presence. The reviewed Restart methods are part of that dormant ABI, but no
+public phase-advance, Cancel, or RestartUnit method exists and `restart` remains
+an unavailable activation requirement in the selected runtime.
+
+The compositor bus name is acquired before compositord opens the persistent
+store, takes its exclusive lease, or performs recovery. Until reconciliation
+finishes, `Available` and `Writable` are false and ordinary authority
+methods fail `Unavailable`. Losing the D-Bus name race therefore cannot
+repair or mutate another instance's store.
 `Writable` describes only whether that desired-state authority accepts
 mutations; it does not imply that the installed activation executor can satisfy
 the activation reported by `RequiredActivation`.
 
 `GetSnapshot` returns one complete canonical Hyprland desired-state document,
-its revision, and the exact scalar and action catalog digests that own those
-bytes. `GetOptionCatalog` returns the authority's already parsed scalar-option
-catalog as its exact canonical JSON plus the digest that owns those bytes. The
-reply is bounded to 4 MiB and fails `Unavailable` unless its SHA-256 equals the
-current `CatalogDigest`; the service never reopens a catalog path to answer the
-request. This is a read-only authority view and does not change desired state,
-the persistent store, or live Hyprland configuration. `ReplaceSnapshot`
-compares all three tokens before parsing the candidate.
-The candidate embeds the current expected revision; a real change is assigned
-exactly the next revision and is made durable before one coherent property
-tuple is published. If that successful response is lost, an exact retry using
-the immediately preceding token returns the already-committed revision without
-incrementing twice. Replacement only changes desired state. It never generates
-Lua, changes the compositor entrypoint, or reloads Hyprland.
+its authority ID, revision, and the exact scalar and action catalog digests
+that own those bytes. `GetOptionCatalog` returns five values in this exact
+order: `optionCatalog`, `authorityId`, `revision`, `catalogDigest`, and
+`actionCatalogDigest`. The catalog reply is bounded to 4 MiB and fails
+`Unavailable` unless its SHA-256 equals the returned `catalogDigest`.
+
+`GetActionCatalog` returns seven values in this exact order: `actionCatalog`,
+`configSchema`, `authorityId`, `revision`, `catalogDigest`,
+`actionCatalogDigest`, and `configSchemaDigest`. The canonical action catalog
+is bounded to 1 MiB and the schema to 2 MiB. The schema digest is the SHA-256
+of those exact schema bytes. The combined action digest is the SHA-256 authority
+over the canonical action-catalog JSON, one newline, and those exact schema
+bytes; it must equal the returned `actionCatalogDigest`.
+Compositord serves both catalog methods from the already parsed, retained
+authority and never reopens a catalog or schema path to answer either request.
+Each getter returns one coherent retained in-memory authority tuple; clients
+reject any mismatch with `GetSnapshot` or the coherent properties and reacquire
+all authority material. These are read-only authority views: they do not change
+desired state, the persistent store, generated files, the managed entrypoint,
+or live Hyprland configuration. `ReplaceSnapshot` compares the authority ID, both catalog
+digests, and revision before parsing the candidate. The candidate embeds the
+current expected authority ID and revision; a real change is assigned exactly
+the next revision within the same authority and is made durable before one
+coherent property tuple is published. If that successful response is lost, an
+exact retry using the immediately preceding tuple returns the already-committed
+revision only inside that authority, without incrementing twice. Replacement
+only changes desired state. It never generates Lua, changes the compositor
+entrypoint, or reloads Hyprland.
+Managed cross-field safety is checked only for a real changed candidate, after
+the exact no-op and immediately preceding lost-reply cases. In particular,
+inner glow may be enabled only when its effective range is at least 10. A
+disabled range from 0 through 9 remains an exact writable compatibility value;
+an enabled low-range candidate returns `InvalidSnapshot` without a revision or
+write. Existing structurally valid low-range state remains readable so it can
+be repaired by disabling glow or raising the range.
+Before persistence, it resolves shared-visual authority from the current
+verified Config1 projection, then the retained last verified projection, then
+the current desired resolved values. It preserves synchronized border and
+spacing values unless the resolved group policy explicitly permits an override,
+and always preserves the exact unique final protected maximized-window rule.
+Failure returns `ControlledByHyprShelld` before desired state is replaced.
 
 The durable desired snapshot and recovery transaction records live below
 `$XDG_STATE_HOME/hyprshelld/compositor`; they are service authority, not Lua
@@ -139,12 +212,15 @@ an existing entrypoint.
 bind the exact bytes of an existing regular file, or assert actual absence with
 an empty digest. Unsafe, unreadable, non-regular, or concurrently changed paths
 fail closed. Before staging, adoption requires a currently verified, available
-Config1 shared-border authority. It returns `ControlledByHyprShelld` when that
-authority is unavailable or unverified, even when the last verified policy was
-an override. With a current verified projection, an explicit synchronization
-override permits divergent desired border values; otherwise divergence also
-returns `ControlledByHyprShelld`. It returns before any generation is prepared
-or entrypoint is adopted. Before changing the
+Config1 shared-visual authority. It returns `ControlledByHyprShelld` when that
+authority is unavailable or unverified, even when the last verified border or
+spacing policy was an override. A current group synchronization override
+permits divergent desired values for that group. Synchronized-value divergence
+or a missing or altered exact protected maximized-window rule also returns
+`ControlledByHyprShelld`. It returns before any generation is prepared or
+entrypoint is adopted. Adoption also verifies managed cross-field safety
+immediately before staging; an unsafe desired target returns
+`VerificationFailed` before a generation or entrypoint change. Before changing the
 stable path, compositord durably preserves a
 recoverable original, writes a live-activation journal that binds the prior and
 target entrypoints, and stages and verifies the entire managed generation. It
@@ -166,12 +242,14 @@ same-UID rename in the instant between a name check and an fd-relative syscall;
 that actor is inside the local-user trust boundary, and a detected post-phase
 mismatch remains an explicit conflict with its recovery journal retained.
 
-`Apply` compares the revision and both catalog digests before rendering. It
-then requires a currently verified, available Config1 shared-border authority.
+`Apply` compares the authority ID, both catalog digests, and revision before
+rendering. It then requires a currently verified, available Config1
+shared-visual authority.
 It returns `ControlledByHyprShelld` when that authority is unavailable or
-unverified, even when the last verified policy was an override. With a current
-verified projection, an explicit synchronization override permits divergent
-saved border values; otherwise divergence also returns
+unverified, even when the last verified border or spacing policy was an
+override. A current group synchronization override permits divergent saved
+values for that group. Synchronized-value divergence or a missing or altered
+exact protected maximized-window rule also returns
 `ControlledByHyprShelld`. It returns before any generation is prepared or
 activated. Apply
 verifies every generated file and manifest, then asks the activation executor
@@ -185,7 +263,18 @@ abort retains the prior managed entrypoint, generation, last-good snapshot, and
 applied tuple. Desired state remains saved, and `RequiredActivation` reports
 `none`, `reload`, `restart`, or `session` for the pending difference. Enabled
 broker-dependent bindings and UWSM environment changes remain fail-closed in
-this slice rather than being rendered as invented shell commands.
+this slice rather than being rendered as invented shell commands. Any generic
+`bindings` or `submaps` collection difference is Restart-required in both
+directions. Exact unchanged collections do not elevate another delta, and
+Recovery can remain Reload only when both collections exactly match the applied
+baseline. This classification adds no shortcut editor, broker method, restart
+executor, or live action.
+
+Apply also verifies managed cross-field safety before staging. The check
+includes an explicit Apply of an already-current generation, which otherwise
+uses an idempotent shortcut. An unsafe target returns `VerificationFailed`
+without rendering, publishing a generation, writing a pending transaction, or
+changing the applied tuple.
 
 Reload activation is bound to one exact running Hyprland instance. Compositord
 resolves the current instance signature before each prepare from the bounded
@@ -241,9 +330,15 @@ current revision it copies the last successfully applied content into exactly
 the next desired revision, prepares a new immutable generation, and activates
 that exact content. It never decrements or reuses a revision, never adopts an
 unmanaged entrypoint, and never silently discards current bytes. Recover is
-intentionally exempt from the shared-border ownership gate so it can restore
-the whole-compositor last-known-good state. Enabled synchronization may then
-reassert the current shared-border values through a normal reconciliation.
+intentionally exempt from the shared-visual ownership gate so it can restore
+the whole-compositor last-known-good state. Normal reconciliation then reasserts
+the current shared-border and shared-spacing policies and the exact protected
+maximized-window rule.
+The recovered last-good content must also satisfy current managed cross-field
+safety. An unsafe recovery target returns `VerificationFailed` before a new
+generation or pending transaction is created. Safety is evaluated against the
+recovery target rather than current desired state, so a safe last-good snapshot
+can still repair unsafe desired state.
 Startup recovery only reconciles an interrupted transaction; it does not invoke
 this public rollback operation.
 
@@ -268,12 +363,38 @@ During `awaiting-confirmation`, discovery returns the cached exact post-proof
 topology and its original observation time instead of opening another blocking
 runtime query; failed or reverting reconciliation is unavailable.
 
+`GetConnectedInputDevices` is a separate authenticated read-only authority.
+It performs a fresh bounded `j/devices` query under the configured reviewed
+Hyprland 0.56.x policy and returns only a canonical v1 inventory plus its
+observation time. The public records contain the session-assigned selector,
+coarse observed kind, and nullable reported active-keymap text; pointer
+addresses and other raw runtime fields never cross D-Bus. The opaque inventory
+digest is bound privately to the authenticated runtime identity, instance
+addresses, and a random compositord-process epoch, and excludes active-keymap
+diagnostics. The selector is diagnostic session identity rather than stable
+hardware identity.
+
+Input-device discovery does not require an available desired snapshot, managed
+entrypoint ownership, activation filesystem binding, or successful activation
+finalization. It is rejected before a runtime query while a display
+confirmation capability still exists or its durable commit is active. A
+terminal failed state without a retained capability does not permanently block
+later discovery. No old device inventory is cached or returned as current.
+
 `PreviewDisplayConfiguration` is permitted only from an exact current managed
-baseline. It stages a monitor-only N+1, activates and proves the realized
+baseline inside one expected authority and revision. It stages a monitor-only
+N+1, activates and proves the realized
 topology, but leaves desired, applied, and last-good authority at N. The
-initiating unique bus owner alone receives the 128-bit token and may recover an
-ambiguous reply through `GetPendingDisplayConfirmation`; no readable property
-exposes the token. While the server-owned monotonic deadline is active,
+complete merged preview target must satisfy managed cross-field safety before
+rendering or publication; an unsafe target returns `VerificationFailed` without
+creating a confirmation capability. The initiating unique bus owner alone
+receives the 128-bit token and may recover an
+ambiguous reply through `GetPendingDisplayConfirmation`, which also returns
+the authority ID that binds the capability; no readable property exposes the
+token. Confirm and Revert compare the expected authority ID and expected
+preview revision before using their private capability; explicit shared-border
+and shared-spacing retry compare the expected authority ID and current desired
+revision. While the server-owned monotonic deadline is active,
 `ManagementState` is `preview`, ordinary mutations fail `ConfirmationPending`,
 and owner loss, timeout, runtime/topology drift, or explicit Revert restores N
 before aborting the prepared transaction. Confirm reopens a fresh authenticated
@@ -313,6 +434,36 @@ exempt as whole-compositor recovery, after which enabled synchronization
 reasserts the current shared border projection as a new normal CAS/apply
 operation.
 
+Shared window-spacing synchronization derives only global `general:gaps_in`
+and `general:gaps_out`. Inner spacing becomes all four `gaps_in` sides. Outer
+spacing becomes `gaps_out` in top, right, bottom, left order with a zero top
+side so the Bar reservation is not counted twice. Absent overrides resolve to
+the authenticated catalog defaults, and synchronized values equal to those
+defaults are elided. `float_gaps`, `gaps_workspaces`, and layout-specific gaps
+remain outside this authority.
+
+Compositord also owns exactly one final protected workspace rule with ID
+`hyprshelld.internal.shared-spacing.maximized` and selector `f[1]`. Its sole
+override is zero `gaps_out`. The ID and selector are admitted only as the exact
+protected record, and ordinary global-spacing override does not remove it.
+Replace, Apply, and adoption fail closed unless the candidate contains this
+exact unique final record. Whole-compositor Recover is the exception and is
+followed by normal reassertion.
+
+`SharedSpacingSyncState`, `SharedSpacingSourceRevision`,
+`SharedSpacingSyncError`, and `RetrySharedSpacingSync` mirror the border status
+vocabulary and lossless source revision. Border and spacing retain independent
+status and error attribution, while one coherent Config1 projection lets their
+edits coalesce into at most one whole-snapshot CAS and one verified reload. A
+revision-only source change advances both source revisions without retrying an
+unchanged failed effective tuple.
+
+Both explicit retry methods require and retain the exact current authority ID,
+revision, catalog digest, and action-catalog digest. That complete tuple is
+rechecked immediately before any Desired write. A token captured before an
+authority rotation, catalog change, or intervening desired-state change cannot
+re-enter either retry path.
+
 `LoadState` is one of `normal`, `recovered`, `defaulted`, `unsupported`, or
 `unavailable`. `ApplyState` is one of `unavailable`, `inactive`, `current`,
 `retained`, or `failed`; in-progress staging is never published. An
@@ -328,21 +479,26 @@ Compositor errors have these meanings:
 
 - `Unavailable` or `ReadOnly`: no authoritative snapshot or writable leased
   transaction is available;
-- `StaleRevision` or `StaleCatalogDigest`: a CAS authority changed;
+- `StaleAuthority`, `StaleRevision`, or `StaleCatalogDigest`: an
+  authority-epoch or CAS input changed;
 - `InvalidSnapshot`, `RevisionExhausted`, or `PersistenceFailed`: desired state
-  could not be validated or durably replaced;
+  could not be validated, did not satisfy a managed cross-field safety rule,
+  exhausted its monotonic revision, or could not be durably replaced;
 - `ControlledByHyprShelld`: `ReplaceSnapshot` could not prove that its
-  candidate preserves the protected border values, or `Apply` or
-  `AdoptManagedConfiguration` lacked a current verified Config1 shared-border
-  projection or found divergent saved values under synchronized policy;
-  `Recover` is exempt;
+  candidate preserves synchronized shared-border and shared-spacing values and
+  the exact protected maximized-window rule, or `Apply` or
+  `AdoptManagedConfiguration` lacked a current verified Config1 shared-visual
+  projection, found divergent synchronized values, or found the protected rule
+  missing or altered; `Recover` is exempt and normal reconciliation reasserts
+  the shared policies and protected rule afterward;
 - `AdoptionRequired`: the caller tried to apply or recover before explicit
   ownership;
 - `EntrypointChanged`: the stable entrypoint no longer matches the committed or
   caller-supplied digest;
 - `ActivationRequired`: the executor cannot confirm the snapshot's required
   reload, restart, or session transition;
-- `VerificationFailed` or `ReloadFailed`: staged bytes failed verification or
+- `VerificationFailed` or `ReloadFailed`: the requested activation or recovery
+  target did not satisfy managed safety, staged bytes failed verification, or
   the live executor did not confirm the exact reload, rollback, or empty-error
   proof;
 - `RuntimeUnavailable` or `UnsupportedVersion`: the authenticated compositor
@@ -355,6 +511,107 @@ Compositor errors have these meanings:
   for the requested operation; and
 - `ApplyFailed`, `RecoveryUnavailable`, or `RecoveryFailed`: the corresponding
   bounded transaction could not complete without weakening its guarantees.
+
+### Restart contract
+
+The dormant Restart ABI authorizes only operation kind `apply` or `recovery`.
+`GetRestartPlan` returns canonical plan bytes, plan ID, plan digest, and
+disclosure version after binding the client request ID and complete authority,
+runtime, preflight, warning, disruption, prior, candidate, and monotonic-deadline
+tuple. Plan retrieval is read-only. Restart and repair use one lease-owned
+volatile plan cache with at most 64 total unexpired entries, at most 4 MiB of
+encoded state, and at most 64 KiB per entry. An unexpired entry is never evicted;
+capacity exhaustion returns `PlanCapacity` without a durable write.
+
+`AuthorizeRestart` revalidates and consumes that exact issued entry with durable
+acceptance, creates the `prepared-authorized` pending record, and returns its
+operation ID and latest canonical active status. Missing, expired, process-lost,
+or mismatched plan capability returns `StalePlan` without an effect. For every
+request-bearing Restart or repair mutation, durable request-map and tombstone
+lookup precedes current-authority CAS. An exact request from an older authority
+returns its original operation or result; changed reuse returns
+`RequestIdConflict`. There is no public phase-advance, Cancel, or RestartUnit
+method.
+
+`GetActiveRestart`, `GetRestartOperation`, and `LookupRestartRequest` expose
+durable operation identity without recreating a private receipt. Lookup
+`availability` is exactly `active`, `unread-result`, `latest-acknowledged`, or
+`tombstone-only`. For `active`, the operation ID and accepted authority tuple
+are durable, `payload` is the latest canonical active status, and
+`payloadDigest` is its domain-separated status digest. For terminal
+availability, `payload` is the exact immutable terminal public status and
+`payloadDigest` is its result digest. When `found=false`, every string and byte
+array is empty and revision is zero.
+
+`GetRestartResults` returns rows `(sequence, authorityId, revision, operationId,
+resultDigest, canonicalStatus)`. `limit` is 1 through 64 and the complete reply
+is at most 4 MiB; `hasMore` requires pagination rather than truncation. The
+latest acknowledged result is returned explicitly even when no unread result
+remains. `AcknowledgeRestartResult` binds the exact authority/revision/operation/
+digest tuple and is idempotent for the same tuple. Acknowledgment removes only
+the unread slot and retains the explicit latest-acknowledged result.
+
+### Repair-only contract
+
+`GetRepairStatus` remains callable in degraded repair-only mode. It returns
+one bounded canonical status document plus `repairId`,
+`observedAuthorityKind`, `observedAuthorityId`, `observedRevision`, and
+`statusDigest`. The kind is exactly `v1`, `v2`, `absent`, or
+`unreadable`. V1 carries its exact revision without an invented authority ID;
+V2 carries its exact authority ID and revision; absent and unreadable carry an
+empty ID and zero revision. The empty ID never supplies meaning by itself.
+
+`GetExactPriorRestorePlan` has priority whenever the complete previous
+authority is provably restorable. Its read-only, strongly warned disclosure
+binds the expected repair incident, authority kind, authority ID, revision,
+status digest, and client-generated request ID before confirmation. It returns
+the plan ID, plan digest, and disclosure version. `RestoreExactPrior`
+compares that complete CAS and request tuple again together with the plan tuple,
+then permanently tombstones the request before a successful effect can be
+repeated. Success reports `restoredAuthorityKind`, `restoredAuthorityId`,
+`restoredRevision`, and the already reserved durable `repairResultId` and
+`repairResultDigest`; it never starts Hyprland.
+
+`GetResetPlan` is a separate read-only, strongly warned disclosure bound to
+the same repair incident, authority-kind tuple, status digest, and
+client-generated request ID. It returns a plan ID, plan digest, and disclosure
+version only when no complete exact prior is provably restorable.
+`ResetAuthorityToDefaults` compares that complete CAS and request tuple again
+together with the plan tuple. The request ID appears exactly once and precedes
+the plan fields. Reset may rotate the authority only after the complete
+descriptor-relative, fsynced archive succeeds. Success creates a random
+v2 authority at revision 1, reports `newAuthorityKind`, `newAuthorityId`,
+`newRevision`, the durable backup ID, and the already reserved repair-result ID
+and digest, claims no Applied or LastGood state, and never starts Hyprland.
+Exact-prior availability makes both reset methods fail with
+`ExactPriorRequired`.
+
+`LookupRepairRequest` exposes the durable request mapping. Its `availability`
+is exactly `active`, `unread-result`, `latest-acknowledged`, or
+`tombstone-only`. At durable repair acceptance, `repairResultId` is already
+reserved. For `active`, `outcome` is `active`, the authority-kind/ID/revision
+tuple is the accepted observed CAS tuple, and `payload` is the latest canonical
+active status with its domain-separated `payloadDigest`. This derived active
+status is never stored as an immutable result or unread slot. Terminal
+availability returns the resulting authority tuple and exact immutable terminal
+public result with its result digest. When `found=false`, every string and byte
+array is empty and revision is zero.
+
+`GetRepairResults` returns rows `(sequence, repairResultId, repairId, requestId,
+outcome, authorityKind, authorityId, revision, resultDigest, canonicalResult)`.
+`limit` is 1 through 64 and the complete reply is at most 4 MiB; `hasMore`
+requires pagination rather than truncation. The latest acknowledged result is
+returned explicitly even when no unread result remains.
+`AcknowledgeRepairResult` binds the exact repair/repair-result/authority-kind/
+authority-ID/revision/digest tuple and is idempotent for the same tuple.
+Acknowledgment removes only the unread slot and retains the explicit latest-
+acknowledged result.
+
+Repair methods are served by the same compositord process and store lease. An
+empty expected authority ID is accepted only with the explicit `v1`,
+`absent`, or `unreadable` kind. V1 still requires its exact revision;
+absent and unreadable require revision zero. No second repair daemon or writer
+exists.
 
 ## Component configuration
 

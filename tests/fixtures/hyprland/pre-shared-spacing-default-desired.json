@@ -1,0 +1,20 @@
+{
+  "formatVersion": 1,
+  "revision": "0",
+  "targetHyprland": "0.56.1",
+  "catalogDigest": "0232f9b036849e2b9423d5960dd32f22001c79b5b6b6696330f481d1d0c657e0",
+  "actionCatalogDigest": "72e063a5476308cefdd2771367ffeed9a8e553b3a2d7141f4e08c3e105a5deb2",
+  "overrides": {},
+  "monitors": [],
+  "devices": [],
+  "curves": [],
+  "animations": [],
+  "gestures": [],
+  "workspaceRules": [],
+  "windowRules": [],
+  "layerRules": [],
+  "submaps": [],
+  "bindings": [],
+  "permissions": [],
+  "environment": []
+}
