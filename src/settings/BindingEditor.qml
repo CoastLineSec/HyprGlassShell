@@ -12,6 +12,8 @@ Frame {
     property var actions: []
     property bool controlsEnabled: false
     property string issue: ""
+    property string bindingOrigin: "custom"
+    property bool canReset: false
     property real minimumTargetSize: 44
     property string argumentsIssue: ""
     property string deviceIssue: ""
@@ -19,6 +21,7 @@ Frame {
     signal recordModified(var record)
     signal closeRequested
     signal removeRequested(string id)
+    signal resetRequested(string id)
 
     readonly property var modifierOrder: ["shift", "caps", "ctrl", "alt", "mod2", "mod3", "super", "mod5"]
     readonly property var optionDefinitions: [
@@ -88,6 +91,11 @@ Frame {
             description: qsTr("Allow during input capture")
         }
     ]
+
+    onBindingChanged: {
+        root.argumentsIssue = "";
+        root.deviceIssue = "";
+    }
 
     padding: 18
 
@@ -311,7 +319,7 @@ Frame {
 
                 Label {
                     Layout.fillWidth: true
-                    text: qsTr("Edit shortcut")
+                    text: root.bindingOrigin === "default" ? qsTr("Edit shipped default") : root.bindingOrigin === "override" ? qsTr("Edit user override") : root.bindingOrigin === "disabled" ? qsTr("Default shortcut disabled") : qsTr("Edit custom shortcut")
                     color: root.palette.text
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
@@ -327,6 +335,15 @@ Frame {
                     font.family: "monospace"
                     font.pixelSize: 10
                     elide: Text.ElideMiddle
+                    textFormat: Text.PlainText
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: root.bindingOrigin === "default" ? qsTr("Changes create a user override; the shipped baseline remains intact.") : root.bindingOrigin === "override" ? qsTr("Saved in the persistent user layer after the shipped defaults.") : root.bindingOrigin === "disabled" ? qsTr("The persistent user layer suppresses this default until Reset is used.") : qsTr("Saved as a custom shortcut in the persistent user layer.")
+                    color: root.bindingOrigin === "default" ? root.palette.placeholderText : root.palette.highlight
+                    font.pixelSize: 10
+                    wrapMode: Text.Wrap
                     textFormat: Text.PlainText
                 }
             }
@@ -464,7 +481,7 @@ Frame {
                         text: root.binding ? root.binding.key || "" : ""
                         enabled: root.controlsEnabled
                         selectByMouse: true
-                        placeholderText: qsTr("K, comma, code:38, mouse:272…")
+                        placeholderText: qsTr("k, comma, code:38, mouse:272…")
                         Accessible.name: qsTr("Shortcut key")
                         onEditingFinished: root.modify(function (candidate) {
                             candidate.key = text.trim();
@@ -716,11 +733,25 @@ Frame {
             Layout.fillWidth: true
 
             Button {
-                text: qsTr("Remove Shortcut")
-                enabled: root.controlsEnabled && root.binding
+                text: root.bindingOrigin === "custom" ? qsTr("Remove Shortcut") : root.bindingOrigin === "disabled" ? qsTr("Default Disabled") : qsTr("Disable Default")
+                enabled: root.controlsEnabled && root.binding && root.bindingOrigin !== "disabled"
                 onClicked: {
                     if (root.binding)
                         root.removeRequested(root.binding.id);
+                }
+            }
+
+            Button {
+                objectName: "resetBindingButton"
+                visible: root.canReset
+                text: qsTr("Reset to Default")
+                enabled: root.controlsEnabled && root.binding
+                onClicked: {
+                    if (root.binding) {
+                        root.argumentsIssue = "";
+                        root.deviceIssue = "";
+                        root.resetRequested(root.binding.id);
+                    }
                 }
             }
 
@@ -729,7 +760,7 @@ Frame {
             }
 
             Label {
-                text: qsTr("Ordered Lua binding")
+                text: root.bindingOrigin === "default" ? qsTr("Managed default layer") : qsTr("Persistent user layer")
                 color: root.palette.placeholderText
                 font.pixelSize: 11
             }

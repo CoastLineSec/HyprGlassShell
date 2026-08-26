@@ -2,6 +2,7 @@
 
 #include "hyprland/catalog.h"
 #include "hyprland/action_catalog.h"
+#include "hyprland/default_keybindings.h"
 #include "hyprland/desired_state.h"
 #include "hyprland/json_support.h"
 
@@ -3322,6 +3323,84 @@ private slots:
         QVERIFY(client.permissionErrorName().isEmpty());
         QVERIFY(client.inputDevicesErrorName().isEmpty());
 
+        const auto defaultBindings = client.defaultBindings();
+        QCOMPARE(
+            defaultBindings.size(),
+            HyprShelld::Hyprland::shippedDefaultKeybindingCount
+        );
+        QSet<QString> defaultBindingIds;
+        const auto &typedDefaults =
+            HyprShelld::Hyprland::shippedDefaultKeybindings();
+        for (qsizetype index = 0; index < defaultBindings.size(); ++index) {
+            const auto binding = defaultBindings.at(index).toMap();
+            const auto &typed = typedDefaults.at(index);
+            const auto id = binding.value(QStringLiteral("id")).toString();
+            QVERIFY(id.startsWith(QStringLiteral("hyprshelld.default.")));
+            QVERIFY(!defaultBindingIds.contains(id));
+            defaultBindingIds.insert(id);
+            QCOMPARE(id, typed.id);
+            QCOMPARE(
+                binding.value(QStringLiteral("modifiers")).toStringList(),
+                typed.modifiers
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("key")).toString(), typed.key
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("actionType")).toString(),
+                QStringLiteral("dispatcher")
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("action")).toString(),
+                typed.action
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("arguments")).toMap(),
+                typed.arguments.toVariantMap()
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("description")).toString(),
+                typed.description
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("enabled")).toBool(),
+                typed.enabled
+            );
+            QCOMPARE(
+                binding.value(QStringLiteral("submap")).toString(),
+                typed.submap
+            );
+            const auto options =
+                binding.value(QStringLiteral("options")).toMap();
+            QCOMPARE(options.size(), 13);
+            QCOMPARE(options.value(QStringLiteral("repeating")).toBool(),
+                     typed.options.repeating);
+            QCOMPARE(options.value(QStringLiteral("locked")).toBool(),
+                     typed.options.locked);
+            QCOMPARE(options.value(QStringLiteral("release")).toBool(),
+                     typed.options.release);
+            QCOMPARE(options.value(QStringLiteral("nonConsuming")).toBool(),
+                     typed.options.nonConsuming);
+            QCOMPARE(options.value(QStringLiteral("autoConsuming")).toBool(),
+                     typed.options.autoConsuming);
+            QCOMPARE(options.value(QStringLiteral("transparent")).toBool(),
+                     typed.options.transparent);
+            QCOMPARE(options.value(QStringLiteral("ignoreMods")).toBool(),
+                     typed.options.ignoreMods);
+            QCOMPARE(options.value(QStringLiteral("dontInhibit")).toBool(),
+                     typed.options.dontInhibit);
+            QCOMPARE(options.value(QStringLiteral("longPress")).toBool(),
+                     typed.options.longPress);
+            QCOMPARE(options.value(QStringLiteral("submapUniversal")).toBool(),
+                     typed.options.submapUniversal);
+            QCOMPARE(options.value(QStringLiteral("click")).toBool(),
+                     typed.options.click);
+            QCOMPARE(options.value(QStringLiteral("drag")).toBool(),
+                     typed.options.drag);
+            QCOMPARE(options.value(QStringLiteral("allowInputCapture")).toBool(),
+                     typed.options.allowInputCapture);
+        }
+
         const auto actions = client.bindingActions();
         QCOMPARE(actions.size(), 76);
         qsizetype dispatcherCount = 0;
@@ -4930,6 +5009,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!client.rulesErrorName().isEmpty(), 3000);
         QCOMPARE(client.actionCatalogAvailable(), false);
         QVERIFY(client.bindingActions().isEmpty());
+        QVERIFY(client.defaultBindings().isEmpty());
         QCOMPARE(client.bindingsProjectionAvailable(), false);
         QCOMPARE(client.environmentProjectionAvailable(), false);
         QCOMPARE(client.permissionsProjectionAvailable(), false);
@@ -4981,6 +5061,11 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(client.allOptionsAvailable(), 3000);
         QTRY_VERIFY_WITH_TIMEOUT(client.actionCatalogAvailable(), 3000);
         QTRY_COMPARE_WITH_TIMEOUT(client.bindingActions().size(), 76, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.defaultBindings().size(),
+            HyprShelld::Hyprland::shippedDefaultKeybindingCount,
+            3000
+        );
         QTRY_VERIFY_WITH_TIMEOUT(client.bindingsAvailable(), 3000);
         QTRY_VERIFY_WITH_TIMEOUT(client.environmentAvailable(), 3000);
         QTRY_VERIFY_WITH_TIMEOUT(client.permissionsAvailable(), 3000);

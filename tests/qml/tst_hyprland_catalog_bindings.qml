@@ -146,7 +146,7 @@ TestCase {
         };
     }
 
-    function configureBindings(page, records, submaps) {
+    function configureBindings(page, records, submaps, defaults) {
         page.bindingsProjectionAvailable = false;
         page.serviceAvailable = true;
         page.writable = true;
@@ -160,6 +160,7 @@ TestCase {
         page.requiredActivation = "none";
         page.confirmationState = "idle";
         page.bindingActions = actions();
+        page.defaultBindings = defaults || [];
         page.bindings = records || [];
         page.submaps = submaps || [];
         page.sharedMutationBusy = false;
@@ -254,6 +255,200 @@ TestCase {
         invalid.key = "code:4294967295";
         page.draftBindings = [invalid];
         verify(page.draftIssue.includes("invalid key token"));
+    }
+
+    function test_defaultBindingSparseOverrideDisableResetAndSaveAcknowledgement() {
+        const window = createTemporaryObject(bindingsComponent, this);
+        verify(window !== null);
+        const page = window.page;
+        const baseline = binding("hyprshelld.default.window.close", "q");
+        baseline.description = "Close the active window";
+        configureBindings(page, [], [], [baseline]);
+
+        compare(page.draftBindings.length, 1);
+        compare(page.draftBindings[0].id, baseline.id);
+        compare(page.draftBindings[0]._defaultId, baseline.id);
+        compare(page.bindingOrigin(page.draftBindings[0]), "default");
+        compare(page.persistedBindings(page.draftBindings).length, 0);
+        compare(page.draftDirty, false);
+        compare(page.visibleBindings.length, 1);
+        page.bindingSearchText = "active window";
+        compare(page.visibleBindings.length, 1);
+        page.bindingSearchText = "does not exist";
+        compare(page.visibleBindings.length, 0);
+        page.bindingSearchText = "";
+        page.bindingFilterIndex = 1;
+        compare(page.visibleBindings.length, 0);
+        page.bindingFilterIndex = 2;
+        compare(page.visibleBindings.length, 1);
+        page.bindingFilterIndex = 0;
+
+        const override = page.clone(page.draftBindings[0]);
+        override.key = "w";
+        override.description = "Close the active window with the user shortcut";
+        page.replaceBinding(override);
+
+        compare(page.bindingOrigin(page.draftBindings[0]), "override");
+        page.bindingFilterIndex = 1;
+        compare(page.visibleBindings.length, 1);
+        page.bindingFilterIndex = 0;
+        let sparseLayer = page.persistedBindings(page.draftBindings);
+        compare(sparseLayer.length, 1);
+        compare(sparseLayer[0].id, baseline.id);
+        compare(sparseLayer[0].key, "w");
+        verify(!Object.prototype.hasOwnProperty.call(sparseLayer[0], "_defaultId"));
+        verify(!Object.prototype.hasOwnProperty.call(sparseLayer[0], "_bindingOrigin"));
+
+        page.removeBinding(baseline.id);
+        compare(page.bindingOrigin(page.draftBindings[0]), "disabled");
+        sparseLayer = page.persistedBindings(page.draftBindings);
+        compare(sparseLayer.length, 1);
+        compare(sparseLayer[0].id, baseline.id);
+        compare(sparseLayer[0].enabled, false);
+
+        page.resetBinding(baseline.id);
+        compare(page.bindingOrigin(page.draftBindings[0]), "default");
+        compare(page.draftBindings[0].key, baseline.key);
+        compare(page.persistedBindings(page.draftBindings).length, 0);
+        compare(page.draftDirty, false);
+        page.bindingFilterIndex = 1;
+        compare(page.visibleBindings.length, 0);
+        page.bindingFilterIndex = 0;
+
+        const savedOverride = page.clone(page.draftBindings[0]);
+        savedOverride.key = "w";
+        page.replaceBinding(savedOverride);
+        compare(page.draftDirty, true);
+        sparseLayer = page.persistedBindings(page.draftBindings);
+        findChild(page, "saveBindingsButton").clicked();
+        compare(window.saveSpy.count, 1);
+        compare(window.saveSpy.signalArguments[0][0].length, 1);
+        compare(window.saveSpy.signalArguments[0][0][0].id, baseline.id);
+        compare(window.saveSpy.signalArguments[0][0][0].key, "w");
+
+        page.externalChangeWhileEditing = true;
+        page.bindings = sparseLayer;
+        page.synchronizeProjection(false);
+        compare(page.externalChangeWhileEditing, false);
+        compare(page.draftDirty, false);
+        compare(page.bindingOrigin(page.draftBindings[0]), "override");
+    }
+
+    function test_legacyChordFallbackMigratesToTheStableDefaultId() {
+        const window = createTemporaryObject(bindingsComponent, this);
+        verify(window !== null);
+        const page = window.page;
+        const baseline = binding("hyprshelld.default.window.close", "q");
+        const legacyOverride = binding("legacy.user.close", "q");
+        legacyOverride.description = "Legacy user close shortcut";
+        configureBindings(page, [legacyOverride], [], [baseline]);
+
+        compare(page.draftBindings.length, 1);
+        compare(page.draftBindings[0].id, baseline.id);
+        compare(page.draftBindings[0]._defaultId, baseline.id);
+        compare(page.bindingOrigin(page.draftBindings[0]), "override");
+        const migrated = page.persistedBindings(page.draftBindings);
+        compare(migrated.length, 1);
+        compare(migrated[0].id, baseline.id);
+        compare(migrated[0].key, baseline.key);
+        compare(migrated[0].description, legacyOverride.description);
+    }
+
+    function test_customBindingUsesAnUnusedCanonicalChordAndAcknowledgesReorderedData() {
+        const window = createTemporaryObject(bindingsComponent, this);
+        verify(window !== null);
+        const page = window.page;
+        const closeDefault = binding("hyprshelld.default.window.close", "q");
+        const focusDefault = binding("hyprshelld.default.focus.window.up.vim", "k");
+        focusDefault.description = "Focus the window up";
+        configureBindings(page, [], [], [closeDefault, focusDefault]);
+
+        page.addBinding();
+        compare(page.draftBindings.length, 3);
+        const custom = page.draftBindings[2];
+        compare(page.bindingOrigin(custom), "custom");
+        compare(custom.modifiers, ["super"]);
+        compare(custom.key, "F13");
+        compare(page.draftIssue, "");
+        compare(page.draftDirty, true);
+
+        const sparseLayer = page.persistedBindings(page.draftBindings);
+        compare(sparseLayer.length, 1);
+        findChild(page, "saveBindingsButton").clicked();
+        compare(window.saveSpy.count, 1);
+        compare(window.saveSpy.signalArguments[0][0][0].key, "F13");
+
+        const saved = sparseLayer[0];
+        const reorderedAcknowledgement = {
+            options: saved.options,
+            submap: saved.submap,
+            enabled: saved.enabled,
+            description: saved.description,
+            arguments: saved.arguments,
+            action: saved.action,
+            actionType: saved.actionType,
+            key: saved.key,
+            modifiers: saved.modifiers,
+            id: saved.id
+        };
+        page.bindings = [reorderedAcknowledgement];
+        page.synchronizeProjection(false);
+        compare(page.externalChangeWhileEditing, false);
+        compare(page.draftDirty, false);
+        compare(page.bindingOrigin(page.draftBindings[2]), "custom");
+    }
+
+    function test_compactDefaultsOpenOnTheKeyboardAccessibleList() {
+        const window = createTemporaryObject(bindingsComponent, this, {
+            width: 620
+        });
+        verify(window !== null);
+        const page = window.page;
+        const baseline = binding("hyprshelld.default.window.close", "q");
+        configureBindings(page, [], [], [baseline]);
+
+        compare(page.compactPage, true);
+        compare(page.selectedBindingId, "");
+        const card = findChild(page, "bindingCard0");
+        verify(card !== null);
+        compare(card.activeFocusOnTab, true);
+        window.requestActivate();
+        tryCompare(window, "active", true);
+        card.forceActiveFocus();
+        tryCompare(card, "activeFocus", true);
+        keyClick(Qt.Key_Return);
+        tryCompare(page, "selectedBindingId", baseline.id);
+    }
+
+    function test_resetClearsTransientEditorErrors() {
+        const window = createTemporaryObject(bindingsComponent, this);
+        verify(window !== null);
+        const page = window.page;
+        const baseline = binding("hyprshelld.default.window.close", "q");
+        configureBindings(page, [], [], [baseline]);
+        page.selectedBindingId = baseline.id;
+
+        const override = page.clone(page.draftBindings[0]);
+        override.key = "w";
+        page.replaceBinding(override);
+        const editor = findChild(page, "bindingEditor");
+        verify(editor !== null);
+        editor.commitArguments("{");
+        verify(editor.argumentsIssue.length > 0);
+        const devices = [];
+        for (let index = 0; index < 65; ++index)
+            devices.push("device-" + String(index));
+        editor.commitDeviceList(devices.join(","));
+        verify(editor.deviceIssue.length > 0);
+
+        const resetButton = findChild(editor, "resetBindingButton");
+        verify(resetButton !== null);
+        tryCompare(resetButton, "visible", true);
+        resetButton.clicked();
+        compare(editor.argumentsIssue, "");
+        compare(editor.deviceIssue, "");
+        compare(page.bindingOrigin(page.draftBindings[0]), "default");
+        compare(page.draftDirty, false);
     }
 
     function test_bindingAndSubmapCrudOrderingConflictAndAtomicSave() {

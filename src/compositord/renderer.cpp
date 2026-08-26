@@ -1,5 +1,6 @@
 #include "renderer.h"
 
+#include "hyprland/default_keybindings.h"
 #include "hyprland/json_support.h"
 
 #include <QCryptographicHash>
@@ -618,6 +619,7 @@ struct SemanticLuaPayload final {
     const Hyprland::DesiredState &state,
     const Hyprland::Catalog &catalog,
     const Hyprland::ActionCatalog &actionCatalog,
+    const bool includeShippedDefaults,
     Hyprland::ValidationErrors &errors
 )
 {
@@ -809,6 +811,36 @@ struct SemanticLuaPayload final {
     auto &keybinds = moduleBodies[QStringLiteral("modules/70-keybinds.lua")];
     QMap<QString, QByteArray> submapBindings;
     QByteArray topLevelBindings;
+    if (includeShippedDefaults) {
+        appendStatement(
+            keybinds,
+            QByteArrayLiteral("-- Shipped HyprShelld defaults (managed baseline)")
+        );
+        const auto &defaultBindings = Hyprland::shippedDefaultKeybindings();
+        QSet<QString> replacedDefaultBindings;
+        for (const auto &record : state.bindings) {
+            if (const auto *matchedDefault =
+                    Hyprland::matchedShippedDefaultKeybinding(record)) {
+                replacedDefaultBindings.insert(matchedDefault->id);
+            }
+        }
+        for (qsizetype index = 0; index < defaultBindings.size(); ++index) {
+            if (replacedDefaultBindings.contains(defaultBindings.at(index).id)) {
+                continue;
+            }
+            const auto statement = bindingStatement(
+                defaultBindings.at(index), actionCatalog, errors,
+                QStringLiteral("$.shippedBindings[%1]").arg(index)
+            );
+            if (!statement.isEmpty()) appendStatement(keybinds, statement);
+        }
+        appendStatement(
+            keybinds,
+            QByteArrayLiteral(
+                "\n-- Persisted user overrides, disabled defaults, and custom shortcuts"
+            )
+        );
+    }
     for (qsizetype index = 0; index < state.bindings.size(); ++index) {
         const auto &record = state.bindings.at(index);
         const auto statement = bindingStatement(
@@ -942,6 +974,7 @@ RenderResult renderGeneration(
         state,
         catalog,
         actionCatalog,
+        true,
         result.errors
     );
     if (!payload) {
@@ -1206,6 +1239,7 @@ DormantRenderResultV2 renderDormantGenerationV2(
         reparsed.value->semanticState,
         catalogV2,
         actionCatalogV2,
+        false,
         result.errors
     );
     if (!payload) {

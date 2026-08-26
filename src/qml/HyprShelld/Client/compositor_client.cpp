@@ -2,6 +2,7 @@
 
 #include "compositor_option_catalog.h"
 #include "compositor_snapshot_editor.h"
+#include "hyprland/default_keybindings.h"
 #include "hyprland/desired_state.h"
 #include "hyprland/json_support.h"
 
@@ -238,6 +239,67 @@ const QString clientErrorPrefix = QStringLiteral(
     return result;
 }
 
+[[nodiscard]] QVariantMap authoredBindingOptions(
+    const Hyprland::BindingOptions &options
+)
+{
+    QVariantMap result{
+        {QStringLiteral("repeating"), options.repeating},
+        {QStringLiteral("locked"), options.locked},
+        {QStringLiteral("release"), options.release},
+        {QStringLiteral("nonConsuming"), options.nonConsuming},
+        {QStringLiteral("autoConsuming"), options.autoConsuming},
+        {QStringLiteral("transparent"), options.transparent},
+        {QStringLiteral("ignoreMods"), options.ignoreMods},
+        {QStringLiteral("dontInhibit"), options.dontInhibit},
+        {QStringLiteral("longPress"), options.longPress},
+        {QStringLiteral("submapUniversal"), options.submapUniversal},
+        {QStringLiteral("click"), options.click},
+        {QStringLiteral("drag"), options.drag},
+        {QStringLiteral("allowInputCapture"), options.allowInputCapture},
+    };
+    if (options.device) {
+        result.insert(
+            QStringLiteral("device"),
+            QVariantMap{
+                {QStringLiteral("inclusive"), options.device->inclusive},
+                {QStringLiteral("list"), options.device->list},
+            }
+        );
+    }
+    return result;
+}
+
+[[nodiscard]] QVariantList authoredDefaultBindings(
+    const CompositorActionCatalog *catalog
+)
+{
+    if (catalog == nullptr) return {};
+    const auto &defaults = Hyprland::shippedDefaultKeybindings();
+    QVariantList result;
+    result.reserve(defaults.size());
+    for (const auto &binding : defaults) {
+        const auto *action = Hyprland::findAction(
+            catalog->catalog(), Hyprland::ActionKind::Dispatcher,
+            binding.action
+        );
+        if (action == nullptr) return {};
+        result.append(QVariantMap{
+            {QStringLiteral("id"), binding.id},
+            {QStringLiteral("modifiers"), binding.modifiers},
+            {QStringLiteral("key"), binding.key},
+            {QStringLiteral("actionType"), QStringLiteral("dispatcher")},
+            {QStringLiteral("action"), binding.action},
+            {QStringLiteral("arguments"), binding.arguments.toVariantMap()},
+            {QStringLiteral("description"), binding.description},
+            {QStringLiteral("enabled"), binding.enabled},
+            {QStringLiteral("submap"), binding.submap},
+            {QStringLiteral("options"), authoredBindingOptions(binding.options)},
+        });
+    }
+    return result;
+}
+
 [[nodiscard]] bool isStringRevision(
     const QJsonValue &value,
     const qulonglong expected
@@ -454,7 +516,14 @@ bool CompositorClient::bindingsProjectionAvailable() const
     const auto *state = optionGroupState(OptionGroup::Bindings);
     return available_ && catalogAvailable_ && actionCatalogAvailable_
         && completeSnapshotValid_ && state != nullptr
-        && state->projectionValid && actionCatalogAvailable();
+        && state->projectionValid && actionCatalogAvailable()
+        && authoredDefaultBindings(actionCatalog_.get()).size()
+            == Hyprland::shippedDefaultKeybindingCount;
+}
+QVariantList CompositorClient::defaultBindings() const
+{
+    return actionCatalogAvailable()
+        ? authoredDefaultBindings(actionCatalog_.get()) : QVariantList{};
 }
 QVariantList CompositorClient::bindings() const
 {

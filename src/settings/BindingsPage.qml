@@ -20,6 +20,7 @@ Page {
     property string applyState: "unavailable"
     property string requiredActivation: "none"
     property string confirmationState: "idle"
+    property var defaultBindings: []
     property var bindings: []
     property var submaps: []
     property var bindingActions: []
@@ -41,6 +42,8 @@ Page {
     property bool externalChangeWhileEditing: false
     property string selectedBindingId: ""
     property int currentTab: 0
+    property string bindingSearchText: ""
+    property int bindingFilterIndex: 0
     property int idCounter: 0
 
     signal refreshRequested
@@ -58,6 +61,10 @@ Page {
     readonly property bool saveEnabled: controlsEnabled && draftDirty && draftIssue.length === 0
     readonly property bool compactPage: width < 760
     readonly property var selectedBinding: root.bindingById(selectedBindingId)
+    readonly property string selectedBindingOrigin: root.bindingOrigin(root.selectedBinding)
+    readonly property bool selectedBindingCanReset: root.isDefaultBinding(root.selectedBinding) && selectedBindingOrigin !== "default"
+    readonly property var visibleBindings: root.filteredBindings()
+    readonly property bool bindingViewFiltered: bindingSearchText.trim().length > 0 || bindingFilterIndex !== 0
 
     function listValue(value) {
         if (Array.isArray(value))
@@ -80,15 +87,141 @@ Page {
 
     function valuesEqual(left, right) {
         try {
-            return JSON.stringify(left) === JSON.stringify(right);
+            return JSON.stringify(root.canonicalValue(left)) === JSON.stringify(root.canonicalValue(right));
         } catch (error) {
             return false;
         }
     }
 
+    function canonicalValue(value) {
+        if (Array.isArray(value))
+            return value.map(item => root.canonicalValue(item));
+        if (value && typeof value === "object") {
+            const result = {};
+            for (const key of Object.keys(value).sort())
+                result[key] = root.canonicalValue(value[key]);
+            return result;
+        }
+        return value;
+    }
+
     function stableId(prefix) {
         root.idCounter += 1;
         return String(prefix) + "-" + String(Date.now()) + "-" + String(root.idCounter);
+    }
+
+    function normalizedBindingChord(record) {
+        if (!record || typeof record !== "object")
+            return "";
+        const order = ["super", "ctrl", "alt", "shift", "caps", "mod2", "mod3", "mod5"];
+        const selected = new Set(root.listValue(record.modifiers).map(value => String(value).toLowerCase()));
+        const modifiers = order.filter(value => selected.has(value));
+        return String(record.submap || "") + "|" + modifiers.join("+") + "|" + String(record.key || "").toLowerCase();
+    }
+
+    function plainBinding(record) {
+        const result = root.clone(record);
+        if (!result)
+            return null;
+        delete result._bindingOrigin;
+        delete result._defaultId;
+        return result;
+    }
+
+    function defaultBindingById(id) {
+        return root.listValue(root.defaultBindings).find(record => record && record.id === id) || null;
+    }
+
+    function bindingOrigin(record) {
+        return record && typeof record._bindingOrigin === "string" ? record._bindingOrigin : "custom";
+    }
+
+    function isDefaultBinding(record) {
+        return record && typeof record._defaultId === "string" && record._defaultId.length > 0;
+    }
+
+    function bindingMatchesDefault(record) {
+        if (!root.isDefaultBinding(record))
+            return false;
+        const baseline = root.defaultBindingById(record._defaultId);
+        const authored = root.plainBinding(record);
+        return baseline !== null && authored !== null && root.valuesEqual(authored, baseline);
+    }
+
+    function effectiveBindings(userBindings) {
+        const defaults = root.clone(root.listValue(root.defaultBindings));
+        const users = root.clone(root.listValue(userBindings));
+        if (!defaults || !users)
+            return null;
+        const consumed = new Set();
+        const result = [];
+        for (const baseline of defaults) {
+            let index = users.findIndex((record, candidateIndex) => !consumed.has(candidateIndex) && record && record.id === baseline.id);
+            if (index < 0) {
+                const chord = root.normalizedBindingChord(baseline);
+                index = users.findIndex((record, candidateIndex) => !consumed.has(candidateIndex) && root.normalizedBindingChord(record) === chord);
+            }
+            let effective = root.clone(baseline);
+            if (index >= 0) {
+                consumed.add(index);
+                effective = root.clone(users[index]);
+                effective.id = baseline.id;
+                effective._bindingOrigin = effective.enabled === false ? "disabled" : "override";
+            } else {
+                effective._bindingOrigin = "default";
+            }
+            effective._defaultId = baseline.id;
+            result.push(effective);
+        }
+        for (let index = 0; index < users.length; ++index) {
+            if (consumed.has(index))
+                continue;
+            const custom = root.clone(users[index]);
+            custom._bindingOrigin = "custom";
+            result.push(custom);
+        }
+        return result;
+    }
+
+    function persistedBindings(records) {
+        const result = [];
+        for (const record of root.listValue(records)) {
+            const authored = root.plainBinding(record);
+            if (!authored)
+                continue;
+            if (root.isDefaultBinding(record)) {
+                const baseline = root.defaultBindingById(record._defaultId);
+                authored.id = record._defaultId;
+                if (baseline !== null && root.valuesEqual(authored, baseline))
+                    continue;
+            }
+            result.push(authored);
+        }
+        return result;
+    }
+
+    function filteredBindings() {
+        const query = root.bindingSearchText.trim().toLowerCase();
+        return root.listValue(root.draftBindings).filter(record => {
+            const origin = root.bindingOrigin(record);
+            if (root.bindingFilterIndex === 1 && origin === "default")
+                return false;
+            if (root.bindingFilterIndex === 2 && !root.isDefaultBinding(record))
+                return false;
+            if (root.bindingFilterIndex === 3 && root.isDefaultBinding(record))
+                return false;
+            if (query.length === 0)
+                return true;
+            const searchable = [
+                record.description || "",
+                record.key || "",
+                record.action || "",
+                record.submap || "",
+                root.listValue(record.modifiers).join(" "),
+                origin
+            ].join(" ").toLowerCase();
+            return searchable.includes(query);
+        });
     }
 
     function bindingById(id) {
@@ -154,23 +287,59 @@ Page {
         };
     }
 
+    function availableNewBindingChord() {
+        const used = new Set(root.listValue(root.draftBindings).map(record => root.normalizedBindingChord(record)));
+        const modifierCandidates = [
+            ["super"],
+            ["super", "shift"],
+            ["super", "ctrl"],
+            ["super", "alt"],
+            []
+        ];
+        const modifierIdentities = new Set(modifierCandidates.map(modifiers => modifiers.join("+")));
+        const modifierOrder = ["super", "ctrl", "alt", "shift", "caps", "mod2", "mod3", "mod5"];
+        for (let mask = 0; mask < 256; ++mask) {
+            const modifiers = [];
+            for (let bit = 0; bit < modifierOrder.length; ++bit) {
+                if ((mask & (1 << bit)) !== 0)
+                    modifiers.push(modifierOrder[bit]);
+            }
+            const identity = modifiers.join("+");
+            if (!modifierIdentities.has(identity)) {
+                modifierIdentities.add(identity);
+                modifierCandidates.push(modifiers);
+            }
+        }
+        for (const modifiers of modifierCandidates) {
+            for (let functionKey = 13; functionKey <= 35; ++functionKey) {
+                const key = "F" + String(functionKey);
+                const candidate = { modifiers: modifiers, key: key, submap: "" };
+                if (!used.has(root.normalizedBindingChord(candidate)))
+                    return { modifiers: modifiers.slice(), key: key };
+            }
+        }
+        return null;
+    }
+
     function addBinding() {
-        if (!root.controlsEnabled || root.draftBindings.length >= 2048)
+        if (!root.controlsEnabled || root.persistedBindings(root.draftBindings).length >= 2048)
             return;
         const action = root.defaultAction();
-        if (!action)
+        const chord = root.availableNewBindingChord();
+        if (!action || !chord)
             return;
         const record = {
             id: root.stableId("binding"),
-            modifiers: ["super"],
-            key: "K",
+            modifiers: chord.modifiers,
+            key: chord.key,
             actionType: root.actionTypeOf(action),
             action: root.actionIdOf(action),
             arguments: {},
             description: qsTr("New shortcut"),
             enabled: true,
             submap: "",
-            options: root.defaultOptions()
+            options: root.defaultOptions(),
+            _bindingOrigin: "custom"
         };
         const next = root.clone(root.draftBindings);
         next.push(record);
@@ -186,7 +355,13 @@ Page {
         if (index < 0)
             return;
         const next = root.clone(root.draftBindings);
-        next[index] = root.clone(record);
+        const replacement = root.clone(record);
+        if (root.isDefaultBinding(replacement)) {
+            replacement.id = replacement._defaultId;
+            replacement._bindingOrigin = root.bindingMatchesDefault(replacement)
+                ? "default" : replacement.enabled === false ? "disabled" : "override";
+        }
+        next[index] = replacement;
         root.draftBindings = next;
     }
 
@@ -197,9 +372,36 @@ Page {
         if (index < 0)
             return;
         const next = root.clone(root.draftBindings);
+        if (root.isDefaultBinding(next[index])) {
+            next[index].enabled = false;
+            next[index]._bindingOrigin = "disabled";
+            root.draftBindings = next;
+            return;
+        }
         next.splice(index, 1);
         root.draftBindings = next;
         root.selectedBindingId = next.length > 0 ? next[Math.min(index, next.length - 1)].id : "";
+    }
+
+    function resetBinding(id) {
+        if (!root.controlsEnabled)
+            return;
+        const index = root.bindingIndex(id);
+        if (index < 0 || !root.isDefaultBinding(root.draftBindings[index]))
+            return;
+        const baseline = root.clone(root.defaultBindingById(root.draftBindings[index]._defaultId));
+        if (!baseline)
+            return;
+        baseline._bindingOrigin = "default";
+        baseline._defaultId = baseline.id;
+        const next = root.clone(root.draftBindings);
+        next[index] = baseline;
+        root.draftBindings = next;
+    }
+
+    function canMoveBinding(id) {
+        const record = root.bindingById(id);
+        return record !== null && !root.isDefaultBinding(record);
     }
 
     function moveBinding(id, delta) {
@@ -297,7 +499,7 @@ Page {
     }
 
     function synchronizeProjection(force) {
-        const nextBindings = root.clone(root.listValue(root.bindings));
+        const nextBindings = root.effectiveBindings(root.bindings);
         const nextSubmaps = root.clone(root.listValue(root.submaps));
         if (!nextBindings || !nextSubmaps)
             return;
@@ -309,11 +511,17 @@ Page {
             root.projectionInitialized = true;
             root.externalChangeWhileEditing = false;
             if (root.bindingIndex(root.selectedBindingId) < 0) {
-                root.selectedBindingId = root.draftBindings.length > 0 ? root.draftBindings[0].id : "";
+                root.selectedBindingId = !root.compactPage && root.draftBindings.length > 0 ? root.draftBindings[0].id : "";
             }
             return;
         }
         if (root.valuesEqual(nextBindings, root.synchronizedBindings) && root.valuesEqual(nextSubmaps, root.synchronizedSubmaps)) {
+            return;
+        }
+        if (root.valuesEqual(nextBindings, root.draftBindings) && root.valuesEqual(nextSubmaps, root.draftSubmaps)) {
+            root.synchronizedBindings = root.clone(nextBindings);
+            root.synchronizedSubmaps = root.clone(nextSubmaps);
+            root.externalChangeWhileEditing = false;
             return;
         }
         if (root.draftDirty) {
@@ -386,18 +594,17 @@ Page {
                 return qsTr("%1 has an invalid device filter.").arg(record.id);
             }
         }
-        const chord = record.submap + "|" + modifiers.join("+") + "|" + record.key;
-        if (record.enabled && seenChords.has(chord))
-            return qsTr("Two enabled shortcuts use the same chord in one submap.");
-        if (record.enabled)
-            seenChords.add(chord);
+        const chord = root.normalizedBindingChord(record);
+        if (seenChords.has(chord))
+            return qsTr("Two shortcuts use the same chord in one submap.");
+        seenChords.add(chord);
         return "";
     }
 
     function validateDraft() {
         if (!root.projectionInitialized)
             return qsTr("Waiting for the shortcut projection.");
-        if (root.draftBindings.length > 2048)
+        if (root.persistedBindings(root.draftBindings).length > 2048)
             return qsTr("At most 2048 shortcuts can be managed.");
         if (root.draftSubmaps.length > 256)
             return qsTr("At most 256 submaps can be managed.");
@@ -478,6 +685,7 @@ Page {
     }
 
     onBindingsChanged: root.synchronizeProjection(false)
+    onDefaultBindingsChanged: root.synchronizeProjection(false)
     onSubmapsChanged: root.synchronizeProjection(false)
     Component.onCompleted: root.synchronizeProjection(true)
 
@@ -681,9 +889,49 @@ Page {
                                 objectName: "addBindingButton"
                                 implicitHeight: 44
                                 text: qsTr("Add Shortcut")
-                                enabled: root.controlsEnabled && root.bindingActions.length > 0
+                                enabled: root.controlsEnabled && root.bindingActions.length > 0 && root.persistedBindings(root.draftBindings).length < 2048 && root.availableNewBindingChord() !== null
+                                Accessible.description: enabled ? qsTr("Create a custom shortcut with the first unused safe placeholder chord") : qsTr("No additional placeholder chord is available")
                                 onClicked: root.addBinding()
                             }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            TextField {
+                                objectName: "bindingSearchField"
+                                Layout.fillWidth: true
+                                implicitHeight: 42
+                                text: root.bindingSearchText
+                                placeholderText: qsTr("Search shortcuts…")
+                                Accessible.name: qsTr("Search shortcuts")
+                                onTextChanged: root.bindingSearchText = text
+                            }
+
+                            ComboBox {
+                                objectName: "bindingOriginFilter"
+                                Layout.preferredWidth: 142
+                                implicitHeight: 42
+                                model: [
+                                    qsTr("All"),
+                                    qsTr("Changed"),
+                                    qsTr("Defaults"),
+                                    qsTr("Custom")
+                                ]
+                                currentIndex: root.bindingFilterIndex
+                                Accessible.name: qsTr("Shortcut origin filter")
+                                onActivated: index => root.bindingFilterIndex = index
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            visible: root.bindingViewFiltered
+                            text: qsTr("Showing %1 of %2 shortcuts").arg(root.visibleBindings.length).arg(root.draftBindings.length)
+                            color: root.palette.placeholderText
+                            font.pixelSize: 10
+                            textFormat: Text.PlainText
                         }
 
                         ScrollView {
@@ -699,8 +947,8 @@ Page {
 
                                 Label {
                                     Layout.fillWidth: true
-                                    visible: root.draftBindings.length === 0
-                                    text: qsTr("No managed shortcuts yet. Add one to select a reviewed action and key chord.")
+                                    visible: root.visibleBindings.length === 0
+                                    text: root.draftBindings.length === 0 ? qsTr("No shipped defaults or custom shortcuts are available.") : qsTr("No shortcuts match this search and filter.")
                                     color: root.palette.placeholderText
                                     font.pixelSize: 13
                                     wrapMode: Text.Wrap
@@ -709,20 +957,34 @@ Page {
                                 }
 
                                 Repeater {
-                                    model: root.draftBindings
+                                    model: root.visibleBindings
 
                                     delegate: Rectangle {
                                         id: bindingCard
                                         required property int index
                                         required property var modelData
+                                        readonly property int draftIndex: root.bindingIndex(modelData.id)
                                         objectName: "bindingCard" + bindingCard.index
+                                        activeFocusOnTab: true
+                                        Accessible.role: Accessible.Button
+                                        Accessible.name: qsTr("%1, %2 plus %3").arg(bindingCard.modelData.description).arg(root.listValue(bindingCard.modelData.modifiers).join(" plus ")).arg(bindingCard.modelData.key)
+                                        Accessible.description: root.bindingOrigin(bindingCard.modelData) === "default" ? qsTr("Shipped default shortcut") : root.bindingOrigin(bindingCard.modelData) === "override" ? qsTr("User override shortcut") : root.bindingOrigin(bindingCard.modelData) === "disabled" ? qsTr("Default shortcut disabled by the user") : qsTr("Custom shortcut")
+                                        Accessible.onPressAction: root.selectedBindingId = bindingCard.modelData.id
+                                        Keys.onReturnPressed: event => {
+                                            root.selectedBindingId = bindingCard.modelData.id;
+                                            event.accepted = true;
+                                        }
+                                        Keys.onEnterPressed: event => {
+                                            root.selectedBindingId = bindingCard.modelData.id;
+                                            event.accepted = true;
+                                        }
 
                                         Layout.fillWidth: true
                                         implicitHeight: cardRow.implicitHeight + 18
                                         radius: 12
                                         color: root.selectedBindingId === modelData.id ? Qt.rgba(root.palette.highlight.r, root.palette.highlight.g, root.palette.highlight.b, 0.14) : root.palette.base
                                         border.width: 1
-                                        border.color: root.selectedBindingId === modelData.id ? root.palette.highlight : root.palette.mid
+                                        border.color: root.selectedBindingId === modelData.id || bindingCard.activeFocus ? root.palette.highlight : root.palette.mid
 
                                         RowLayout {
                                             id: cardRow
@@ -770,17 +1032,34 @@ Page {
                                                     font.pixelSize: 10
                                                     elide: Text.ElideRight
                                                 }
+                                                Label {
+                                                    Layout.fillWidth: true
+                                                    text: {
+                                                        const origin = root.bindingOrigin(bindingCard.modelData);
+                                                        if (origin === "default")
+                                                            return qsTr("Shipped default");
+                                                        if (origin === "override")
+                                                            return qsTr("User override");
+                                                        if (origin === "disabled")
+                                                            return qsTr("Default disabled by user");
+                                                        return qsTr("Custom shortcut");
+                                                    }
+                                                    color: root.bindingOrigin(bindingCard.modelData) === "default" ? root.palette.placeholderText : root.palette.highlight
+                                                    font.pixelSize: 9
+                                                    font.weight: Font.DemiBold
+                                                    elide: Text.ElideRight
+                                                }
                                             }
 
                                             ToolButton {
                                                 text: "↑"
-                                                enabled: root.controlsEnabled && bindingCard.index > 0
+                                                enabled: root.controlsEnabled && !root.bindingViewFiltered && root.canMoveBinding(bindingCard.modelData.id) && bindingCard.draftIndex > 0 && root.canMoveBinding(root.draftBindings[bindingCard.draftIndex - 1].id)
                                                 Accessible.name: qsTr("Move shortcut earlier")
                                                 onClicked: root.moveBinding(bindingCard.modelData.id, -1)
                                             }
                                             ToolButton {
                                                 text: "↓"
-                                                enabled: root.controlsEnabled && bindingCard.index < root.draftBindings.length - 1
+                                                enabled: root.controlsEnabled && !root.bindingViewFiltered && root.canMoveBinding(bindingCard.modelData.id) && bindingCard.draftIndex < root.draftBindings.length - 1 && root.canMoveBinding(root.draftBindings[bindingCard.draftIndex + 1].id)
                                                 Accessible.name: qsTr("Move shortcut later")
                                                 onClicked: root.moveBinding(bindingCard.modelData.id, 1)
                                             }
@@ -814,12 +1093,15 @@ Page {
                             actions: root.bindingActions
                             controlsEnabled: root.controlsEnabled
                             issue: root.selectedBindingIssue()
+                            bindingOrigin: root.selectedBindingOrigin
+                            canReset: root.selectedBindingCanReset
                             onRecordModified: record => root.replaceBinding(record)
                             onCloseRequested: {
                                 if (root.compactPage)
                                     root.selectedBindingId = "";
                             }
                             onRemoveRequested: id => root.removeBinding(id)
+                            onResetRequested: id => root.resetBinding(id)
                         }
                     }
                 }
@@ -1022,7 +1304,7 @@ Page {
                     text: root.busy && root.busyOperation === "bindings-save" ? qsTr("Saving…") : qsTr("Save Shortcuts")
                     highlighted: true
                     enabled: root.saveEnabled
-                    onClicked: root.saveRequested(root.clone(root.draftBindings), root.clone(root.draftSubmaps))
+                    onClicked: root.saveRequested(root.persistedBindings(root.draftBindings), root.clone(root.draftSubmaps))
                 }
             }
         }

@@ -1,5 +1,6 @@
 #include "hyprland/action_catalog.h"
 #include "hyprland/catalog.h"
+#include "hyprland/default_keybindings.h"
 #include "hyprland/desired_state.h"
 #include "hyprland/json_support.h"
 
@@ -418,6 +419,96 @@ private slots:
                        }));
     QVERIFY(!dispatcherIds.contains(QStringLiteral("exec_cmd")));
     QVERIFY(!dispatcherIds.contains(QStringLiteral("exec_raw")));
+  }
+
+  void shippedDefaultKeybindingsAreCanonicalReviewedAndUnique() {
+    const auto catalog = shippedCatalog();
+    const auto actions = shippedActionCatalog();
+    QVERIFY2(catalog, qPrintable(describeErrors(catalog.errors)));
+    QVERIFY2(actions, qPrintable(describeErrors(actions.errors)));
+
+    const auto &defaults = shippedDefaultKeybindings();
+    QCOMPARE(defaults.size(), shippedDefaultKeybindingCount);
+    QSet<QString> ids;
+    QSet<QString> chords;
+    for (const auto &record : defaults) {
+      QVERIFY(record.id.startsWith(QStringLiteral("hyprshelld.default.")));
+      QVERIFY(!ids.contains(record.id));
+      ids.insert(record.id);
+      QVERIFY(record.enabled);
+      QVERIFY(record.submap.isEmpty());
+      QVERIFY(record.actionType == BindingActionType::Dispatcher);
+      QVERIFY(!record.description.isEmpty());
+      QVERIFY(findAction(*actions.value, ActionKind::Dispatcher,
+                         record.action) != nullptr);
+      const auto normalized = normalizeBindingChord(record.modifiers,
+                                                     record.key);
+      QVERIFY2(normalized, qPrintable(describeErrors(normalized.errors)));
+      QCOMPARE(record.normalizedChord, *normalized.value);
+      QVERIFY(!chords.contains(record.normalizedChord));
+      chords.insert(record.normalizedChord);
+      QCOMPARE(shippedDefaultKeybindingById(record.id), &record);
+      QCOMPARE(matchedShippedDefaultKeybinding(record), &record);
+    }
+
+    auto state = defaultDesiredState(*catalog.value, *actions.value);
+    state.bindings = defaults;
+    const auto serializedDefaults = serializeDesiredState(state);
+    const auto serializedRoot =
+        QJsonDocument::fromJson(serializedDefaults).object();
+    const auto serializedBindings = QJsonDocument(
+        serializedRoot.value(QStringLiteral("bindings")).toArray()
+    ).toJson(QJsonDocument::Compact);
+    QCOMPARE(
+        QCryptographicHash::hash(
+            serializedBindings, QCryptographicHash::Sha256
+        ).toHex(),
+        QByteArrayLiteral(
+            "395636a86fc54a7290414697576f4162dc82ccc7d913a634806bfa58034c3608"
+        )
+    );
+    const auto reparsed = parseDesiredState(
+        serializedDefaults, *catalog.value, *actions.value);
+    QVERIFY2(reparsed, qPrintable(describeErrors(reparsed.errors)));
+    QCOMPARE(reparsed.value->bindings, defaults);
+
+    auto chordFallback = defaults.constFirst();
+    chordFallback.id = QStringLiteral("legacy.user.exit-session");
+    chordFallback.description = QStringLiteral("Legacy user exit shortcut");
+    QCOMPARE(
+        matchedShippedDefaultKeybinding(chordFallback),
+        &defaults.constFirst()
+    );
+    state.bindings = {chordFallback};
+    const auto fallbackParsed = parseDesiredState(
+        serializeDesiredState(state), *catalog.value, *actions.value);
+    QVERIFY2(
+        fallbackParsed,
+        qPrintable(describeErrors(fallbackParsed.errors))
+    );
+    QCOMPARE(
+        fallbackParsed.value->bindings.constFirst().id,
+        chordFallback.id
+    );
+
+    auto idOverride = defaults.constFirst();
+    idOverride.key = QStringLiteral("F13");
+    state.bindings = {idOverride, chordFallback};
+    const auto duplicateOverride = parseDesiredState(
+        serializeDesiredState(state), *catalog.value, *actions.value);
+    QVERIFY(!duplicateOverride);
+    QVERIFY(hasCode(
+        duplicateOverride.errors,
+        QStringLiteral("state.duplicate-default-binding-override")
+    ));
+
+    state.bindings = {defaults.constFirst()};
+    state.bindings.first().enabled = false;
+    const auto disabled = parseDesiredState(
+        serializeDesiredState(state), *catalog.value, *actions.value);
+    QVERIFY2(disabled, qPrintable(describeErrors(disabled.errors)));
+    QCOMPARE(disabled.value->bindings.size(), qsizetype(1));
+    QVERIFY(!disabled.value->bindings.constFirst().enabled);
   }
 
   void dormantV2AuthorityEnvelopeIsParallelStrictAndSemanticOnly() {

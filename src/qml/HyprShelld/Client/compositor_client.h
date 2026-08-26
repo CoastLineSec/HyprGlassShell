@@ -55,6 +55,7 @@ class CompositorClient final : public QObject {
     Q_PROPERTY(bool actionCatalogAvailable READ actionCatalogAvailable NOTIFY bindingsChanged)
     Q_PROPERTY(bool bindingsAvailable READ bindingsAvailable NOTIFY bindingsChanged)
     Q_PROPERTY(bool bindingsProjectionAvailable READ bindingsProjectionAvailable NOTIFY bindingsChanged)
+    Q_PROPERTY(QVariantList defaultBindings READ defaultBindings NOTIFY bindingsChanged)
     Q_PROPERTY(QVariantList bindings READ bindings NOTIFY bindingsChanged)
     Q_PROPERTY(QVariantList submaps READ submaps NOTIFY bindingsChanged)
     Q_PROPERTY(QVariantList bindingActions READ bindingActions NOTIFY bindingsChanged)
@@ -188,6 +189,7 @@ public:
     [[nodiscard]] bool actionCatalogAvailable() const;
     [[nodiscard]] bool bindingsAvailable() const;
     [[nodiscard]] bool bindingsProjectionAvailable() const;
+    [[nodiscard]] QVariantList defaultBindings() const;
     [[nodiscard]] QVariantList bindings() const;
     [[nodiscard]] QVariantList submaps() const;
     [[nodiscard]] QVariantList bindingActions() const;

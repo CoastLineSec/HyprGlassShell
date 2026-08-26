@@ -2070,6 +2070,7 @@ ApplicationWindow {
                         requiredActivation: CompositorClient.requiredActivation
                         confirmationState: CompositorClient.displayConfirmationState
                         bindings: CompositorClient.bindings
+                        defaultBindings: CompositorClient.defaultBindings
                         submaps: CompositorClient.submaps
                         bindingActions: CompositorClient.bindingActions
                         bindingsErrorName: CompositorClient.bindingsErrorName

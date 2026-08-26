@@ -1,6 +1,7 @@
 #include "compositord/generation.h"
 #include "compositord/renderer.h"
 
+#include "hyprland/default_keybindings.h"
 #include "hyprland/json_support.h"
 
 #include <QCryptographicHash>
@@ -1257,8 +1258,9 @@ private slots:
             + QByteArrayLiteral("-- Put custom configuration in ")
             + customPath.toUtf8()
             + QByteArrayLiteral("; it is loaded last.\n\n");
-        QCOMPARE(
-            configuredGeneration.value->files.value(keybindsPath).contents,
+        const auto configuredKeybinds = configuredGeneration.value->files
+            .value(keybindsPath).contents;
+        QVERIFY(configuredKeybinds.startsWith(
             expectedHeader
                 + QByteArrayLiteral(
                     "hl.config({binds = {allow_workspace_cycles = true, "
@@ -1266,6 +1268,13 @@ private slots:
                     "workspace_back_and_forth = true, "
                     "workspace_center_on = 0}})\n"
                 )
+        ));
+        QVERIFY(configuredKeybinds.contains(
+            QByteArrayLiteral("-- Shipped HyprShelld defaults")
+        ));
+        QCOMPARE(
+            occurrences(configuredKeybinds, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount
         );
         QCOMPARE(
             configuredGeneration.value->files.value(cursorPath).contents,
@@ -1471,7 +1480,7 @@ private slots:
         );
         QCOMPARE(
             occurrences(defaultKeybinds, QByteArrayLiteral("hl.bind(")),
-            qsizetype(2)
+            shippedDefaultKeybindingCount + qsizetype(2)
         );
 
         auto stateObject = baselineObject;
@@ -1541,7 +1550,7 @@ private slots:
         );
         QCOMPARE(
             occurrences(configuredKeybinds, QByteArrayLiteral("hl.bind(")),
-            qsizetype(2)
+            shippedDefaultKeybindingCount + qsizetype(2)
         );
         QCOMPARE(
             configuredGeneration.value->activationRequirement,
@@ -4164,6 +4173,152 @@ private slots:
         );
     }
 
+    void layersShippedDefaultsAndPersistentUserOverrides()
+    {
+        QTemporaryDir temporary;
+        QVERIFY(temporary.isValid());
+        const auto generationRoot = QDir(temporary.path()).filePath(
+            QString::fromLatin1(nonceA)
+        );
+        const auto customPath = QDir(temporary.path()).filePath(
+            QStringLiteral("user-custom.lua")
+        );
+        const auto keybindsPath = QStringLiteral("modules/70-keybinds.lua");
+        const auto baselineStatement = QByteArrayLiteral(
+            "hl.bind(\"SUPER + q\", hl.dsp.window.kill(), "
+            "{description = \"Close the focused window\"})"
+        );
+        const auto replacementStatement = QByteArrayLiteral(
+            "hl.bind(\"SUPER + z\", hl.dsp.window.kill(), "
+            "{description = \"User replacement\"})"
+        );
+
+        const auto baselineState = parseState(defaults);
+        QVERIFY2(
+            baselineState,
+            qPrintable(describeErrors(baselineState.errors))
+        );
+        const auto baselineGeneration = render(
+            *baselineState.value, generationRoot, customPath
+        );
+        QVERIFY2(
+            baselineGeneration,
+            qPrintable(describeErrors(baselineGeneration.errors))
+        );
+        const auto baselineKeybinds = baselineGeneration.value->files
+                                          .value(keybindsPath)
+                                          .contents;
+        QCOMPARE(
+            occurrences(baselineKeybinds, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount
+        );
+        QCOMPARE(
+            occurrences(baselineKeybinds, baselineStatement),
+            qsizetype(1)
+        );
+
+        const QJsonObject replacement{
+            {QStringLiteral("id"),
+             QStringLiteral("hyprshelld.default.window.close")},
+            {QStringLiteral("modifiers"),
+             QJsonArray{QStringLiteral("super")}},
+            {QStringLiteral("key"), QStringLiteral("z")},
+            {QStringLiteral("actionType"), QStringLiteral("dispatcher")},
+            {QStringLiteral("action"), QStringLiteral("window.kill")},
+            {QStringLiteral("arguments"), QJsonObject{}},
+            {QStringLiteral("description"),
+             QStringLiteral("User replacement")},
+            {QStringLiteral("enabled"), true},
+            {QStringLiteral("submap"), QString()},
+            {QStringLiteral("options"), bindingOptions()},
+        };
+        auto overrideObject = defaults;
+        overrideObject.insert(
+            QStringLiteral("bindings"), QJsonArray{replacement}
+        );
+        const auto overrideState = parseState(overrideObject);
+        QVERIFY2(
+            overrideState,
+            qPrintable(describeErrors(overrideState.errors))
+        );
+        const auto overrideGeneration = render(
+            *overrideState.value, generationRoot, customPath
+        );
+        QVERIFY2(
+            overrideGeneration,
+            qPrintable(describeErrors(overrideGeneration.errors))
+        );
+        const auto overrideKeybinds = overrideGeneration.value->files
+                                          .value(keybindsPath)
+                                          .contents;
+        QCOMPARE(
+            occurrences(overrideKeybinds, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount
+        );
+        QCOMPARE(
+            occurrences(overrideKeybinds, baselineStatement),
+            qsizetype(0)
+        );
+        QCOMPARE(
+            occurrences(overrideKeybinds, replacementStatement),
+            qsizetype(1)
+        );
+        QVERIFY(!overrideKeybinds.contains(QByteArrayLiteral("hl.unbind(")));
+
+        auto disabledReplacement = replacement;
+        disabledReplacement.insert(QStringLiteral("enabled"), false);
+        auto disabledObject = defaults;
+        disabledObject.insert(
+            QStringLiteral("bindings"), QJsonArray{disabledReplacement}
+        );
+        const auto disabledState = parseState(disabledObject);
+        QVERIFY2(
+            disabledState,
+            qPrintable(describeErrors(disabledState.errors))
+        );
+        const auto disabledGeneration = render(
+            *disabledState.value, generationRoot, customPath
+        );
+        QVERIFY2(
+            disabledGeneration,
+            qPrintable(describeErrors(disabledGeneration.errors))
+        );
+        const auto disabledKeybinds = disabledGeneration.value->files
+                                          .value(keybindsPath)
+                                          .contents;
+        QCOMPARE(
+            occurrences(disabledKeybinds, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount - qsizetype(1)
+        );
+        QCOMPARE(
+            occurrences(disabledKeybinds, baselineStatement),
+            qsizetype(0)
+        );
+        QCOMPARE(
+            occurrences(disabledKeybinds, replacementStatement),
+            qsizetype(0)
+        );
+        QVERIFY(!disabledKeybinds.contains(QByteArrayLiteral("hl.unbind(")));
+
+        const auto resetState = parseState(defaults);
+        QVERIFY2(resetState, qPrintable(describeErrors(resetState.errors)));
+        const auto resetGeneration = render(
+            *resetState.value, generationRoot, customPath
+        );
+        QVERIFY2(
+            resetGeneration,
+            qPrintable(describeErrors(resetGeneration.errors))
+        );
+        const auto resetKeybinds = resetGeneration.value->files
+                                       .value(keybindsPath)
+                                       .contents;
+        QCOMPARE(resetKeybinds, baselineKeybinds);
+        QCOMPARE(
+            occurrences(resetKeybinds, baselineStatement),
+            qsizetype(1)
+        );
+    }
+
     void activationRequirementIsStrongestAndNeverNone()
     {
         QTemporaryDir temporary;
@@ -4310,9 +4465,13 @@ private slots:
             rendered.value->activationRequirement,
             ActivationRequirement::Restart
         );
-        QVERIFY(!rendered.value->files
-                     .value(QStringLiteral("modules/70-keybinds.lua"))
-                     .contents.contains("hl.bind("));
+        const auto disabledBrokerKeybinds = rendered.value->files
+            .value(QStringLiteral("modules/70-keybinds.lua")).contents;
+        QCOMPARE(
+            occurrences(disabledBrokerKeybinds, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount
+        );
+        QVERIFY(!disabledBrokerKeybinds.contains("defaultApp.terminal"));
     }
 
     void dormantV2ManifestBindsExactAuthorityClosure()
@@ -4339,7 +4498,23 @@ private slots:
         const auto dormant = renderDormant(*v2State.value, root, custom);
         QVERIFY2(active, qPrintable(describeErrors(active.errors)));
         QVERIFY2(dormant, qPrintable(describeErrors(dormant.errors)));
-        QVERIFY(dormant.value->files == active.value->files);
+        auto activeFiles = active.value->files;
+        auto dormantFiles = dormant.value->files;
+        const auto keybindPath = QStringLiteral("modules/70-keybinds.lua");
+        const auto activeKeybinds = activeFiles.take(keybindPath);
+        const auto dormantKeybinds = dormantFiles.take(keybindPath);
+        QVERIFY(activeFiles == dormantFiles);
+        QVERIFY(activeKeybinds != dormantKeybinds);
+        QCOMPARE(
+            occurrences(activeKeybinds.contents, QByteArrayLiteral("hl.bind(")),
+            shippedDefaultKeybindingCount
+        );
+        QCOMPARE(
+            occurrences(
+                dormantKeybinds.contents, QByteArrayLiteral("hl.bind(")
+            ),
+            qsizetype(0)
+        );
         QCOMPARE(dormant.value->files.size(), 17);
         QCOMPARE(
             dormant.value->activationRequirement,

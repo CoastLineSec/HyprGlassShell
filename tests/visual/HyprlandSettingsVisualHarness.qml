@@ -236,7 +236,20 @@ ApplicationWindow {
                 actionType: "defaultApp"
             }
         ];
-        page.bindings = [bindingRecord("binding.close", ["super"], "Q", "window.close", "Close the focused window"), bindingRecord("binding.fullscreen", ["super"], "F", "fullscreen", "Toggle fullscreen"), bindingRecord("binding.move", ["super", "shift"], "3", "workspace", "Move to workspace three", "move")];
+        page.defaultBindings = [
+            bindingRecord("hyprshelld.default.window.close", ["super"], "q", "window.close", "Close the focused window"),
+            bindingRecord("hyprshelld.default.window.fullscreen", ["super", "shift"], "f", "fullscreen", "Toggle fullscreen"),
+            bindingRecord("hyprshelld.default.focus.window.up.vim", ["super"], "k", "window.close", "Focus the window up"),
+            bindingRecord("hyprshelld.default.focus.workspace.3", ["super"], "3", "workspace", "Focus workspace three")
+        ];
+        const closeOverride = bindingRecord("hyprshelld.default.window.close", ["super"], "z", "window.close", "Close the focused window with my shortcut");
+        const disabledFullscreen = bindingRecord("hyprshelld.default.window.fullscreen", ["super", "shift"], "f", "fullscreen", "Toggle fullscreen");
+        disabledFullscreen.enabled = false;
+        page.bindings = [
+            closeOverride,
+            disabledFullscreen,
+            bindingRecord("binding.move", ["super", "shift"], "3", "workspace", "Move to workspace three", "move")
+        ];
         page.submaps = [
             {
                 id: "submap.resize",
@@ -261,7 +274,7 @@ ApplicationWindow {
             page.selectedBindingId = "";
         } else {
             page.currentTab = 0;
-            page.selectedBindingId = "binding.close";
+            page.selectedBindingId = "hyprshelld.default.window.close";
         }
     }
 

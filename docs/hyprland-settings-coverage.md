@@ -121,6 +121,10 @@ There are no missing complex surfaces.
 | `permissions` | Permissions / `hyprland/permissions` | [`PermissionsPage.qml`](../src/settings/PermissionsPage.qml) | typed `id`/`binary`/`type`/`mode` collection editor | implemented |
 | `workspaceRules` | Workspaces / `workspaces` | [`WorkspacesPage.qml`](../src/settings/WorkspacesPage.qml) | [`WorkspaceRuleSummaryList.qml`](../src/settings/WorkspaceRuleSummaryList.qml) + [`WorkspaceRuleEditor.qml`](../src/settings/WorkspaceRuleEditor.qml) | implemented |
 
+The `bindings` surface's shipped-default inventory, Legacy HyprGlassShell
+crosswalk, sparse override semantics, and intentionally blocked rows are pinned
+separately in [`hyprland-keybinding-layers.md`](hyprland-keybinding-layers.md).
+
 The environment surface preserves and edits exact-v1 `uwsm` records, but saving
 such a record remains blocked (`environment.scope.uwsm`,
 `intentionally-unsupported`) until there is a verified UWSM publisher. The

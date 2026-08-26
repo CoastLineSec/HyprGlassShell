@@ -24,6 +24,8 @@ qt_add_library(
         monitor_profile.h
         input_device_inventory.cpp
         input_device_inventory.h
+        default_keybindings.cpp
+        default_keybindings.h
         keyboard_shortcut_reference.cpp
         keyboard_shortcut_reference.h
         json_support.cpp

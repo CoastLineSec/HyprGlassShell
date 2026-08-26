@@ -1,5 +1,6 @@
 #include "desired_state.h"
 
+#include "default_keybindings.h"
 #include "json_support.h"
 
 #include <QJsonArray>
@@ -3131,7 +3132,47 @@ parseDesiredStateForAuthorities(
         }
     }
 
+    const bool includesShippedDefaultBindings =
+        catalog.contractVersion == currentCatalogContractVersion
+        && catalog.digest == QLatin1String(reviewedCatalogDigest)
+        && actionCatalog.contractVersion == currentActionCatalogContractVersion
+        && actionCatalog.digest == QLatin1String(reviewedActionCatalogDigest);
+    QSet<QString> replacedDefaultBindings;
+    if (includesShippedDefaultBindings) {
+        for (qsizetype index = 0; index < state.bindings.size(); ++index) {
+            const auto &binding = state.bindings.at(index);
+            const auto *matchedDefault =
+                matchedShippedDefaultKeybinding(binding);
+            if (matchedDefault == nullptr) continue;
+            if (replacedDefaultBindings.contains(matchedDefault->id)) {
+                addError(
+                    result.errors,
+                    QStringLiteral("$.bindings[") + QString::number(index)
+                        + QLatin1Char(']'),
+                    QStringLiteral(
+                        "state.duplicate-default-binding-override"
+                    ),
+                    QStringLiteral(
+                        "Only one user-layer record may replace or disable a shipped default shortcut."
+                    )
+                );
+            }
+            replacedDefaultBindings.insert(matchedDefault->id);
+        }
+    }
+
     QSet<QString> bindingChords;
+    if (includesShippedDefaultBindings) {
+        for (const auto &binding : shippedDefaultKeybindings()) {
+            if (!binding.enabled
+                || replacedDefaultBindings.contains(binding.id)) {
+                continue;
+            }
+            bindingChords.insert(
+                binding.submap + QLatin1Char('|') + binding.normalizedChord
+            );
+        }
+    }
     for (qsizetype index = 0; index < state.bindings.size(); ++index) {
         const auto &binding = state.bindings.at(index);
         const auto path = QStringLiteral("$.bindings[") + QString::number(index) + QLatin1Char(']');
