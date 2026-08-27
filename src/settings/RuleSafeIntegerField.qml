@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ColumnLayout {
     id: root
@@ -83,7 +84,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: !root.inputValid
         text: qsTr("Enter a canonical whole number from −9007199254740991 through 9007199254740991.")
-        color: "#ffb8c3"
+        color: ShellTheme.onErrorContainer
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         Accessible.role: Accessible.AlertMessage

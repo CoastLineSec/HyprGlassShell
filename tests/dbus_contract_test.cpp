@@ -210,6 +210,8 @@ private slots:
                 QStringLiteral("annotation=property:ShellOuterSpacing:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=SyncHyprlandWindowSpacing:b:read"),
                 QStringLiteral("annotation=property:SyncHyprlandWindowSpacing:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
+                QStringLiteral("property=AppearanceMode:s:read"),
+                QStringLiteral("annotation=property:AppearanceMode:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=Revision:t:read"),
                 QStringLiteral("annotation=property:Revision:org.freedesktop.DBus.Property.EmitsChangedSignal:true"),
                 QStringLiteral("property=RecoveryState:s:read"),
@@ -234,6 +236,11 @@ private slots:
                 QStringLiteral("arg=method:SetSharedSpacing:revision:t:out"),
                 QStringLiteral("method=ResetSharedSpacing"),
                 QStringLiteral("arg=method:ResetSharedSpacing:revision:t:out"),
+                QStringLiteral("method=SetAppearanceMode"),
+                QStringLiteral("arg=method:SetAppearanceMode:mode:s:in"),
+                QStringLiteral("arg=method:SetAppearanceMode:revision:t:out"),
+                QStringLiteral("method=ResetAppearanceMode"),
+                QStringLiteral("arg=method:ResetAppearanceMode:revision:t:out"),
             }
         );
     }

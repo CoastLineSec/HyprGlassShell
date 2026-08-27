@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -520,9 +521,9 @@ Page {
                 padding: root.compactPage ? 12 : 16
 
                 background: Rectangle {
-                    color: root.statusIsDanger ? "#382125" : "#33251a"
+                    color: root.statusIsDanger ? ShellTheme.errorContainer : ShellTheme.warningContainer
                     radius: 12
-                    border.color: root.statusIsDanger ? "#8bfb7185" : "#8bf6ad55"
+                    border.color: root.statusIsDanger ? ShellTheme.errorOutline : ShellTheme.warningOutline
                 }
 
                 ColumnLayout {
@@ -533,7 +534,7 @@ Page {
                         objectName: "permissionsStatusMessage"
                         Layout.fillWidth: true
                         text: root.statusMessage
-                        color: root.statusIsDanger ? "#ffb8c3" : "#ffd5a1"
+                        color: root.statusIsDanger ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                         Accessible.role: Accessible.AlertMessage
@@ -603,8 +604,8 @@ Page {
                         Layout.preferredWidth: root.compactPage ? 112 : 154
                         Layout.preferredHeight: root.compactPage ? 112 : 126
                         radius: 14
-                        color: "#201f2c"
-                        border.color: "#ab91dc"
+                        color: ShellTheme.card
+                        border.color: ShellTheme.primary
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -614,7 +615,7 @@ Page {
                             Label {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: root.editingPermission ? root.modeLabel(root.editingPermission.mode).toUpperCase() : qsTr("POLICY")
-                                color: root.editingPermission && root.editingPermission.mode === "deny" ? "#ffacb8" : "#c9b4f4"
+                                color: root.editingPermission && root.editingPermission.mode === "deny" ? ShellTheme.error : ShellTheme.primary
                                 font.pixelSize: 15
                                 font.weight: Font.Bold
                             }
@@ -624,13 +625,13 @@ Page {
                                 Layout.preferredWidth: 58
                                 Layout.preferredHeight: 47
                                 radius: 13
-                                color: "#332b47"
-                                border.color: "#c9b4f4"
+                                color: ShellTheme.primaryContainer
+                                border.color: ShellTheme.primary
 
                                 Label {
                                     anchors.centerIn: parent
                                     text: root.editingPermission && root.editingPermission.mode === "deny" ? "×" : "✓"
-                                    color: root.editingPermission && root.editingPermission.mode === "deny" ? "#ffacb8" : "#b9efcb"
+                                    color: root.editingPermission && root.editingPermission.mode === "deny" ? ShellTheme.error : ShellTheme.success
                                     font.pixelSize: 26
                                     font.weight: Font.Bold
                                 }
@@ -640,7 +641,7 @@ Page {
                                 Layout.fillWidth: true
                                 horizontalAlignment: Text.AlignHCenter
                                 text: qsTr("FIRST MATCH")
-                                color: "#a69db9"
+                                color: ShellTheme.onSurfaceMuted
                                 font.pixelSize: 10
                                 font.weight: Font.Bold
                             }
@@ -666,7 +667,7 @@ Page {
                             objectName: "permissionRiskExplanation"
                             Layout.fillWidth: true
                             text: root.permissionRisk(root.editingPermission)
-                            color: root.editingPermission && root.editingPermission.mode === "allow" && ["plugin", "keyboard", "input-capture"].includes(root.editingPermission.type) ? "#ffb8c3" : root.palette.placeholderText
+                            color: root.editingPermission && root.editingPermission.mode === "allow" && ["plugin", "keyboard", "input-capture"].includes(root.editingPermission.type) ? ShellTheme.onErrorContainer : root.palette.placeholderText
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
@@ -676,7 +677,7 @@ Page {
                             objectName: "permissionCodeExample"
                             Layout.fillWidth: true
                             text: root.permissionExample(root.editingPermission)
-                            color: "#c9b4f4"
+                            color: ShellTheme.primary
                             font.family: "monospace"
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -693,9 +694,9 @@ Page {
                 padding: 14
 
                 background: Rectangle {
-                    color: "#30231f"
+                    color: ShellTheme.warningContainer
                     radius: 13
-                    border.color: "#8bedad63"
+                    border.color: ShellTheme.warningOutline
                 }
 
                 ColumnLayout {
@@ -705,7 +706,7 @@ Page {
                     Label {
                         Layout.fillWidth: true
                         text: qsTr("Restart and enforcement safety")
-                        color: "#ffd3a9"
+                        color: ShellTheme.onWarningContainer
                         font.weight: Font.DemiBold
                         textFormat: Text.PlainText
                     }
@@ -713,7 +714,7 @@ Page {
                     Label {
                         Layout.fillWidth: true
                         text: qsTr("Permission changes require a verified Hyprland restart. They are effective only when ecosystem.enforce_permissions is enabled. This editor does not enable enforcement, and the trusted backend performs final RE2 compilation before saving.")
-                        color: "#e6c8ad"
+                        color: ShellTheme.onWarningContainer
                         font.pixelSize: 12
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
@@ -825,7 +826,7 @@ Page {
 
                             Label {
                                 text: root.modeLabel(permissionCard.modelData.mode).toUpperCase()
-                                color: permissionCard.modelData.mode === "deny" ? "#ffacb8" : permissionCard.modelData.mode === "allow" ? "#b9efcb" : "#ffd3a9"
+                                color: permissionCard.modelData.mode === "deny" ? ShellTheme.error : permissionCard.modelData.mode === "allow" ? ShellTheme.success : ShellTheme.onWarningContainer
                                 font.pixelSize: 11
                                 font.weight: Font.Bold
                                 textFormat: Text.PlainText
@@ -877,9 +878,9 @@ Page {
                             padding: root.compactPage ? 12 : 16
 
                             background: Rectangle {
-                                color: "#201f2c"
+                                color: ShellTheme.card
                                 radius: 12
-                                border.color: root.editorIssue.length === 0 ? "#8a74b0" : "#a8606a"
+                                border.color: root.editorIssue.length === 0 ? ShellTheme.primary : ShellTheme.errorOutline
                             }
 
                             ColumnLayout {
@@ -889,7 +890,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Binary pattern (RE2)")
-                                    color: "#f3edf9"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -910,7 +911,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Capability")
-                                    color: "#f3edf9"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -930,7 +931,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Decision")
-                                    color: "#f3edf9"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -952,7 +953,7 @@ Page {
                                     Layout.fillWidth: true
                                     visible: root.editorIssue.length > 0
                                     text: root.editorIssue
-                                    color: "#ffb8c3"
+                                    color: ShellTheme.onErrorContainer
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
                                     Accessible.role: Accessible.AlertMessage
@@ -962,7 +963,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: root.permissionRisk(permissionCard.modelData)
-                                    color: permissionCard.modelData.mode === "allow" && ["plugin", "keyboard", "input-capture"].includes(permissionCard.modelData.type) ? "#ffb8c3" : "#c1b9cc"
+                                    color: permissionCard.modelData.mode === "allow" && ["plugin", "keyboard", "input-capture"].includes(permissionCard.modelData.type) ? ShellTheme.onErrorContainer : ShellTheme.onSurfaceMuted
                                     font.pixelSize: 12
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
@@ -988,7 +989,7 @@ Page {
                 background: Rectangle {
                     color: root.palette.base
                     radius: 16
-                    border.color: root.draftValid ? root.palette.mid : "#a8606a"
+                    border.color: root.draftValid ? root.palette.mid : ShellTheme.errorOutline
                 }
 
                 ColumnLayout {
@@ -998,7 +999,7 @@ Page {
                     Label {
                         Layout.fillWidth: true
                         text: root.draftValid ? qsTr("The complete ordered collection is validated before it replaces desired state.") : qsTr("Finish every rule and remove duplicate binary/type pairs before saving.")
-                        color: root.draftValid ? root.palette.placeholderText : "#ffb8c3"
+                        color: root.draftValid ? root.palette.placeholderText : ShellTheme.onErrorContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                     }

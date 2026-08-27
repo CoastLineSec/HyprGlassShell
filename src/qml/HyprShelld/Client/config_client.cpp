@@ -45,6 +45,7 @@ ConfigClient::ConfigClient(QDBusConnection connection, QObject *parent)
     , syncHyprlandWindowSpacing_(
           ConfigValues::defaultSyncHyprlandWindowSpacing
       )
+    , appearanceMode_(ConfigValues::defaultAppearanceMode)
 {
     interface_ = new OrgHyprshelldConfig1Interface(
         serviceName,
@@ -126,6 +127,11 @@ uint ConfigClient::shellOuterSpacing() const
 bool ConfigClient::syncHyprlandWindowSpacing() const
 {
     return syncHyprlandWindowSpacing_;
+}
+
+QString ConfigClient::appearanceMode() const
+{
+    return appearanceMode_;
 }
 
 qulonglong ConfigClient::revision() const
@@ -223,6 +229,11 @@ bool ConfigClient::defaultSyncHyprlandWindowSpacing() const
     return ConfigValues::defaultSyncHyprlandWindowSpacing;
 }
 
+QString ConfigClient::defaultAppearanceMode() const
+{
+    return ConfigValues::defaultAppearanceMode;
+}
+
 QString ConfigClient::lastErrorName() const
 {
     return lastErrorName_;
@@ -281,6 +292,16 @@ void ConfigClient::resetSharedSpacing()
     beginMutation(interface_->ResetSharedSpacing());
 }
 
+void ConfigClient::setAppearanceMode(const QString &mode)
+{
+    beginMutation(interface_->SetAppearanceMode(mode));
+}
+
+void ConfigClient::resetAppearanceMode()
+{
+    beginMutation(interface_->ResetAppearanceMode());
+}
+
 void ConfigClient::clearError()
 {
     if (lastErrorName_.isEmpty() && lastErrorMessage_.isEmpty()) {
@@ -311,6 +332,7 @@ void ConfigClient::propertiesChanged(
             || property == QStringLiteral("ShellInnerSpacing")
             || property == QStringLiteral("ShellOuterSpacing")
             || property == QStringLiteral("SyncHyprlandWindowSpacing")
+            || property == QStringLiteral("AppearanceMode")
             || property == QStringLiteral("Revision")
             || property == QStringLiteral("RecoveryState")) {
             setAvailable(false);
@@ -400,6 +422,7 @@ bool ConfigClient::applyProperties(
         QStringLiteral("ShellInnerSpacing"),
         QStringLiteral("ShellOuterSpacing"),
         QStringLiteral("SyncHyprlandWindowSpacing"),
+        QStringLiteral("AppearanceMode"),
         QStringLiteral("Revision"),
         QStringLiteral("RecoveryState"),
     };
@@ -447,7 +470,8 @@ bool ConfigClient::applyProperties(
         }
     }
     if ((properties.contains(QStringLiteral("BarHeight"))
-         || sharedBorderSupplied || sharedSpacingSupplied)
+         || sharedBorderSupplied || sharedSpacingSupplied
+         || properties.contains(QStringLiteral("AppearanceMode")))
         && !properties.contains(QStringLiteral("Revision"))) {
         return false;
     }
@@ -460,6 +484,7 @@ bool ConfigClient::applyProperties(
     auto nextShellInnerSpacing = shellInnerSpacing_;
     auto nextShellOuterSpacing = shellOuterSpacing_;
     auto nextSyncHyprlandWindowSpacing = syncHyprlandWindowSpacing_;
+    auto nextAppearanceMode = appearanceMode_;
     auto nextRevision = revision_;
     auto nextRecoveryState = recoveryState_;
 
@@ -564,6 +589,20 @@ bool ConfigClient::applyProperties(
     }
 
     const auto revision = properties.constFind(QStringLiteral("Revision"));
+
+    const auto appearanceMode = properties.constFind(
+        QStringLiteral("AppearanceMode")
+    );
+    if (appearanceMode != properties.cend()) {
+        if (appearanceMode->metaType().id() != QMetaType::QString) {
+            return false;
+        }
+        nextAppearanceMode = appearanceMode->toString();
+        if (!ConfigValues::isValidAppearanceMode(nextAppearanceMode)) {
+            return false;
+        }
+    }
+
     if (revision != properties.cend()) {
         if (revision->metaType().id() != QMetaType::ULongLong) {
             return false;
@@ -591,6 +630,7 @@ bool ConfigClient::applyProperties(
         nextShellInnerSpacing != shellInnerSpacing_
         || nextShellOuterSpacing != shellOuterSpacing_
         || nextSyncHyprlandWindowSpacing != syncHyprlandWindowSpacing_;
+    const auto appearanceModeChanged = nextAppearanceMode != appearanceMode_;
     const auto revisionChanged = nextRevision != revision_;
     const auto recoveryStateChanged = nextRecoveryState != recoveryState_;
 
@@ -599,7 +639,7 @@ bool ConfigClient::applyProperties(
         && (nextRevision < revision_
             || (nextRevision == revision_
                 && (barHeightChanged || sharedBorderChanged
-                    || sharedSpacingChanged)))) {
+                    || sharedSpacingChanged || appearanceModeChanged)))) {
         return false;
     }
 
@@ -611,6 +651,7 @@ bool ConfigClient::applyProperties(
     shellInnerSpacing_ = nextShellInnerSpacing;
     shellOuterSpacing_ = nextShellOuterSpacing;
     syncHyprlandWindowSpacing_ = nextSyncHyprlandWindowSpacing;
+    appearanceMode_ = nextAppearanceMode;
     revision_ = nextRevision;
     recoveryState_ = nextRecoveryState;
     projectionEstablished_ = true;
@@ -623,6 +664,9 @@ bool ConfigClient::applyProperties(
     }
     if (sharedSpacingChanged) {
         emit this->sharedSpacingChanged();
+    }
+    if (appearanceModeChanged) {
+        emit this->appearanceModeChanged();
     }
     if (revisionChanged) {
         emit this->revisionChanged();

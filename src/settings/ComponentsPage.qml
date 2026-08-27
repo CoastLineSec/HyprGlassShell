@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -479,16 +480,16 @@ Page {
                 padding: 16
 
                 background: Rectangle {
-                    color: "#33251a"
+                    color: ShellTheme.warningContainer
                     radius: 12
-                    border.color: "#8bf6ad55"
+                    border.color: ShellTheme.warningOutline
                 }
 
                 Label {
                     anchors.fill: parent
                     text: root.availabilityMessage.length > 0
                         ? root.availabilityMessage : root.managerError
-                    color: "#ffd5a1"
+                    color: ShellTheme.onWarningContainer
                     wrapMode: Text.Wrap
                     Accessible.role: Accessible.AlertMessage
                     Accessible.name: text
@@ -502,15 +503,15 @@ Page {
                 padding: 16
 
                 background: Rectangle {
-                    color: "#33251a"
+                    color: ShellTheme.warningContainer
                     radius: 12
-                    border.color: "#8bf6ad55"
+                    border.color: ShellTheme.warningOutline
                 }
 
                 Label {
                     anchors.fill: parent
                     text: qsTr("Third-party components are temporarily disabled because their runtime recovery data could not be trusted. Built-in features remain available.")
-                    color: "#ffd5a1"
+                    color: ShellTheme.onWarningContainer
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
                     Accessible.role: Accessible.AlertMessage
@@ -526,15 +527,15 @@ Page {
                 padding: 16
 
                 background: Rectangle {
-                    color: "#3a1f27"
+                    color: ShellTheme.errorContainer
                     radius: 12
-                    border.color: "#8bff7187"
+                    border.color: ShellTheme.errorOutline
                 }
 
                 Label {
                     anchors.fill: parent
                     text: root.packageError
-                    color: "#ffb8c3"
+                    color: ShellTheme.onErrorContainer
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
                     Accessible.role: Accessible.AlertMessage

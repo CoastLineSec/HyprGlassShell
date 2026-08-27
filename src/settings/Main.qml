@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import HyprShelld.Client
+import HyprShelld.UI
 
 ApplicationWindow {
     id: root
@@ -14,13 +15,16 @@ ApplicationWindow {
     minimumHeight: 480
     visible: true
     title: qsTr("HyprShelld Settings")
-    color: "#101319"
+    color: ShellTheme.canvas
 
     readonly property real sidebarWidth: Math.min(232, Math.max(196, width * 0.22))
     readonly property var sidebarNavigationFlickable: sidebarNavigationScroll.contentItem
     property string currentPage: "bar"
     property string hyprlandSection: "overview"
     property string hyprlandCategory: "appearance"
+    property string lastEffectiveThemeMode: ""
+    property bool shellAppearanceRequestPending: false
+    property string shellAppearanceRequestError: ""
     readonly property string appearanceDraftNavigationState: appearancePage.externalChangeWhileEditing ? "conflict" : appearancePage.draftDirty ? "dirty" : "clean"
     readonly property string inputDraftNavigationState: inputPage.externalChangeWhileEditing ? "conflict" : inputPage.draftDirty ? "dirty" : "clean"
     readonly property string windowsDraftNavigationState: windowsLayoutPage.externalChangeWhileEditing ? "conflict" : windowsLayoutPage.draftDirty ? "dirty" : "clean"
@@ -67,10 +71,10 @@ ApplicationWindow {
     }
     readonly property color desktopStatusColor: {
         if (failedComponentCount > 0)
-            return "#fb7185";
+            return ShellTheme.error;
         if (CoordinatorClient.available && CoordinatorClient.healthy)
-            return "#68d391";
-        return "#f6ad55";
+            return ShellTheme.success;
+        return ShellTheme.warning;
     }
 
     function appearanceCompositorError(operation) {
@@ -337,16 +341,94 @@ ApplicationWindow {
         root.replaceWorkspaceSettings(root.workspaceDefaults.showIdentifiers, root.workspaceDefaults.showNames, root.workspaceDefaults.showApplications, root.workspaceDefaults.maximumApplications, root.workspaceDefaults.occupiedOnly, root.workspaceDefaults.scrollMode);
     }
 
-    palette.window: "#101319"
-    palette.windowText: "#f4f6fa"
-    palette.base: "#171b22"
-    palette.text: "#f4f6fa"
-    palette.button: "#29303b"
-    palette.buttonText: "#f4f6fa"
-    palette.highlight: "#7c91ff"
-    palette.highlightedText: "#ffffff"
-    palette.placeholderText: "#aeb8c6"
-    palette.mid: "#3a424f"
+    function requestShellAppearanceMode(mode) {
+        if (!ConfigClient.available || ConfigClient.busy
+                || root.shellAppearanceRequestPending
+                || mode === ConfigClient.appearanceMode) {
+            return;
+        }
+        root.shellAppearanceRequestError = "";
+        root.shellAppearanceRequestPending = true;
+        ConfigClient.setAppearanceMode(mode);
+    }
+
+    palette.window: ShellTheme.canvas
+    palette.windowText: ShellTheme.onSurface
+    palette.base: ShellTheme.card
+    palette.alternateBase: ShellTheme.floating
+    palette.text: ShellTheme.onSurface
+    palette.brightText: ShellTheme.onSurface
+    palette.button: ShellTheme.floating
+    palette.buttonText: ShellTheme.onSurface
+    palette.highlight: ShellTheme.primary
+    palette.highlightedText: ShellTheme.onPrimary
+    palette.placeholderText: ShellTheme.onSurfaceMuted
+    palette.light: ShellTheme.floating
+    palette.midlight: ShellTheme.track
+    palette.mid: ShellTheme.outline
+    palette.dark: ShellTheme.outlineStrong
+    palette.shadow: ShellTheme.shadow
+    palette.link: ShellTheme.primary
+    palette.linkVisited: ShellTheme.primary
+    palette.toolTipBase: ShellTheme.floating
+    palette.toolTipText: ShellTheme.onSurface
+    palette.disabled.window: ShellTheme.canvas
+    palette.disabled.windowText: ShellTheme.onSurfaceDisabled
+    palette.disabled.base: ShellTheme.card
+    palette.disabled.alternateBase: ShellTheme.floating
+    palette.disabled.text: ShellTheme.onSurfaceDisabled
+    palette.disabled.brightText: ShellTheme.onSurfaceDisabled
+    palette.disabled.button: ShellTheme.floating
+    palette.disabled.buttonText: ShellTheme.onSurfaceDisabled
+    palette.disabled.highlight: ShellTheme.track
+    palette.disabled.highlightedText: ShellTheme.onSurfaceDisabled
+    palette.disabled.placeholderText: ShellTheme.onSurfaceDisabled
+    palette.disabled.light: ShellTheme.floating
+    palette.disabled.midlight: ShellTheme.track
+    palette.disabled.mid: ShellTheme.outline
+    palette.disabled.dark: ShellTheme.outlineStrong
+    palette.disabled.shadow: ShellTheme.shadow
+    palette.disabled.link: ShellTheme.onSurfaceDisabled
+    palette.disabled.linkVisited: ShellTheme.onSurfaceDisabled
+    palette.disabled.toolTipBase: ShellTheme.floating
+    palette.disabled.toolTipText: ShellTheme.onSurfaceDisabled
+
+    Component.onCompleted:
+        root.lastEffectiveThemeMode = ShellTheme.effectiveMode
+
+    Connections {
+        target: ShellTheme
+
+        function onEffectiveModeChanged() {
+            const previousMode = root.lastEffectiveThemeMode;
+            root.lastEffectiveThemeMode = ShellTheme.effectiveMode;
+            if (previousMode.length === 0
+                    || previousMode === ShellTheme.effectiveMode) {
+                return;
+            }
+            themeTransitionVeil.color = ShellTheme.colorFor(
+                previousMode, "canvas"
+            );
+            themeTransitionVeil.opacity = 1;
+            themeTransitionReveal.restart();
+        }
+    }
+
+    Connections {
+        target: ConfigClient
+
+        function onOperationFailed(name, message) {
+            if (!root.shellAppearanceRequestPending)
+                return;
+            root.shellAppearanceRequestError = message.length > 0
+                ? message : name;
+        }
+
+        function onBusyChanged() {
+            if (root.shellAppearanceRequestPending && !ConfigClient.busy)
+                root.shellAppearanceRequestPending = false;
+        }
+    }
 
     ShellRuntimeStatus {
         id: shellRuntimeStatus
@@ -610,7 +692,7 @@ ApplicationWindow {
                             bottomPadding: 8
                             Accessible.role: Accessible.PageTab
                             Accessible.name: qsTr("Appearance settings")
-                            Accessible.description: root.appearanceDraftNavigationState === "conflict" ? qsTr("Appearance has a preserved draft that conflicts with a newer compositor revision.") : root.appearanceDraftNavigationState === "dirty" ? qsTr("Appearance has unsaved changes.") : ""
+                            Accessible.description: root.appearanceDraftNavigationState === "conflict" ? qsTr("Window visuals and animations have a preserved draft that conflicts with a newer compositor revision.") : root.appearanceDraftNavigationState === "dirty" ? qsTr("Window visuals and animations have unsaved changes.") : ""
                             Accessible.checked: checked
 
                             onClicked: root.currentPage = "appearance"
@@ -675,7 +757,7 @@ ApplicationWindow {
                                     objectName: "appearanceNavigationBadge"
                                     visible: root.appearanceDraftNavigationState !== "clean"
                                     text: root.appearanceDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.appearanceDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.appearanceDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -686,7 +768,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.appearanceDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.appearanceDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -799,7 +881,7 @@ ApplicationWindow {
                                     objectName: "inputNavigationBadge"
                                     visible: root.inputDraftNavigationState !== "clean"
                                     text: root.inputDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.inputDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.inputDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -810,7 +892,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.inputDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.inputDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -1004,7 +1086,7 @@ ApplicationWindow {
                                     objectName: "windowsNavigationBadge"
                                     visible: root.windowsDraftNavigationState !== "clean"
                                     text: root.windowsDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.windowsDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.windowsDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -1015,7 +1097,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.windowsDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.windowsDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -1100,7 +1182,7 @@ ApplicationWindow {
                                     objectName: "workspacesNavigationBadge"
                                     visible: root.workspacesDraftNavigationState !== "clean"
                                     text: root.workspacesDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.workspacesDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.workspacesDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -1111,7 +1193,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.workspacesDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.workspacesDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -1300,7 +1382,7 @@ ApplicationWindow {
                                     objectName: "rulesNavigationBadge"
                                     visible: root.rulesDraftNavigationState !== "clean"
                                     text: root.rulesDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.rulesDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.rulesDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -1311,7 +1393,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.rulesDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.rulesDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -1435,7 +1517,7 @@ ApplicationWindow {
                                     objectName: "advancedNavigationBadge"
                                     visible: root.advancedDraftNavigationState !== "clean"
                                     text: root.advancedDraftNavigationState === "conflict" ? qsTr("Review") : qsTr("Unsaved")
-                                    color: root.advancedDraftNavigationState === "conflict" ? "#ffb8c3" : root.palette.highlightedText
+                                    color: root.advancedDraftNavigationState === "conflict" ? ShellTheme.onErrorContainer : root.palette.highlightedText
                                     font.pixelSize: 10
                                     font.weight: Font.DemiBold
                                     leftPadding: 6
@@ -1446,7 +1528,7 @@ ApplicationWindow {
 
                                     background: Rectangle {
                                         radius: 7
-                                        color: root.advancedDraftNavigationState === "conflict" ? "#6b2a36" : root.palette.highlight
+                                        color: root.advancedDraftNavigationState === "conflict" ? ShellTheme.errorContainer : root.palette.highlight
                                     }
                                 }
                             }
@@ -1663,6 +1745,12 @@ ApplicationWindow {
                     id: appearancePage
 
                     objectName: "appearancePage"
+                    shellAppearanceMode: ConfigClient.appearanceMode
+                    shellEffectiveAppearanceMode: ShellTheme.effectiveMode
+                    shellAppearanceServiceAvailable: ConfigClient.available
+                    shellAppearanceBusy: ConfigClient.busy
+                        || root.shellAppearanceRequestPending
+                    shellAppearanceError: root.shellAppearanceRequestError
                     serviceAvailable: CompositorClient.available
                     writable: CompositorClient.writable
                     catalogAvailable: CompositorClient.catalogAvailable
@@ -1683,6 +1771,9 @@ ApplicationWindow {
                     sharedBorderClientError: ConfigClient.lastErrorMessage
                     sharedBorderConfigRevisionToken: ConfigClient.revisionToken
                     sharedBorderVerifiedRevisionToken: CompositorClient.sharedBorderSourceRevisionToken
+
+                    onShellAppearanceModeRequested: mode =>
+                        root.requestShellAppearanceMode(mode)
                     sharedSpacingAvailable: ConfigClient.available
                     sharedSpacingBusy: ConfigClient.busy
                     windowSpacingSynced: ConfigClient.syncHyprlandWindowSpacing
@@ -2201,6 +2292,34 @@ ApplicationWindow {
                     }
                 }
             }
+        }
+    }
+
+    Rectangle {
+        id: themeTransitionVeil
+
+        objectName: "themeTransitionVeil"
+        anchors.fill: parent
+        z: 1000
+        color: ShellTheme.canvas
+        opacity: 0
+        visible: opacity > 0
+
+        Accessible.ignored: true
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: parent.visible
+        }
+
+        NumberAnimation {
+            id: themeTransitionReveal
+            target: themeTransitionVeil
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: ShellTheme.transitionDuration
+            easing.type: Easing.OutCubic
         }
     }
 

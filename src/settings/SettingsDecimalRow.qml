@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 RowLayout {
     id: root
@@ -155,7 +156,7 @@ RowLayout {
             Layout.fillWidth: true
             visible: !root.inputValid
             text: root.validationMessage
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             textFormat: Text.PlainText

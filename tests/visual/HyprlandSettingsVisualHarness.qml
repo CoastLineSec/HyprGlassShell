@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import HyprShelld.UI
 import "../../src/settings" as Settings
 
 ApplicationWindow {
@@ -10,6 +11,8 @@ ApplicationWindow {
 
     property string sceneName: argumentValue("scene", "overview")
     property string outputPath: argumentValue("output", "/tmp/hyprshelld-settings.png")
+    property string themeMode: argumentValue("theme", "dark")
+    property string selectorMode: argumentValue("selector-mode", themeMode)
     property bool autoCapture: true
     property bool fixtureReady: false
     property alias renderedItem: captureSurface
@@ -22,7 +25,51 @@ ApplicationWindow {
     color: palette.window
     title: "HyprShelld Settings visual fixture · " + sceneName
 
-    Component.onCompleted: console.log("VISUAL_HARNESS_READY", sceneName, width + "x" + height)
+    palette.window: ShellTheme.colorFor(themeMode, "canvas")
+    palette.windowText: ShellTheme.colorFor(themeMode, "onSurface")
+    palette.base: ShellTheme.colorFor(themeMode, "card")
+    palette.alternateBase: ShellTheme.colorFor(themeMode, "floating")
+    palette.text: ShellTheme.colorFor(themeMode, "onSurface")
+    palette.brightText: ShellTheme.colorFor(themeMode, "onSurface")
+    palette.button: ShellTheme.colorFor(themeMode, "floating")
+    palette.buttonText: ShellTheme.colorFor(themeMode, "onSurface")
+    palette.highlight: ShellTheme.colorFor(themeMode, "primary")
+    palette.highlightedText: ShellTheme.colorFor(themeMode, "onPrimary")
+    palette.placeholderText: ShellTheme.colorFor(themeMode, "onSurfaceMuted")
+    palette.light: ShellTheme.colorFor(themeMode, "floating")
+    palette.midlight: ShellTheme.colorFor(themeMode, "track")
+    palette.mid: ShellTheme.colorFor(themeMode, "outline")
+    palette.dark: ShellTheme.colorFor(themeMode, "outlineStrong")
+    palette.shadow: ShellTheme.colorFor(themeMode, "shadow")
+    palette.link: ShellTheme.colorFor(themeMode, "primary")
+    palette.linkVisited: ShellTheme.colorFor(themeMode, "primary")
+    palette.toolTipBase: ShellTheme.colorFor(themeMode, "floating")
+    palette.toolTipText: ShellTheme.colorFor(themeMode, "onSurface")
+    palette.disabled.window: ShellTheme.colorFor(themeMode, "canvas")
+    palette.disabled.windowText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.base: ShellTheme.colorFor(themeMode, "card")
+    palette.disabled.alternateBase: ShellTheme.colorFor(themeMode, "floating")
+    palette.disabled.text: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.brightText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.button: ShellTheme.colorFor(themeMode, "floating")
+    palette.disabled.buttonText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.highlight: ShellTheme.colorFor(themeMode, "track")
+    palette.disabled.highlightedText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.placeholderText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.light: ShellTheme.colorFor(themeMode, "floating")
+    palette.disabled.midlight: ShellTheme.colorFor(themeMode, "track")
+    palette.disabled.mid: ShellTheme.colorFor(themeMode, "outline")
+    palette.disabled.dark: ShellTheme.colorFor(themeMode, "outlineStrong")
+    palette.disabled.shadow: ShellTheme.colorFor(themeMode, "shadow")
+    palette.disabled.link: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.linkVisited: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+    palette.disabled.toolTipBase: ShellTheme.colorFor(themeMode, "floating")
+    palette.disabled.toolTipText: ShellTheme.colorFor(themeMode, "onSurfaceDisabled")
+
+    Component.onCompleted: {
+        ShellTheme.previewMode = themeMode;
+        console.log("VISUAL_HARNESS_READY", sceneName, themeMode, width + "x" + height);
+    }
 
     function argumentValue(name, fallback) {
         const prefix = name + "=";
@@ -544,6 +591,10 @@ ApplicationWindow {
 
     function configureAppearance(page) {
         const projection = root.guidedProjection(page);
+        page.shellAppearanceMode = root.themeMode;
+        page.shellEffectiveAppearanceMode = root.themeMode;
+        page.shellAppearanceServiceAvailable = true;
+        page.shellAppearanceBusy = false;
         page.serviceAvailable = true;
         page.writable = true;
         page.catalogAvailable = true;
@@ -831,7 +882,10 @@ ApplicationWindow {
     function configurePage(page) {
         if (!page)
             return;
-        if (sceneName === "overview") {
+        if (sceneName === "theme-selector") {
+            fixtureReady = true;
+            return;
+        } else if (sceneName === "overview") {
             page.allOptions = coverageOptions();
         } else if (sceneName.startsWith("catalog-")) {
             const category = sceneName.slice("catalog-".length);
@@ -901,6 +955,8 @@ ApplicationWindow {
             sourceComponent: {
                 if (root.sceneName === "overview")
                     return overviewComponent;
+                if (root.sceneName === "theme-selector")
+                    return themeSelectorComponent;
                 if (root.sceneName.startsWith("catalog-"))
                     return catalogComponent;
                 if (root.sceneName.startsWith("bindings-"))
@@ -942,6 +998,26 @@ ApplicationWindow {
         running: root.autoCapture
         repeat: false
         onTriggered: root.capture()
+    }
+
+    Component {
+        id: themeSelectorComponent
+
+        Page {
+            background: Rectangle { color: palette.window }
+
+            Settings.ThemeModeSelector {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 28
+                }
+                mode: root.selectorMode
+                effectiveMode: root.themeMode
+                serviceAvailable: true
+            }
+        }
     }
 
     Component {

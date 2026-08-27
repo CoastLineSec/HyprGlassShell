@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -103,7 +104,7 @@ Frame {
         color: root.palette.base
         radius: 16
         border.width: 1
-        border.color: root.issue.length > 0 || root.argumentsIssue.length > 0 || root.deviceIssue.length > 0 ? "#8bfb7185" : root.palette.mid
+        border.color: root.issue.length > 0 || root.argumentsIssue.length > 0 || root.deviceIssue.length > 0 ? ShellTheme.errorOutline : root.palette.mid
     }
 
     function clone(value) {
@@ -506,7 +507,7 @@ Frame {
                     Layout.fillWidth: true
                     visible: root.deviceIssue.length > 0
                     text: root.deviceIssue
-                    color: "#ffb8c3"
+                    color: ShellTheme.onErrorContainer
                     font.pixelSize: 11
                     wrapMode: Text.Wrap
                     Accessible.role: Accessible.AlertMessage
@@ -589,7 +590,7 @@ Frame {
                         radius: 10
                         color: root.palette.base
                         border.width: 1
-                        border.color: root.argumentsIssue.length > 0 ? "#fb7185" : root.palette.mid
+                        border.color: root.argumentsIssue.length > 0 ? ShellTheme.error : root.palette.mid
                     }
                 }
 
@@ -600,7 +601,7 @@ Frame {
                         Layout.fillWidth: true
                         visible: root.argumentsIssue.length > 0
                         text: root.argumentsIssue
-                        color: "#ffb8c3"
+                        color: ShellTheme.onErrorContainer
                         font.pixelSize: 12
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
@@ -721,7 +722,7 @@ Frame {
             Layout.fillWidth: true
             visible: root.issue.length > 0
             text: root.issue
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             textFormat: Text.PlainText

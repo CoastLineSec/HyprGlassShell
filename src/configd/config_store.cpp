@@ -15,7 +15,8 @@
 namespace HyprShelld {
 namespace {
 
-constexpr auto formatVersion = 3;
+constexpr auto formatVersion = 4;
+constexpr auto spacingFormatVersion = 3;
 constexpr auto borderFormatVersion = 2;
 constexpr auto legacyFormatVersion = 1;
 constexpr qsizetype maximumSnapshotBytes = 64 * 1024;
@@ -74,6 +75,7 @@ QByteArray serialize(
         QStringLiteral("syncHyprlandWindowSpacing"),
         state.syncHyprlandWindowSpacing
     );
+    object.insert(QStringLiteral("appearanceMode"), state.appearanceMode);
     if (legacyWorkspaceSettings) {
         object.insert(
             QStringLiteral("workspaceSwitcher"),
@@ -240,6 +242,7 @@ ReadResult readSnapshot(const QString &path)
     }
     if (version != legacyFormatVersion
         && version != borderFormatVersion
+        && version != spacingFormatVersion
         && version != formatVersion) {
         return {
             .status = FileStatus::Damaged,
@@ -318,7 +321,7 @@ ReadResult readSnapshot(const QString &path)
         state.syncHyprlandWindowBorders = syncValue.toBool();
     }
 
-    if (version < formatVersion) {
+    if (version < spacingFormatVersion) {
         state.shellInnerSpacing = ConfigValues::defaultShellInnerSpacing;
         state.shellOuterSpacing = ConfigValues::defaultShellOuterSpacing;
         state.syncHyprlandWindowSpacing = false;
@@ -350,6 +353,25 @@ ReadResult readSnapshot(const QString &path)
         state.shellInnerSpacing = static_cast<quint32>(inner);
         state.shellOuterSpacing = static_cast<quint32>(outer);
         state.syncHyprlandWindowSpacing = syncValue.toBool();
+    }
+
+    if (version < formatVersion) {
+        state.appearanceMode = ConfigValues::defaultAppearanceMode;
+    } else {
+        const auto appearanceModeValue = object.value(
+            QStringLiteral("appearanceMode")
+        );
+        if (!appearanceModeValue.isString()
+            || !ConfigValues::isValidAppearanceMode(
+                appearanceModeValue.toString()
+            )) {
+            return {
+                .status = FileStatus::Damaged,
+                .error = QStringLiteral("Invalid appearance mode in %1")
+                             .arg(path),
+            };
+        }
+        state.appearanceMode = appearanceModeValue.toString();
     }
     state.revision = revision;
 

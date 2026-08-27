@@ -10100,7 +10100,7 @@ TestCase {
         verify(status !== null);
         compare(status.visible, true);
         verify(String(status.text).includes(
-            "trusted Appearance contract does not match"
+            "trusted compositor appearance contract does not match"
         ));
 
         const invalidDefinitionCases = [
@@ -11029,7 +11029,9 @@ TestCase {
         compare(page.controlsEnabled, false);
         verify(String(findChild(
             page, "appearanceStatusMessage"
-        ).text).includes("strict managed Appearance contract"));
+        ).text).includes(
+            "strict managed compositor appearance contract"
+        ));
     }
 
     function test_appearanceExternalRevisionPreservesDraft() {
@@ -20124,7 +20126,7 @@ TestCase {
             {
                 page: appearance,
                 projectionAvailable: appearance.appearanceProjectionAvailable,
-                prefix: "Appearance authority verification failed"
+                prefix: "Compositor appearance authority verification failed"
             },
             {
                 page: input,

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -1011,10 +1012,10 @@ Page {
                     padding: root.compactPage ? 12 : 16
 
                     background: Rectangle {
-                        color: root.statusIsDanger ? "#382125" : "#33251a"
+                        color: root.statusIsDanger ? ShellTheme.errorContainer : ShellTheme.warningContainer
                         radius: 12
                         border.color: root.statusIsDanger
-                            ? "#8bfb7185" : "#8bf6ad55"
+                            ? ShellTheme.errorOutline : ShellTheme.warningOutline
                     }
 
                     ColumnLayout {
@@ -1026,7 +1027,7 @@ Page {
                             Layout.fillWidth: true
                             text: root.statusMessage
                             color: root.statusIsDanger
-                                ? "#ffb8c3" : "#ffd5a1"
+                                ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1112,9 +1113,9 @@ Page {
                     padding: root.compactPage ? 14 : 18
 
                     background: Rectangle {
-                        color: "#211e2e"
+                        color: ShellTheme.card
                         radius: 18
-                        border.color: "#665282"
+                        border.color: ShellTheme.outlineStrong
                     }
 
                     GridLayout {
@@ -1150,9 +1151,9 @@ Page {
                                 Layout.column: root.compactPage ? 0 : index * 2
                                 Layout.preferredHeight: 78
                                 radius: 12
-                                color: index === 2 ? "#493b60" : "#302a41"
+                                color: index === 2 ? ShellTheme.primaryContainer : ShellTheme.floating
                                 border.color: index === 2
-                                    ? "#b398dd" : "#625578"
+                                    ? ShellTheme.primary : ShellTheme.outline
 
                                 Column {
                                     anchors.centerIn: parent
@@ -1163,7 +1164,7 @@ Page {
                                         width: parent.width
                                         horizontalAlignment: Text.AlignHCenter
                                         text: String(pipelineStep.modelData.title)
-                                        color: "#efe6ff"
+                                        color: ShellTheme.onSurface
                                         font.weight: Font.DemiBold
                                         wrapMode: Text.Wrap
                                         textFormat: Text.PlainText
@@ -1173,7 +1174,7 @@ Page {
                                         width: parent.width
                                         horizontalAlignment: Text.AlignHCenter
                                         text: String(pipelineStep.modelData.copy)
-                                        color: "#c4b6d7"
+                                        color: ShellTheme.onSurfaceMuted
                                         font.pixelSize: 11
                                         wrapMode: Text.Wrap
                                         textFormat: Text.PlainText
@@ -1191,7 +1192,7 @@ Page {
                                 Layout.row: 0
                                 Layout.column: index === 0 ? 1 : 3
                                 text: "→"
-                                color: "#c7afea"
+                                color: ShellTheme.primary
                                 font.pixelSize: 24
                                 Accessible.ignored: true
                             }
@@ -1205,9 +1206,9 @@ Page {
                     padding: root.compactPage ? 14 : 18
 
                     background: Rectangle {
-                        color: "#33251a"
+                        color: ShellTheme.warningContainer
                         radius: 14
-                        border.color: "#8bf6ad55"
+                        border.color: ShellTheme.warningOutline
                     }
 
                     ColumnLayout {
@@ -1217,7 +1218,7 @@ Page {
                         Label {
                             Layout.fillWidth: true
                             text: qsTr("Restart-required input boundary")
-                            color: "#ffd3a9"
+                            color: ShellTheme.onWarningContainer
                             font.weight: Font.DemiBold
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
@@ -1226,7 +1227,7 @@ Page {
                         Label {
                             Layout.fillWidth: true
                             text: qsTr("Adding, removing, reordering, retargeting, enabling, or changing any override saves a Restart-required desired revision. The editor does not claim stable hardware identity or mutate the running input stack in place.")
-                            color: "#e6c8ad"
+                            color: ShellTheme.onWarningContainer
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
@@ -1309,7 +1310,7 @@ Page {
                             border.color: root.deviceIssue(
                                     String(deviceCard.modelData.id)
                                 ).length > 0
-                                ? "#a8606a" : root.palette.mid
+                                ? ShellTheme.errorOutline : root.palette.mid
                         }
 
                         ColumnLayout {
@@ -1325,16 +1326,16 @@ Page {
                                     Layout.preferredHeight: 42
                                     radius: 12
                                     color: deviceCard.modelData.enabled
-                                        ? "#4b3e61" : "#34323a"
+                                        ? ShellTheme.primaryContainer : ShellTheme.neutralButton
                                     border.color: deviceCard.modelData.enabled
-                                        ? "#9e83c8" : "#62606a"
+                                        ? ShellTheme.primary : ShellTheme.outline
 
                                     Label {
                                         anchors.centerIn: parent
                                         text: root.kindLabel(
                                             deviceCard.modelData.kind
                                         ).slice(0, 1).toUpperCase()
-                                        color: "#f0e7ff"
+                                        color: ShellTheme.onPrimaryContainer
                                         font.pixelSize: 17
                                         font.weight: Font.Bold
                                         textFormat: Text.PlainText
@@ -1375,7 +1376,7 @@ Page {
                                     text: deviceCard.modelData.enabled
                                         ? qsTr("ENABLED") : qsTr("DISABLED")
                                     color: deviceCard.modelData.enabled
-                                        ? "#9ce4b5" : "#c3c0ca"
+                                        ? ShellTheme.success : ShellTheme.onSurfaceMuted
                                     font.pixelSize: 11
                                     font.weight: Font.Bold
                                     textFormat: Text.PlainText
@@ -1385,7 +1386,7 @@ Page {
                             Label {
                                 Layout.fillWidth: true
                                 text: root.deviceExample(deviceCard.modelData)
-                                color: "#baa7d7"
+                                color: ShellTheme.primary
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 elide: Text.ElideRight
@@ -1400,7 +1401,7 @@ Page {
                                 text: root.deviceIssue(
                                     String(deviceCard.modelData.id)
                                 )
-                                color: "#ffb8c3"
+                                color: ShellTheme.onErrorContainer
                                 wrapMode: Text.Wrap
                                 textFormat: Text.PlainText
                                 Accessible.role: Accessible.AlertMessage
@@ -1492,7 +1493,7 @@ Page {
                         color: root.palette.base
                         radius: 16
                         border.color: root.draftValid
-                            ? root.palette.mid : "#a8606a"
+                            ? root.palette.mid : ShellTheme.errorOutline
                     }
 
                     ColumnLayout {
@@ -1505,7 +1506,7 @@ Page {
                                 ? qsTr("All 39 supported override fields and every record are validated before the complete ordered collection replaces desired state.")
                                 : qsTr("Finish every device, remove duplicate selectors, and fix invalid overrides before saving.")
                             color: root.draftValid
-                                ? root.palette.placeholderText : "#ffb8c3"
+                                ? root.palette.placeholderText : ShellTheme.onErrorContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                         }

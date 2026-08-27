@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Dialog {
     id: root
@@ -84,15 +85,15 @@ Dialog {
                 padding: 14
 
                 background: Rectangle {
-                    color: "#33251a"
+                    color: ShellTheme.warningContainer
                     radius: 10
-                    border.color: "#8bf6ad55"
+                    border.color: ShellTheme.warningOutline
                 }
 
                 Label {
                     anchors.fill: parent
                     text: qsTr("This changes which file owns your Hyprland configuration.")
-                    color: "#ffd5a1"
+                    color: ShellTheme.onWarningContainer
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText

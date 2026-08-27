@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -145,7 +146,7 @@ Frame {
                             root.palette.highlight.b,
                             0.15
                         )
-                        : "#33251a"
+                        : ShellTheme.warningContainer
                     border.color: root.builtIn
                         ? Qt.rgba(
                             root.palette.highlight.r,
@@ -153,7 +154,7 @@ Frame {
                             root.palette.highlight.b,
                             0.34
                         )
-                        : "#8bf6ad55"
+                        : ShellTheme.warningOutline
 
                     Label {
                         id: originLabel
@@ -163,7 +164,7 @@ Frame {
                         text: root.builtIn
                             ? qsTr("Built-in") : qsTr("Third-party")
                         color: root.builtIn
-                            ? root.palette.text : "#ffd5a1"
+                            ? root.palette.text : ShellTheme.onWarningContainer
                         font.pixelSize: 11
                         font.weight: Font.Medium
                         textFormat: Text.PlainText
@@ -208,7 +209,7 @@ Frame {
                 objectName: "componentTrust-" + root.componentId
                 visible: root.thirdParty
                 text: qsTr("Unverified third-party code")
-                color: "#ffd5a1"
+                color: ShellTheme.onWarningContainer
                 font.pixelSize: 11
                 font.weight: Font.Medium
                 textFormat: Text.PlainText
@@ -223,7 +224,7 @@ Frame {
                     ? root.errorText : root.statusText
                 visible: text.length > 0
                 color: root.errorText.length > 0
-                    ? "#ffb8c3" : root.palette.placeholderText
+                    ? ShellTheme.onErrorContainer : root.palette.placeholderText
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText

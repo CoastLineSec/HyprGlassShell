@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -314,9 +315,9 @@ Page {
             implicitHeight: statusRow.implicitHeight + 18
             visible: root.statusText().length > 0
             radius: 12
-            color: root.externalChangeWhileEditing || root.managementState === "conflict" ? "#4c232c" : "#40351f"
+            color: root.externalChangeWhileEditing || root.managementState === "conflict" ? ShellTheme.errorContainer : ShellTheme.warningContainer
             border.width: 1
-            border.color: root.externalChangeWhileEditing || root.managementState === "conflict" ? "#b55268" : "#9c7934"
+            border.color: root.externalChangeWhileEditing || root.managementState === "conflict" ? ShellTheme.errorOutline : ShellTheme.warningOutline
 
             RowLayout {
                 id: statusRow
@@ -329,7 +330,7 @@ Page {
                 Label {
                     Layout.fillWidth: true
                     text: root.statusText()
-                    color: root.externalChangeWhileEditing || root.managementState === "conflict" ? "#ffb8c3" : "#ffe0a6"
+                    color: root.externalChangeWhileEditing || root.managementState === "conflict" ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText

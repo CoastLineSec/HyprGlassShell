@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ListView {
     id: root
@@ -257,7 +258,7 @@ ListView {
             Layout.fillWidth: true
             visible: root.draftDirty && !root.draftValid
             text: qsTr("Every rule needs a unique name, at least one complete matcher, and at least one complete effect before the combined draft can be saved.")
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             Accessible.role: Accessible.AlertMessage

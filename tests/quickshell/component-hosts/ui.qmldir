@@ -1,2 +1,3 @@
 module HyprShelld.UI
+singleton ShellTheme 254.0 ShellTheme.qml
 WorkspaceSwitcher 254.0 WorkspaceSwitcher.qml

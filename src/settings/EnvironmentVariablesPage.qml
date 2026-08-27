@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -508,9 +509,9 @@ Page {
                 padding: root.compactPage ? 12 : 16
 
                 background: Rectangle {
-                    color: root.statusIsDanger ? "#382125" : "#33251a"
+                    color: root.statusIsDanger ? ShellTheme.errorContainer : ShellTheme.warningContainer
                     radius: 12
-                    border.color: root.statusIsDanger ? "#8bfb7185" : "#8bf6ad55"
+                    border.color: root.statusIsDanger ? ShellTheme.errorOutline : ShellTheme.warningOutline
                 }
 
                 ColumnLayout {
@@ -521,7 +522,7 @@ Page {
                         objectName: "environmentStatusMessage"
                         Layout.fillWidth: true
                         text: root.statusMessage
-                        color: root.statusIsDanger ? "#ffb8c3" : "#ffd5a1"
+                        color: root.statusIsDanger ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                         Accessible.role: Accessible.AlertMessage
@@ -599,8 +600,8 @@ Page {
                         Layout.preferredWidth: root.compactPage ? 112 : 154
                         Layout.preferredHeight: root.compactPage ? 104 : 118
                         radius: 14
-                        color: "#192530"
-                        border.color: "#6aa9d8"
+                        color: ShellTheme.infoContainer
+                        border.color: ShellTheme.infoOutline
 
                         ColumnLayout {
                             anchors.fill: parent
@@ -610,7 +611,7 @@ Page {
                             Label {
                                 Layout.fillWidth: true
                                 text: "LUA"
-                                color: "#8fd4ff"
+                                color: ShellTheme.info
                                 font.bold: true
                                 font.pixelSize: 11
                             }
@@ -619,7 +620,7 @@ Page {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 7
                                 radius: 4
-                                color: "#8fd4ff"
+                                color: ShellTheme.info
                             }
 
                             Rectangle {
@@ -627,7 +628,7 @@ Page {
                                 Layout.rightMargin: 24
                                 Layout.preferredHeight: 7
                                 radius: 4
-                                color: "#6e8292"
+                                color: ShellTheme.outlineStrong
                             }
 
                             Rectangle {
@@ -635,13 +636,13 @@ Page {
                                 Layout.rightMargin: 9
                                 Layout.preferredHeight: 7
                                 radius: 4
-                                color: "#78c995"
+                                color: ShellTheme.success
                             }
 
                             Label {
                                 Layout.fillWidth: true
                                 text: "SESSION"
-                                color: "#9fb0bd"
+                                color: ShellTheme.onSurfaceMuted
                                 font.bold: true
                                 font.pixelSize: 10
                             }
@@ -677,7 +678,7 @@ Page {
                             Layout.fillWidth: true
                             visible: !root.uwsmIntegrationAvailable
                             text: qsTr("UWSM publishing is currently unavailable. UWSM records remain visible and editable, but cannot be saved through this page yet.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
@@ -687,7 +688,7 @@ Page {
                             objectName: "environmentCodeExample"
                             Layout.fillWidth: true
                             text: root.environmentExample(root.editingVariable)
-                            color: "#9cd7ff"
+                            color: ShellTheme.info
                             font.family: "monospace"
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -802,7 +803,7 @@ Page {
 
                             Label {
                                 text: variableCard.modelData.scope === "uwsm" ? qsTr("UWSM") : qsTr("LUA")
-                                color: variableCard.modelData.scope === "uwsm" ? "#a9e6bc" : "#9cd7ff"
+                                color: variableCard.modelData.scope === "uwsm" ? ShellTheme.success : ShellTheme.info
                                 font.pixelSize: 11
                                 font.weight: Font.Bold
                                 textFormat: Text.PlainText
@@ -812,7 +813,7 @@ Page {
                         Label {
                             Layout.fillWidth: true
                             text: root.environmentExample(variableCard.modelData)
-                            color: "#9fb0bd"
+                            color: ShellTheme.onSurfaceMuted
                             font.family: "monospace"
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -872,9 +873,9 @@ Page {
                             padding: root.compactPage ? 12 : 16
 
                             background: Rectangle {
-                                color: "#18232b"
+                                color: ShellTheme.card
                                 radius: 12
-                                border.color: root.editorIssue.length === 0 ? "#598cb0" : "#a8606a"
+                                border.color: root.editorIssue.length === 0 ? ShellTheme.infoOutline : ShellTheme.errorOutline
                             }
 
                             ColumnLayout {
@@ -884,7 +885,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Variable name")
-                                    color: "#eef5f8"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -905,7 +906,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Value")
-                                    color: "#eef5f8"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -926,7 +927,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Startup owner")
-                                    color: "#eef5f8"
+                                    color: ShellTheme.onSurface
                                     font.weight: Font.Medium
                                     textFormat: Text.PlainText
                                 }
@@ -948,7 +949,7 @@ Page {
                                     Layout.fillWidth: true
                                     visible: root.editorIssue.length > 0
                                     text: root.editorIssue
-                                    color: "#ffb8c3"
+                                    color: ShellTheme.onErrorContainer
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
                                     Accessible.role: Accessible.AlertMessage
@@ -958,7 +959,7 @@ Page {
                                 Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Values are stored literally. Existing shell variables are not expanded by this editor, and a new session may be required before applications inherit the change.")
-                                    color: "#b9c7cf"
+                                    color: ShellTheme.onSurfaceMuted
                                     font.pixelSize: 12
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
@@ -986,7 +987,7 @@ Page {
                 background: Rectangle {
                     color: root.palette.base
                     radius: 16
-                    border.color: root.draftValid && !root.draftHasUnavailableUwsm ? root.palette.mid : "#a8606a"
+                    border.color: root.draftValid && !root.draftHasUnavailableUwsm ? root.palette.mid : ShellTheme.errorOutline
                 }
 
                 ColumnLayout {
@@ -996,7 +997,7 @@ Page {
                     Label {
                         Layout.fillWidth: true
                         text: !root.draftValid ? qsTr("Finish every variable and remove duplicate names before saving.") : root.draftHasUnavailableUwsm ? qsTr("UWSM-owned records are preserved, but cannot be saved until UWSM publishing is available.") : qsTr("The complete ordered collection is validated before it replaces desired state.")
-                        color: root.draftValid && !root.draftHasUnavailableUwsm ? root.palette.placeholderText : "#ffb8c3"
+                        color: root.draftValid && !root.draftHasUnavailableUwsm ? root.palette.placeholderText : ShellTheme.onErrorContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                     }

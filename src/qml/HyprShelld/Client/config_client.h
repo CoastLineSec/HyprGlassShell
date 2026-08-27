@@ -46,6 +46,9 @@ class ConfigClient final : public QObject {
         bool syncHyprlandWindowSpacing READ syncHyprlandWindowSpacing
         NOTIFY sharedSpacingChanged
     )
+    Q_PROPERTY(
+        QString appearanceMode READ appearanceMode NOTIFY appearanceModeChanged
+    )
     Q_PROPERTY(qulonglong revision READ revision NOTIFY revisionChanged)
     Q_PROPERTY(QString revisionToken READ revisionToken NOTIFY revisionChanged)
     Q_PROPERTY(QString recoveryState READ recoveryState NOTIFY recoveryStateChanged)
@@ -89,6 +92,9 @@ class ConfigClient final : public QObject {
         bool defaultSyncHyprlandWindowSpacing
         READ defaultSyncHyprlandWindowSpacing CONSTANT
     )
+    Q_PROPERTY(
+        QString defaultAppearanceMode READ defaultAppearanceMode CONSTANT
+    )
     Q_PROPERTY(QString lastErrorName READ lastErrorName NOTIFY lastErrorChanged)
     Q_PROPERTY(QString lastErrorMessage READ lastErrorMessage NOTIFY lastErrorChanged)
 
@@ -106,6 +112,7 @@ public:
     [[nodiscard]] uint shellInnerSpacing() const;
     [[nodiscard]] uint shellOuterSpacing() const;
     [[nodiscard]] bool syncHyprlandWindowSpacing() const;
+    [[nodiscard]] QString appearanceMode() const;
     [[nodiscard]] qulonglong revision() const;
     [[nodiscard]] QString revisionToken() const;
     [[nodiscard]] QString recoveryState() const;
@@ -125,6 +132,7 @@ public:
     [[nodiscard]] uint defaultShellInnerSpacing() const;
     [[nodiscard]] uint defaultShellOuterSpacing() const;
     [[nodiscard]] bool defaultSyncHyprlandWindowSpacing() const;
+    [[nodiscard]] QString defaultAppearanceMode() const;
     [[nodiscard]] QString lastErrorName() const;
     [[nodiscard]] QString lastErrorMessage() const;
 
@@ -143,6 +151,8 @@ public:
         bool syncHyprlandWindowSpacing
     );
     Q_INVOKABLE void resetSharedSpacing();
+    Q_INVOKABLE void setAppearanceMode(const QString &mode);
+    Q_INVOKABLE void resetAppearanceMode();
     Q_INVOKABLE void clearError();
 
 signals:
@@ -151,6 +161,7 @@ signals:
     void barHeightChanged();
     void sharedBorderChanged();
     void sharedSpacingChanged();
+    void appearanceModeChanged();
     void revisionChanged();
     void recoveryStateChanged();
     void lastErrorChanged();
@@ -193,6 +204,7 @@ private:
     uint shellInnerSpacing_ = 0;
     uint shellOuterSpacing_ = 0;
     bool syncHyprlandWindowSpacing_ = true;
+    QString appearanceMode_;
     qulonglong revision_ = 0;
     QString recoveryState_;
     QString lastErrorName_;

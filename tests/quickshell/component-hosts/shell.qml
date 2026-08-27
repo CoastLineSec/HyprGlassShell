@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import HyprShelld.UI
 import "surfaced/components" as SurfaceComponents
 
 ShellRoot {
@@ -97,7 +98,11 @@ ShellRoot {
             );
             if (!root.check(hostileLabel
                     && hostileLabel.text === "<img src='file:///tmp/x'>"
-                    && hostileLabel.textFormat === Text.PlainText,
+                    && hostileLabel.textFormat === Text.PlainText
+                    && hostileDeclarative.color === ShellTheme.floating
+                    && hostileDeclarative.border.color
+                        === ShellTheme.primary
+                    && hostileLabel.color === ShellTheme.onSurface,
                     "declarative text was not pinned to plain text")) {
                 return;
             }

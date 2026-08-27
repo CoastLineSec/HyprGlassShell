@@ -202,6 +202,7 @@ private slots:
         QCOMPARE(proxy.shellInnerSpacing(), 8U);
         QCOMPARE(proxy.shellOuterSpacing(), 12U);
         QCOMPARE(proxy.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(proxy.recoveryState(), QStringLiteral("normal"));
 
@@ -257,8 +258,8 @@ private slots:
         QVERIFY(!bytesSeenAtSignal_.isEmpty());
 
         const auto persisted = QJsonDocument::fromJson(bytesSeenAtSignal_).object();
-        QCOMPARE(persisted.size(), 10);
-        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 3);
+        QCOMPARE(persisted.size(), 11);
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 4);
         QCOMPARE(persisted.value(QStringLiteral("barHeight")).toInteger(), 60);
         QCOMPARE(persisted.value(QStringLiteral("shellBorderEnabled")).toBool(), true);
         QCOMPARE(persisted.value(QStringLiteral("shellBorderWidth")).toInteger(), 1);
@@ -272,6 +273,10 @@ private slots:
         QCOMPARE(
             persisted.value(QStringLiteral("syncHyprlandWindowSpacing")).toBool(),
             true
+        );
+        QCOMPARE(
+            persisted.value(QStringLiteral("appearanceMode")).toString(),
+            QStringLiteral("dark")
         );
         QCOMPARE(persisted.value(QStringLiteral("revision")).toString(), QStringLiteral("1"));
         QVERIFY(!persisted.contains(QStringLiteral("workspaceSwitcher")));
@@ -392,7 +397,7 @@ private slots:
         const auto persisted = QJsonDocument::fromJson(
             bytesSeenAtSignal_
         ).object();
-        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 3);
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 4);
         QCOMPARE(persisted.value(QStringLiteral("shellBorderEnabled")).toBool(), false);
         QCOMPARE(persisted.value(QStringLiteral("shellBorderWidth")).toInteger(), 7);
         QCOMPARE(persisted.value(QStringLiteral("shellBorderRadius")).toInteger(), 12);
@@ -522,7 +527,7 @@ private slots:
         const auto persisted = QJsonDocument::fromJson(
             bytesSeenAtSignal_
         ).object();
-        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 3);
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 4);
         QCOMPARE(persisted.value(QStringLiteral("shellInnerSpacing")).toInteger(), 0);
         QCOMPARE(persisted.value(QStringLiteral("shellOuterSpacing")).toInteger(), 32);
         QCOMPARE(
@@ -601,6 +606,11 @@ private slots:
         auto failedSpacing = proxy.SetSharedSpacing(0U, 32U, false);
         failedSpacing.waitForFinished();
 
+        auto failedAppearance = proxy.SetAppearanceMode(
+            QStringLiteral("light")
+        );
+        failedAppearance.waitForFinished();
+
         QVERIFY(restoreDirectory(configDirectory));
         QVERIFY(failed.isError());
         QCOMPARE(
@@ -617,6 +627,11 @@ private slots:
             failedSpacing.error().name(),
             QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
         );
+        QVERIFY(failedAppearance.isError());
+        QCOMPARE(
+            failedAppearance.error().name(),
+            QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
+        );
         QTest::qWait(50);
         QCOMPARE(signalCount_, 0);
         QCOMPARE(proxy.barHeight(), 40U);
@@ -627,6 +642,7 @@ private slots:
         QCOMPARE(proxy.shellInnerSpacing(), 8U);
         QCOMPARE(proxy.shellOuterSpacing(), 12U);
         QCOMPARE(proxy.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
         QCOMPARE(proxy.revision(), 0ULL);
         QCOMPARE(readFile(activeFile_), originalBytes);
     }
@@ -702,6 +718,119 @@ private slots:
         QCOMPARE(proxy.syncHyprlandWindowSpacing(), true);
     }
 
+    void mutatesAppearanceModeWithStrictEnumValidation()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        QVERIFY2(startService(directory.path()), qPrintable(processError_));
+        QVERIFY(connectPropertiesSignal());
+
+        OrgHyprshelldConfig1Interface proxy(busName, objectPath, bus_);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(proxy.revision(), 0ULL);
+        const auto originalActive = readFile(activeFile_);
+        const auto originalRecovery = readFile(recoveryFile_);
+
+        for (const auto &invalid : {
+                 QString(),
+                 QStringLiteral("system"),
+                 QStringLiteral("Dark"),
+             }) {
+            auto reply = proxy.SetAppearanceMode(invalid);
+            reply.waitForFinished();
+            QVERIFY(reply.isError());
+            QCOMPARE(
+                reply.error().name(),
+                QStringLiteral(
+                    "org.hyprshelld.Config1.Error.InvalidAppearanceMode"
+                )
+            );
+        }
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 0);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(proxy.revision(), 0ULL);
+        QCOMPARE(readFile(activeFile_), originalActive);
+        QCOMPARE(readFile(recoveryFile_), originalRecovery);
+
+        auto light = proxy.SetAppearanceMode(QStringLiteral("light"));
+        light.waitForFinished();
+        QVERIFY2(!light.isError(), qPrintable(light.error().message()));
+        QCOMPARE(light.value(), 1ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 1, 1000);
+        QCOMPARE(lastChanged_.size(), 2);
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("AppearanceMode")).toString(),
+            QStringLiteral("light")
+        );
+        QCOMPARE(
+            lastChanged_.value(QStringLiteral("Revision")).toULongLong(),
+            1ULL
+        );
+        QVERIFY(lastInvalidated_.isEmpty());
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("light"));
+
+        const auto persisted = QJsonDocument::fromJson(
+            bytesSeenAtSignal_
+        ).object();
+        QCOMPARE(persisted.value(QStringLiteral("formatVersion")).toInteger(), 4);
+        QCOMPARE(
+            persisted.value(QStringLiteral("appearanceMode")).toString(),
+            QStringLiteral("light")
+        );
+
+        const auto lightActive = readFile(activeFile_);
+        const auto lightRecovery = readFile(recoveryFile_);
+        const auto configDirectory = QFileInfo(activeFile_).absolutePath();
+        const auto stateDirectory = QFileInfo(recoveryFile_).absolutePath();
+        QVERIFY(blockDirectory(configDirectory));
+        QVERIFY(blockDirectory(stateDirectory));
+        auto idempotent = proxy.SetAppearanceMode(QStringLiteral("light"));
+        idempotent.waitForFinished();
+        QVERIFY(restoreDirectory(stateDirectory));
+        QVERIFY(restoreDirectory(configDirectory));
+        QVERIFY2(!idempotent.isError(), qPrintable(idempotent.error().message()));
+        QCOMPARE(idempotent.value(), 1ULL);
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 1);
+        QCOMPARE(readFile(activeFile_), lightActive);
+        QCOMPARE(readFile(recoveryFile_), lightRecovery);
+
+        auto automatic = proxy.SetAppearanceMode(
+            QStringLiteral("automatic")
+        );
+        automatic.waitForFinished();
+        QVERIFY2(!automatic.isError(), qPrintable(automatic.error().message()));
+        QCOMPARE(automatic.value(), 2ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 2, 1000);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("automatic"));
+
+        auto reset = proxy.ResetAppearanceMode();
+        reset.waitForFinished();
+        QVERIFY2(!reset.isError(), qPrintable(reset.error().message()));
+        QCOMPARE(reset.value(), 3ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(signalCount_, 3, 1000);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
+
+        const auto resetActive = readFile(activeFile_);
+        const auto resetRecovery = readFile(recoveryFile_);
+        QVERIFY(blockDirectory(configDirectory));
+        QVERIFY(blockDirectory(stateDirectory));
+        auto repeatedReset = proxy.ResetAppearanceMode();
+        repeatedReset.waitForFinished();
+        QVERIFY(restoreDirectory(stateDirectory));
+        QVERIFY(restoreDirectory(configDirectory));
+        QVERIFY2(
+            !repeatedReset.isError(),
+            qPrintable(repeatedReset.error().message())
+        );
+        QCOMPARE(repeatedReset.value(), 3ULL);
+        QTest::qWait(50);
+        QCOMPARE(signalCount_, 3);
+        QCOMPARE(readFile(activeFile_), resetActive);
+        QCOMPARE(readFile(recoveryFile_), resetRecovery);
+    }
+
     void reportsRestartRecoveryStates()
     {
         QTemporaryDir recoveredDirectory;
@@ -773,6 +902,7 @@ private slots:
         QCOMPARE(proxy.shellInnerSpacing(), 8U);
         QCOMPARE(proxy.shellOuterSpacing(), 12U);
         QCOMPARE(proxy.syncHyprlandWindowSpacing(), false);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
         QCOMPARE(proxy.revision(), 9ULL);
         QCOMPARE(proxy.recoveryState(), QStringLiteral("normal"));
 
@@ -780,7 +910,7 @@ private slots:
         const auto migrated = QJsonDocument::fromJson(
             readFile(activeFile_)
         ).object();
-        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 3);
+        QCOMPARE(migrated.value(QStringLiteral("formatVersion")).toInteger(), 4);
         QCOMPARE(migrated.value(QStringLiteral("revision")).toString(), QStringLiteral("9"));
         QCOMPARE(migrated.value(QStringLiteral("shellBorderRadius")).toInteger(), 12);
         QCOMPARE(
@@ -823,6 +953,19 @@ private slots:
         QVERIFY2(!idempotent.isError(), qPrintable(idempotent.error().message()));
         QCOMPARE(idempotent.value(), std::numeric_limits<qulonglong>::max());
 
+        auto idempotentAppearance = proxy.SetAppearanceMode(
+            QStringLiteral("dark")
+        );
+        idempotentAppearance.waitForFinished();
+        QVERIFY2(
+            !idempotentAppearance.isError(),
+            qPrintable(idempotentAppearance.error().message())
+        );
+        QCOMPARE(
+            idempotentAppearance.value(),
+            std::numeric_limits<qulonglong>::max()
+        );
+
         auto failed = proxy.SetSharedSpacing(0U, 32U, false);
         failed.waitForFinished();
         QVERIFY(failed.isError());
@@ -831,11 +974,27 @@ private slots:
             QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
         );
         QVERIFY(failed.error().message().contains(QStringLiteral("exhausted")));
+
+        auto failedAppearance = proxy.SetAppearanceMode(
+            QStringLiteral("light")
+        );
+        failedAppearance.waitForFinished();
+        QVERIFY(failedAppearance.isError());
+        QCOMPARE(
+            failedAppearance.error().name(),
+            QStringLiteral("org.hyprshelld.Config1.Error.PersistenceFailed")
+        );
+        QVERIFY(
+            failedAppearance.error().message().contains(
+                QStringLiteral("exhausted")
+            )
+        );
         QTest::qWait(50);
         QCOMPARE(signalCount_, 0);
         QCOMPARE(proxy.shellInnerSpacing(), 8U);
         QCOMPARE(proxy.shellOuterSpacing(), 12U);
         QCOMPARE(proxy.syncHyprlandWindowSpacing(), true);
+        QCOMPARE(proxy.appearanceMode(), QStringLiteral("dark"));
         QCOMPARE(proxy.revision(), std::numeric_limits<qulonglong>::max());
         QCOMPARE(readFile(activeFile_), original);
     }

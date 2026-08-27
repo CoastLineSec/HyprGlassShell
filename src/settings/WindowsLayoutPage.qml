@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -1721,10 +1722,10 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: root.statusIsDanger ? "#382125" : "#33251a"
+                        color: root.statusIsDanger ? ShellTheme.errorContainer : ShellTheme.warningContainer
                         radius: 12
                         border.color: root.statusIsDanger
-                            ? "#8bfb7185" : "#8bf6ad55"
+                            ? ShellTheme.errorOutline : ShellTheme.warningOutline
                     }
 
                     ColumnLayout {
@@ -1736,7 +1737,7 @@ Page {
                             Layout.fillWidth: true
                             text: root.statusMessage
                             color: root.statusIsDanger
-                                ? "#ffb8c3" : "#ffd5a1"
+                                ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -2012,7 +2013,7 @@ Page {
                                 visible: root.projectionInitialized
                                     && !root.aspectRatioCoherent
                                 text: qsTr("Width and height must both be 0, or both be greater than 0, before this draft can be saved.")
-                                color: "#ffb8c3"
+                                color: ShellTheme.onErrorContainer
                                 font.pixelSize: 12
                                 wrapMode: Text.Wrap
                                 textFormat: Text.PlainText

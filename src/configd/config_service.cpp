@@ -23,6 +23,9 @@ const QString invalidSharedBorderError = QStringLiteral(
 const QString invalidSharedSpacingError = QStringLiteral(
     "org.hyprshelld.Config1.Error.InvalidSharedSpacing"
 );
+const QString invalidAppearanceModeError = QStringLiteral(
+    "org.hyprshelld.Config1.Error.InvalidAppearanceMode"
+);
 const QString persistenceError = QStringLiteral(
     "org.hyprshelld.Config1.Error.PersistenceFailed"
 );
@@ -109,6 +112,11 @@ bool ConfigService::syncHyprlandWindowSpacing() const
     return state_.syncHyprlandWindowSpacing;
 }
 
+QString ConfigService::appearanceMode() const
+{
+    return state_.appearanceMode;
+}
+
 qulonglong ConfigService::revision() const
 {
     return state_.revision;
@@ -176,6 +184,16 @@ qulonglong ConfigService::ResetSharedSpacing()
         ConfigValues::defaultShellOuterSpacing,
         ConfigValues::defaultSyncHyprlandWindowSpacing
     );
+}
+
+qulonglong ConfigService::SetAppearanceMode(const QString &mode)
+{
+    return setAppearanceMode(mode);
+}
+
+qulonglong ConfigService::ResetAppearanceMode()
+{
+    return setAppearanceMode(ConfigValues::defaultAppearanceMode);
 }
 
 qulonglong ConfigService::setBarHeight(uint height)
@@ -332,6 +350,46 @@ qulonglong ConfigService::setSharedSpacing(
     return state_.revision;
 }
 
+qulonglong ConfigService::setAppearanceMode(const QString &mode)
+{
+    if (!ConfigValues::isValidAppearanceMode(mode)) {
+        reportError(
+            invalidAppearanceModeError,
+            QStringLiteral(
+                "Appearance mode must be one of automatic, light, or dark"
+            )
+        );
+        return state_.revision;
+    }
+
+    if (mode == state_.appearanceMode) {
+        return state_.revision;
+    }
+
+    if (state_.revision == std::numeric_limits<quint64>::max()) {
+        reportError(
+            persistenceError,
+            QStringLiteral("Configuration revision is exhausted")
+        );
+        return state_.revision;
+    }
+
+    auto next = state_;
+    next.appearanceMode = mode;
+    next.revision = state_.revision + 1;
+
+    QString error;
+    if (!store_.persist(state_, next, legacyWorkspaceSettings_, error)) {
+        reportError(persistenceError, error);
+        return state_.revision;
+    }
+
+    const auto previous = state_;
+    state_ = next;
+    publishChange(previous);
+    return state_.revision;
+}
+
 void ConfigService::attemptLegacyWorkspaceRetirement()
 {
     if (!legacyWorkspaceRetirementAuthorized_
@@ -405,6 +463,12 @@ void ConfigService::publishChange(const ConfigState &previous) const
         changed.insert(
             QStringLiteral("SyncHyprlandWindowSpacing"),
             state_.syncHyprlandWindowSpacing
+        );
+    }
+    if (state_.appearanceMode != previous.appearanceMode) {
+        changed.insert(
+            QStringLiteral("AppearanceMode"),
+            state_.appearanceMode
         );
     }
     changed.insert(

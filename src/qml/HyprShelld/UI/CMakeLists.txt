@@ -1,8 +1,14 @@
+set_source_files_properties(
+    ShellTheme.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(
     hyprshelld-ui
     SHARED
     URI HyprShelld.UI
     QML_FILES
+        ShellTheme.qml
         Bar.qml
         BarHeightControl.qml
         WorkspaceSwitcher.qml

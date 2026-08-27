@@ -2,17 +2,22 @@ import "." as Visual
 import QtQuick
 import QtQuick.Window
 import QtTest
+import HyprShelld.UI
 
 TestCase {
     id: testCase
 
     readonly property string captureDirectory: "/tmp/hyprshelld-visual-qa"
-    readonly property var scenes: ["overview", "catalog-appearance", "catalog-input", "catalog-windows", "catalog-shortcuts", "catalog-system", "catalog-session", "bindings-list", "bindings-editor", "bindings-submaps", "input-list", "input-editor", "environment-list", "environment-editor", "permissions-list", "permissions-editor", "displays-advanced", "displays-luminance", "appearance-visuals", "appearance-animations", "guided-input-global", "guided-input-gestures", "windows-layout", "workspaces", "rules-window", "rules-layer"]
+    readonly property var scenes: ["theme-selector", "overview", "catalog-appearance", "catalog-input", "catalog-windows", "catalog-shortcuts", "catalog-system", "catalog-session", "bindings-list", "bindings-editor", "bindings-submaps", "input-list", "input-editor", "environment-list", "environment-editor", "permissions-list", "permissions-editor", "displays-advanced", "displays-luminance", "appearance-visuals", "appearance-animations", "guided-input-global", "guided-input-gestures", "windows-layout", "workspaces", "rules-window", "rules-layer"]
 
-    function captureScene(scene, width, height) {
-        const output = "%1/%2-%3x%4.png".arg(captureDirectory).arg(scene).arg(width).arg(height);
+    function captureScene(scene, theme, width, height, selectorMode) {
+        const selectorVariant = selectorMode
+            ? "-" + selectorMode + "-effective" : "";
+        const output = "%1/%2%3-%4-%5x%6.png".arg(captureDirectory).arg(scene).arg(selectorVariant).arg(theme).arg(width).arg(height);
         const window = createTemporaryObject(harnessComponent, testCase, {
             "sceneName": scene,
+            "themeMode": theme,
+            "selectorMode": selectorMode || theme,
             "outputPath": output,
             "width": width,
             "height": height,
@@ -29,9 +34,18 @@ TestCase {
             verify(summary !== null);
             verify(summary.lineCount <= summary.maximumLineCount);
             verify(summary.height <= window.pageItem.height);
+        } else if (scene === "theme-selector" && selectorMode === "automatic") {
+            const badge = window.findByObjectName(
+                window.pageItem, "themeAutomaticEffectiveBadge"
+            );
+            verify(badge !== null);
+            compare(badge.visible, true);
+            verify(badge.text.indexOf(
+                theme === "light" ? "Light" : "Dark"
+            ) >= 0);
         }
         waitForRendering(window.renderedItem);
-        wait(60);
+        wait(ShellTheme.transitionDuration + 40);
         let completed = false;
         let saved = false;
         window.renderedItem.grabToImage(function (result) {
@@ -46,10 +60,18 @@ TestCase {
     }
 
     function test_captureAllSurfaces() {
-        for (const scene of scenes) {
-            captureScene(scene, 1080, 720);
-            captureScene(scene, 620, 720);
+        for (const theme of ["dark", "light"]) {
+            for (const scene of scenes) {
+                captureScene(scene, theme, 1080, 720);
+                captureScene(scene, theme, 620, 720);
+            }
+            captureScene("theme-selector", theme, 1080, 720, "automatic");
+            captureScene("theme-selector", theme, 620, 720, "automatic");
         }
+    }
+
+    function cleanupTestCase() {
+        ShellTheme.previewMode = "";
     }
 
     name: "HyprlandSettingsVisualCapture"

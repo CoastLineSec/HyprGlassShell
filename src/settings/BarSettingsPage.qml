@@ -435,15 +435,15 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: "#33251a"
+                        color: ShellTheme.warningContainer
                         radius: 12
-                        border.color: "#8bf6ad55"
+                        border.color: ShellTheme.warningOutline
                     }
 
                     Label {
                         anchors.fill: parent
                         text: qsTr("Bar settings are unavailable. The displayed size, spacing, and border may be stale, and core Bar changes are disabled until settings reconnect.")
-                        color: "#ffd5a1"
+                        color: ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -459,16 +459,16 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: "#33251a"
+                        color: ShellTheme.warningContainer
                         radius: 12
-                        border.color: "#8bf6ad55"
+                        border.color: ShellTheme.warningOutline
                     }
 
                     Label {
                         objectName: "componentServiceWarningLabel"
                         anchors.fill: parent
                         text: root.componentWarningMessage
-                        color: "#ffd5a1"
+                        color: ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -485,20 +485,20 @@ Page {
 
                     background: Rectangle {
                         color: root.coreRecoveryState === "defaulted"
-                            ? "#382125"
-                            : "#1c2f34"
+                            ? ShellTheme.errorContainer
+                            : ShellTheme.infoContainer
                         radius: 12
                         border.color: root.coreRecoveryState === "defaulted"
-                            ? "#8bfb7185"
-                            : "#8b63d7e6"
+                            ? ShellTheme.errorOutline
+                            : ShellTheme.infoOutline
                     }
 
                     Label {
                         anchors.fill: parent
                         text: root.coreRecoveryMessage
                         color: root.coreRecoveryState === "defaulted"
-                            ? "#ffb8c3"
-                            : "#b9eef4"
+                            ? ShellTheme.onErrorContainer
+                            : ShellTheme.onInfoContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -515,21 +515,21 @@ Page {
 
                     background: Rectangle {
                         color: root.componentRecoveryState === "defaulted"
-                            ? "#382125"
-                            : "#1c2f34"
+                            ? ShellTheme.errorContainer
+                            : ShellTheme.infoContainer
                         radius: 12
                         border.color:
                             root.componentRecoveryState === "defaulted"
-                                ? "#8bfb7185"
-                                : "#8b63d7e6"
+                                ? ShellTheme.errorOutline
+                                : ShellTheme.infoOutline
                     }
 
                     Label {
                         anchors.fill: parent
                         text: root.componentRecoveryMessage
                         color: root.componentRecoveryState === "defaulted"
-                            ? "#ffb8c3"
-                            : "#b9eef4"
+                            ? ShellTheme.onErrorContainer
+                            : ShellTheme.onInfoContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -545,9 +545,9 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: "#382125"
+                        color: ShellTheme.errorContainer
                         radius: 12
-                        border.color: "#8bfb7185"
+                        border.color: ShellTheme.errorOutline
                     }
 
                     Label {
@@ -556,7 +556,7 @@ Page {
                         text: qsTr("The Bar settings could not be saved. %1").arg(
                             root.coreErrorText
                         )
-                        color: "#ffb8c3"
+                        color: ShellTheme.onErrorContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -572,9 +572,9 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: "#382125"
+                        color: ShellTheme.errorContainer
                         radius: 12
-                        border.color: "#8bfb7185"
+                        border.color: ShellTheme.errorOutline
                     }
 
                     Label {
@@ -583,7 +583,7 @@ Page {
                         text: qsTr("The workspace settings could not be saved. %1").arg(
                             root.componentErrorText
                         )
-                        color: "#ffb8c3"
+                        color: ShellTheme.onErrorContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text

@@ -3,11 +3,17 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
 
     property bool serviceAvailable: false
+    property string shellAppearanceMode: "dark"
+    property string shellEffectiveAppearanceMode: "dark"
+    property bool shellAppearanceServiceAvailable: false
+    property bool shellAppearanceBusy: false
+    property string shellAppearanceError: ""
     property bool writable: false
     property bool catalogAvailable: false
     property bool appearanceAvailable: false
@@ -83,6 +89,7 @@ Page {
     property bool sharedSpacingSourceExpectedSync: windowSpacingSynced
 
     signal refreshRequested()
+    signal shellAppearanceModeRequested(string mode)
     signal openDisplaysRequested()
     signal saveRequested(var values, var curves, var animations)
     signal retryApplyRequested()
@@ -508,36 +515,36 @@ Page {
         const appearanceDetail = root.appearanceErrorMessage.length > 0
             ? " " + root.appearanceErrorMessage : "";
         if (!root.serviceAvailable)
-            return qsTr("Appearance settings are unavailable. The compositor settings service may be restarting.%1").arg(detail);
+            return qsTr("Window visuals and animations are unavailable. The compositor settings service may be restarting.%1").arg(detail);
         if (root.displayTestActive)
-            return qsTr("A display test is active. Appearance changes stay locked until that test is kept or reverted.");
+            return qsTr("A display test is active. Window visual and animation changes stay locked until that test is kept or reverted.");
         if (root.managementState === "unmanaged")
-            return qsTr("HyprShelld is not managing the Hyprland entrypoint yet. Review takeover from Displays before changing appearance.");
+            return qsTr("HyprShelld is not managing the Hyprland entrypoint yet. Review takeover from Displays before changing window visuals or animations.");
         if (root.managementState === "conflict")
-            return qsTr("The managed compositor entrypoint or its ownership state changed unexpectedly. Appearance changes are locked to preserve it.%1").arg(detail);
+            return qsTr("The managed compositor entrypoint or its ownership state changed unexpectedly. Window visual and animation changes are locked to preserve it.%1").arg(detail);
         if (!root.writable)
             return qsTr("This compositor configuration is read-only and has been preserved.");
         if (!root.catalogAvailable)
-            return qsTr("The trusted Hyprland option catalog is unavailable or does not match the compositor authority. Appearance changes are disabled.%1").arg(appearanceDetail);
+            return qsTr("The trusted Hyprland option catalog is unavailable or does not match the compositor authority. Window visual and animation changes are disabled.%1").arg(appearanceDetail);
         if (!root.trustedDefinitionsValid || !root.trustedValuesValid)
-            return qsTr("The trusted Appearance contract does not match this Settings build. No compositor values will be written.%1").arg(appearanceDetail);
+            return qsTr("The trusted compositor appearance contract does not match this Settings build. No compositor values will be written.%1").arg(appearanceDetail);
         if (!root.appearanceAnimationProjectionAvailable)
-            return qsTr("Curves and animations are waiting for a current, authenticated full compositor projection. Existing visual values remain readable, but the combined Appearance draft cannot be changed yet.%1").arg(appearanceDetail);
+            return qsTr("Curves and animations are waiting for a current, authenticated full compositor projection. Existing visual values remain readable, but the combined compositor appearance draft cannot be changed yet.%1").arg(appearanceDetail);
         if (!root.trustedAnimationProjectionValid)
-            return qsTr("The current curves and animations do not match the strict managed Appearance contract. No compositor values will be written.%1").arg(appearanceDetail);
+            return qsTr("The current curves and animations do not match the strict managed compositor appearance contract. No compositor values will be written.%1").arg(appearanceDetail);
         if (!root.revisionTokenValid)
-            return qsTr("The exact compositor revision token is unavailable. Appearance changes are disabled to prevent overwriting another revision.");
+            return qsTr("The exact compositor revision token is unavailable. Window visual and animation changes are disabled to prevent overwriting another revision.");
         if (root.externalChangeWhileEditing)
             return qsTr("Compositor settings changed outside this draft. Your draft is preserved, but it cannot be saved over the newer revision. Load the current settings to continue.");
         if (root.busy) {
             if (root.busyOperation === "appearance-save")
-                return qsTr("Saving the validated Appearance draft…");
+                return qsTr("Saving the validated compositor appearance draft…");
             if (root.busyOperation === "compositor-apply"
                     || root.busyOperation === "appearance-apply")
                 return qsTr("Applying and verifying the saved compositor revision…");
             if (root.busyOperation === "recover")
                 return qsTr("Restoring and verifying the last working compositor configuration…");
-            return qsTr("Another compositor operation is in progress. Appearance changes are temporarily locked.");
+            return qsTr("Another compositor operation is in progress. Window visual and animation changes are temporarily locked.");
         }
         if (root.applyState === "retained"
                 || root.applyState === "failed"
@@ -562,14 +569,14 @@ Page {
         if (root.appearanceProjectionAvailable
                 && !root.appearanceAvailable
                 && root.appearanceErrorMessage.length > 0) {
-            return qsTr("Appearance authority verification failed. Current visual values remain readable, but changes are disabled until the managed action, schema, and full-state contract is authenticated.%1").arg(appearanceDetail);
+            return qsTr("Compositor appearance authority verification failed. Current visual values remain readable, but changes are disabled until the managed action, schema, and full-state contract is authenticated.%1").arg(appearanceDetail);
         }
         if (root.appearanceErrorMessage.length > 0)
-            return qsTr("The Appearance operation failed.%1").arg(appearanceDetail);
+            return qsTr("The compositor appearance operation failed.%1").arg(appearanceDetail);
         if (root.errorMessage.length > 0)
             return qsTr("The compositor operation failed.%1").arg(detail);
         if (!root.appearanceAvailable)
-            return qsTr("Appearance settings are waiting for a current, verified compositor baseline.");
+            return qsTr("Window visuals and animations are waiting for a current, verified compositor baseline.");
         return "";
     }
 
@@ -2333,7 +2340,7 @@ Page {
 
                         Label {
                             Layout.fillWidth: true
-                            text: qsTr("Shape common window visuals through the managed compositor configuration.")
+                            text: qsTr("Choose the shell color mode and shape window visuals through the managed compositor configuration.")
                             color: root.palette.placeholderText
                             font.pixelSize: 13
                             wrapMode: Text.Wrap
@@ -2364,10 +2371,13 @@ Page {
                     padding: 16
 
                     background: Rectangle {
-                        color: root.statusIsDanger ? "#382125" : "#33251a"
+                        color: root.statusIsDanger
+                            ? ShellTheme.errorContainer
+                            : ShellTheme.warningContainer
                         radius: 12
                         border.color: root.statusIsDanger
-                            ? "#8bfb7185" : "#8bf6ad55"
+                            ? ShellTheme.errorOutline
+                            : ShellTheme.warningOutline
                     }
 
                     ColumnLayout {
@@ -2378,7 +2388,9 @@ Page {
                             objectName: "appearanceStatusMessage"
                             Layout.fillWidth: true
                             text: root.statusMessage
-                            color: root.statusIsDanger ? "#ffb8c3" : "#ffd5a1"
+                            color: root.statusIsDanger
+                                ? ShellTheme.onErrorContainer
+                                : ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -2463,6 +2475,18 @@ Page {
                             }
                         }
                     }
+                }
+
+                ThemeModeSelector {
+                    Layout.fillWidth: true
+                    mode: root.shellAppearanceMode
+                    effectiveMode: root.shellEffectiveAppearanceMode
+                    serviceAvailable: root.shellAppearanceServiceAvailable
+                    busy: root.shellAppearanceBusy
+                    errorText: root.shellAppearanceError
+
+                    onModeRequested: mode =>
+                        root.shellAppearanceModeRequested(mode)
                 }
 
                 TabBar {
@@ -2569,7 +2593,7 @@ Page {
                                     text: qsTr("The shared spacing source could not be changed. %1").arg(
                                         root.sharedSpacingSourceActionError
                                     )
-                                    color: "#ffb8c3"
+                                    color: ShellTheme.onErrorContainer
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
                                     Accessible.role: Accessible.AlertMessage
@@ -2840,7 +2864,7 @@ Page {
                                     text: qsTr("The shared border source could not be changed. %1").arg(
                                         root.sharedBorderSourceActionError
                                     )
-                                    color: "#ffb8c3"
+                                    color: ShellTheme.onErrorContainer
                                     wrapMode: Text.Wrap
                                     textFormat: Text.PlainText
                                     Accessible.role: Accessible.AlertMessage
@@ -3311,7 +3335,7 @@ Page {
                             Layout.fillWidth: true
                             visible: root.glowSafetyViolation
                             text: qsTr("Inner window glow is on with a range below 10. Turn it off or set Glow range to at least 10 before saving or applying.")
-                            color: "#ffb8c3"
+                            color: ShellTheme.onErrorContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -4178,8 +4202,8 @@ Page {
                                 text: root.externalChangeWhileEditing
                                     ? qsTr("Draft preserved")
                                     : root.draftDirty
-                                        ? qsTr("Unsaved Appearance draft")
-                                        : qsTr("No Appearance changes")
+                                        ? qsTr("Unsaved compositor appearance draft")
+                                        : qsTr("No compositor appearance changes")
                                 color: root.palette.text
                                 font.pixelSize: 15
                                 font.weight: Font.DemiBold
@@ -4202,11 +4226,11 @@ Page {
                             Layout.fillWidth: true
                             visible: root.draftDirty && !root.draftValid
                             text: !root.draftValuesValid
-                                ? qsTr("Return to Visuals and correct every highlighted value before the combined Appearance draft can be saved.")
+                                ? qsTr("Return to Visuals and correct every highlighted value before the combined compositor appearance draft can be saved.")
                                 : !root.glowDraftSafe
-                                    ? qsTr("Turn Inner window glow off or set Glow range to at least 10 before the combined Appearance draft can be saved.")
-                                    : qsTr("Finish every curve and animation rule before the combined Appearance draft can be saved.")
-                            color: "#ffb8c3"
+                                    ? qsTr("Turn Inner window glow off or set Glow range to at least 10 before the combined compositor appearance draft can be saved.")
+                                    : qsTr("Finish every curve and animation rule before the combined compositor appearance draft can be saved.")
+                            color: ShellTheme.onErrorContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -4237,7 +4261,7 @@ Page {
                                     && !root.busy
                                     && !root.saveSubmitted
                                     && !root.sharedVisualTransitionBusy
-                                Accessible.name: qsTr("Discard Appearance draft")
+                                Accessible.name: qsTr("Discard compositor appearance draft")
 
                                 onClicked: root.synchronizeDraft()
                             }
@@ -4275,7 +4299,7 @@ Page {
                                 }
                                 highlighted: true
                                 enabled: root.saveEnabled
-                                Accessible.name: qsTr("Save and apply the validated Appearance draft")
+                                Accessible.name: qsTr("Save and apply the validated compositor appearance draft")
 
                                 onClicked: root.submitDraft()
                             }

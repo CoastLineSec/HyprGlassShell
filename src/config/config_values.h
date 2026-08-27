@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QString>
+
 namespace HyprShelld::ConfigValues {
 
 inline constexpr unsigned int minimumBarHeight = 24U;
@@ -20,5 +22,19 @@ inline constexpr unsigned int maximumShellSpacing = 32U;
 inline constexpr unsigned int defaultShellInnerSpacing = 8U;
 inline constexpr unsigned int defaultShellOuterSpacing = 12U;
 inline constexpr bool defaultSyncHyprlandWindowSpacing = true;
+
+inline const QString automaticAppearanceMode = QStringLiteral("automatic");
+inline const QString lightAppearanceMode = QStringLiteral("light");
+inline const QString darkAppearanceMode = QStringLiteral("dark");
+// Preserve the established dark presentation when upgrading snapshots that
+// predate the appearance-mode setting.
+inline const QString defaultAppearanceMode = darkAppearanceMode;
+
+[[nodiscard]] inline bool isValidAppearanceMode(const QString &mode)
+{
+    return mode == automaticAppearanceMode
+        || mode == lightAppearanceMode
+        || mode == darkAppearanceMode;
+}
 
 } // namespace HyprShelld::ConfigValues

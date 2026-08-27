@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 import HyprShelld.Client
 
 Page {
@@ -130,9 +131,9 @@ Page {
             Layout.minimumWidth: 0
             implicitHeight: legacyNoticeContent.implicitHeight + 24
             radius: 12
-            color: "#242b38"
+            color: ShellTheme.warningContainer
             border.width: 1
-            border.color: "#4a5568"
+            border.color: ShellTheme.warningOutline
             Accessible.role: Accessible.StaticText
             Accessible.name: legacyNoticeTitle.text
                 + ". " + legacyNoticeBody.text
@@ -154,7 +155,7 @@ Page {
                     Layout.minimumWidth: 0
                     text: qsTr("Legacy reference — not current keybindings")
                     textFormat: Text.PlainText
-                    color: "#fbd38d"
+                    color: ShellTheme.onWarningContainer
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
@@ -169,7 +170,7 @@ Page {
                     Layout.minimumWidth: 0
                     text: qsTr("This immutable page reproduces the pinned old keybinds.lua in source order. It does not read your active Hyprland configuration and cannot edit, activate, repair, or replace any shortcut.")
                     textFormat: Text.PlainText
-                    color: "#d8dee9"
+                    color: ShellTheme.onWarningContainer
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     Accessible.ignored: true
@@ -187,7 +188,7 @@ Page {
                     .arg(root.referenceErrorMessage)
                 : qsTr("The pinned legacy shortcut reference is unavailable.")
             textFormat: Text.PlainText
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             Accessible.role: Accessible.AlertMessage
@@ -262,9 +263,9 @@ Page {
                 width: ListView.view.width
                 implicitHeight: shortcutContent.implicitHeight + 24
                 radius: 12
-                color: "#181d26"
+                color: ShellTheme.card
                 border.width: 1
-                border.color: "#303846"
+                border.color: ShellTheme.outline
                 Accessible.role: Accessible.ListItem
                 Accessible.name: qsTr("Legacy shortcut %1: %2. Action: %3. Options: %4")
                     .arg(shortcutOrdinal)
@@ -334,7 +335,7 @@ Page {
                         text: qsTr("Action: %1")
                             .arg(String(shortcutCard.shortcut.action))
                         textFormat: Text.PlainText
-                        color: "#cbd5e0"
+                        color: ShellTheme.onSurface
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
@@ -348,7 +349,7 @@ Page {
                         text: qsTr("Options: %1")
                             .arg(shortcutCard.shortcutOptionsText)
                         textFormat: Text.PlainText
-                        color: "#aeb8c6"
+                        color: ShellTheme.onSurfaceMuted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
@@ -361,7 +362,7 @@ Page {
                         Layout.minimumWidth: 0
                         text: qsTr("Reference only — not editable or active")
                         textFormat: Text.PlainText
-                        color: "#fbd38d"
+                        color: ShellTheme.onWarningContainer
                         font.pixelSize: 11
                         font.weight: Font.DemiBold
                         wrapMode: Text.Wrap

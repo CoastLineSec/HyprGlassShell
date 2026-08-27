@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -45,11 +46,11 @@ Frame {
     padding: 12
 
     background: Rectangle {
-        color: root.included ? "#242131" : root.palette.alternateBase
+        color: root.included ? ShellTheme.card : root.palette.alternateBase
         radius: 12
         border.color: !root.fieldValid
-            ? "#a8606a"
-            : root.included ? "#7b68a1" : root.palette.mid
+            ? ShellTheme.errorOutline
+            : root.included ? ShellTheme.primary : root.palette.mid
     }
 
     ColumnLayout {
@@ -220,7 +221,7 @@ Frame {
             Layout.leftMargin: 12
             visible: root.included && !root.fieldValid
             text: qsTr("Enter a value accepted by the pinned Hyprland 0.56.2 device schema.")
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             Accessible.role: Accessible.AlertMessage

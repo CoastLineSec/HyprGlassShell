@@ -44,6 +44,11 @@ configure_file(
     COPYONLY
 )
 configure_file(
+    "${SHARED_UI_SOURCE_DIR}/ShellTheme.qml"
+    "${test_config}/HyprShelld/UI/ShellTheme.qml"
+    COPYONLY
+)
+configure_file(
     "${CMAKE_CURRENT_LIST_DIR}/quickshell/component-hosts/ui.qmldir"
     "${test_config}/HyprShelld/UI/qmldir"
     COPYONLY

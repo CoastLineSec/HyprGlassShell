@@ -66,12 +66,15 @@ private slots:
         QCOMPARE(client.defaultShellInnerSpacing(), 8U);
         QCOMPARE(client.defaultShellOuterSpacing(), 12U);
         QCOMPARE(client.defaultSyncHyprlandWindowSpacing(), true);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.defaultAppearanceMode(), QStringLiteral("dark"));
 
         QVERIFY2(startService(directory.path()), qPrintable(processError_));
         QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
         QCOMPARE(client.barHeight(), 40U);
         QCOMPARE(client.revision(), 0ULL);
         QCOMPARE(client.recoveryState(), QStringLiteral("normal"));
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
 
         client.setBarHeight(60);
         QVERIFY(client.busy());
@@ -494,6 +497,155 @@ private slots:
         QCOMPARE(client.shellInnerSpacing(), 0U);
         QCOMPARE(client.shellOuterSpacing(), 32U);
         QCOMPARE(client.syncHyprlandWindowSpacing(), false);
+    }
+
+    void tracksAppearanceModeAndRejectsMalformedProjections()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        QVERIFY2(startService(directory.path()), qPrintable(processError_));
+
+        HyprShelld::ConfigClient client(bus_, nullptr);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.defaultAppearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.revision(), 0ULL);
+
+        QSignalSpy appearanceModeChanged(
+            &client,
+            &HyprShelld::ConfigClient::appearanceModeChanged
+        );
+        QSignalSpy revisionChanged(
+            &client,
+            &HyprShelld::ConfigClient::revisionChanged
+        );
+
+        client.setAppearanceMode(QStringLiteral("light"));
+        QVERIFY(client.busy());
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.appearanceMode(),
+            QStringLiteral("light"),
+            3000
+        );
+        QCOMPARE(client.revision(), 1ULL);
+        QCOMPARE(appearanceModeChanged.count(), 1);
+        QCOMPARE(revisionChanged.count(), 1);
+
+        client.setAppearanceMode(QStringLiteral("system"));
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QCOMPARE(
+            client.lastErrorName(),
+            QStringLiteral(
+                "org.hyprshelld.Config1.Error.InvalidAppearanceMode"
+            )
+        );
+        QCOMPARE(client.appearanceMode(), QStringLiteral("light"));
+        QCOMPARE(client.revision(), 1ULL);
+        QCOMPARE(appearanceModeChanged.count(), 1);
+
+        client.setAppearanceMode(QStringLiteral("automatic"));
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.appearanceMode(),
+            QStringLiteral("automatic"),
+            3000
+        );
+        QCOMPARE(client.revision(), 2ULL);
+        QCOMPARE(appearanceModeChanged.count(), 2);
+
+        client.resetAppearanceMode();
+        QTRY_VERIFY_WITH_TIMEOUT(!client.busy(), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.appearanceMode(),
+            QStringLiteral("dark"),
+            3000
+        );
+        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(appearanceModeChanged.count(), 3);
+
+        const QStringList noInvalidatedProperties;
+        const auto inject = [
+            &client,
+            &noInvalidatedProperties
+        ](const QVariantMap &properties) {
+            return QMetaObject::invokeMethod(
+                &client,
+                "propertiesChanged",
+                Qt::DirectConnection,
+                Q_ARG(QString, interfaceName),
+                Q_ARG(QVariantMap, properties),
+                Q_ARG(QStringList, noInvalidatedProperties)
+            );
+        };
+
+        QVERIFY(inject({
+            {QStringLiteral("AppearanceMode"), QStringLiteral("light")},
+        }));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.revision(), 3ULL);
+        QCOMPARE(appearanceModeChanged.count(), 3);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        QVERIFY(inject({
+            {QStringLiteral("AppearanceMode"), 1U},
+            {QStringLiteral("Revision"), qulonglong(4)},
+        }));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.revision(), 3ULL);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        QVERIFY(inject({
+            {QStringLiteral("AppearanceMode"), QStringLiteral("system")},
+            {QStringLiteral("Revision"), qulonglong(4)},
+        }));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.revision(), 3ULL);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        QVERIFY(inject({
+            {QStringLiteral("AppearanceMode"), QStringLiteral("light")},
+            {QStringLiteral("Revision"), qulonglong(3)},
+        }));
+        QCOMPARE(client.available(), false);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("dark"));
+        QCOMPARE(client.revision(), 3ULL);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+
+        QDBusInterface external(busName, objectPath, interfaceName, bus_);
+        QDBusPendingReply<qulonglong> changed = external.asyncCall(
+            QStringLiteral("SetAppearanceMode"),
+            QStringLiteral("light")
+        );
+        changed.waitForFinished();
+        QVERIFY2(!changed.isError(), qPrintable(changed.error().message()));
+        QCOMPARE(changed.value(), 4ULL);
+        QTRY_COMPARE_WITH_TIMEOUT(
+            client.appearanceMode(),
+            QStringLiteral("light"),
+            3000
+        );
+        QCOMPARE(client.revision(), 4ULL);
+        QCOMPARE(appearanceModeChanged.count(), 4);
+
+        const QStringList invalidatedAppearance{
+            QStringLiteral("AppearanceMode"),
+        };
+        QVERIFY(QMetaObject::invokeMethod(
+            &client,
+            "propertiesChanged",
+            Qt::DirectConnection,
+            Q_ARG(QString, interfaceName),
+            Q_ARG(QVariantMap, QVariantMap()),
+            Q_ARG(QStringList, invalidatedAppearance)
+        ));
+        QCOMPARE(client.available(), false);
+        QTRY_VERIFY_WITH_TIMEOUT(client.available(), 3000);
+        QCOMPARE(client.appearanceMode(), QStringLiteral("light"));
+        QCOMPARE(client.revision(), 4ULL);
     }
 
     void exposesAnExactRevisionTokenBeyondQmlIntegerPrecision()

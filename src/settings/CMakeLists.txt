@@ -54,6 +54,7 @@ qt_add_qml_module(
         SettingsSpinBoxRow.qml
         SettingsToggleRow.qml
         ShellHealthWarning.qml
+        ThemeModeSelector.qml
         WorkspaceSwitcherSettings.qml
         WorkspaceRuleEditor.qml
         WorkspaceRuleSummaryList.qml

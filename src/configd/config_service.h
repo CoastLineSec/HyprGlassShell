@@ -20,6 +20,7 @@ class ConfigService final : public QObject, protected QDBusContext {
     Q_PROPERTY(uint ShellInnerSpacing READ shellInnerSpacing)
     Q_PROPERTY(uint ShellOuterSpacing READ shellOuterSpacing)
     Q_PROPERTY(bool SyncHyprlandWindowSpacing READ syncHyprlandWindowSpacing)
+    Q_PROPERTY(QString AppearanceMode READ appearanceMode)
     Q_PROPERTY(qulonglong Revision READ revision)
     Q_PROPERTY(QString RecoveryState READ recoveryState)
 
@@ -39,6 +40,7 @@ public:
     [[nodiscard]] uint shellInnerSpacing() const;
     [[nodiscard]] uint shellOuterSpacing() const;
     [[nodiscard]] bool syncHyprlandWindowSpacing() const;
+    [[nodiscard]] QString appearanceMode() const;
     [[nodiscard]] qulonglong revision() const;
     [[nodiscard]] QString recoveryState() const;
 
@@ -60,6 +62,8 @@ public slots:
         bool syncHyprlandWindowSpacing
     );
     qulonglong ResetSharedSpacing();
+    qulonglong SetAppearanceMode(const QString &mode);
+    qulonglong ResetAppearanceMode();
 
 private:
     qulonglong setBarHeight(uint height);
@@ -74,6 +78,7 @@ private:
         uint outer,
         bool syncHyprlandWindowSpacing
     );
+    qulonglong setAppearanceMode(const QString &mode);
     void attemptLegacyWorkspaceRetirement();
     void reportError(const QString &name, const QString &message) const;
     void publishChange(const ConfigState &previous) const;

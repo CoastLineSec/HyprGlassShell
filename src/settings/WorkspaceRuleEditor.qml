@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ScrollView {
     id: root
@@ -264,7 +265,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: root.ruleIssue.length > 0
                     text: root.ruleIssue
-                    color: "#ffb8c3"
+                    color: ShellTheme.onErrorContainer
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
                     Accessible.role: Accessible.AlertMessage

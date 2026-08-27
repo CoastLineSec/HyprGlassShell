@@ -558,6 +558,43 @@ TestCase {
         The remaining tests exercise the transport-free shared renderer.
     */
 
+    function test_rendererUsesSharedSemanticThemeRoles() {
+        const testWindow = createTemporaryObject(
+            switcherWindowComponent,
+            this
+        );
+        verify(testWindow !== null);
+        const switcher = testWindow.switcher;
+        waitForRendering(switcher);
+
+        compare(switcher.activeFillColor, ShellTheme.primaryContainer);
+        compare(switcher.activeEdgeColor, ShellTheme.primary);
+        compare(switcher.strongTextColor, ShellTheme.onPrimaryContainer);
+        compare(switcher.occupiedRingColor, ShellTheme.outlineStrong);
+        compare(switcher.occupiedTextColor, ShellTheme.onSurface);
+        compare(switcher.emptyRingColor, ShellTheme.outline);
+        compare(switcher.emptyTextColor, ShellTheme.onSurfaceMuted);
+        compare(switcher.mutedTextColor, ShellTheme.onSurfaceMuted);
+        compare(switcher.urgentColor, ShellTheme.error);
+
+        const currentCircle = findChild(switcher, "workspaceCircle-2");
+        const urgentCircle = findChild(switcher, "workspaceCircle--44");
+        const activeMarker = findChild(
+            switcher,
+            "workspaceApplicationActiveMarker-2-0"
+        );
+        const focusRing = findChild(switcher, "workspaceFocusRing-2");
+        verify(currentCircle !== null);
+        verify(urgentCircle !== null);
+        verify(activeMarker !== null);
+        verify(focusRing !== null);
+        compare(currentCircle.color, ShellTheme.primaryContainer);
+        compare(currentCircle.border.color, ShellTheme.primary);
+        compare(urgentCircle.border.color, ShellTheme.error);
+        compare(activeMarker.color, ShellTheme.primary);
+        compare(focusRing.border.color, ShellTheme.primary);
+    }
+
     function test_rendererShowsStatesLabelsAppsAndOverflow() {
         const testWindow = createTemporaryObject(
             switcherWindowComponent,

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ColumnLayout {
     id: root
@@ -499,8 +500,8 @@ ColumnLayout {
         objectName: "appearanceAnimationDraftValidationMessage"
         Layout.fillWidth: true
         visible: root.draftDirty && !root.draftValid
-        text: qsTr("Finish every curve and animation rule before the combined Appearance draft can be saved.")
-        color: "#ffb8c3"
+        text: qsTr("Finish every curve and animation rule before the combined compositor appearance draft can be saved.")
+        color: ShellTheme.onErrorContainer
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         Accessible.role: Accessible.AlertMessage

@@ -52,6 +52,13 @@
         value="true"/>
     </property>
 
+    <!-- One of automatic, light, or dark. -->
+    <property name="AppearanceMode" type="s" access="read">
+      <annotation
+        name="org.freedesktop.DBus.Property.EmitsChangedSignal"
+        value="true"/>
+    </property>
+
     <property name="Revision" type="t" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -114,6 +121,20 @@
     </method>
 
     <method name="ResetSharedSpacing">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!--
+      Errors:
+        org.hyprshelld.Config1.Error.InvalidAppearanceMode
+        org.hyprshelld.Config1.Error.PersistenceFailed
+    -->
+    <method name="SetAppearanceMode">
+      <arg name="mode" type="s" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <method name="ResetAppearanceMode">
       <arg name="revision" type="t" direction="out"/>
     </method>
   </interface>

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Dialog {
     id: root
@@ -84,9 +85,9 @@ Dialog {
                 padding: 14
 
                 background: Rectangle {
-                    color: "#33251a"
+                    color: ShellTheme.warningContainer
                     radius: 10
-                    border.color: "#8bf6ad55"
+                    border.color: ShellTheme.warningOutline
                 }
 
                 ColumnLayout {
@@ -96,7 +97,7 @@ Dialog {
                     Label {
                         Layout.fillWidth: true
                         text: qsTr("Unverified third-party code")
-                        color: "#ffd5a1"
+                        color: ShellTheme.onWarningContainer
                         font.weight: Font.DemiBold
                         textFormat: Text.PlainText
                         Accessible.role: Accessible.AlertMessage
@@ -106,7 +107,7 @@ Dialog {
                     Label {
                         Layout.fillWidth: true
                         text: qsTr("HyprShelld verified the package structure and integrity, not that its code is safe. Install only code you have reviewed and trust.")
-                        color: "#ffd5a1"
+                        color: ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                     }
@@ -285,7 +286,7 @@ Dialog {
                 Layout.fillWidth: true
                 visible: root.errorText.length > 0
                 text: root.errorText
-                color: "#ffb8c3"
+                color: ShellTheme.onErrorContainer
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
                 Accessible.role: Accessible.AlertMessage

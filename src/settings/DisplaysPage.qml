@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -505,9 +506,9 @@ Page {
                 padding: 16
 
                 background: Rectangle {
-                    color: root.managementState === "conflict" || root.applyState === "failed" || root.confirmationState === "failed" ? "#382125" : "#33251a"
+                    color: root.managementState === "conflict" || root.applyState === "failed" || root.confirmationState === "failed" ? ShellTheme.errorContainer : ShellTheme.warningContainer
                     radius: 12
-                    border.color: root.managementState === "conflict" || root.applyState === "failed" || root.confirmationState === "failed" ? "#8bfb7185" : "#8bf6ad55"
+                    border.color: root.managementState === "conflict" || root.applyState === "failed" || root.confirmationState === "failed" ? ShellTheme.errorOutline : ShellTheme.warningOutline
                 }
 
                 RowLayout {
@@ -544,7 +545,7 @@ Page {
                                 return qsTr("The connected display inventory changed. Your draft was refreshed so you can review it safely.");
                             return "";
                         }
-                        color: root.managementState === "conflict" || root.applyState === "failed" ? "#ffb8c3" : "#ffd5a1"
+                        color: root.managementState === "conflict" || root.applyState === "failed" ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         Accessible.role: Accessible.AlertMessage
                         Accessible.name: text
@@ -677,7 +678,7 @@ Page {
                         Label {
                             Layout.fillWidth: true
                             text: root.draftValidationMessage.length > 0 ? root.draftValidationMessage : qsTr("The test lasts 15 seconds. If you cannot see the confirmation, HyprShelld reverts automatically.")
-                            color: root.draftValidationMessage.length > 0 ? "#fb7185" : root.palette.placeholderText
+                            color: root.draftValidationMessage.length > 0 ? ShellTheme.error : root.palette.placeholderText
                             font.pixelSize: 12
                             wrapMode: Text.Wrap
                         }
@@ -731,7 +732,7 @@ Page {
         anchors.fill: parent
         z: 100
         visible: root.confirmationActive
-        color: "#b8101319"
+        color: ShellTheme.shadow
 
         MouseArea {
             anchors.fill: parent
@@ -746,7 +747,7 @@ Page {
                 color: root.palette.base
                 radius: 18
                 border.width: 2
-                border.color: root.confirmationState === "failed" ? "#fb7185" : root.palette.highlight
+                border.color: root.confirmationState === "failed" ? ShellTheme.error : root.palette.highlight
             }
 
             ColumnLayout {
@@ -797,7 +798,7 @@ Page {
                             return qsTr("The displayed countdown has elapsed. The daemon rejects late confirmation and reverts automatically.");
                         return root.confirmationSecondsRemaining === 1 ? qsTr("Reverting automatically in 1 second.") : qsTr("Reverting automatically in %1 seconds.").arg(root.confirmationSecondsRemaining);
                     }
-                    color: root.confirmationState === "failed" ? "#ffb8c3" : root.palette.placeholderText
+                    color: root.confirmationState === "failed" ? ShellTheme.onErrorContainer : root.palette.placeholderText
                     font.pixelSize: 14
                     wrapMode: Text.Wrap
                     Accessible.role: root.confirmationState === "failed" ? Accessible.AlertMessage : Accessible.StaticText

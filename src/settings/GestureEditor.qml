@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -21,7 +22,7 @@ Frame {
     background: Rectangle {
         color: root.palette.base
         radius: 16
-        border.color: root.issue.length > 0 ? "#8bfb7185" : root.palette.mid
+        border.color: root.issue.length > 0 ? ShellTheme.errorOutline : root.palette.mid
     }
 
     function clone(value) {
@@ -604,7 +605,7 @@ Frame {
             Label {
                 Layout.fillWidth: true
                 text: qsTr("Advanced: this bypasses an application's request to inhibit compositor gestures. It can make a managed gesture activate during interactions that expect gestures to be reserved.")
-                color: "#ffd5a1"
+                color: ShellTheme.onWarningContainer
                 font.pixelSize: 12
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
@@ -615,7 +616,7 @@ Frame {
             Layout.fillWidth: true
             visible: root.issue.length > 0
             text: root.issue
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             Accessible.role: Accessible.AlertMessage

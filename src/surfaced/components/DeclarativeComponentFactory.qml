@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import HyprShelld.UI
 
 Rectangle {
     id: root
@@ -14,10 +15,24 @@ Rectangle {
     implicitWidth: Math.min(root.maximumWidth, label.implicitWidth + 24)
     implicitHeight: Math.min(28, Math.max(20, label.implicitHeight + 8))
     radius: height / 2
-    color: shellPalette.alternateBase
-    border.color: shellPalette.highlight
+    color: ShellTheme.floating
+    border.color: ShellTheme.primary
     border.width: 1
     clip: true
+
+    Behavior on color {
+        ColorAnimation {
+            duration: ShellTheme.transitionDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on border.color {
+        ColorAnimation {
+            duration: ShellTheme.transitionDuration
+            easing.type: Easing.OutCubic
+        }
+    }
 
     Accessible.role: Accessible.StaticText
     Accessible.name: root.displayText
@@ -34,7 +49,7 @@ Rectangle {
         }
         text: root.displayText
         textFormat: Text.PlainText
-        color: shellPalette.text
+        color: ShellTheme.onSurface
         font.pixelSize: 13
         font.weight: Font.Medium
         horizontalAlignment: Text.AlignHCenter
@@ -42,25 +57,32 @@ Rectangle {
         elide: Text.ElideRight
         maximumLineCount: 1
         wrapMode: Text.NoWrap
+
+        Behavior on color {
+            ColorAnimation {
+                duration: ShellTheme.transitionDuration
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     HoverHandler {
         id: hover
     }
 
-    SystemPalette {
-        id: shellPalette
-
-        colorGroup: SystemPalette.Active
-    }
-
     ToolTip {
         visible: hover.hovered && root.tooltipText.length > 0
         delay: 500
+        background: Rectangle {
+            color: ShellTheme.floating
+            border.color: ShellTheme.outline
+            border.width: 1
+            radius: 6
+        }
         contentItem: Text {
             text: root.tooltipText
             textFormat: Text.PlainText
-            color: shellPalette.text
+            color: ShellTheme.onSurface
             wrapMode: Text.Wrap
         }
     }

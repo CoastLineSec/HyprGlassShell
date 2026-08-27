@@ -494,6 +494,12 @@ window borders** or **Override window spacing**. Core recovery never requires
 the two services to overwrite one another's persistence files; compositord
 reconciles from Config1's verified projection.
 
+Core settings also persist the shell appearance preference as exactly one of
+`automatic`, `light`, or `dark`. `automatic` follows Qt's current desktop color
+scheme at runtime; the other two modes remain explicit. Existing version 1–3
+core snapshots migrate to `dark` without advancing their revision, preserving
+the presentation used before the preference was introduced.
+
 If a recovery message keeps returning, close Settings and preserve the active
 and last-known-good file named above for the affected area before seeking help.
 Do not delete or edit either file as a first troubleshooting step; doing so can

@@ -29,17 +29,15 @@ Item {
         1,
         Math.min(5, maximumApplications)
     )
-    // Local fallback palette for semantic workspace states. The shared theme
-    // contract can supply these roles once it owns component palette values.
-    readonly property color activeFillColor: "#263a59"
-    readonly property color activeEdgeColor: "#668fc9"
-    readonly property color strongTextColor: "#f5f7fa"
-    readonly property color occupiedRingColor: "#b8aeb8c6"
-    readonly property color occupiedTextColor: "#d9e1ec"
-    readonly property color emptyRingColor: "#66aeb8c6"
-    readonly property color emptyTextColor: "#8faeb8c6"
-    readonly property color mutedTextColor: "#aeb8c6"
-    readonly property color urgentColor: "#fb7185"
+    readonly property color activeFillColor: ShellTheme.primaryContainer
+    readonly property color activeEdgeColor: ShellTheme.primary
+    readonly property color strongTextColor: ShellTheme.onPrimaryContainer
+    readonly property color occupiedRingColor: ShellTheme.outlineStrong
+    readonly property color occupiedTextColor: ShellTheme.onSurface
+    readonly property color emptyRingColor: ShellTheme.outline
+    readonly property color emptyTextColor: ShellTheme.onSurfaceMuted
+    readonly property color mutedTextColor: ShellTheme.onSurfaceMuted
+    readonly property color urgentColor: ShellTheme.error
 
     readonly property real activeCircleSize: 24
     readonly property real inactiveCircleSize: 18
@@ -464,10 +462,19 @@ Item {
                             && (workspaceButton.hovered
                                 || workspaceButton.down)
                         color: workspaceButton.down
-                            ? "#18ffffff"
-                            : "#0cffffff"
+                            ? ShellTheme.surfacePressed
+                            : ShellTheme.surfaceHover
                         z: 1
                         Accessible.ignored: true
+
+                        Behavior on color {
+                            enabled: root.animationsEnabled
+
+                            ColorAnimation {
+                                duration: ShellTheme.transitionDuration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                     }
 
                     Rectangle {
@@ -596,10 +603,29 @@ Item {
                             visible: workspaceButton.hovered
                                 || workspaceButton.down
                             radius: width / 2
-                            color: workspaceButton.down
-                                ? "#18ffffff"
-                                : "#0cffffff"
+                            color: {
+                                const opacity = workspaceButton.down
+                                    ? 0.14 : 0.07;
+                                const background = workspaceIndicator
+                                    .workspaceActive
+                                    ? root.activeFillColor
+                                    : ShellTheme.card;
+                                return ShellTheme.overlay(
+                                    ShellTheme.onSurface,
+                                    opacity,
+                                    background
+                                );
+                            }
                             Accessible.ignored: true
+
+                            Behavior on color {
+                                enabled: root.animationsEnabled
+
+                                ColorAnimation {
+                                    duration: ShellTheme.transitionDuration
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
                         }
 
                         Rectangle {
@@ -619,8 +645,26 @@ Item {
                             radius: width / 2
                             color: root.urgentColor
                             border.width: 1
-                            border.color: "#17243a"
+                            border.color: ShellTheme.card
                             Accessible.ignored: true
+
+                            Behavior on color {
+                                enabled: root.animationsEnabled
+
+                                ColorAnimation {
+                                    duration: ShellTheme.transitionDuration
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            Behavior on border.color {
+                                enabled: root.animationsEnabled
+
+                                ColorAnimation {
+                                    duration: ShellTheme.transitionDuration
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
                         }
                     }
 
@@ -720,14 +764,34 @@ Item {
                                 background: Rectangle {
                                     radius: height / 2
                                     color: applicationButton.down
-                                        ? "#26ffffff"
+                                        ? ShellTheme.surfacePressed
                                         : (applicationButton.hovered
-                                            ? "#16ffffff"
+                                            ? ShellTheme.surfaceHover
                                             : "transparent")
                                     border.width: applicationButton.activeFocus
                                         ? 1
                                         : 0
                                     border.color: root.activeEdgeColor
+
+                                    Behavior on color {
+                                        enabled: root.animationsEnabled
+
+                                        ColorAnimation {
+                                            duration:
+                                                ShellTheme.transitionDuration
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+
+                                    Behavior on border.color {
+                                        enabled: root.animationsEnabled
+
+                                        ColorAnimation {
+                                            duration:
+                                                ShellTheme.transitionDuration
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
 
                                 contentItem: Item {
@@ -803,8 +867,18 @@ Item {
                                         width: 7
                                         height: 2
                                         radius: 1
-                                        color: "#a8cbff"
+                                        color: ShellTheme.primary
                                         Accessible.ignored: true
+
+                                        Behavior on color {
+                                            enabled: root.animationsEnabled
+
+                                            ColorAnimation {
+                                                duration:
+                                                    ShellTheme.transitionDuration
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
                                     }
 
                                     Rectangle {
@@ -824,9 +898,29 @@ Item {
                                         width: 10
                                         height: 10
                                         radius: width / 2
-                                        color: "#17243a"
-                                        border.color: "#a8cbff"
+                                        color: ShellTheme.primaryContainer
+                                        border.color: ShellTheme.primary
                                         border.width: 1
+
+                                        Behavior on color {
+                                            enabled: root.animationsEnabled
+
+                                            ColorAnimation {
+                                                duration:
+                                                    ShellTheme.transitionDuration
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+
+                                        Behavior on border.color {
+                                            enabled: root.animationsEnabled
+
+                                            ColorAnimation {
+                                                duration:
+                                                    ShellTheme.transitionDuration
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         Text {
                                             anchors.centerIn: parent
@@ -886,9 +980,18 @@ Item {
                         radius: width / 2
                         color: "transparent"
                         border.width: 1
-                        border.color: "#a8cbff"
+                        border.color: ShellTheme.primary
                         z: 5
                         Accessible.ignored: true
+
+                        Behavior on border.color {
+                            enabled: root.animationsEnabled
+
+                            ColorAnimation {
+                                duration: ShellTheme.transitionDuration
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                     }
 
                     Behavior on width {
@@ -951,5 +1054,14 @@ Item {
             ? qsTr("Workspaces unavailable on %1").arg(root.outputName)
             : text
         Accessible.ignored: !root.interactive
+
+        Behavior on color {
+            enabled: root.animationsEnabled
+
+            ColorAnimation {
+                duration: ShellTheme.transitionDuration
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 }

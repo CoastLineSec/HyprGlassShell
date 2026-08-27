@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Rectangle {
     id: root
@@ -300,13 +301,13 @@ Rectangle {
                 Layout.preferredWidth: riskLabel.implicitWidth + 14
                 Layout.preferredHeight: 24
                 radius: 8
-                color: root.definition.risk === "dangerous" ? "#6b2a36" : "#5b431f"
+                color: root.definition.risk === "dangerous" ? ShellTheme.errorContainer : ShellTheme.warningContainer
 
                 Label {
                     id: riskLabel
                     anchors.centerIn: parent
                     text: root.definition.risk === "dangerous" ? qsTr("Danger") : qsTr("Caution")
-                    color: root.definition.risk === "dangerous" ? "#ffb8c3" : "#ffd89a"
+                    color: root.definition.risk === "dangerous" ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                     font.pixelSize: 10
                     font.weight: Font.DemiBold
                 }
@@ -360,7 +361,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: !root.writable
             text: qsTr("This value is preserved by the managed Lua contract but is read-only because its syntax is not safely editable yet.")
-            color: "#ffd89a"
+            color: ShellTheme.onWarningContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
@@ -603,7 +604,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: root.validationError.length > 0
             text: root.validationError
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             textFormat: Text.PlainText

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ColumnLayout {
     id: root
@@ -172,7 +173,7 @@ ColumnLayout {
                 color: root.palette.base
                 radius: 14
                 border.color: gestureCard.editable
-                    ? root.palette.mid : "#8bf6ad55"
+                    ? root.palette.mid : ShellTheme.warningOutline
             }
 
             ColumnLayout {
@@ -247,7 +248,7 @@ ColumnLayout {
                             180, gestureCard.width * 0.42
                         )
                         text: qsTr("Compatibility record — read only")
-                        color: "#ffd5a1"
+                        color: ShellTheme.onWarningContainer
                         font.pixelSize: 12
                         font.weight: Font.DemiBold
                         wrapMode: Text.Wrap
@@ -263,7 +264,7 @@ ColumnLayout {
                         && gestureCard.compatibility.reason.length > 0
                     text: gestureCard.compatibility !== null
                         ? gestureCard.compatibility.reason : ""
-                    color: "#ffd5a1"
+                    color: ShellTheme.onWarningContainer
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
@@ -273,7 +274,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     visible: gestureCard.modelData.disableInhibit === true
                     text: qsTr("Allowed while compositor gestures are inhibited")
-                    color: "#ffd5a1"
+                    color: ShellTheme.onWarningContainer
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
@@ -366,7 +367,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: !root.draftValid
         text: qsTr("This ordered gesture draft is not valid. Remove the orphaned compatibility record or restore the current Input draft before saving.")
-        color: "#ffb8c3"
+        color: ShellTheme.onErrorContainer
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         Accessible.role: Accessible.AlertMessage

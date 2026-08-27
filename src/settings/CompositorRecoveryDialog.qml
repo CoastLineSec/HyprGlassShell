@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Dialog {
     id: root
@@ -75,9 +76,9 @@ Dialog {
                 padding: 14
 
                 background: Rectangle {
-                    color: "#382125"
+                    color: ShellTheme.errorContainer
                     radius: 10
-                    border.color: "#8bfb7185"
+                    border.color: ShellTheme.errorOutline
                 }
 
                 Label {
@@ -86,7 +87,7 @@ Dialog {
                     text: qsTr("Recovery is not limited to %1. It replaces every pending compositor setting, including display and other settings, with the last verified working snapshot.").arg(
                         root.settingsAreaName
                     )
-                    color: "#ffb8c3"
+                    color: ShellTheme.onErrorContainer
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText

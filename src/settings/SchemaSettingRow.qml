@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ColumnLayout {
     id: root
@@ -384,7 +385,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: root.validationError.length > 0
         text: root.validationError
-        color: "#ffb8c3"
+        color: ShellTheme.onErrorContainer
         font.pixelSize: 11
         wrapMode: Text.Wrap
         textFormat: Text.PlainText

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ColumnLayout {
     id: root
@@ -138,7 +139,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 visible: root.curveIssue.length > 0
                 text: root.curveIssue
-                color: "#ffb8c3"
+                color: ShellTheme.onErrorContainer
                 wrapMode: Text.Wrap
                 textFormat: Text.PlainText
                 Accessible.role: Accessible.AlertMessage

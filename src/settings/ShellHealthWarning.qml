@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -124,9 +125,9 @@ Frame {
     Accessible.ignored: !visible
 
     background: Rectangle {
-        color: root.errorTone ? "#382125" : "#33251a"
+        color: root.errorTone ? ShellTheme.errorContainer : ShellTheme.warningContainer
         radius: 14
-        border.color: root.errorTone ? "#8bfb7185" : "#8bf6ad55"
+        border.color: root.errorTone ? ShellTheme.errorOutline : ShellTheme.warningOutline
     }
 
     contentItem: ColumnLayout {
@@ -140,12 +141,12 @@ Frame {
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 30
                 radius: 15
-                color: root.errorTone ? "#fb7185" : "#f6ad55"
+                color: root.errorTone ? ShellTheme.error : ShellTheme.warning
 
                 Label {
                     anchors.centerIn: parent
                     text: "!"
-                    color: "#171b22"
+                    color: ShellTheme.onPrimary
                     font.pixelSize: 17
                     font.weight: Font.Bold
                     Accessible.ignored: true
@@ -159,7 +160,7 @@ Frame {
                 Label {
                     Layout.fillWidth: true
                     text: root.warningTitle
-                    color: root.errorTone ? "#ffb8c3" : "#ffd5a1"
+                    color: root.errorTone ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                     font.pixelSize: 15
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
@@ -259,7 +260,7 @@ Frame {
                     Label {
                         visible: !root.coordinatorAvailable
                         text: qsTr("Needs attention")
-                        color: "#ffb8c3"
+                        color: ShellTheme.onErrorContainer
                         font.pixelSize: 11
                         font.weight: Font.DemiBold
                         wrapMode: Text.Wrap
@@ -283,7 +284,7 @@ Frame {
                 : qsTr("Restart could not be requested. %1").arg(
                     root.restartError
                 )
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             font.pixelSize: 12
             wrapMode: Text.Wrap
             Accessible.role: Accessible.AlertMessage

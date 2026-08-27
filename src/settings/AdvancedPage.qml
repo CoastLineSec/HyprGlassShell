@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -733,10 +734,10 @@ Page {
                 padding: 16
 
                 background: Rectangle {
-                    color: root.statusIsDanger ? "#382125" : "#33251a"
+                    color: root.statusIsDanger ? ShellTheme.errorContainer : ShellTheme.warningContainer
                     radius: 12
                     border.color: root.statusIsDanger
-                        ? "#8bfb7185" : "#8bf6ad55"
+                        ? ShellTheme.errorOutline : ShellTheme.warningOutline
                 }
 
                 ColumnLayout {
@@ -747,7 +748,7 @@ Page {
                         objectName: "advancedStatusMessage"
                         Layout.fillWidth: true
                         text: root.statusMessage
-                        color: root.statusIsDanger ? "#ffb8c3" : "#ffd5a1"
+                        color: root.statusIsDanger ? ShellTheme.onErrorContainer : ShellTheme.onWarningContainer
                         wrapMode: Text.Wrap
                         textFormat: Text.PlainText
                         Accessible.role: Accessible.AlertMessage
@@ -1138,16 +1139,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedWorkspaceUnderlayRenderingCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: When this is on, the active-workspace render path skips construction of Hyprland's compositor fallback background, layer-shell background and bottom passes, and the post-wallpaper pass. Windows and layer-shell top and overlay surfaces still render. The no-workspace render path is unchanged. This does not stop those surfaces or their processes, and it does not clear prior buffer pixels, so uncovered pixels may be stale or undefined.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1217,16 +1218,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedSdrWorkBufferTransferCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: This changes only the internal FP16 or ICC SDR work-buffer transfer. It does not enable FP16, HDR, or ICC, and it does not change the output transfer function or color profile. On ordinary sRGB output without an ICC profile, the choice may remain dormant. HDR-like paths stay linear regardless of this setting.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1300,16 +1301,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedDirectScanoutCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: Eligible direct scanout bypasses normal composition, but activation is never guaranteed. Overlays such as the lock screen or notifications, screen capture, mirrored outputs, a software cursor, and incompatible buffers, transforms, or color management can keep normal composition active. Settings does not test display or GPU support.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1381,16 +1382,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedNativeWaylandResizeCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: This affects native Wayland surfaces only. It does not resize the client buffer, window, or display, and it does not make the application respond sooner. X11 windows handled through XWayland are unaffected.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1461,16 +1462,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedXWaylandCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: This global choice affects only X11 windows handled through XWayland. Native Wayland windows are unchanged, and a per-window Nearest-neighbor scaling Rule can still enable the filter when this choice is off.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage
@@ -1542,16 +1543,16 @@ Page {
                         padding: 14
 
                         background: Rectangle {
-                            color: "#33251a"
+                            color: ShellTheme.warningContainer
                             radius: 10
-                            border.color: "#8bf6ad55"
+                            border.color: ShellTheme.warningOutline
                         }
 
                         Label {
                             objectName: "advancedInputCaptureProtocolCautionMessage"
                             anchors.fill: parent
                             text: qsTr("Caution: These choices do not grant input-capture permission, create or enable a capture session, or release an active one. They affect only later modifier events and new barrier requests. Changing them does not synthesize or retract held modifier state, and it does not revalidate, repair, or remove existing barriers.")
-                            color: "#ffd5a1"
+                            color: ShellTheme.onWarningContainer
                             wrapMode: Text.Wrap
                             textFormat: Text.PlainText
                             Accessible.role: Accessible.AlertMessage

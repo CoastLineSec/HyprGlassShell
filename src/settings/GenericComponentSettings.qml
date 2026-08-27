@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -206,7 +207,7 @@ Frame {
             Layout.fillWidth: true
             visible: root.errorText.length > 0
             text: root.errorText
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             Accessible.role: Accessible.AlertMessage

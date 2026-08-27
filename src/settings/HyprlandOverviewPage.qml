@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Page {
     id: root
@@ -21,9 +22,9 @@ Page {
     readonly property bool wideHero: width >= 650
     readonly property color coverageColor: {
         if (root.coverageComplete)
-            return "#68d391";
+            return ShellTheme.success;
         if (root.loadedCatalogOptionCount > 0)
-            return "#f6ad55";
+            return ShellTheme.warning;
         return root.palette.placeholderText;
     }
     readonly property string coverageSummary: {
@@ -590,7 +591,13 @@ Page {
                             radius: 18
                             color: categoryCard.hovered ? root.translucent(categoryCard.categoryAccent, 0.09) : root.palette.base
                             border.width: categoryCard.activeFocus ? 2 : 1
-                            border.color: categoryCard.activeFocus ? categoryCard.categoryAccent : categoryCard.hovered ? root.translucent(categoryCard.categoryAccent, 0.62) : root.palette.mid
+                            border.color: categoryCard.activeFocus
+                                ? root.palette.highlight
+                                : categoryCard.hovered
+                                    ? root.translucent(
+                                          categoryCard.categoryAccent, 0.62
+                                      )
+                                    : root.palette.mid
 
                             Rectangle {
                                 anchors {
@@ -662,7 +669,7 @@ Page {
 
                                             anchors.centerIn: parent
                                             text: categoryCard.coverageLabel
-                                            color: categoryCard.categoryAccent
+                                            color: root.palette.highlight
                                             font.pixelSize: 10
                                             font.weight: Font.DemiBold
                                         }
@@ -697,7 +704,7 @@ Page {
 
                                 Label {
                                     text: categoryCard.modelData.routeType === "surface" ? qsTr("Open %1").arg(categoryCard.modelData.pageLabel) : qsTr("Explore category")
-                                    color: categoryCard.categoryAccent
+                                    color: root.palette.highlight
                                     font.pixelSize: 11
                                     font.weight: Font.DemiBold
                                 }
@@ -712,7 +719,7 @@ Page {
                                         width: 9
                                         height: 2
                                         radius: 1
-                                        color: categoryCard.categoryAccent
+                                        color: root.palette.highlight
                                     }
 
                                     Rectangle {
@@ -722,7 +729,7 @@ Page {
                                         height: 2
                                         radius: 1
                                         rotation: 45
-                                        color: categoryCard.categoryAccent
+                                        color: root.palette.highlight
                                     }
 
                                     Rectangle {
@@ -732,7 +739,7 @@ Page {
                                         height: 2
                                         radius: 1
                                         rotation: -45
-                                        color: categoryCard.categoryAccent
+                                        color: root.palette.highlight
                                     }
                                 }
                             }

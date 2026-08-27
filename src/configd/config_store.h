@@ -21,6 +21,7 @@ struct ConfigState final {
     quint32 shellOuterSpacing = ConfigValues::defaultShellOuterSpacing;
     bool syncHyprlandWindowSpacing =
         ConfigValues::defaultSyncHyprlandWindowSpacing;
+    QString appearanceMode = ConfigValues::defaultAppearanceMode;
     quint64 revision = 0;
 
     friend bool operator==(const ConfigState &, const ConfigState &) = default;

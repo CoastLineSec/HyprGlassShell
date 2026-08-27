@@ -67,11 +67,18 @@ enabled. `SetSharedSpacing` changes the complete tuple atomically and
 `ResetSharedSpacing` restores those defaults, with the same persistence,
 revision, and combined-notification semantics as the border tuple.
 
-The current snapshot format is version 3. Valid version-1 and version-2
+`AppearanceMode` is exactly one of `automatic`, `light`, or `dark`.
+`automatic` follows the current desktop color scheme; the explicit modes do
+not. `SetAppearanceMode` persists a real change before publishing it, while
+`ResetAppearanceMode` restores `dark`.
+
+The current snapshot format is version 4. Valid version-1 through version-3
 snapshots migrate during loading without incrementing their revision. Version
-1 receives the established border migration; version 2 retains its complete
-border tuple. Both receive inner 8, outer 12, and spacing synchronization
-disabled so an upgrade does not replace existing managed gaps. The recovery
+1 receives the established border migration; later versions retain their
+complete border tuple. Versions 1 and 2 receive inner 8, outer 12, and spacing
+synchronization disabled so an upgrade does not replace existing managed gaps;
+version 3 retains its complete spacing tuple. All three receive `dark`, which
+preserves the presentation used before appearance modes existed. The recovery
 snapshot is rewritten before the active snapshot and before publication.
 
 The active snapshot follows the XDG base directories at
@@ -97,7 +104,9 @@ Configuration errors have these meanings:
 - `org.hyprshelld.Config1.Error.InvalidSharedBorder`: the requested border
   width or radius is outside the accepted range;
 - `org.hyprshelld.Config1.Error.InvalidSharedSpacing`: the requested inner or
-  outer spacing is outside the accepted range; and
+  outer spacing is outside the accepted range;
+- `org.hyprshelld.Config1.Error.InvalidAppearanceMode`: the requested mode is
+  not `automatic`, `light`, or `dark`; and
 - `org.hyprshelld.Config1.Error.PersistenceFailed`: the new state could not be
   persisted atomically, so the active value and revision remain unchanged.
 

@@ -31,6 +31,7 @@ TestCase {
             currentTime: new Date(2026, 7, 7, 15, 42)
             screenName: "DP-2"
             configurationAvailable: true
+            animationsEnabled: false
         }
     }
 
@@ -89,6 +90,7 @@ TestCase {
                 currentTime: new Date(2026, 7, 7, 15, 42)
                 screenName: "DP-2"
                 configurationAvailable: true
+                animationsEnabled: false
                 startComponent: startSlotComponent
                 centerComponent: centerSlotComponent
                 endComponent: endSlotComponent
@@ -207,6 +209,39 @@ TestCase {
         bar.attachedToTopEdge = false;
         compare(background.topLeftRadius, 12);
         compare(background.topRightRadius, 12);
+    }
+
+    function test_barUsesSharedSemanticThemeRoles() {
+        const bar = createTemporaryObject(barComponent, this);
+        verify(bar !== null);
+
+        const background = findChild(bar, "barBackground");
+        const configurationIndicator = findChild(
+            bar,
+            "configurationStatusIndicator"
+        );
+        const healthIndicator = findChild(bar, "shellHealthIndicator");
+        const failureNotice = findChild(bar, "failureNotice");
+        const clock = findChild(bar, "clockLabel");
+
+        verify(background !== null);
+        verify(configurationIndicator !== null);
+        verify(healthIndicator !== null);
+        verify(failureNotice !== null);
+        verify(clock !== null);
+
+        compare(background.color, ShellTheme.card);
+        compare(background.border.color, ShellTheme.outline);
+        compare(configurationIndicator.color, ShellTheme.success);
+        compare(healthIndicator.color, ShellTheme.errorContainer);
+        compare(healthIndicator.border.color, ShellTheme.errorOutline);
+        compare(clock.color, ShellTheme.onSurface);
+
+        compare(failureNotice.color, ShellTheme.errorContainer);
+        compare(failureNotice.border.color, ShellTheme.errorOutline);
+
+        bar.configurationAvailable = false;
+        compare(configurationIndicator.color, ShellTheme.warning);
     }
 
     function test_barOnlyShowsHealthIndicatorWhenDegraded() {

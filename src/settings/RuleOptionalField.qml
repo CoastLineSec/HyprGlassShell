@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 Frame {
     id: root
@@ -27,7 +28,7 @@ Frame {
             root.included ? 0.045 : 0.02
         )
         radius: 12
-        border.color: root.fieldValid ? root.palette.mid : "#8bfb7185"
+        border.color: root.fieldValid ? root.palette.mid : ShellTheme.errorOutline
     }
 
     function clone(value) {
@@ -107,7 +108,7 @@ Frame {
             visible: root.included && !root.fieldValid
             text: root.definition.errorText
                 || qsTr("This value is incomplete or outside the supported range.")
-            color: "#ffb8c3"
+            color: ShellTheme.onErrorContainer
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             Accessible.role: Accessible.AlertMessage

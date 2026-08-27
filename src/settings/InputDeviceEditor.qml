@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import HyprShelld.UI
 
 ScrollView {
     id: root
@@ -123,7 +124,7 @@ ScrollView {
                 color: root.palette.base
                 radius: 16
                 border.color: root.deviceIssue.length === 0
-                    ? root.palette.mid : "#a8606a"
+                    ? root.palette.mid : ShellTheme.errorOutline
             }
 
             ColumnLayout {
@@ -154,7 +155,7 @@ ScrollView {
                 Label {
                     Layout.fillWidth: true
                     text: qsTr("Record ID · %1").arg(root.deviceId())
-                    color: "#bca8dc"
+                    color: ShellTheme.primary
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WrapAnywhere
@@ -238,7 +239,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: root.deviceIssue.length > 0
                     text: root.deviceIssue
-                    color: "#ffb8c3"
+                    color: ShellTheme.onErrorContainer
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
                     Accessible.role: Accessible.AlertMessage
@@ -253,9 +254,9 @@ ScrollView {
             padding: root.compact ? 14 : 18
 
             background: Rectangle {
-                color: "#252032"
+                color: ShellTheme.card
                 radius: 16
-                border.color: "#6f5c90"
+                border.color: ShellTheme.outlineStrong
             }
 
             ColumnLayout {
@@ -265,7 +266,7 @@ ScrollView {
                 Label {
                     Layout.fillWidth: true
                     text: qsTr("Overrides are explicit")
-                    color: "#d6c0fa"
+                    color: ShellTheme.onSurface
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
@@ -275,7 +276,7 @@ ScrollView {
                 Label {
                     Layout.fillWidth: true
                     text: qsTr("Unchecked values inherit the global Input configuration. Checked values are emitted inside this device's hl.device({...}) record. Hyprland and libinput may ignore a valid field when the selected hardware does not support that capability.")
-                    color: "#c7b9da"
+                    color: ShellTheme.onSurfaceMuted
                     font.pixelSize: 12
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
@@ -365,10 +366,10 @@ ScrollView {
             padding: root.compact ? 14 : 18
 
             background: Rectangle {
-                color: "#242131"
+                color: ShellTheme.card
                 radius: 16
                 border.color: root.deviceIssue.length === 0
-                    ? "#7b68a1" : "#a8606a"
+                    ? ShellTheme.primary : ShellTheme.errorOutline
             }
 
             ColumnLayout {
