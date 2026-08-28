@@ -495,10 +495,17 @@ the two services to overwrite one another's persistence files; compositord
 reconciles from Config1's verified projection.
 
 Core settings also persist the shell appearance preference as exactly one of
-`automatic`, `light`, or `dark`. `automatic` follows Qt's current desktop color
-scheme at runtime; the other two modes remain explicit. Existing version 1–3
-core snapshots migrate to `dark` without advancing their revision, preserving
-the presentation used before the preference was introduced.
+`automatic`, `light`, or `dark`. Light and dark remain explicit. Automatic can
+follow Qt's current desktop color scheme, a separate fixed-time or locally
+calculated solar schedule, or Night Light's automatic schedule. Core settings
+also persist the independent Night Light switch, schedule, manual coordinates,
+and day and night temperatures. Existing version 1–3 core snapshots migrate to
+`dark` without advancing their revision, preserving the presentation used
+before the preference was introduced. See
+[Appearance automation and Night Light](appearance-automation.md) for location
+privacy, `hyprsunset` ownership, scheduling behavior, and dependencies.
+Version 4 snapshots preserve their saved appearance mode while receiving the
+desktop automatic source and disabled Night Light defaults during migration.
 
 If a recovery message keeps returning, close Settings and preserve the active
 and last-known-good file named above for the affected area before seeking help.

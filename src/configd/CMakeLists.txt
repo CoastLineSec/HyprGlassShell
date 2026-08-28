@@ -1,6 +1,8 @@
 qt_add_library(
     hyprshelld-configd-core
     STATIC
+        appearance_schedule.cpp
+        appearance_schedule.h
         component_catalog_client.cpp
         component_catalog_client.h
         component_config_service.cpp
@@ -11,6 +13,10 @@ qt_add_library(
         config_service.h
         config_store.cpp
         config_store.h
+        geoclue_client.cpp
+        geoclue_client.h
+        hyprsunset_controller.cpp
+        hyprsunset_controller.h
         legacy_workspace_settings.h
 )
 
@@ -61,6 +67,9 @@ target_compile_definitions(
     hyprshelld-configd
     PRIVATE
         HYPRSHELLD_COMPONENT_DEFAULTS_FILE="${CMAKE_INSTALL_FULL_DATADIR}/hyprshelld/defaults/components.json"
+        HYPRSUNSET_EXECUTABLE="${HYPRSUNSET_EXECUTABLE}"
+        HYPRCTL_EXECUTABLE="${HYPRCTL_EXECUTABLE}"
+        PGREP_EXECUTABLE="${PGREP_EXECUTABLE}"
 )
 
 target_include_directories(

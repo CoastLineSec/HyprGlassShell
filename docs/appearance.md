@@ -8,6 +8,13 @@ the complete Appearance domain. These are desired managed values, not a reading
 of every value effective in the running session. In particular, the user-owned
 `user-custom.lua` is loaded after the managed modules and can override them.
 
+The same page also selects HyprShelld's light, dark, or automatic shell palette
+and configures the `hyprsunset`-backed Night Light. Those core settings are
+independent of this managed Hyprland draft and do not require compositor
+takeover. See [Appearance automation and Night Light](appearance-automation.md)
+for desktop, fixed-time, solar, and shared Night Light scheduling, location
+privacy, and runtime dependencies.
+
 Appearance becomes editable only after HyprShelld manages the Hyprland
 entrypoint and the active desired-state revision is current. If management has
 not started, open **Displays**, read the takeover confirmation, and choose

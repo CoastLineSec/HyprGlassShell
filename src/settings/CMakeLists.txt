@@ -41,6 +41,7 @@ qt_add_qml_module(
         HyprlandOptionRow.qml
         HyprlandOverviewPage.qml
         KeyboardShortcutsPage.qml
+        NightLightCard.qml
         PermissionsPage.qml
         RuleDecimalField.qml
         RuleOptionalField.qml
@@ -54,6 +55,7 @@ qt_add_qml_module(
         SettingsSpinBoxRow.qml
         SettingsToggleRow.qml
         ShellHealthWarning.qml
+        ThemeAutomationCard.qml
         ThemeModeSelector.qml
         WorkspaceSwitcherSettings.qml
         WorkspaceRuleEditor.qml

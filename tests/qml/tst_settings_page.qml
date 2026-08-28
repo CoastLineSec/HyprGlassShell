@@ -6418,9 +6418,15 @@ TestCase {
                             activeWindow, summary, disclaimer]) {
             verify(item !== null);
         }
+        // This case verifies that glow edits do not alter preview geometry.
+        // Freeze the independent illustrative motion so animation progress
+        // cannot masquerade as a glow-induced geometry change.
+        preview.motionPaused = true;
+        preview.motionProgress = 1;
         page.applyState = "retained";
         page.requiredActivation = "reload";
         page.retryApplyAvailable = true;
+        waitForRendering(page);
         wait(0);
 
         compare(page.trustedValuesValid, true);
@@ -6485,6 +6491,7 @@ TestCase {
         compare(power.enabled, true);
 
         page.setDraftValue(page.glowRangeId, 9);
+        waitForRendering(page);
         wait(0);
         compare(page.draftValuesValid, true);
         compare(page.draftValid, false);

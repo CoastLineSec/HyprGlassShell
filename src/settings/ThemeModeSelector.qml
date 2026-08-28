@@ -21,7 +21,7 @@ Frame {
         {
             mode: "automatic",
             label: qsTr("Automatic"),
-            description: qsTr("Follow the desktop appearance")
+            description: qsTr("Follow desktop, schedule, or Night Light")
         },
         {
             mode: "light",
@@ -139,7 +139,7 @@ Frame {
                     Accessible.name: modeButton.modelData.label
                     Accessible.description:
                         modeButton.modelData.mode === "automatic"
-                        ? qsTr("Follow the desktop appearance. Currently using %1.")
+                        ? qsTr("Use the selected automatic source. Currently using %1.")
                               .arg(root.effectiveMode === "light"
                                   ? qsTr("Light") : qsTr("Dark"))
                         : modeButton.modelData.description

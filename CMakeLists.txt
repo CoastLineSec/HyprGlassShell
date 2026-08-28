@@ -45,6 +45,14 @@ find_program(
     REQUIRED
 )
 
+# Night Light is implemented with the Hypr ecosystem's color-temperature
+# daemon and its official Hyprland IPC client. Require the runtime tools while
+# configuring and embed their resolved paths in configd; distribution packages
+# must declare the matching package dependencies separately.
+find_program(HYPRSUNSET_EXECUTABLE NAMES hyprsunset REQUIRED)
+find_program(HYPRCTL_EXECUTABLE NAMES hyprctl REQUIRED)
+find_program(PGREP_EXECUTABLE NAMES pgrep REQUIRED)
+
 include(CTest)
 
 add_subdirectory(src)

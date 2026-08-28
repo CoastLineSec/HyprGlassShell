@@ -19,12 +19,23 @@ if(NOT test_root_name STREQUAL ".hws"
 endif()
 
 file(REMOVE_RECURSE "${TEST_ROOT}")
-foreach(directory config state cache data runtime)
+foreach(directory config state cache data)
     file(MAKE_DIRECTORY "${TEST_ROOT}/${directory}")
 endforeach()
+
+# AF_UNIX paths are limited to roughly 108 bytes on Linux. The source tree can
+# live below a much longer checkout path, so keep only the socket-bearing XDG
+# runtime directory under a short, per-run temporary path.
+set(runtime_parent "$ENV{TMPDIR}")
+if(runtime_parent STREQUAL "")
+    set(runtime_parent "/tmp")
+endif()
+string(RANDOM LENGTH 10 ALPHABET 0123456789abcdef runtime_suffix)
+set(short_runtime "${runtime_parent}/hyprshelld-hws-${runtime_suffix}")
+file(MAKE_DIRECTORY "${short_runtime}")
 file(
     CHMOD
-    "${TEST_ROOT}/runtime"
+    "${short_runtime}"
     PERMISSIONS
         OWNER_READ
         OWNER_WRITE
@@ -58,7 +69,7 @@ execute_process(
         "XDG_STATE_HOME=${TEST_ROOT}/state"
         "XDG_CACHE_HOME=${TEST_ROOT}/cache"
         "XDG_DATA_HOME=${TEST_ROOT}/data"
-        "XDG_RUNTIME_DIR=${TEST_ROOT}/runtime"
+        "XDG_RUNTIME_DIR=${short_runtime}"
         "QS_DISABLE_CRASH_HANDLER=1"
         "${QUICKSHELL_EXECUTABLE}"
         --no-color
@@ -72,6 +83,7 @@ execute_process(
 
 set(quickshell_log "${quickshell_output}${quickshell_error}")
 file(REMOVE_RECURSE "${TEST_ROOT}")
+file(REMOVE_RECURSE "${short_runtime}")
 message("${quickshell_log}")
 
 if(NOT "${quickshell_result}" STREQUAL "0")

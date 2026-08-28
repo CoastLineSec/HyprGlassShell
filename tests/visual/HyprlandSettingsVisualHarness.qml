@@ -591,10 +591,57 @@ ApplicationWindow {
 
     function configureAppearance(page) {
         const projection = root.guidedProjection(page);
-        page.shellAppearanceMode = root.themeMode;
+        const automationScene = root.sceneName
+            === "appearance-automation-time"
+            || root.sceneName === "appearance-automation-solar"
+            || root.sceneName === "appearance-night-light";
+        page.shellAppearanceMode = automationScene
+            ? "automatic" : root.themeMode;
         page.shellEffectiveAppearanceMode = root.themeMode;
         page.shellAppearanceServiceAvailable = true;
         page.shellAppearanceBusy = false;
+        page.hyprsunsetAvailable = true;
+        if (root.sceneName === "appearance-automation-time") {
+            page.shellAppearanceAutomationSource = "schedule";
+            page.shellAppearanceScheduleMode = "time";
+            page.shellAppearanceDarkStartMinute = 18 * 60;
+            page.shellAppearanceLightStartMinute = 6 * 60;
+            page.shellAppearanceNextTransition =
+                "2026-08-27T18:00:00-04:00";
+            page.shellAppearanceSunrise = "2026-08-27T06:00:00-04:00";
+            page.shellAppearanceSunset = "2026-08-27T18:00:00-04:00";
+            page.shellAppearanceAutomationStatus = "ready";
+        } else if (root.sceneName === "appearance-automation-solar") {
+            page.shellAppearanceAutomationSource = "schedule";
+            page.shellAppearanceScheduleMode = "location";
+            page.shellAppearanceLocationSource = "manual";
+            page.shellAppearanceHasLocation = true;
+            page.shellAppearanceLatitude = 39.9526;
+            page.shellAppearanceLongitude = -75.1652;
+            page.shellAppearanceNextTransition =
+                "2026-08-27T19:38:00-04:00";
+            page.shellAppearanceSunrise = "2026-08-27T06:23:00-04:00";
+            page.shellAppearanceSunset = "2026-08-27T19:38:00-04:00";
+            page.shellAppearanceAutomationStatus = "ready";
+        } else if (root.sceneName === "appearance-night-light") {
+            page.shellAppearanceAutomationSource = "desktop";
+            page.nightLightEnabled = true;
+            page.nightLightAutomatic = true;
+            page.nightLightScheduleMode = "location";
+            page.nightLightLocationSource = "manual";
+            page.nightLightHasLocation = true;
+            page.nightLightLatitude = 39.9526;
+            page.nightLightLongitude = -75.1652;
+            page.nightLightTemperature = 4000;
+            page.nightLightDayTemperature = 6500;
+            page.nightLightGradual = true;
+            page.nightLightCurrentTemperature = 4125;
+            page.nightLightNextTransition =
+                "2026-08-28T06:24:00-04:00";
+            page.nightLightSunrise = "2026-08-27T06:23:00-04:00";
+            page.nightLightSunset = "2026-08-27T19:38:00-04:00";
+            page.nightLightStatus = "night";
+        }
         page.serviceAvailable = true;
         page.writable = true;
         page.catalogAvailable = true;
@@ -650,6 +697,32 @@ ApplicationWindow {
         page.appearanceAvailable = true;
         page.reviewProjection();
         page.appearanceTabIndex = root.sceneName === "appearance-animations" ? 1 : 0;
+        if (automationScene) {
+            Qt.callLater(function () {
+                Qt.callLater(function () {
+                    const scroll = root.findByObjectName(
+                        page, "appearanceOptionsScrollView"
+                    );
+                    const target = root.findByObjectName(
+                        page,
+                        root.sceneName === "appearance-night-light"
+                            ? "nightLightAutomaticSwitch"
+                            : root.sceneName === "appearance-automation-solar"
+                                ? "themeAutomationMethod-location"
+                                : "themeAutomationMethod-time"
+                    );
+                    if (scroll && scroll.contentItem && target) {
+                        const point = target.mapToItem(
+                            scroll.contentItem, 0, 0
+                        );
+                        scroll.contentItem.contentY = Math.max(
+                            0,
+                            point.y - 16
+                        );
+                    }
+                });
+            });
+        }
     }
 
     function gestureActions() {

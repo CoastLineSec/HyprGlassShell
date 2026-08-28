@@ -1751,6 +1751,62 @@ ApplicationWindow {
                     shellAppearanceBusy: ConfigClient.busy
                         || root.shellAppearanceRequestPending
                     shellAppearanceError: root.shellAppearanceRequestError
+                    shellAppearanceAutomationError:
+                        ConfigClient.lastErrorOperation
+                            === "appearance-automation"
+                        ? ConfigClient.lastErrorMessage : ""
+                    nightLightSettingsError:
+                        ConfigClient.lastErrorOperation === "night-light"
+                        ? ConfigClient.lastErrorMessage : ""
+                    shellAppearanceAutomationSource:
+                        ConfigClient.appearanceAutomationSource
+                    shellAppearanceScheduleMode:
+                        ConfigClient.appearanceScheduleMode
+                    shellAppearanceDarkStartMinute:
+                        ConfigClient.appearanceDarkStartMinute
+                    shellAppearanceLightStartMinute:
+                        ConfigClient.appearanceLightStartMinute
+                    shellAppearanceLocationSource:
+                        ConfigClient.appearanceLocationSource
+                    shellAppearanceHasLocation:
+                        ConfigClient.appearanceHasLocation
+                    shellAppearanceLatitude:
+                        ConfigClient.appearanceLatitude
+                    shellAppearanceLongitude:
+                        ConfigClient.appearanceLongitude
+                    shellAppearanceNextTransition:
+                        ConfigClient.appearanceNextTransition
+                    shellAppearanceSunrise: ConfigClient.appearanceSunrise
+                    shellAppearanceSunset: ConfigClient.appearanceSunset
+                    shellAppearanceAutomationStatus:
+                        ConfigClient.appearanceAutomationStatus
+                    nightLightEnabled: ConfigClient.nightLightEnabled
+                    nightLightAutomatic: ConfigClient.nightLightAutomatic
+                    nightLightScheduleMode:
+                        ConfigClient.nightLightScheduleMode
+                    nightLightDarkStartMinute:
+                        ConfigClient.nightLightDarkStartMinute
+                    nightLightLightStartMinute:
+                        ConfigClient.nightLightLightStartMinute
+                    nightLightLocationSource:
+                        ConfigClient.nightLightLocationSource
+                    nightLightHasLocation:
+                        ConfigClient.nightLightHasLocation
+                    nightLightLatitude: ConfigClient.nightLightLatitude
+                    nightLightLongitude: ConfigClient.nightLightLongitude
+                    nightLightTemperature:
+                        ConfigClient.nightLightTemperature
+                    nightLightDayTemperature:
+                        ConfigClient.nightLightDayTemperature
+                    nightLightGradual: ConfigClient.nightLightGradual
+                    hyprsunsetAvailable: ConfigClient.hyprsunsetAvailable
+                    nightLightCurrentTemperature:
+                        ConfigClient.nightLightCurrentTemperature
+                    nightLightNextTransition:
+                        ConfigClient.nightLightNextTransition
+                    nightLightSunrise: ConfigClient.nightLightSunrise
+                    nightLightSunset: ConfigClient.nightLightSunset
+                    nightLightStatus: ConfigClient.nightLightStatus
                     serviceAvailable: CompositorClient.available
                     writable: CompositorClient.writable
                     catalogAvailable: CompositorClient.catalogAvailable
@@ -1774,6 +1830,52 @@ ApplicationWindow {
 
                     onShellAppearanceModeRequested: mode =>
                         root.requestShellAppearanceMode(mode)
+                    onShellAppearanceAutomationRequested: (
+                        source,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude
+                    ) => ConfigClient.setAppearanceAutomation(
+                        source,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude
+                    )
+                    onNightLightSettingsRequested: (
+                        nightLightEnabled,
+                        automatic,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude,
+                        nightTemperature,
+                        dayTemperature,
+                        gradual
+                    ) => ConfigClient.setNightLightSettings(
+                        nightLightEnabled,
+                        automatic,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude,
+                        nightTemperature,
+                        dayTemperature,
+                        gradual
+                    )
                     sharedSpacingAvailable: ConfigClient.available
                     sharedSpacingBusy: ConfigClient.busy
                     windowSpacingSynced: ConfigClient.syncHyprlandWindowSpacing

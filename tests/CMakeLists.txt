@@ -187,6 +187,7 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/HyprlandOptionRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/HyprlandOverviewPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/KeyboardShortcutsPage.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/NightLightCard.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/PermissionsPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/RuleDecimalField.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/RuleOptionalField.qml"
@@ -200,6 +201,7 @@ add_test(
         "${PROJECT_SOURCE_DIR}/src/settings/SettingsSpinBoxRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/SettingsToggleRow.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ShellHealthWarning.qml"
+        "${PROJECT_SOURCE_DIR}/src/settings/ThemeAutomationCard.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/ThemeModeSelector.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/WindowsLayoutPage.qml"
         "${PROJECT_SOURCE_DIR}/src/settings/WorkspaceRuleEditor.qml"
@@ -1626,6 +1628,89 @@ add_test(
     COMMAND hyprshelld-config-store-test
 )
 
+qt_add_executable(
+    hyprshelld-appearance-schedule-test
+    appearance_schedule_test.cpp
+)
+
+target_include_directories(
+    hyprshelld-appearance-schedule-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-appearance-schedule-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-configd-core
+)
+
+add_test(
+    NAME appearance-schedule
+    COMMAND hyprshelld-appearance-schedule-test
+)
+
+qt_add_executable(
+    hyprshelld-hyprsunset-controller-test
+    hyprsunset_controller_test.cpp
+)
+
+target_include_directories(
+    hyprshelld-hyprsunset-controller-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-hyprsunset-controller-test
+    PRIVATE
+        Qt6::Core
+        Qt6::Test
+        hyprshelld-configd-core
+)
+
+add_test(
+    NAME hyprsunset-controller
+    COMMAND hyprshelld-hyprsunset-controller-test
+)
+
+qt_add_executable(
+    hyprshelld-geoclue-client-test
+    geoclue_client_test.cpp
+)
+
+target_include_directories(
+    hyprshelld-geoclue-client-test
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    hyprshelld-geoclue-client-test
+    PRIVATE
+        Qt6::Core
+        Qt6::DBus
+        Qt6::Test
+        hyprshelld-configd-core
+)
+
+add_test(
+    NAME geoclue-client
+    COMMAND
+        "${HYPRSHELLD_DBUS_RUN_SESSION_EXECUTABLE}"
+        "--config-file=${CMAKE_CURRENT_SOURCE_DIR}/no_activation_session.conf"
+        --
+        "$<TARGET_FILE:hyprshelld-geoclue-client-test>"
+)
+
+set_tests_properties(
+    geoclue-client
+    PROPERTIES
+        TIMEOUT 15
+)
+
 add_test(
     NAME component-plan-hydrator
     COMMAND
@@ -2146,7 +2231,7 @@ add_test(
 set_tests_properties(
     qml-modules
     PROPERTIES
-        TIMEOUT 30
+        TIMEOUT 120
 )
 
 qt_add_executable(

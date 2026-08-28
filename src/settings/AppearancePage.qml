@@ -14,6 +14,38 @@ Page {
     property bool shellAppearanceServiceAvailable: false
     property bool shellAppearanceBusy: false
     property string shellAppearanceError: ""
+    property string shellAppearanceAutomationError: ""
+    property string nightLightSettingsError: ""
+    property string shellAppearanceAutomationSource: "desktop"
+    property string shellAppearanceScheduleMode: "time"
+    property int shellAppearanceDarkStartMinute: 18 * 60
+    property int shellAppearanceLightStartMinute: 6 * 60
+    property string shellAppearanceLocationSource: "manual"
+    property bool shellAppearanceHasLocation: false
+    property real shellAppearanceLatitude: 0
+    property real shellAppearanceLongitude: 0
+    property string shellAppearanceNextTransition: ""
+    property string shellAppearanceSunrise: ""
+    property string shellAppearanceSunset: ""
+    property string shellAppearanceAutomationStatus: "desktop"
+    property bool nightLightEnabled: false
+    property bool nightLightAutomatic: true
+    property string nightLightScheduleMode: "time"
+    property int nightLightDarkStartMinute: 20 * 60
+    property int nightLightLightStartMinute: 6 * 60
+    property string nightLightLocationSource: "manual"
+    property bool nightLightHasLocation: false
+    property real nightLightLatitude: 0
+    property real nightLightLongitude: 0
+    property int nightLightTemperature: 4000
+    property int nightLightDayTemperature: 6500
+    property bool nightLightGradual: true
+    property bool hyprsunsetAvailable: false
+    property int nightLightCurrentTemperature: 0
+    property string nightLightNextTransition: ""
+    property string nightLightSunrise: ""
+    property string nightLightSunset: ""
+    property string nightLightStatus: "disabled"
     property bool writable: false
     property bool catalogAvailable: false
     property bool appearanceAvailable: false
@@ -90,6 +122,30 @@ Page {
 
     signal refreshRequested()
     signal shellAppearanceModeRequested(string mode)
+    signal shellAppearanceAutomationRequested(
+        string source,
+        string scheduleMode,
+        int darkStartMinute,
+        int lightStartMinute,
+        string locationSource,
+        bool hasLocation,
+        real latitude,
+        real longitude
+    )
+    signal nightLightSettingsRequested(
+        bool nightLightEnabled,
+        bool automatic,
+        string scheduleMode,
+        int darkStartMinute,
+        int lightStartMinute,
+        string locationSource,
+        bool hasLocation,
+        real latitude,
+        real longitude,
+        int nightTemperature,
+        int dayTemperature,
+        bool gradual
+    )
     signal openDisplaysRequested()
     signal saveRequested(var values, var curves, var animations)
     signal retryApplyRequested()
@@ -2487,6 +2543,104 @@ Page {
 
                     onModeRequested: mode =>
                         root.shellAppearanceModeRequested(mode)
+                }
+
+                ThemeAutomationCard {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    visible: root.shellAppearanceMode === "automatic"
+                    source: root.shellAppearanceAutomationSource
+                    scheduleMode: root.shellAppearanceScheduleMode
+                    darkStartMinute: root.shellAppearanceDarkStartMinute
+                    lightStartMinute: root.shellAppearanceLightStartMinute
+                    locationSource: root.shellAppearanceLocationSource
+                    hasLocation: root.shellAppearanceHasLocation
+                    latitude: root.shellAppearanceLatitude
+                    longitude: root.shellAppearanceLongitude
+                    effectiveMode: root.shellEffectiveAppearanceMode
+                    nextTransition: root.shellAppearanceNextTransition
+                    sunrise: root.shellAppearanceSunrise
+                    sunset: root.shellAppearanceSunset
+                    status: root.shellAppearanceAutomationStatus
+                    serviceAvailable: root.shellAppearanceServiceAvailable
+                    busy: root.shellAppearanceBusy
+                    errorText: root.shellAppearanceAutomationError
+                    nightLightReady: root.hyprsunsetAvailable
+                        && root.nightLightAutomatic
+
+                    onSettingsRequested: (
+                        source,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude
+                    ) => root.shellAppearanceAutomationRequested(
+                        source,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude
+                    )
+                }
+
+                NightLightCard {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    nightLightEnabled: root.nightLightEnabled
+                    automatic: root.nightLightAutomatic
+                    scheduleMode: root.nightLightScheduleMode
+                    darkStartMinute: root.nightLightDarkStartMinute
+                    lightStartMinute: root.nightLightLightStartMinute
+                    locationSource: root.nightLightLocationSource
+                    hasLocation: root.nightLightHasLocation
+                    latitude: root.nightLightLatitude
+                    longitude: root.nightLightLongitude
+                    nightTemperature: root.nightLightTemperature
+                    dayTemperature: root.nightLightDayTemperature
+                    gradual: root.nightLightGradual
+                    status: root.nightLightStatus
+                    currentTemperature: root.nightLightCurrentTemperature
+                    nextTransition: root.nightLightNextTransition
+                    sunrise: root.nightLightSunrise
+                    sunset: root.nightLightSunset
+                    hyprsunsetAvailable: root.hyprsunsetAvailable
+                    serviceAvailable: root.shellAppearanceServiceAvailable
+                    busy: root.shellAppearanceBusy
+                    errorText: root.nightLightSettingsError
+
+                    onSettingsRequested: (
+                        nightLightEnabled,
+                        automatic,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude,
+                        nightTemperature,
+                        dayTemperature,
+                        gradual
+                    ) => root.nightLightSettingsRequested(
+                        nightLightEnabled,
+                        automatic,
+                        scheduleMode,
+                        darkStartMinute,
+                        lightStartMinute,
+                        locationSource,
+                        hasLocation,
+                        latitude,
+                        longitude,
+                        nightTemperature,
+                        dayTemperature,
+                        gradual
+                    )
                 }
 
                 TabBar {

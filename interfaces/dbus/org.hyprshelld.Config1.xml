@@ -59,6 +59,110 @@
         value="true"/>
     </property>
 
+    <!-- Persisted automatic appearance configuration. -->
+    <property name="AppearanceAutomationSource" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceScheduleMode" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceDarkStartMinute" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceLightStartMinute" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceLocationSource" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceHasLocation" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceLatitude" type="d" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceLongitude" type="d" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+
+    <!-- Derived scheduler state; changes never advance Revision. -->
+    <property name="ScheduledAppearanceMode" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceNextTransition" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceSunrise" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceSunset" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="AppearanceAutomationStatus" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+
+    <!-- Persisted Night Light configuration. -->
+    <property name="NightLightEnabled" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightAutomatic" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightScheduleMode" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightDarkStartMinute" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightLightStartMinute" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightLocationSource" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightHasLocation" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightLatitude" type="d" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightLongitude" type="d" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightTemperature" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightDayTemperature" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightGradual" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+
+    <!-- Derived hyprsunset and Night Light scheduler state. -->
+    <property name="HyprsunsetAvailable" type="b" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightRuntimeState" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightCurrentTemperature" type="u" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightNextTransition" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightSunrise" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightSunset" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+    <property name="NightLightStatus" type="s" access="read">
+      <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="true"/>
+    </property>
+
     <property name="Revision" type="t" access="read">
       <annotation
         name="org.freedesktop.DBus.Property.EmitsChangedSignal"
@@ -135,6 +239,42 @@
     </method>
 
     <method name="ResetAppearanceMode">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!-- The complete custom appearance schedule is validated and saved atomically. -->
+    <method name="SetAppearanceAutomation">
+      <arg name="source" type="s" direction="in"/>
+      <arg name="scheduleMode" type="s" direction="in"/>
+      <arg name="darkStartMinute" type="u" direction="in"/>
+      <arg name="lightStartMinute" type="u" direction="in"/>
+      <arg name="locationSource" type="s" direction="in"/>
+      <arg name="hasLocation" type="b" direction="in"/>
+      <arg name="latitude" type="d" direction="in"/>
+      <arg name="longitude" type="d" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+    <method name="ResetAppearanceAutomation">
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+
+    <!-- The complete Night Light configuration is validated and saved atomically. -->
+    <method name="SetNightLightSettings">
+      <arg name="enabled" type="b" direction="in"/>
+      <arg name="automatic" type="b" direction="in"/>
+      <arg name="scheduleMode" type="s" direction="in"/>
+      <arg name="darkStartMinute" type="u" direction="in"/>
+      <arg name="lightStartMinute" type="u" direction="in"/>
+      <arg name="locationSource" type="s" direction="in"/>
+      <arg name="hasLocation" type="b" direction="in"/>
+      <arg name="latitude" type="d" direction="in"/>
+      <arg name="longitude" type="d" direction="in"/>
+      <arg name="nightTemperature" type="u" direction="in"/>
+      <arg name="dayTemperature" type="u" direction="in"/>
+      <arg name="gradual" type="b" direction="in"/>
+      <arg name="revision" type="t" direction="out"/>
+    </method>
+    <method name="ResetNightLightSettings">
       <arg name="revision" type="t" direction="out"/>
     </method>
   </interface>

@@ -8,7 +8,7 @@ TestCase {
     id: testCase
 
     readonly property string captureDirectory: "/tmp/hyprshelld-visual-qa"
-    readonly property var scenes: ["theme-selector", "overview", "catalog-appearance", "catalog-input", "catalog-windows", "catalog-shortcuts", "catalog-system", "catalog-session", "bindings-list", "bindings-editor", "bindings-submaps", "input-list", "input-editor", "environment-list", "environment-editor", "permissions-list", "permissions-editor", "displays-advanced", "displays-luminance", "appearance-visuals", "appearance-animations", "guided-input-global", "guided-input-gestures", "windows-layout", "workspaces", "rules-window", "rules-layer"]
+    readonly property var scenes: ["theme-selector", "overview", "catalog-appearance", "catalog-input", "catalog-windows", "catalog-shortcuts", "catalog-system", "catalog-session", "bindings-list", "bindings-editor", "bindings-submaps", "input-list", "input-editor", "environment-list", "environment-editor", "permissions-list", "permissions-editor", "displays-advanced", "displays-luminance", "appearance-visuals", "appearance-animations", "appearance-automation-time", "appearance-automation-solar", "appearance-night-light", "guided-input-global", "guided-input-gestures", "windows-layout", "workspaces", "rules-window", "rules-layer"]
 
     function captureScene(scene, theme, width, height, selectorMode) {
         const selectorVariant = selectorMode

@@ -13,10 +13,18 @@ QtObject {
     property string previewMode: ""
     readonly property string systemMode:
         Application.styleHints.colorScheme === Qt.Light ? "light" : "dark"
+    readonly property string automaticSource:
+        ConfigClient.appearanceAutomationSource
+    readonly property string scheduledMode:
+        ConfigClient.scheduledAppearanceMode
+    readonly property string automaticMode:
+        automaticSource === "desktop" ? systemMode
+            : scheduledMode === "light" || scheduledMode === "dark"
+                ? scheduledMode : systemMode
     readonly property string effectiveMode:
         previewMode === "light" || previewMode === "dark"
             ? previewMode
-            : preference === "automatic" ? systemMode
+            : preference === "automatic" ? automaticMode
                 : preference === "light" ? "light" : "dark"
     readonly property bool isLight: effectiveMode === "light"
 
@@ -86,7 +94,7 @@ QtObject {
 
     function normalizedMode(mode) {
         if (mode === "automatic")
-            return root.systemMode;
+            return root.automaticMode;
         return mode === "light" ? "light" : "dark";
     }
 

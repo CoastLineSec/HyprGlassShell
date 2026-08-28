@@ -90,6 +90,10 @@ The guides below describe behavior available in the current development build.
   ranges; enter exact blur color-modulation values,
   tune existing custom curves, author animation rules, work with the aggregate
   draft, and understand apply and recovery.
+- [Appearance automation and Night Light](appearance-automation.md) — choose
+  desktop, fixed-time, solar, or Night Light-driven shell colors; configure
+  permission-aware location and `hyprsunset` temperature schedules; and
+  understand runtime ownership and privacy.
 - [Input](input.md) — configure reviewed global keyboard, virtual keyboard,
   mouse, pointer behavior, cursor visibility and placement, touchpad,
   touch-device, and drawing-tablet controls and ordered gesture bindings,
